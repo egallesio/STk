@@ -1,0 +1,55 @@
+;;;;
+;;;; D e f b u t t o n . s t k 	  --  Default button composite widget
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
+;;;;    Creation date: 22-Mar-1994 13:05
+;;;; Last file update: 13-Aug-1996 23:16
+
+(require "Frame")
+(require "Button")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Default-button> class definition
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class <Default-button> (<Tk-composite-widget> <Button>)
+  ((button 	   :accessor     button-of)
+   (internal-frame :accessor	 internal-frame-of)
+   ;; Fictive slots 
+   (background     :accessor     background
+		   :init-keyword :background
+		   :allocation   :propagated
+		   :propagate-to (frame button internal-frame))
+   (border-width   :accessor     border-width 
+		   :allocation   :propagated
+		   :init-keyword :border-width
+		   :propagate-to (frame))
+   (relief	   :accessor     relief
+		   :init-keyword :relief
+		   :allocation   :propagated
+		   :propagate-to (frame))))
+
+(define-method initialize-composite-widget ((self <Default-button>) initargs frame)
+  (let* ((if (make <Frame>  :parent frame :border-width 2 :relief "groove"))
+	 (b  (make <Button> :parent if)))
+
+    (pack b  :padx 5 :pady 5 :expand #t)
+    (pack if :padx 5 :pady 5 :expand #t)
+    
+    (slot-set! self 'Id    	    (Id b))
+    (slot-set! self 'button	    b)
+    (slot-set! self 'internal-frame if)))
+
+(provide "Defbutton")

@@ -1,0 +1,126 @@
+Since I'm not a lawyer, I don't know where to put copyrigth notices
+and permission notices of softwares I use. Consequently I put them here in
+hope it's sufficient.... 
+
+Note:
+   STk licence seems not to be as clear as I hope. The main idea is
+that you can do what you want with STk. You can even use it in
+commercial products. The only restriction is that you must prevent me
+if you intend to use it in a commercial product (so I can send you a
+"written permission" for efectively using it). The goal is not to
+restrict commercial applications but only to count them.  If someone,
+fluent in english and which like those aspects, can help me to make
+things clearer...
+
+==============================================================================
+
+TK/TCL Copyright 
+----------------
+Copyright (c) 1987-1993 The Regents of the University of California.
+Copyright (c) 1994 Sun Microsystems, Inc.
+
+This software is copyrighted by the Regents of the University of
+California, Sun Microsystems, Inc., and other parties.  The following
+terms apply to all files associated with the software unless explicitly
+disclaimed in individual files.
+
+The authors hereby grant permission to use, copy, modify, distribute,
+and license this software and its documentation for any purpose, provided
+that existing copyright notices are retained in all copies and that this
+notice is included verbatim in any distributions. No written agreement,
+license, or royalty fee is required for any of the authorized uses.
+Modifications to this software may be copyrighted by their authors
+and need not follow the licensing terms described here, provided that
+the new terms are clearly indicated on the first page of each file where
+they apply.
+
+IN NO EVENT SHALL THE AUTHORS OR DISTRIBUTORS BE LIABLE TO ANY PARTY
+FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES
+ARISING OUT OF THE USE OF THIS SOFTWARE, ITS DOCUMENTATION, OR ANY
+DERIVATIVES THEREOF, EVEN IF THE AUTHORS HAVE BEEN ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+
+THE AUTHORS AND DISTRIBUTORS SPECIFICALLY DISCLAIM ANY WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.  THIS SOFTWARE
+IS PROVIDED ON AN "AS IS" BASIS, AND THE AUTHORS AND DISTRIBUTORS HAVE
+NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR
+MODIFICATIONS.
+
+RESTRICTED RIGHTS: Use, duplication or disclosure by the government
+is subject to the restrictions as set forth in subparagraph (c) (1) (ii)
+of the Rights in Technical Data and Computer Software Clause as DFARS
+252.227-7013 and FAR 52.227-19.
+
+
+Siod Copyright
+--------------
+
+/* Scheme In One Defun, but in C this time.
+ 
+ *                      COPYRIGHT (c) 1988-1992 BY                          *
+ *        PARADIGM ASSOCIATES INCORPORATED, CAMBRIDGE, MASSACHUSETTS.       *
+ *			   ALL RIGHTS RESERVED                              *
+
+Permission to use, copy, modify, distribute and sell this software
+and its documentation for any purpose and without fee is hereby
+granted, provided that the above copyright notice appear in all copies
+and that both that copyright notice and this permission notice appear
+in supporting documentation, and that the name of Paradigm Associates
+Inc not be used in advertising or publicity pertaining to distribution
+of the software without specific, written prior permission.
+
+PARADIGM DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
+PARADIGM BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR
+ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+SOFTWARE.
+
+*/
+
+Tiny CLOS copyright
+-------------------
+
+;;; Copyright (c) 1992 Xerox Corporation.	 
+;;;; All Rights Reserved.	
+;;;
+;;; Use, reproduction, and preparation of derivative works are permitted.
+;;; Any copy of this software or of any derivative work must include the
+;;; above copyright notice of Xerox Corporation, this paragraph and the
+;;; one after it.	 Any distribution of this software or derivative works
+;;; must comply with all applicable United States export control laws.
+;;;
+;;; This software is made available AS IS, and XEROX CORPORATION DISCLAIMS
+;;; ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION THE
+;;; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+;;; PURPOSE, AND NOTWITHSTANDING ANY OTHER PROVISION CONTAINED HEREIN, ANY
+;;; LIABILITY FOR DAMAGES RESULTING FROM THE SOFTWARE OR ITS USE IS
+;;; EXPRESSLY DISCLAIMED, WHETHER ARISING IN CONTRACT, TORT (INCLUDING
+;;; NEGLIGENCE) OR STRICT LIABILITY, EVEN IF XEROX CORPORATION IS ADVISED
+;;; OF THE POSSIBILITY OF SUCH DAMAGES.
+
+
+
+and finally
+
+STk Copyright
+-------------
+
+/*
+ * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * 
+ *
+ * Permission to use, copy, and/or distribute this software and its
+ * documentation for any purpose and without fee is hereby granted, provided
+ * that both the above copyright notice and this permission notice appear in
+ * all copies and derived works.  Fees for distribution or use of this
+ * software or derived works may only be charged with express written
+ * permission of the copyright holder.  
+ * This software is provided ``as is'' without express or implied warranty.
+ *
+ * This software is a derivative work of other copyrighted softwares; the
+ * copyright notices of these softwares are placed in the file COPYRIGHTS
+ *
+ */

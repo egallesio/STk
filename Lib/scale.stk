@@ -1,0 +1,249 @@
+;;;;
+;;;; Scale bindings and procs
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; This software is a derivative work of other copyrighted softwares; the
+;;;; copyright notices of these softwares are placed in the file COPYRIGHTS
+;;;;
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 17-May-1993 12:35
+;;;; Last file update: 21-Jul-1996 17:08
+;;;;
+
+(let ()
+
+(define dragging   #f)
+(define init-value #f)
+(define delta-x	   0)
+(define delta-y	   0)
+
+;;-------------------------------------------------------------------------
+;; The code below creates the default class bindings for entries.
+;;-------------------------------------------------------------------------
+
+;; Standard Motif bindings:
+
+(define-binding "Scale" "<Enter>" (|W| x y)
+  (when *tk-strict-Motif* 
+     (set! Tk::active-bg (tk-get |W| :activebackground))
+     (tk-set! |W| :activebackground (tk-get |W| :background)))
+  (Tk:scale-activate |W| x y))
+
+(define-binding "Scale" "<Motion>" (|W| x y)
+  (Tk:scale-activate |W| x y))
+
+(define-binding "Scale" "<Leave>" (|W|)
+  (if *tk-strict-Motif*
+      (tk-set! |W| :activebackground Tk::active-bg))
+  (if (equal? (tk-get |W| :state) "active")
+      (tk-set! |W| :state "normal")))
+
+(define-binding "Scale" "<1>" (|W| x y)
+  (Tk:scale-button-down |W| x y))
+
+(define-binding "Scale" "<B1-Motion>" (|W| x y)
+  (Tk:scale-drag |W| x y))
+
+(define-binding "Scale" "<B1-Leave>" () "")
+
+(define-binding "Scale" "<B1-Enter>" () "")
+
+(define-binding "Scale" "<ButtonRelease-1>" (|W| x y)
+  (Tk:cancel-repeat)
+  (Tk:scale-end-drag |W|)
+  (Tk:scale-activate |W| x y))
+
+(define-binding "Scale" "<2>" (|W| x y)
+  (Tk:scale-button-2-down |W| x y))
+
+(define-binding "Scale" "<B2-Motion>" (|W| x y)
+  (Tk:scale-drag |W| x y))
+
+(define-binding "Scale" "<B2-Leave>" () "")
+
+(define-binding "Scale" "<B2-Enter>" () "")
+
+(define-binding "Scale" "<ButtonRelease-2>" (|W| x y)
+  (Tk:cancel-repeat)
+  (Tk:scale-end-drag |W|)
+  (Tk:scale-activate |W| x y))
+
+(define-binding "Scale" "<Control-1>" (|W| x y)
+  (Tk:scale-control-press |W| x y))
+
+(define-binding "Scale" "<Up>" (|W|)
+  (Tk:scale-increment |W| 'up 'little 'no-repeat))
+
+(define-binding "Scale" "<Down>" (|W|)
+  (Tk:scale-increment |W| 'down 'little 'no-repeat))
+
+(define-binding "Scale" "<Left>" (|W|)
+  (Tk:scale-increment |W| 'up 'little 'no-repeat))
+
+(define-binding "Scale" "<Right>" (|W|)
+  (Tk:scale-increment |W| 'down 'little 'no-repeat))
+
+(define-binding "Scale" "<Control-Up>" (|W|)
+  (Tk:scale-increment |W| 'up 'big 'no-repeat))
+
+(define-binding "Scale" "<Control-Down>" (|W|)
+  (Tk:scale-increment |W| 'down 'big 'no-repeat))
+
+(define-binding "Scale" "<Control-Left>" (|W|)
+  (Tk:scale-increment |W| 'up 'big 'no-repeat))
+
+(define-binding "Scale" "<Control-Right>" (|W|)
+  (Tk:scale-increment |W| 'down 'big 'no-repeat))
+
+(define-binding "Scale" "<Home>" (|W|)
+  (|W| 'set (tk-get |W| :from)))
+
+(define-binding "Scale" "<End>" (|W|)
+  (|W| 'set (tk-get |W| :to)))
+
+
+;; Tk:scale-activate --
+;; This procedure is invoked to check a given x-y position in the
+;; scale and activate the slider if the x-y position falls within
+;; the slider.
+;;
+;; w -		The scale widget.
+;; x, y -	Mouse coordinates.
+
+(define  (Tk:scale-activate w x y)
+  (unless (equal? (tk-get w :state) "disabled")
+     (tk-set! w :state (if (equal? (w 'identify x y) "slider") "active" "normal"))))
+
+;; Tk:scale-button-down --
+;; This procedure is invoked when a button is pressed in a scale.  It
+;; takes different actions depending on where the button was pressed.
+;;
+;; w -		The scale widget.
+;; x, y -	Mouse coordinates of button press.
+
+(define (Tk:scale-button-down w x y)
+  (let ((el (w 'identify x y)))
+    (set! dragging #f)
+    (cond
+       ((string=? el "trough1") (Tk:scale-increment w 'up   'little 'initial))
+       ((string=? el "trough2") (Tk:scale-Increment w 'down 'little 'initial))
+       ((string=? el "slider")  (set! dragging #t)
+				(set! init-value (w 'get))
+				(let ((coords (w 'coords)))
+				  (set! delta-x (- x (car  coords)))
+				  (set! delta-y (- y (cadr coords)))
+				  (w 'configure :sliderrelief "sunken"))))))
+
+;; Tk:scale-drag --
+;; This procedure is called when the mouse is dragged with
+;; mouse button 1 down.  If the drag started inside the slider
+;; (i.e. the scale is active) then the scale's value is adjusted
+;; to reflect the mouse's position.
+;;
+;; w -		The scale widget.
+;; x, y -	Mouse coordinates.
+
+(define (Tk:scale-drag w x y)
+  (when dragging
+     (w 'set (w 'get (- x delta-x) (- y delta-y)))))
+
+
+;; Tk:scale-end-drag --
+;; This procedure is called to end an interactive drag of the
+;; slider.  It just marks the drag as over.
+(define (Tk:scale-end-drag w)
+  (set! dragging #f)
+  (w 'configure :sliderrelief "raised"))
+
+
+;; Tk:scale-increment --
+;; This procedure is invoked to increment the value of a scale and
+;; to set up auto-repeating of the action if that is desired.  The
+;; way the value is incremented depends on the "dir" and "big"
+;; arguments.
+;;
+;; w -		The scale widget.
+;; dir -	"up" means move value towards -from, "down" means
+;;		move towards -to.
+;; size -	Size of increments: "big" or "little".
+;; repeat -	Whether and how to auto-repeat the action:  "no-repeat"
+;;		means don't auto-repeat, "initial" means this is the
+;;		first action in an auto-repeat sequence, and "again"
+;;		means this is the second repetition or later.
+
+(define (Tk:scale-increment w dir size repeat)
+  (when (winfo 'exists w)
+    (let ((inc  0)
+	  (from (tk-get w :from))
+	  (to   (tk-get w :to)))
+
+      (if (eqv? size 'big)
+	  (begin
+	    (set! inc (tk-get w :bigincrement))
+	    (if (= inc 0)
+		(set! inc (abs (/ (- to from) #i10))))
+	    (set! inc (max (tk-get w :resolution) inc)))
+	  (set! inc (tk-get w :resolution)))
+    
+      (if (or (and (> from to) (eqv? dir 'down)) (and (<= from to) (eqv? dir 'up)))
+	  (set! inc (- inc)))
+
+      (w 'set (+ (w 'get) inc))
+
+      (case repeat
+	((again)   (set! tk::after-id 
+			 (after (tk-get w :repeatinterval)
+				(lambda () 
+				  (Tk:scale-increment w dir size 'again)))))
+	((initial) (let ((delay (tk-get w :repeatdelay)))
+		     (if (> delay 0)
+			 (set! Tk::after-id 
+			       (after delay
+				      (lambda () 
+					(Tk:scale-increment w dir 
+							    size 'again)))))))))))
+
+;; Tk:scale-control-press --
+;; This procedure handles button presses that are made with the Control
+;; key down.  Depending on the mouse position, it adjusts the scale
+;; value to one end of the range or the other.
+;;
+;; Arguments:
+;; w -		The scale widget.
+;; x, y -	Mouse coordinates where the button was pressed.
+
+(define (Tk:scale-control-press w x y)
+  (let ((el (w 'identify x y)))
+    (cond
+      ((string=? el "trough1")  (w 'set (tk-get w :from)))
+      ((string=? el "trough2")  (w 'set (tk-get w :to))))))
+
+;; This procedure is invoked when button 2 is pressed over a scale.
+;; It sets the value to correspond to the mouse position and starts
+;; a slider drag.
+;;
+;; Arguments:
+;; w -		The scrollbar widget.
+;; x, y -	Mouse coordinates within the widget.
+
+(define (Tk:scale-button-2-down w x y)
+  (unless (equal? (tk-get w :state) "disabled")
+    (tk-set! w :state "active")
+    (w 'set (w 'get x y))
+    (set! dragging #t)
+    (set! init-value (w 'get))
+    (set! delta-x 0)
+    (set! delta-y 0)))
+
+;; enf of let
+)

@@ -1,0 +1,16 @@
+;; Canvas item types
+;; We use here the fact that "wtour-lessondir" contains the path of the
+;; wtour demo
+
+(canvas '.c2)
+(pack .c2 :fill "both" :expand #t)
+
+(.c2 'create 'arc 10 10 50 50 :fill "red")
+(.c2 'create 'line 10 100 40 140 :fill "blue")
+(.c2 'create 'oval 150 150 170 200 :fill "yellow")
+(.c2 'create 'polygon 200 10 210 50 280 20 :fill "green")
+(.c2 'create 'rectangle 10 200 30 250 :fill "cyan")
+(.c2 'create 'text 100 220 :text "Some random text")
+(.c2 'create 'bitmap 120 70 :bitmap (string-append "@" 
+						   wtour-lessondir
+						   "/../lib/iu.seal.small.xbm"))

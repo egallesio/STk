@@ -1,0 +1,4 @@
+#define full_width 1
+#define full_height 1
+static unsigned char full_bits[] = {
+   0x01};

@@ -1,0 +1,125 @@
+
+			STklos version 2.1
+			------------------
+
+
+What is STklos?
+---------------
+
+STklos is an extension of STk which provides a` la CLOS objets to STk. 
+This implementation takes its inspiration from the version 1.3 of the
+Tiny-clos package defined by Gregor Kickzales 
+(available at parcftp.xerox.com:/pub/mop/*).
+
+Compiling STklos
+----------------
+STklos is compiled during the interpreter construction. Normally, You don't
+have to do something in this directory. 
+
+Simple test of STklos
+---------------------
+
+STklos needs some files to run properly. Until you have installed it in its
+definitive place, you have to:
+	1. set your default directory to STklos
+	2. use the the shell script test-stklos to run the interpreter 
+
+So, you just have to type 
+
+	$ cd STklos; test-stklos
+
+To test, that everything is OK, you can try:
+	(let ()
+	  (define-class A () ((a :initform 10) b))
+	  (define inst (make A))
+	  (slot-set! inst 'b 20)
+	  (+ (slot-ref inst 'a) (slot-ref inst 'b)))
+
+which should yield 30 if everything is correct.
+
+Using STklos with TK
+--------------------
+
+A set of classes have been defined to use Tk with object flavor. All the Tk
+commands have been re-written using STklos. 
+
+Following example creates a three buttons panel (button 1 & 2 being on top of
+button 3).
+
+   (require "Frame")
+   (require "Button")
+   (define f  (make <Frame>))
+   (define b1 (make <Button> :text "Button 1" :parent f))
+   (define b2 (make <Button> :text "Button 2" :parent f))
+   (define b3 (make <Button> :text "Button 3"))
+   (pack b1 b2 :side "left")
+   (pack f b3 :fill "both" :expand #t)
+
+Note usage of Scheme names in the two preceding pack calls instead of dotted
+Tcl/Tk names.
+
+Tk options can be seen as slot in the STklos world. So getting the font of 
+button 3 can be done with 
+
+   (font b3)
+
+and changing its value can be done with 
+
+   (set! (font b3) "fixed")
+
+and associating a callback to button 1 can be done with the following expression
+
+   (set! (command b1) '(format #t "You have typed on \"Button1\"\n"))
+
+The desribe function permits to see all the slots value of a given object. For
+instance, 
+
+   (describe b2)
+
+would give something like:
+
+     #[<button> 122e44] is an instance of class <button>
+     Slots are: 
+	  id = #[Tk-command .v1.v3]
+	  eid = #[Tk-command .v1.v3]
+	  parent = #[<frame> f09d8]
+	  bitmap = ""
+	  width = 0
+	  height = 0
+	  anchor = "center"
+	  font = "-Adobe-Helvetica-Bold-R-Normal--*-120-*"
+	  foreground = "Black"
+	  pad-x = 1
+	  pad-y = 1
+	  text = "Button 2"
+	  text-variable = ""
+	  background = "#cccccc"
+	  border-width = 2
+	  cursor = ""
+	  relief = "raised"
+	  active-background = "#999999"
+	  active-foreground = "Black"
+	  command = ""
+	  disabled-foreground = "#b0b0b0"
+	  state = "normal"
+
+
+Destruction of a button can be obtained with the destroy-widget generic function
+as in
+
+    (destroy b2)
+
+Examples
+--------
+
+Some examples are available in the Examples directory. What those
+examples do is not interesting but rather how they are written.  Note:
+There are not enough examples. Send me programs if you have intersting
+pieces of code to make this directory growing.
+Thanks
+
+
+
+Have fun
+
+

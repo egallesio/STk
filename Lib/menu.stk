@@ -1,0 +1,801 @@
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; This software is a derivative work of other copyrighted softwares; the
+;;;; copyright notices of these softwares are placed in the file COPYRIGHTS
+;;;;
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 17-May-1993 12:35
+;;;; Last file update:  2-Jul-1996 19:30
+;;;;
+
+;; This file is loaded for the first menu or menub-button. Avoid to load it twice
+(unless (or (tk-command? Tk:menu) (tk-command? Tk:menubutton))
+  (let ()
+
+
+  (define tk::in-menu-button	#f)
+  (define tk::posted-mb		#f)
+  (define tk::popup		#f)
+  (define tk::grab-status	#f)
+  (define tk::old-grab		#f)
+
+;;-------------------------------------------------------------------------
+;; Globals that are used in this file:
+;;
+;; cursor -		Saves the -cursor option for the posted menubutton.
+;; focus -		Saves the focus during a menu selection operation.
+;;			Focus gets restored here when the menu is unposted.
+;; grab-status -	Used in conjunction with Tk::old-grab: if Tk:old-grab
+;;			is not false, then Tk:grab-status contains either an
+;;			empty string or "-global" to indicate whether the old
+;;			grab was a local one or	a global one.
+;; in-menu-button -	The name of the menubutton widget containing
+;;			the mouse, or an empty string if the mouse is
+;;			not over any menubutton.
+;; old-grab -		Window that had the grab before a menu was posted.
+;;			Used to restore the grab state after the menu
+;;			is unposted.  Empty string means there was no
+;;			grab previously set.
+;; popup -		If a menu has been popped up via tk_popup, this
+;;			gives the name of the menu.  Otherwise this
+;;			value is empty.
+;; posted-mb -		Name of the menubutton whose menu is currently
+;;			posted, or an empty string if nothing is posted
+;;			A grab is set on this widget.
+;; relief -		Used to save the original relief of the current
+;;			menubutton.
+;; window -		When the mouse is over a menu, this holds the
+;;			name of the menu;  it's cleared when the mouse
+;;			leaves the menu.
+;;-------------------------------------------------------------------------
+
+;;-------------------------------------------------------------------------
+;; Overall note:
+;; This file is tricky because there are four different ways that menus
+;; can be used:
+;;
+;; 1. As a pulldown from a menubutton.  This is the most common usage.
+;;    In this style, the variable tk::posted-mb identifies the posted
+;;    menubutton.
+;; 2. As a torn-off menu copied from some other menu.  In this style
+;;    tk::posted-Mb is empty, and the top-level menu is no
+;;    override-redirect.
+;; 3. As an option menu, triggered from an option menubutton.  In thi
+;;    style tk::posted-Mb identifies the posted menubutton.
+;; 4. As a popup menu.  In this style tk::posted-mb is empty and
+;;    the top-level menu is override-redirect.
+;;
+;; The various binding procedures use the  state described above to
+;; distinguish the various cases and take different actions in each
+;; case.
+;;-------------------------------------------------------------------------
+
+;;-------------------------------------------------------------------------
+;; The code below creates the default class bindings for menus
+;; and menubuttons.
+;;-------------------------------------------------------------------------
+
+
+(define-binding "Menubutton" "<FocusIn>" ()
+  '())
+
+(define-binding "Menubutton" "<Enter>" (|W|)
+  (Tk:menu-button-enter |W|))
+
+(define-binding "Menubutton" "<Leave>" (|W|)
+  (Tk:menu-button-leave |W|))
+
+(define-binding "Menubutton" "<1>" (|W| |X| |Y|)
+  (when tk::in-menu-button
+     (Tk:menu-button-post tk::in-menu-button |X| |Y|)))
+
+(define-binding "Menubutton" "<Motion>" (|W| |X| |Y|)
+  (Tk:menu-button-motion |W| 'up |X| |Y|))
+
+(define-binding "Menubutton" "<B1-Motion>" (|W| |X| |Y|)
+  (Tk:menu-button-motion |W| 'down |X| |Y|))
+
+(define-binding "Menubutton" "<ButtonRelease-1>" (|W|)
+  (Tk:menu-button-button-up |W|))
+
+(define-binding "Menubutton" "<space>" (|W|)
+  (Tk:menu-button-post |W|)
+  (Tk:menu-first-entry (tk-get |W| :menu)))
+
+;; Must set focus when mouse enters a menu, in order to allow
+;; mixed-mode processing using both the mouse and the keyboard.
+;; Don't set the focus if the event comes from a grab release,
+;; though:  such an event can happen after as part of unposting
+;; a cascaded chain of menus, after the focus has already been
+;; restored to wherever it was before menu selection started.
+
+(define-binding "Menu" "<FocusIn>" ()
+  '())
+
+(define-binding "Menu" "<Enter>" (|W| m)
+  (set! tk::window |W|)
+  (unless (string=? m "NotifyUngrab")
+    (focus |W|)))
+
+(define-binding "Menu" "<Leave>" (|W| |X| |Y|)
+  (Tk:menu-leave |W| |X| |Y|))
+
+(define-binding "Menu" "<Motion>" (|W| y s)
+  (Tk:menu-Motion |W| y s))
+
+(define-binding "Menu" "<ButtonPress>" (|W|)
+  (Tk:menu-button-down |W|))
+
+(define-binding "Menu" "<ButtonRelease>" (|W|)
+  (Tk:menu-invoke |W| #t))
+
+(define-binding "Menu" "<space>" (|W|)
+  (Tk:menu-invoke |W| #f))
+
+(define-binding "Menu" "<Return>" (|W|)
+  (Tk:menu-invoke |W| #f))
+
+(define-binding "Menu" "<Escape>" (|W|)
+  (Tk:menu-escape |W|))
+
+(define-binding "Menu" "<Left>" (|W|)
+  (Tk:menu-left-right |W| 'left))
+
+(define-binding "Menu" "<Right>" (|W|)
+  (Tk:menu-left-right |W| 'right))
+
+(define-binding "Menu" "<Up>" (|W|)
+  (Tk:menu-next-entry |W| -1))
+
+(define-binding "Menu" "<Down>" (|W|)
+  (Tk:menu-next-entry |W| +1))
+
+(define-binding "Menu" "<KeyPress>" (|W| |A|)
+  (Tk:traverse-within-menu |W| |A|))
+
+
+;; The following bindings apply to all windows, and are used to
+;; implement keyboard menu traversal.
+
+(define-binding "all" "<Alt-KeyPress>" (|W| |A|)
+  (Tk:traverse-to-menu |W| |A|))
+
+(define-binding "all" "<Meta-KeyPress>" (|W| |A|)
+  (Tk:traverse-to-menu |W| |A|))
+
+(define-binding "all" "<F10>" (|W|)
+  (Tk:first-menu |W|))
+
+;; Tk:menu-button-enter --
+;; This procedure is invoked when the mouse enters a menubutton
+;; widget.  It activates the widget unless it is disabled.  Note:
+;; this procedure is only invoked when mouse button 1 is *not* down.
+;; The procedure Tk:menu-button-B1-enter is invoked if the button is down.
+;;
+
+(define (Tk:menu-button-enter w)
+  (when tk::in-menu-button
+     (Tk:menu-button-leave tk::in-menu-button))
+
+  (set! tk::in-menu-button w)
+
+  (unless (equal? (tk-get w :state) "disabled")
+     (tk-set! w :state "active")))
+
+;; Tk:menu-button-leave --
+;; This procedure is invoked when the mouse leaves a menubutton widget.
+;; It de-activates the widget, if the widget still exists.
+;;
+
+(define (Tk:menu-button-leave w)
+  (set! tk::in-menu-button #f)
+  (when (and (winfo 'exists w) (equal? (tk-get w :state) "active"))
+    (tk-set! w :state "normal")))
+
+;; Tk:menu-button-Post --
+;; Given a menubutton, this procedure does all the work of posting
+;; its associated menu and unposting any other menu that is currently
+;; posted.
+;;
+;; w -			The name of the menubutton widget whose menu
+;;			is to be posted.
+;; x, y -		Root coordinates of cursor, used for positioning
+;;			option menus.  If not specified, then the center
+;;			of the menubutton is used for an option menu.
+
+(define (Tk:menu-button-post w . coords)
+  (unless (or (equal? (tk-get w :state) "disabled") (equal? w tk::posted-mb))
+    (let ((menu (tk-get w :menu)))
+      (when menu
+	(unless (string-find? (string-append (widget->string w) ".")
+			      (widget->string menu))
+	  ;; This is weak, but should be sufficient
+	  (error "can't post ~S:  it isn't a descendant of ~S" menu w))
+
+	(let ((cur tk::posted-mb))
+	  (when tk::posted-mb (Tk:menu-unpost #f))
+	  (set! tk::cursor (tk-get w :cursor))
+	  (set! tk::relief (tk-get w :relief))
+	  (tk-set! w :cursor "arrow")
+	  (tk-set! w :relief "raised")
+	  (set! tk::posted-mb w)
+	  (set! tk::focus (focus))
+	  (menu 'activate 'none)
+	     
+	  ;; If this looks like an option menubutton then post the menu so
+	  ;; that the current entry is on top of the mouse. Otherwise post
+	  ;; the menu just below the menubutton, as for a pull-down.
+	  (if (tk-get w :indicatoron)
+	      (let ((x (if (null? coords)
+			   (+ (winfo 'rootx w) (/ (winfo 'width w) 2))
+			   (car coords)))
+		    (y (if (null? coords)
+			   (+ (winfo 'rooty w) (/ (winfo 'height w) 2))
+			   (cadr coords))))
+		(Tk:post-over-point menu x y
+				    (Tk:menu-find-name menu (tk-get w :text))))
+	      (menu 'post (winfo 'rootx w)
+		    (+ (winfo 'rooty w) (winfo 'height w))))
+	  (focus menu)
+	  (Tk:save-grab-info w)
+	  (grab :global w))))))
+
+;; Tk:menu-unpost --
+;; This procedure unposts a given menu, plus all of its ancestors up
+;; to (and including) a menubutton, if any.  It also restores various
+;; values to what they were before the menu was posted, and releases
+;; a grab if there's a menubutton involved.  Special notes:
+;; 1. It's important to unpost all menus before releasing the grab, so
+;;    that any Enter-Leave events (e.g. from menu back to main
+;;    application) have mode NotifyGrab.
+;; 2. Be sure to enclose various groups of commands in "catch" so that
+;;    the procedure will complete even if the menubutton or the menu
+;;    or the grab window has been deleted.
+;;
+;; menu -		Name of a menu to unpost.  Ignored if there
+;;			is a posted menubutton.
+
+(define (Tk:menu-unpost menu)
+  (let ((mb tk::posted-mb))
+    ;; Restore focus right away (otherwise X will take focus away when
+    ;; the menu is unmapped and under some window managers (e.g. olvwm)
+    ;; we'll lose the focus completely).
+
+    (catch (focus tk::focus))
+    (set! tk::focus #f)
+    ;; Unpost menu(s) and restore some stuff that's dependent on
+    ;; what was posted.
+    (BEGIN ;catch 
+       (if mb
+	   (begin
+	     (set! menu (tk-get mb :menu))
+	     (menu 'unpost)
+	     (set! tk::posted-mb #f)
+	     (tk-set! mb :cursor tk::cursor :relief tk::relief))
+	   (if tk::popup
+	       (begin
+		 (tk::popup 'unpost)
+		 (set! tk::popup #f))
+	       (when (and menu (wm 'overrideredirect menu))
+		  ;; We're in a cascaded sub-menu from a torn-off menu or popup.
+		  ;; Unpost all the menus up to the toplevel one (but not
+		  ;; including the top-level torn-off one) and deactivate the
+		  ;; top-level torn off menu if there is one.
+		  (let loop ((parent (winfo 'parent menu)))
+		    (when (and (equal? (winfo 'class parent) "Menu")
+			       (winfo 'ismapped parent))
+		       (parent 'activate "none")
+		       (parent 'postcascade "none")
+		       (if (wm 'overrideredirect parent)
+			   (loop (winfo 'parent parent)))))
+		  (menu 'unpost)))))
+
+    ;; Release grab, if any, and restore the previous grab, if there was one.
+    (if menu
+	(let ((g (grab 'current menu)))
+	     (and g (grab 'release g))))
+    (when tk::old-grab
+      ;; Be careful restoring the old grab, since it's window may not
+      ;; be visible anymore.
+      (catch
+        (if (equal? tk::grab-status "global")
+	    (grab 'set :global tk::old-grab)
+	    (grab 'set tk::old-grab)))
+      (set! tk::old-grab #f))))
+
+;; Tk:menu-button-motion --
+;; This procedure handles mouse motion events inside menubuttons, and
+;; also outside menubuttons when a menubutton has a grab (e.g. when a
+;; menu selection operation is in progress).
+;;
+;; w -			The name of the menubutton widget.
+;; upDown - 		"down" means button 1 is pressed, "up" means
+;;			it isn't.
+;; rootx, rooty -	Coordinates of mouse, in (virtual?) root window.
+(define (Tk:menu-button-motion w upDown rootx rooty)
+  (unless (equal? tk::in-menu-button w)
+     (let ((new (winfo 'containing rootx rooty)))
+       (when (and (not (equal? new tk::in-menu-button))
+		  (or (not new)
+		      (equal? (winfo 'toplevel new) (winfo 'toplevel w))))
+	  (if tk::in-menu-button
+	      (Tk:menu-button-leave tk::in-menu-button))
+	  (when (and new 
+		     (equal? (winfo 'class new) "Menubutton")
+		     (not (tk-get new :indicatoron))
+		     (not (tk-get w   :indicatoron)))
+	     (if (eq? updown 'down)
+		 (Tk:menu-button-post new rootx rooty)
+		 (Tk:menu-button-enter new)))))))
+
+
+;; Tk:menu-button-button-up --
+;; This procedure is invoked to handle button 1 releases for menubuttons.
+;; If the release happens inside the menubutton then leave its menu
+;; posted with element 0 activated.  Otherwise, unpost the menu.
+;;
+(define (Tk:menu-button-button-up w)
+  (if (and (equal? tk::posted-mb w) (equal? tk::in-menu-button w))
+      (Tk:menu-first-entry (tk-get tk::posted-mb :menu))
+      (Tk:menu-unpost #f)))
+
+
+;; Tk:menu-motion --
+;; This procedure is called to handle mouse motion events for menus.
+;; It does two things.  First, it resets the active element in the
+;; menu, if the mouse is over the menu.  Second, if a mouse button
+;; is down, it posts and unposts cascade entries to match the mouse
+;; position.
+;;
+;; Arguments:
+;; menu -		The menu window.
+;; y -			The y position of the mouse.
+;; state -		Modifier state (tells whether buttons are down).
+
+(define (Tk:menu-motion menu y state)
+  (if (equal? menu tk::window)
+      (menu 'activate (format #f "@~A" y)))
+  (if (= (* (modulo state 128) (modulo state 512) (modulo state 1024)) 0)
+      (menu 'postcascade 'active)))
+
+;; Tk:menu-button-down --
+;; Handles button presses in menus.  There are a couple of tricky things
+;; here:
+;; 1. Change the posted cascade entry (if any) to match the mouse position.
+;; 2. If there is a posted menubutton, must grab to the menubutton;  this
+;;    overrrides the implicit grab on button press, so that the menu
+;;    button can track mouse motions over other menubuttons and change
+;;    the posted menu.
+;; 3. If there's no posted menubutton (e.g. because we're a torn-off menu
+;;    or one of its descendants) must grab to the top-level menu so that
+;;    we can track mouse motions across the entire menu hierarchy.
+;;
+
+(define (Tk:menu-button-down menu)
+  (menu 'postcascade 'active)
+  (if tk::posted-mb 
+      (grab :global tk::posted-mb)
+      (let loop ((menu   menu)
+		 (parent (winfo 'parent menu)))
+	(if (and (wm 'overrideredirect menu)
+		 (equal? (winfo 'class parent) "Menu")
+		 (winfo 'ismapped parent))
+	    (loop parent (winfo 'parent parent))
+	    (begin
+	      ; Don't update grab information if the grab window isn't changing.
+	      ; Otherwise, we'll get an error when we unpost the menus and
+	      ; restore the grab, since the old grab window will not be viewable
+	      ; anymore.
+	      (unless (equal? menu (grab 'current menu))
+		(Tk:save-grab-info menu))
+	      ; Must re-grab even if the grab window hasn't changed, in order
+	      ; to release the implicit grab from the button press.
+	      (grab :global menu))))))
+
+;; Tk:menu-leave --
+;; This procedure is invoked to handle Leave events for a menu.  It
+;; deactivates everything unless the active element is a cascade element
+;; and the mouse is now over the submenu.
+;;
+;; menu -		The menu window.
+;; rootx, rooty -	Root coordinates of mouse.
+;; state -		Modifier state.
+
+(define (Tk:menu-leave menu rootx rooty)
+  (set! tk::window #f)
+  (unless (equal? (menu 'index 'active) "none")
+    (unless (and (equal? (menu 'type "active") "cascade")
+		 (equal? (winfo 'containing rootx rooty)
+			 (menu 'entrycget 'active :menu)))
+       (menu 'activate "none"))))
+
+
+;; Tk:menu-invoke --
+;; This procedure is invoked when button 1 is released over a menu.
+;; It invokes the appropriate menu action and unposts the menu if
+;; it came from a menubutton.
+;;
+;;  w -			menu widget.
+;; button-release -	#t means this procedure is called because of
+;;			a button release;  #f means because of keystroke.
+;;
+(define (Tk:menu-invoke w button-release)
+  (cond
+     ((and button-release (not tk::window))
+      			;; Mouse was pressed over a menu without a menu button, 
+      			;; then dragged off the menu (possibly with a cascade
+			;; posted) and  released.  Unpost everything
+      			(w 'postcascade "none")
+			(w 'activate "none")
+			(Tk:menu-unpost w))
+     ((equal? (w 'type "active") "cascade")
+			(w 'postcascade "active")
+			(Tk:menu-first-entry (w 'entrycget "active" :menu)))
+     ((equal? (w 'type "active") "tearoff")
+      			(Tk:menu-unpost w)
+			(Tk:tear-off-menu w))
+     (ELSE		(Tk:menu-unpost w)
+			(w 'invoke "active"))))
+
+
+;; Tk:menuEscape --
+;; This procedure is invoked for the Cancel (or Escape) key.  It unposts
+;; the given menu and, if it is the top-level menu for a menu button,
+;; unposts the menu button as well.
+;;
+(define (Tk:menu-escape menu)
+  (if (equal? (winfo 'class (winfo 'parent menu)) "Menu")
+      (Tk:menu-left-right menu -1)
+      (Tk:menu-unpost menu)))
+
+;; Tk:menu-left-right --
+;; This procedure is invoked to handle "left" and "right" traversal
+;; motions in menus.  It traverses to the next menu in a menu bar,
+;; or into or out of a cascaded menu.
+;;
+;; menu -		The menu that received the keyboard
+;;			event.
+;; direction -		Direction in which to move: "left" or "right"
+
+(define (Tk:menu-left-right menu direction)
+  (let ((count    +1)
+	(continue #t))
+    ;; First handle traversals into and out of cascaded menus.
+    (if (eq? direction 'right)
+	(when (equal? (menu 'type "active") "cascade")
+	    (menu 'postcascade "active")
+	    (let ((m2 (menu 'entrycget 'active :menu)))
+	      (and m2 (Tk:menu-first-entry m2))
+	      (set! continue #f)))
+	;; Direction is 'left
+	(let ((m2 (winfo 'parent menu)))
+	  (set! count -1)
+	  (when (equal? (winfo 'class m2) "Menu")
+	    (menu 'activate "none")
+	    (focus m2)
+	    ;; This code unposts any posted submenu in the parent.
+	    (let ((tmp (m2 'index "active")))
+	      (m2 'activate "none")
+	      (m2 'activate tmp)
+	      (set! continue #f)))))
+    
+    (when (and continue tk::posted-mb)
+      ;; Can't traverse into or out of a cascaded menu.  Go to the next
+      ;; or previous menubutton, if that makes sense.
+      (let* ((buttons (winfo 'children [winfo 'parent tk::posted-mb]))
+	     (len     (length buttons)))
+	(let loop ((i (- count (length (member tk::posted-mb buttons)))))
+	  (while (< i 0)     (set! i (+ i len)))
+	  (while (>=  i len) (set! i (- i len)))
+	  (let ((mb (list-ref buttons i)))
+	    (when (and (equal? [winfo 'class mb] "Menubutton")
+		       (not (equal? [tk-get mb :state] "disabled"))
+		       (tk-get mb :menu)
+		       (not (equal? ((tk-get mb :menu) 'index "last") "none")))
+	      (Tk:menu-button-post mb)
+	      (Tk:menu-first-entry (tk-get mb :menu)))
+	    (unless (eq? mb tk::posted-mb)
+	      (loop (+ i count)))))))))
+
+;; Tk:menu-next-entry --
+;; Activate the next higher or lower entry in the posted menu,
+;; wrapping around at the ends.  Disabled entries are skipped.
+;;
+;; Arguments:
+;; menu -			Menu window that received the keystroke.
+;; count -			1 means go to the next lower entry,
+;;				-1 means go to the next higher entry.
+
+(define (Tk:menu-next-entry menu count)
+  (unless (equal? (menu 'index "last") "none")
+    (let* ((length     (+ (menu 'index "last") 1))
+	   (quit-after length)
+	   (active     (menu 'index "active"))
+	   (i          0)
+	   (break      #f))
+
+      (unless (equal? active "none")
+	(set! i (+ active count)))
+      
+      (let loop ((i i))
+	(when (> quit-after 0)
+	  ;; We've not already tried every entry in the menu
+	  (set! quit-after (- quit-after 1))
+
+	  (while (< i 0)        (set! i (+ i length)))
+	  (while (>=  i length) (set! i (- i length)))
+
+	  (catch (set! break (not (equal? (menu 'entrycget i :state) "disabled"))))
+	  (if break
+	      (begin
+		(menu 'activate i)
+		(menu 'postcascade i))
+	      (unless (= i active)
+		(loop (+ i count)))))))))
+
+;; Tk:menu-find --
+;; This procedure searches the entire window hierarchy under w for
+;; a menubutton that isn't disabled and whose underlined character
+;; is "char".  It returns the name of that window, if found, or #f
+;; if no matching window was found.  If "char" is an
+;; empty string then the procedure returns the name of the first
+;; menubutton found that isn't disabled.
+;;
+;; w -				Name of window where key was typed.
+;; char -			Underlined character to search for;
+;;				may be either upper or lower case, and
+;;				will match either upper or lower case.
+
+(define (Tk:menu-find w char)
+  (let ((char (string-lower char)))
+    (let loop ((children  (winfo 'children w)))
+      (if (null? children)
+	  #f
+	  (let* ((child (car children))
+		 (C     (winfo 'class child)))
+	    (cond
+	     ((string=? C "Menubutton")
+	         (let* ((index (tk-get child :underline))
+			(txt   (tk-get child :text))
+			(char2 (if (= index -1)
+				   "" 
+				   (string (string-ref txt index)))))
+		   (if (and (or (string=? char (string-lower char2)) 
+				(string=? char ""))
+			    (not (equal? (tk-get child :state) "disabled")))
+		       child
+		       (loop (cdr children)))))
+	     ((string=? C "Frame")
+	    	  (or (Tk:menu-find child char)
+		      (loop (cdr children))))
+	     (ELSE (loop (cdr children)))))))))
+
+;; Tk:traverse-to-menu --
+;; This procedure implements keyboard traversal of menus.  Given an
+;; ASCII character "char", it looks for a menubutton with that character
+;; underlined.  If one is found, it posts the menubutton's menu
+;;
+;; Arguments:
+;; w -				Window in which the key was typed (selects
+;;				a toplevel window).
+;; char -			Character that selects a menu.  The case
+;;				is ignored.  If an empty string, nothing
+;;				happens.
+
+(define (Tk:traverse-to-menu w char)
+  (let ((continue #t))
+    (unless (string=? char "")
+      (while (and continue (equal? (winfo 'class w) "Menu"))
+       (if  tk::posted-mb
+	   (set! w (winfo 'parent w))
+	   (set! continue #f)))
+      (when continue
+	(let ((w (Tk:menu-find (winfo 'toplevel w) char)))
+	  (when w 
+	    (Tk:menu-button-post w)
+	    (Tk:menu-first-entry (tk-get w :menu))))))))
+
+;; Tk:first-menu --
+;; This procedure traverses to the first menubutton in the toplevel
+;; for a given window, and posts that menubutton's menu.
+;;
+;; w -				Name of a window.  Selects which toplevel
+;;				to search for menubuttons.
+
+(define (Tk:first-menu w)
+  (let ((w (Tk:menu-find (winfo 'toplevel w) "")))
+    (when w
+      (Tk:menu-button-post w)
+      (Tk:menu-first-entry (tk-get w :menu)))))
+
+;; Tk:traverse-within-menu
+;; This procedure implements keyboard traversal within a menu.  It
+;; searches for an entry in the menu that has "char" underlined.  If
+;; such an entry is found, it is invoked and the menu is unposted.
+;;
+;; Arguments:
+;; w -				The name of the menu widget.
+;; char -			The character to look for;  case is
+;;				ignored.  If the string is empty then
+;;				nothing happens.
+
+(define (Tk:traverse-within-menu w char)
+  (unless (equal? char "")
+    (let* ((char (string-lower char))
+	   (last (w 'index "last")))
+      (unless (equal? last "none")
+	(let loop ((i 0))
+	  (when (<= i last)
+	    (let ((char2 #f)
+		  (index -1)
+		  (label ""))
+	      (catch 
+	         (set! index (w 'entrycget i :underline))
+		 (set! label (w 'entrycget i :label))
+		 (set! char2 (string-lower (string (string-ref label index)))))
+	      
+	      (if (and char2 (string=? char char2))
+		  (if (equal? (w 'type i) "cascade")
+		      (begin
+			(w 'postcascade i)
+			(w 'activate i)
+			(let ((m2 (w 'entrycget i :menu)))
+			  (and m2 (Tk:menu-first-entry m2))))
+		      (begin
+			(Tk:menu-unpost w)
+			(w 'invoke i)))
+		  (loop (+ i 1))))))))))
+
+;; Tk:menu-first-entry --
+;; Given a menu, this procedure finds the first entry that isn't
+;; disabled or a tear-off or separator, and activates that entry.
+;; However, if there is already an active entry in the menu (e.g.,
+;; because of a previous call to tkPostOverPoint) then the active
+;; entry isn't changed.  This procedure also sets the input focus
+;; to the menu.
+;;
+(define (Tk:menu-first-entry menu)
+  (when menu
+      (focus menu)
+      (when (equal? (menu 'index "active") "none")
+	  (let ((last (menu 'index "last")))
+	    (unless (equal? last "none")
+	        (let loop ((i 0))
+		  (when (<= i last)
+		      (let ((state #f))
+			(catch (set! state (menu 'entrycget i :state)))
+			(if (or (not state)
+				(equal? state "disabled")
+				(equal? (menu 'type i) "tearoff"))
+			    (loop (+ i 1))
+			    (menu 'activate i))))))))))
+
+
+;; Tk:menu-find-name --
+;; Given a menu and a text string, return the index of the menu entry
+;; that displays the string as its label.  If there is no such entry,
+;; return an empty string.  This procedure is tricky because some names
+;; like "active" have a special meaning in menu commands, so we can't
+;; always use the "index" widget command.
+;;
+;; menu -		Name of the menu widget.
+;; s -			String to look for.
+
+(define (Tk:menu-find-name menu s)
+  (let ((last (menu 'index "last")))
+    (unless (equal? last "none")
+      (let loop ((i 0))
+	(if (<= i last)
+	    (let ((label #f))
+	      (catch (set! label (menu 'entrycget i :label)))
+	      (if (equal? label s)
+		  i
+		  (loop (+ i 1))))
+	    #f)))))
+
+;; Tk:post-over-point --
+;; This procedure posts a given menu such that a given entry in the
+;; menu is centered over a given point in the root window.  It also
+;; activates the given entry.
+;;
+;; menu -		Menu to post.
+;; x, y -		Root coordinates of point.
+;; entry -		Index of entry within menu to center over (x,y).
+;;			If omitted or specified as {}, then the menu's
+;;			upper-left corner goes at (x,y).
+
+(define (Tk:post-over-point menu x y entry)
+  (when entry
+    (if (= entry (menu 'index "last"))
+	(set! y (- y (/ (+ (menu 'yposition entry) (winfo 'reqheight menu)) 2)))
+	(set! y (- y (/ (+ (menu 'yposition entry) 
+			   (menu 'yposition (+ entry 1))) 2))))
+    (set! x (- x (/ (winfo 'reqwidth menu) 2))))
+
+  (menu 'post (inexact->exact x) (inexact->exact y))
+  (if (and entry (not (equal? (menu 'entrycget entry :state) "disabled")))
+      (menu 'activate entry)))
+
+;; Tk:save-grab-info
+;; Sets the variables tkPriv(oldGrab) and tkPriv(grabStatus) to record
+;; the state of any existing grab on the w's display.
+;;
+;; w -			Name of a window;  used to select the display
+;;			whose grab information is to be recorded.
+
+(define (Tk:save-grab-info w)
+  (set! tk::old-grab (grab 'current w))
+  (if tk::old-grab
+      (set! tk::grab-status [grab 'status tk::old-grab])))
+
+(load "tearoff")
+
+))
+
+;; Tk:popup --
+;; This procedure pops up a menu and sets things up for traversing
+;; the menu and its submenus.
+;;
+;; menu -		Name of the menu to be popped up.
+;; x, y -		Root coordinates at which to pop up the
+;;			menu.
+;; entry -		Index of a menu entry to center over (x,y).
+;;			If omitted or specified as {}, then menu's
+;;			upper-left corner goes at (x,y).
+
+(define (Tk:popup menu x y entry)
+  (if (or tk::popup tk::posted-mb)
+      (Tk:menu-unpost #f))
+  (Tk:post-over-point menu x y entry)
+  (Tk:save-grab-info menu)
+  (grab :global menu)
+  (set! tk::popup menu)
+  (set! tk::focus (focus))
+  (focus menu))
+
+;; Tk:option-menu --
+;; This procedure creates an option button named  and an associated
+;; menu.  Together they provide the functionality of Motif option menus:
+;; they can be used to select one of many values, and the current value
+;; appears in the global variable var-name, as well as in the text of
+;; the option menubutton.  The  menu is returned as the
+;; procedure's result, so that the caller can use it to change configuration
+;; options on the menu or otherwise manipulate it.
+;;
+;; w -			The name to use for the menubutton.
+;; var-name -		Global variable to hold the currently selected value.
+;; first -		first (mandatory) legal value for option
+;; l 			legal values for option
+
+(define (Tk:option-menu w var-name first . l)
+  ;; define var-name before (if necessary) otherwise :textvar will define it to ""
+  (unless (symbol-bound? var-name (global-environment))
+    (eval `(define ,var-name ',first) (global-environment)))
+
+  (let* ((menu-name (format #f "~A.menu" w))
+	 (mb 	    (menubutton w :textvariable var-name 
+				  :indicatoron #t
+				  :menu menu-name
+				  :relief "raised"
+				  :borderwidth 2 
+				  :highlightthickness 2
+				  :anchor "c"))
+	 (m	    (menu menu-name :tearoff #f))
+	 (env	    (global-environment)))
+
+    (for-each (lambda (x)
+		(m 'add 'command :label x :command (lambda()
+						     (eval `(set! ,var-name ',x) 
+							   env))))
+	      (cons first l))
+    m))

@@ -1,0 +1,11 @@
+;;; Canvas tags
+
+(pack (canvas '.c1)
+      :fill "both" :expand #t)
+
+(.c1 'create 'rectangle 20 20 80 80   :fill "red" :tag "cats")
+(.c1 'create 'rectangle 60 60 120 120 :fill "green" :tag "cats")
+(.c1 'create 'rectangle 40 40 100 100 :fill "blue" :tag "dogs")
+
+(.c1 'move 'cats 100 0)
+

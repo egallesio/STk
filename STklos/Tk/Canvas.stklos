@@ -1,0 +1,338 @@
+;;;;
+;;;; C a n v a s . s t k 	  --  Canvas class definition
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
+;;;;    Creation date: 18-Aug-1993 19:55
+;;;; Last file update: 23-Jul-1996 10:39
+
+(require "Basics")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Canvas class definition
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define-class <Canvas> (<Tk-simple-widget> <Tk-sizeable> <Tk-xyscrollable> 
+			<Tk-editable> <Tk-selectable>)
+
+  ((items 	       :initform	(make-hash-table))
+   (close-enough       :init-keyword	:close-enough
+		       :accessor	close-enough
+		       :tk-name		closeenough
+		       :allocation	:tk-virtual)
+   (confine 	       :init-keyword	:confine
+		       :accessor	confine
+		       :allocation	:tk-virtual)
+   (x-scroll-increment :init-keyword    :x-scroll-increment
+		       :accessor	x-scroll-increment
+		       :tk-name		xscrollincrement
+		       :allocation 	:tk-virtual)
+   (y-scroll-increment :init-keyword    :y-xscroll-increment
+		       :accessor	y-scroll-increment
+		       :tk-name		yscrollincrement
+		       :allocation 	:tk-virtual)
+   (scroll-region      :init-keyword	:scroll-region
+		       :accessor	scroll-region
+		       :tk-name		scrollregion
+		       :allocation	:tk-virtual)))
+
+(define-method tk-constructor ((self <Canvas>))
+  Tk:canvas)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Utilities
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;; tag-value delivers the integer Id of an object. A method for canvas items 
+;; will be defined later
+(define-method tag-value ((object <top>))
+  (if (or (symbol?  object) (integer? object) (string?  object))
+      object
+      (error "**** object ~A is not contained in a canvas" object)))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Canvas> methods
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;
+;;; Add-tag
+;;;
+(define-method add-tag ((self <Canvas>) tag . args)
+  (apply (slot-ref self 'Id) 'addtag tag args))
+
+;;;
+;;; Bounding-box
+;;;
+(define-method bounding-box ((self <Canvas>) tag)
+  ((slot-ref self 'Id) 'bbox (tag-value tag)))
+ 
+;;;
+;;; Bind
+;;;
+(define-method bind ((self <Canvas>) tag-or-Id . args)
+  (if (and (string? tag-or-Id) 
+	   (> (string-length tag-or-Id) 2)
+	   (eq? (string-ref tag-or-Id 0) #\<))
+      (apply bind (slot-ref self 'Id) tag-or-Id args)
+      (apply (slot-ref self 'Id) 'bind  (tag-value tag-or-Id) args)))
+
+;;;
+;;; Canvas-x
+;;;
+(define-method canvas-x ((self <Canvas>) screenx . args)
+  (apply (slot-ref self 'Id) 'canvasx screenx args))
+
+;;;
+;;; Canvas-y
+;;;
+(define-method canvas-y ((self <Canvas>) screeny . args)
+  (apply (slot-ref self 'Id) 'canvasy screeny args))
+
+;;;
+;;; Coords et (setter coords)
+;;;
+(define-method coords ((self <Canvas>) tag-or-Id)
+  ((slot-ref self 'Id) 'coords (tag-value tag-or-Id)))
+
+(define-method (setter coords) ((self <Canvas>) tag-or-Id  args)
+  (apply (slot-ref self 'Id) 'coords (tag-value tag-or-Id) args))
+
+;;;
+;;; Delete-chars
+;;;
+(define-method delete-chars ((self <Canvas>) tag-or-Id first . last)
+  (apply (slot-ref self 'Id) 'dchars (tag-value tag-or-Id) first last))
+
+;;;
+;;; Delete (BUG. This procedure doesn't clean the hash table).....
+;;;
+(define-method canvas-delete ((self <Canvas>) . args)
+  (apply (slot-ref self 'Id) 'delete (map tag-value args)))
+
+;;;
+;;; Delete-tag
+;;;
+(define-method delete-tag ((self <Canvas>) tag-or-Id . tag-to-delete)
+  (apply (slot-ref self 'Id) 'dtag (tag-value tag-or-Id) tag-to-delete))
+
+
+;;;
+;;; Find-items
+;;;
+(define-method find-items ((self <Canvas>) . args)
+  (let ((result (apply (slot-ref self 'Id) 'find args)))
+    (if (list? result)
+        (map (lambda (x) (Cid->instance self x)) result)
+        (Cid->instance self result))))
+
+;;;
+;;; Focus
+;;;
+(define-method item-with-focus ((self <Canvas>))
+  (Cid->instance self ((slot-ref self 'Id) 'focus)))
+
+(define-method focus ((self <Canvas>) tag-or-id)
+  ((slot-ref self 'Id) 'focus (tag-value tag-or-id)))
+
+;;;
+;;; Get-tags
+;;;
+(define-method get-tags ((self <Canvas>) tag-or-Id)
+  ((slot-ref self 'Id) 'gettags (tag-value tag-or-Id)))
+
+;;;
+;;; Icursor
+;;;
+(define-method icursor ((self <Canvas>) tag-or-id index)
+  ((slot-ref self 'Id) 'icursor (tag-value tag-or-Id) index))
+
+;;;
+;;; Index
+;;;
+(define-method text-index ((self <Canvas>) tag-or-id index)
+  ((slot-ref self 'Id) 'index (tag-value tag-or-Id) index))
+
+;;;
+;;; Insert
+;;;
+(define-method text-insert ((self <Canvas>) tag-or-id before string)
+  ((slot-ref self 'Id) 'insert  (tag-value tag-or-Id) before string))
+
+
+;;;
+;;; Item-configure
+;;;
+(define-method item-configure ((self <Canvas>) tag-or-id . args )
+  (apply (slot-ref self 'Id) 'itemconfigure (tag-value tag-or-Id) args))
+
+;;;
+;;; Lower
+;;; 
+(define-method lower ((self <Canvas>) tag-or-Id . below)
+  (apply (slot-ref self 'Id) 'lower (tag-value tag-or-Id) (map tag-value below)))
+
+;;;
+;;; Move
+;;;
+(define-method move ((self <Canvas>) tag-or-Id x y)
+  ((slot-ref self 'Id) 'move (tag-value tag-or-Id) x y))
+
+;;;
+;;; Postscript
+;;;
+(define-method postscript ((self <Canvas>) . args)
+  (apply (slot-ref self 'Id) 'postscript args))
+
+;;;
+;;; Raise
+;;;
+(define-method raise ((self <Canvas>) tag-or-Id . above)
+  (apply (slot-ref self 'Id) 'raise (tag-value tag-or-Id) (map tag-value above)))
+
+;;;
+;;; Rescale
+;;;
+(define-method rescale ((self <Canvas>) tag-or-Id x y xs ys)
+  ((slot-ref self 'Id) 'scale (tag-value tag-or-Id) x y xs ys))
+
+;;;
+;;; Scan
+;;;
+(define-method scan ((self <Canvas>) option x y)
+  ((slot-ref self 'Id) 'scan option x y))
+
+;;;
+;;; Text-selection
+;;;
+(define-method text-selection ((self <Canvas>) . args)
+  (apply (slot-ref self 'Id) 'select args))
+
+;;;;;; item-type can be obtained by (class-name(class-of xxx))
+
+;;;
+;;; x-view family
+;;;
+(define-method x-view ((self <Canvas>) . args)
+  (apply (slot-ref self 'Id) 'xview args))
+
+(define-method x-view-scroll-units((self <Canvas>) num)
+  ((slot-ref self 'Id) 'xview 'scroll num 'units))
+
+(define-method x-view-scroll-pages((self <Canvas>) num)
+  ((slot-ref self 'Id) 'xview 'scroll num 'pages))
+
+(define-method x-view-moveto((self <Canvas>) fraction)
+  ((slot-ref self 'Id) 'xview 'moveto fraction))
+
+;;;
+;;; y-view family
+;;;
+(define-method y-view ((self <Canvas>) . args)
+  (apply (slot-ref self 'Id) 'yview args))
+
+(define-method y-view-scroll-units((self <Canvas>) num)
+  ((slot-ref self 'Id) 'yview 'scroll num 'units))
+
+(define-method y-view-scroll-pages((self <Canvas>) num)
+  ((slot-ref self 'Id) 'yview 'scroll num 'pages))
+
+(define-method y-view-moveto((self <Canvas>) fraction)
+  ((slot-ref self 'Id) 'yview 'moveto fraction))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; bind-for-dragging
+;;;;
+:;;; You can specify a :start, :before-motion, :after-motion, and :stop scripts
+;;;; If :before-motion returns #f the the object is not displaced and the
+;;;; :after-motion closure is not applied.
+;;;;
+;;;; Old :motion hook is equivalent to :after-motion but its use is deprecated
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-generic bind-for-dragging)
+(let ()
+  (define last-x 		   0)
+  (define last-y 		   0)
+  (define instance-selected '())
+
+  (define (start-drag instance x y closure tag)
+    (let ((tag (or tag (car ((slot-ref instance 'Id) 'find 'with 'current)))))
+      (delete-tag instance 'selected)
+      (add-tag instance 'selected 'with tag)
+      (raise instance 'selected)
+      (set! last-x x)
+      (set! last-y y)
+      (set! instance-selected (Cid->instance instance tag))
+      ;; Apply user :start hook
+      (if closure
+	  (closure instance-selected x y))))
+  
+  (define (motion-drag instance x y before after)
+    (let ((continue #t))
+      ;; Apply user :before-motion hook
+      (if before 
+	  (set! continue (before instance-selected x y)))
+      (when continue 
+	(move instance 'selected (- x last-x) (- y last-y))
+	(set! last-x x)
+	(set! last-y y)
+	;; Apply user :after-motion hook
+	(if after 
+	    (after instance-selected x y)))))
+
+  (define (fast-motion-drag instance x y)
+    (move instance 'selected (- x last-x) (- y last-y))
+    (set! last-x x)
+    (set! last-y y))
+  
+  (define (stop-drag instance x y closure)
+    (delete-tag instance 'selected)
+    ;; Apply user :stop hook
+    (if closure 
+	(closure instance-selected x y)))
+
+  (add-method bind-for-dragging (method ((self <Canvas>) . args)
+    (let* ((Id     (slot-ref self 'Id))
+	   (who    (tag-value (get-keyword :tag args 'all)))
+	   (but    (get-keyword :button args 1))
+	   (mod    (get-keyword :modifier args ""))
+	   (alone  (get-keyword :only-current args #t)) 
+	   (str    (if (equal? mod "") "" (string-append mod "-")))
+	   (start  (get-keyword :start args #f))
+	   (before (get-keyword :before-motion args #f))
+	   (after  (get-keyword :after-motion args (get-keyword :motion args #f)))
+	   (stop   (get-keyword :stop args #f)))
+      
+      ;; Start binding
+      (bind self who (format #f "<~AButtonPress-~A>" str but) 
+	    (lambda (x y) (start-drag self x y start (if alone #f who))))
+      ;; Motion binding
+      (bind self who (format #f "<~AB~A-Motion>" str but)
+	    (if (or before after)
+		(lambda (x y) (motion-drag self x y before after))
+		;; Provide a faster motion handler
+		(lambda (x y) (fast-motion-drag self x y))))
+      ;; Stop binding
+      (bind self who (format #f "<~AButtonRelease-~A>" str but)
+	    (lambda (x y) (stop-drag self x y stop)))))))
+
+(require "Canvitem")
+(provide "Canvas")

@@ -1,0 +1,33 @@
+;;;;
+;;;; STk adaptation of the Tk widget demo.
+;;;;
+;;;; This demonstration script creates a listbox widget that displays
+;;;; the names of the 50 states in the United States of America.
+;;;;
+
+(require "Scrollbox")
+
+(define (demo-states)
+  (let* ((w     (make-demo-toplevel "states"
+				    "Listbox Demonstration (50 states)"
+				    "A listbox containing the 50 states is displayed below, along with a scrollbar.  You can scan the list either using the scrollbar or by scanning.  To scan, press Shift key and button 2 in the widget and drag up or down."))
+	 (l	'("Alabama" "Alaska" "Arizona" "Arkansas" "California" 
+		  "Colorado" "Connecticut" "Delaware" "Florida" "Georgia" 
+		  "Hawaii" "Idaho" "Illinois" "Indiana" "Iowa"
+		  "Kansas" "Kentucky" "Louisiana" "Maine" "Maryland"
+		  "Massachusetts" "Michigan" "Minnesota" "Mississippi" 
+		  "Missouri" "Montana" "Nebraska" "Nevada" "New Hampshire"
+		  "New Jersey" "New Mexico" "New York" "North Carolina"
+		  "North Dakota" "Ohio" "Oklahoma" "Oregon" "Pennsylvania"
+		  "Rhode Island" "South Carolina" "South Dakota" "Tennessee" 
+		  "Texas" "Utah" "Vermont" "Virginia" "Washington"
+		  "West Virginia" "Wisconsin" "Wyoming")))
+
+
+    (pack (make <Scroll-listbox> :parent w :value l)
+	  :padx 20 :pady 20)))
+
+
+    
+
+

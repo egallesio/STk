@@ -1,0 +1,92 @@
+;;;;
+;;;; I m a g e . s t k 		--  The Tk4.0 image mechanism
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 26-Jul-1995 11:23
+;;;; Last file update: 13-Dec-1995 23:25
+
+(require "Basics")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Tk-image> class definition
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class <Tk-Image> ()
+  ((Id  	:getter Id)
+   (file	:accessor	file
+		:init-keyword	:file
+		:allocation	:tk-virtual)
+   (data	:accessor	image-data
+		:init-keyword	:data
+		:allocation	:tk-virtual))   
+  :metaclass <Tk-metaclass>)
+
+(define-method initialize ((self <Tk-Image>) initargs)
+  (let ((tk-options (get-keyword :tk-options initargs '())))
+    (slot-set! self 'id (initialize-image self tk-options))
+    (next-method)))
+
+;;; Tk-write-object is called when a STklos object is passed to a Tk-command.
+;;; By default, we do the same job as write; but if an object is a <Tk-Image>
+;;; we will pass it its id. This method does this job.
+(define-method Tk-write-object((self <Tk-Image>) port)
+  (write (widget-name (slot-ref self 'id)) port))
+
+;;;
+;;; Destroy
+;;;
+(define-method destroy ((self <Tk-image>))
+  (Tk:image 'delete self))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Bitmap-image> class definition
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class <Bitmap-image> (<Tk-Image>)
+  ((background :accessor 	background
+	       :init-keyword	:background
+	       :allocation	:tk-virtual)
+   (foreground :accessor 	foreground
+	       :init-keyword	:foreground
+	       :allocation	:tk-virtual)
+   (mask-data  :accessor 	mask-data
+	       :init-keyword	:mask-data
+	       :tk-name		maskdata
+	       :allocation	:tk-virtual)
+   (mask-file  :accessor 	mask-file
+	       :init-keyword	:mask-file
+	       :tk-name		maskfile
+	       :allocation	:tk-virtual)))
+
+(define-method initialize-image((self <Bitmap-image>) args)
+  (apply Tk:image 'create 'bitmap (gensym "img") args))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Photo-image> class definition
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define-class <Photo-image> (<Tk-Image>)
+  ())
+
+(define-method initialize-image((self <Photo-image>) args)
+  (apply Tk:image 'create 'photo (gensym "img") args))
+
+
+
+
+(provide "Image")

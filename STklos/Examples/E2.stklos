@@ -1,0 +1,135 @@
+;;;;
+;;;; E x a m p l e 2.  s t k
+;;;;
+;;;; Copyright (C) 1993,1994,1995 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
+;;;;    Creation date:  4-Aug-1994 15:22 
+;;;; Last file update: 17-Jan-1996 23:14
+
+
+(require "Canvas")
+(define c (make <Canvas>))
+(pack c)
+
+;;;; Hereafter is a definition of a new composite Canvas item. This composite
+;;;; object is formed of a text contained in a box.
+;;;; Note how values are propagated: For instance changing the font of 
+;;;; a <Boxed-text> will propagate this change to the object contained in the slot 
+;;;; text-item. changing the foregroung of a  <Boxed-text> will be propagated to 
+;;;; the "outline" of its box and to the "fill" of its text.
+
+(define-class <Boxed-Text> (<Tk-Composite-item>)
+  ((box-item   :accessor 	box-item)
+   (text-item  :accessor 	text-item)
+   ;; Propagated slots
+   (text       :getter 		text-of
+	       :init-keyword 	:text
+	       :allocation 	:propagated 
+	       :propagate-to 	(text-item))
+   (coords     :getter 		coords 
+	       :init-keywords 	:coords
+	       :allocation 	:propagated
+	       :propagate-to 	(text-item))
+   (font       :getter 		font
+	       :init-keyword	:font
+	       :allocation 	:propagated 
+	       :propagate-to 	(text-item))
+   (foreground :accessor 	foreground
+	       :allocation 	:propagated 
+	       :propagate-to 	((box-item outline) (text-item fill)))
+   (background :accessor 	background
+	       :allocation 	:propagated
+	       :propagate-to 	((box-item fill)))))
+
+;;;; Herafter is a definition of the initialize-item method which will be 
+;;;; automagically called upon instance creation. This is this routine which 
+;;;; will create the components of the composite object.
+
+(define-method initialize-item ((self  <Boxed-Text>) canvas coords args)
+  (let* ((parent      (slot-ref self 'parent))
+	 (text        (get-keyword :text args ""))
+	 (t 	      (make <Text-item> :text text
+			    :anchor "nw" :parent parent :coords coords))
+	 (coords-rect (bounding-box t))
+	 (r 	      (make <Rectangle> :parent parent :coords coords-rect))
+	 (Cid 	      (gensym "group")))
+
+    ;; set the true slots
+    (slot-set! self 'Cid       Cid)
+    (slot-set! self 'box-item  r)
+    (slot-set! self 'text-item t)
+
+    ;; Add the r and t component to the "Group" whith tag "Cid"
+    (add-to-group self r t)
+
+    ;; Raise the text to be sure it will not be under the rectangle
+    (raise t)
+
+    ;; Give this association a default binding allowing it to be moved with mouse
+    (bind-for-dragging parent :tag Cid :only-current #f)
+    
+    ;; Return Cid
+    Cid))
+  
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Some methods which guarantish that the box is always the good size
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-method (setter font) ((bt <Boxed-text>) value)
+  (let ((t (text-item bt)))
+    (set! (font t) value)
+    (set! (coords (box-item bt)) (bounding-box t))))
+
+(define-method (setter text-of) ((bt <Boxed-text>) value)
+  (let ((t (text-item bt)))
+    (set! (text-of t) value)
+    (set! (coords (box-item bt)) (bounding-box t))))
+
+(define-method (setter coords) ((bt <Boxed-text>) value)
+  (unless (and (list? value) (= (length value) 2))
+     (error "coords: must be a list of 2 elements. It was ~S" value))
+  (let ((t (text-item bt)))
+    (set! (coords t) value)
+    (set! (coords (box-item bt)) (bounding-box t))))
+
+
+;;;; And now a little demo using the preceding new widget
+
+(define (demo)
+  (let ((x  (make <Boxed-text> :parent c :coords '(50 50) :text "Hello")))
+    (update)
+    
+    (after 1000)
+    (do ((i 0 (+ i 3)))
+	((> i 200))
+      (set! (coords x) (list i i))
+      (update))
+
+    (after 1000)
+    (set! (coords x) '(100 100))
+    (set! (font x)  "10x20")
+    (set! (text-of x) "That's all, folks!")
+    (set! (background x) "lightblue")
+
+    ;; Destroying the group will destroy all the components and change the class
+    ;; of x to <Destroyed-object>
+    (update)
+    (after 1000)
+    (destroy x)
+    (format #t "class of x = ~S\n" (class-name (class-of x)))))
+
+
+;;; Run the demo
+(demo)
+

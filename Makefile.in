@@ -1,0 +1,195 @@
+#
+# Toplevel Makefile for STk
+#
+# 
+# Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+# 
+# Permission to use, copy, and/or distribute this software and its
+# documentation for any purpose and without fee is hereby granted, provided
+# that both the above copyright notice and this permission notice appear in
+# all copies and derived works.  Fees for distribution or use of this
+# software or derived works may only be charged with express written
+# permission of the copyright holder.  
+# This software is provided ``as is'' without express or implied warranty.
+#
+#           Author: Erick Gallesio [eg@unice.fr]
+#    Creation date: ??-Sep-1993 ??:??
+# Last file update: 26-Sep-1996 22:09
+#
+
+
+include VERSION
+
+SHELL		= /bin/sh
+CP		= /bin/cp
+RANLIB 		= @RANLIB@
+MACHINE		= @MACHINE@
+MP		= @MP@.a
+FLAVOR		= unix
+
+prefix 		= @prefix@
+stkdir		= $(prefix)/lib/stk
+libdir 		= $(stkdir)/$(VERSION)
+execdir 	= $(libdir)/$(MACHINE)
+mandir 		= $(libdir)/man
+incdir		= $(libdir)/include
+bindir 		= $(prefix)/bin
+etcdir		= $(stkdir)/etc
+
+all: start tcl tk mp src snow stklos ext stop 
+
+start:
+	@date > .start-date
+	@/bin/rm -f config.make
+	@echo "# Common startup for all Makefiles"		>  config.make
+	@echo "VERSION		= $(VERSION)"			>> config.make
+	@echo "FLAVOR		= $(FLAVOR)"			>> config.make
+	@echo "SHELL		= $(SHELL)"			>> config.make
+	@echo "prefix		= $(prefix)"			>> config.make
+	@echo "stkdir		= $(stkdir)"			>> config.make
+	@echo "libdir 		= $(libdir)"			>> config.make
+	@echo "execdir	 	= $(execdir)"			>> config.make
+	@echo "incdir 		= $(incdir)"			>> config.make
+	@echo "bindir 		= $(bindir)"			>> config.make
+	@echo "mandir 		= $(mandir)"			>> config.make
+	@echo "etcdir 		= $(etcdir)"			>> config.make
+	@echo "VERS-OPT		= -DSTK_VERSION=\\\"$(VERSION)\\\"">> config.make
+	@echo "MACHINE 		= -DMACHINE=\\\"$(MACHINE)\\\""	>> config.make
+	@echo "CC		= @CC@"				>> config.make
+	@echo "STKCFLAGS	= @STKCFLAGS@"			>> config.make
+	@echo "STKLDFLAGS	= @STKLDFLAGS@"			>> config.make
+	@echo "CP		= $(CP)"			>> config.make
+	@echo "RANLIB		= @RANLIB@"			>> config.make
+	@echo "STRIP		= @STRIP@"			>> config.make
+	@echo "XINCLUDES	= @XINCLUDES@"			>> config.make
+	@echo "XLIBSW		= @XLIBSW@"			>> config.make
+	@echo "MP		= @MP@"				>> config.make
+	@echo "DFLGS		= @DFLGS@"			>> config.make
+	@echo "EOBJ		= @EOBJ@"			>> config.make
+	@echo "ETKOBJ		= @ETKOBJ@"			>> config.make
+	@echo "EXTRA_OBJ	= @EXTRA_OBJ@"			>> config.make
+	@echo "DYNLOAD		= @DYNLOAD@"			>> config.make
+	@echo "SH_CCFLAGS	= @SH_CCFLAGS@"			>> config.make
+	@echo "SH_LDFLAGS	= @SH_LDFLAGS@"			>> config.make
+	@echo "SH_LOADER	= @SH_LOADER@"			>> config.make
+	@echo "SH_SUFFIX	= @SH_SUFFIX@"			>> config.make
+	@echo "LIB_MALLOC	= @LIB_MALLOC@"			>> config.make
+	@echo "LIB_DLD		= @LIB_DLD@"			>> config.make
+	@echo "STK_LIBRARY	= $(libdir)"			>> config.make
+
+
+stop:
+	@echo "Make started at `cat .start-date`"
+	@/bin/rm .start-date
+	@echo "Make completed at `date`"
+
+tcl:
+	@(echo "make Tcl"; cd Tcl; $(MAKE) all)
+tk:
+	@(echo "make Tk"; cd Tk; $(MAKE) libtk.a)
+mp:
+	@(echo "make Mp"; cd Mp; $(MAKE) $(MP))
+src:
+	@(echo "make Src"; cd Src; $(MAKE) stk TK="-DUSE_TK")
+snow:
+	@(echo "make Snow"; cd Snow; $(MAKE) snow TK="-DNO_TK")
+stklos:
+	@(echo "make STklos"; cd STklos; $(MAKE) stklos)	
+ext:
+	@(echo "Make Extensions"; cd Extensions; $(MAKE) all)
+doc:
+	@(echo "Make Documentation"; cd Doc; $(MAKE) all)
+dvi:
+	@(echo "Make Documentation(dvi)"; cd Doc; $(MAKE) dvi)
+
+demos:
+	/bin/sh -c "(cd Demos; ../Src/test-stk -f hbrowse README.html)"
+
+install: clean-before
+	(cd Tcl;     	$(MAKE) install)
+	(cd Tk;      	$(MAKE) install)
+	(cd Mp;		$(MAKE) install)
+	(cd Src;     	$(MAKE) install.stk)
+	(cd Snow;     	$(MAKE) install.snow)
+	(cd Lib;     	$(MAKE) install)
+	(cd STklos;  	$(MAKE) install)
+	(cd Extensions; $(MAKE) install)
+	(cd Demos;   	$(MAKE) install)
+	(cd Help;	$(MAKE) install)
+	@echo ""
+	@echo "Installation completed."
+
+install.libs:
+	-if [ ! -d $(etcdir) ] ; then mkdir -p $(etcdir); fi
+	$(CP) config.make $(etcdir)
+	-if [ ! -d $(incdir) ] ; then mkdir -p $(incdir); fi
+	/bin/rm -f $(stkdir)/include
+	(cd $(stkdir) ; ln -s $(VERSION)/include ./include)
+	(cd Tcl;     	$(MAKE) install.libs)
+	(cd Tk;      	$(MAKE) install.libs)
+	(cd Mp;		$(MAKE) install.libs)
+	(cd Src;     	$(MAKE) install.stk.libs)
+	(cd Snow;     	$(MAKE) install.snow.libs)
+	@echo ""
+	@echo "Full installation completed."
+
+binary-release: install install.man
+	(cd $(prefix)/lib; \
+	 tar cvfz /tmp//STk-$(VERSION)-$(MACHINE).tar.gz stk/$(VERSION)/$(MACHINE))
+	@echo "The release is in the file  /tmp/STk-$(VERSION)-$(MACHINE).tar.gz"
+	@echo "Don't forget to create the file STk-$(VERSION)-$(MACHINE).README"
+	@echo "to describe the content of your archive (a template is given in"
+	@echo "the file BINARY-DISTRIB"
+
+common-release: 
+	(cd $(prefix)/lib; \
+	 tar cvfz /tmp/STk-$(VERSION)-common.tar.gz stk/$(VERSION)/Help   \
+						    stk/$(VERSION)/STk    \
+						    stk/$(VERSION)/demos  \
+						    stk/$(VERSION)/images \
+						    stk/$(VERSION)/images \
+						    stk/$(VERSION)/man    \
+						    stk/man)
+	@echo "Terminé. Le fichier est dans /tmp/STk-$(VERSION)-common.tar.gz"
+
+clean-before:
+	@if [ -d $(prefix)/lib/stk ]; \
+	then \
+	  echo "*** WARNING:"; \
+	  echo "*** A previous version of STk has already been installed in"; \
+	  echo "*** directory '$(stkdir)'. It is not a problem since"; \
+	  echo "*** several versions can coexist now in this directory"; \
+	  echo "*** However, if you are short in place, or if you don't use "; \
+	  echo "*** a multi architecture file system, cleaning may be a good"; \
+	  echo "*** thing to do."; \
+	  echo "*** (Waiting 10s) " ; \
+	  sleep 10;\
+	fi
+	@if [ -d $(prefix)/lib/stk/$(VERSION) ]; \
+	then \
+	  echo "*** WARNING:"; \
+	  echo "*** This STk version ($(VERSION)) has already been installed "; \
+	  echo "*** on this machine. Should I clean this directory before "; \
+	  echo "*** starting installation of STk-$(VERSION)? [no] " ; \
+	  read a; \
+	  case $$a in \
+	    y*|Y*) echo "Deleting previous installation"; \
+                   /bin/rm -rf $(stkdir)/$(VERSION);; \
+	    *) echo "No cleaning!";; \
+	  esac; \
+	fi
+ 
+install.man:
+	(cd Doc;	$(MAKE) install.man)
+
+clean:
+	(cd Tcl;    	$(MAKE) clean)
+	(cd Tk;     	$(MAKE) clean)
+	(cd Mp;     	$(MAKE) clean)
+	(cd Src;    	$(MAKE) clean)
+	(cd Snow;    	$(MAKE) clean)
+	(cd STklos; 	$(MAKE) clean)
+	(cd Extensions; $(MAKE) clean)
+	(cd Help;	$(MAKE) clean)
+	(cd Doc;	$(MAKE) clean)
+	/bin/rm -f core *~ Makefile config.*

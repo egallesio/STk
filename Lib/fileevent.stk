@@ -1,0 +1,41 @@
+;;;;
+;;;; f i l e e v e n t . s t k 		-- Implement the Tk fileevent commeand
+;;;;					   in term of when-port-{read|writ}able
+;;;;					   For backward compatibility ...
+;;;;
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 16-Jun-1996 22:37
+;;;; Last file update: 25-Jun-1996 00:07
+
+
+(define (fileevent file mode . script)
+  (define (err)
+    (error "fileeevent: bad mode specification ~S.\n(Note: fileevent is obsolete; use when-port-readable or when-port-writable)" mode))
+    
+  (let ((smode (& mode))
+	(fct   #f))
+    (cond 
+       ((equal? smode "readable") (set! fct when-port-readable))
+       ((equal? smode "writable") (set! fct when-port-writable))
+       (ELSE 			  (err)))
+    (if (null? script)
+	(fct file)
+	(let ((s (car script)))
+	  (cond 
+	   ((procedure? s)    (fct file s))
+	   ((string? s)       (if (string=? s "") (fct file #f) (err)))
+	   (ELSE	      (err)))))))
+
+
+       

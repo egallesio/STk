@@ -1,0 +1,76 @@
+%										-*- LaTeX -*-
+% e g c o m m a n d . s t y
+%
+% Various commands which I often used in my documents
+% Code is most of the time stolen from ``The LaTeX Companion''
+%
+%           Author: Erick Gallesio [eg@unice.fr]
+%    Creation date:  4-Jun-1995 18:13
+% Last file update:  3-Nov-1995 17:59
+
+\input{alltt.sty}
+%\input{moreverb}
+\input{psfig}
+
+
+%
+% Entry
+%
+\newcommand{\Entryfont}{\textbf}
+
+\newcommand{\Entrylabel}[1]{\mbox{\Entryfont{#1:}}\hfil}
+
+\newenvironment{Entry}%
+   {\begin{list}{}%
+          {\renewcommand{\makelabel}{\Entrylabel}%
+	   \setlength{\labelwidth}{35pt}%
+	   \setlength{\leftmargin}{\labelwidth+\labelsep}%
+	  }%
+   }%
+   {\end{list}}
+
+%
+% Ventry
+%
+\newenvironment{Ventry}[1]%
+   {\begin{list}{}%
+	  {\renewcommand{\makelabel}{\makelabel}[1]{\Entryfont{##1:}\hfil}%
+	   \settowidth{\labelwidth}{\Entryfont{#1:}}%
+	   \setlength{\leftmargin}{\labelwidth+\labelsep}%
+	  }%
+   }%
+   {\end{list}}
+
+%
+% Lentry
+%
+\newlength{\lentrylen}
+
+\newcommand{\Lentrylabel}[1]{%
+   \settowidth{\lentrylen}{\Entryfont{#1:}}%
+   \ifthenelse{\lengthtest{\lentrylen > \labelwidth}}%
+	{\parbox[b]{\labelwidth}%				term > labelwidth
+		   {\makebox[0pt][l]{\Entryfont{#1:}}\\}}%
+	{\Entryfont{#1:}}%					term < labelwidth
+   \hfil\relax}
+
+\newenvironment{Lentry}%
+   {\renewcommand{\Entrylabel}{\Lentrylabel}\begin{Entry}}%
+   {\end{Entry}}
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% STk stuff
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\stk}{{\sc STk}}
+\newcommand{\stklos}{{\sc STklos}}
+\newcommand{\Indextt}[1]{{\tt{#1}}\index{#1}}
+\newcommand{\Index}[1]{{#1}\index{#1}}
+\newcommand{\rrrr}{{\em R$^{4}\!RS$}}
+\newcommand{\codesize}{\small}
+\newenvironment{Code}{\begin{quote}\begin{minipage}{12cm}\codesize}{\end{minipage}\end{quote}}
+

@@ -1,0 +1,18 @@
+This directory contains various documentation files:
+
+Documentation
+-------------
+
+Extension: 	contains a document which explains how to extend the STk 
+		interpreter (i.e. adding new SUBRs or new types).
+Reference:	contains the STk reference manual 
+STklos+Tk:	contains a document on how to program the toolkit with 
+		the STklos object system
+Manual:		contains stk(1) manual page in various formats
+
+Papers
+------
+
+Tcl93:		contains a paper presented at TCl/Tk 93 Workshop (Berkeley)
+Xhibition94:	contains a paper presented at X'hibition 94 conference (San Jose CA)
+Isotas96:	contains a paper which will be presented at Isotas 96 (Japan)

@@ -1,0 +1,36 @@
+;;;;
+;;;; STk adaptation of the Tk widget demo.
+;;;;
+;;;; This demonstration script shows an example with a horizontal scale.
+;;;;
+
+(define (demo-hscale)
+  
+  (define (set-width! c poly line width)
+    (let* ((width (+ width 21))
+	   (x2     (max (- width 30) 21)))
+      (set! (coords poly) (list 20 15 20 35 x2 35 x2 45 width 25 x2 5 x2 15 20 15))
+      (set! (coords line) (list 20 15 20 35 x2 35 x2 45 width 25 x2 5 x2 15 20 15)))
+    )
+    
+
+  (let* ((w (make-demo-toplevel  "hscale"
+				 "Horizontal Scale Demonstration"
+				 "An arrow and a horizontal scale are displayed below.  If you click or drag mouse button 1 in the scale, you can change the length of the arrow."))
+	 (f    (make <Frame> :parent w :border-width 10))
+	 (c    (make <Canvas> :parent f :width 50 :height 50 :border-width 0 
+		     :highlight-thickness 0))
+	 (poly  (make <Polygon> :parent c :coords '(0 0 1 1 2 2) 
+		      :fill "DeepSkyBlue3"))
+	 (line  (make <Line> :parent c :coords '(0 0 1 1 2 2 0 0) :fill "black"))
+	 (s     (make <Scale> :parent f :orientation "horizontal" :scale-length 284 
+		      :from 0 :to 250
+		      :tick-interval 50 :value 75
+		      :command (lambda (v) (set-width! c poly line v)))))
+    
+    (pack f :side "top" :fill "x")
+    (pack s :side "left" :side "bottom" :expand #t :anchor "n")
+    (pack c :side "left" :side "top" :expand #t :anchor "s" :fill "x" :padx 15)))
+
+    
+

@@ -1,0 +1,14 @@
+;;; A basic text widget, with scrollbars
+ 
+(text '.text :yscroll (lambda l (apply .scroll 'set l)))
+(scrollbar '.scroll :relief "flat" :command (lambda l (apply .text 'yview l)))
+ 
+(pack .scroll :side "right" :fill "y")
+(pack .text   :expand "yes" :fill "both")
+ 
+(.text 'insert "current" 
+       "This is a text widget, with an attached scrollbar.\n")
+(.text 'insert "current" 
+       "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nTry scrolling me.")
+(.text 'insert "current" "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nBoo!")
+ 

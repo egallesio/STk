@@ -1,0 +1,30 @@
+;;;;
+;;;; s o c k e t . s t k 		-- Socket module initialisation
+;;;;
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date:  3-Feb-1995 23:59
+;;;; Last file update: 22-Jul-1996 19:01
+;;;;
+
+(if (symbol-bound? '%init-socket)
+    ;; Soket module is in the core interpreter
+    (%init-socket)
+    ;; Try to load hash table dynamically
+    (load (string-append "socket." *shared-suffix*)))
+
+;; For backward compatibility
+(define socket-hostname socket-host-name)
+
+(provide "socket")

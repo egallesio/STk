@@ -1,0 +1,85 @@
+;;;;
+;;;; STk adaptation of the Tk widget demo.
+;;;;
+;;;; This demonstration script creates a collection of widgets that
+;;;; allow you to load a file into a text widget, then perform searches
+;;;; on that file.
+;;;;
+
+(define Wsearch-name   "")
+(define Wsearch-string "")
+
+
+(define (demo-search)
+  ;;
+  ;; Functions used by this demo
+  ;;
+  (define (load-file t file)
+    (text-delete t 0.0 "end")
+    (with-input-from-file file
+      (lambda ()
+	(do ((l (read-line) (read-line)))
+	    ((eof-object? l))
+	  (text-insert t "end" l)
+	  (text-insert t "end" "\n")))))
+
+
+  (define (search t str tag)
+    ; Search for all instances of a given string in a text widget and
+    ; apply a given tag to each instance found.
+    (tag-remove tag 0.0 "end")
+    (let ((length (string-length str)))
+      (when (> length 0)
+	 (let loop ((cur (text-search t str 1.0 "end")))
+	   (when cur
+	      (let ((last (cons (car cur) (+ (cdr cur) length))))
+		(tag-add tag cur last)
+		(loop (text-search t str last "end"))))))))
+
+  (define (toggle t tag)
+    (catch (let ((bg (slot-ref tag 'background))
+		 (fg (slot-ref tag 'foreground)))
+	     (slot-set! tag 'foreground bg)
+	     (slot-set! tag 'background fg)
+	     (update)
+	     (after t (lambda () (toggle t tag))))))
+
+  (let* ((w   (make-demo-toplevel  "search"
+				   "Text Demonstration - Search and Highlight"
+				   ""))
+	 (t   (make <Scroll-Text> :wrap "word" :parent w))
+	 (tag (make <Text-tag> :parent t :foreground "IndianRed1")))
+
+    (when (= (winfo 'depth w) 1)
+       (slot-set! tag 'background "white")
+       (slot-set! tag 'foreground "black"))	     
+
+    (let* ((f1 (make <Frame>  :parent w))
+	   (l1 (make <Label>  :parent f1 :text "File name:" :width 13 :anchor "w"))
+	   (e1 (make <Entry>  :parent f1 :width 40 :text-variable 'Wsearch-name))
+	   (b1 (make <Button> :parent f1 :text "Load File" 
+		     	      :command (lambda () (load-file t Wsearch-name))))
+	   (f2 (make <Frame>  :parent w))
+	   (l2 (make <Label>  :parent f2 :text "Search string:" :width 13
+		    	      :anchor "w"))
+	   (e2 (make <Entry>  :parent f2 :width 40 :text-variable 'Wsearch-string))
+	   (b2 (make <Button> :parent f2 :text "Highlight"
+		   	      :command (lambda () 
+					 (search t Wsearch-string tag)))))
+	  
+      (pack l1 e1 b1 :side "left" :expand #t)
+      (pack l2 e2 b2 :side "left" :expand #t)
+      (bind e1 "<Return>" (lambda () (load-file t Wsearch-name) (focus e2)))
+      (bind e2 "<Return>" (lambda () (search t Wsearch-string tag)))
+      (pack f1 f2 t :side "top")
+      
+      ;; Fill in text widget and pack it
+      (text-insert t "end" "This window demonstrates how to use the tagging facilities in text widgets to implement a searching mechanism.  First, type a file name in the top entry, then type <Return> or click on \"Load File\".  Then type a string in the lower entry and type <Return> or click on \"Highlight\".  This will cause all of the instances of the string to be tagged with the same tag, and it will arrange for the tag's display attributes to change to make all of the strings blink.")
+      (pack t :side "top" :expand #t :fill "both"))
+  
+    ;; Toggle the bg and fg colors of the search tag
+    (toggle 500 tag))
+  
+  ;; Reste global varaiable (for multiple executions)
+  (set! Wsearch-name   "")
+  (set! Wsearch-string ""))

@@ -1,0 +1,237 @@
+;;;;
+;;;; Initialization file for STk
+;;;;
+;;;; This script is executed for each STk-based application. It arranges class 
+;;;; bindings for widgets.
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; This software is a derivative work of other copyrighted softwares; the
+;;;; copyright notices of these softwares are placed in the file COPYRIGHTS
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 17-May-1993 12:35
+;;;; Last file update: 13-Sep-1996 17:45
+;;;;
+
+(unless (equal? *tk-version* "4.1")
+  (error "wrong version of Tk loaded: need 4.1 (this version is ~A)" 
+	 *tk-version*))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Utilities
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define-macro (tk-get w option)
+  `(,w 'cget ,option))
+
+(define-macro (tk-set! w option . value)
+  `(,w 'configure ,option ,@value))
+
+(define (Tk-screen-changed  screen)
+  ;; This function is called when the screen is changed. Since I own only 
+  ;; one screen, I don't know what I must do here.
+  screen)
+
+(define-macro (define-binding class event args . body)
+  (if (null? body)
+      `(bind ,class ,event "")
+      `(bind ,class ,event (lambda ,args ,@body))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Turn off strict Motif look and feel as a default.
+(define *tk-strict-Motif*   #f)
+
+;; Following vars are used everywhere. So define them here
+(define tk::window	   #f)
+(define tk::button-window  '())
+(define tk::relief	   "sunken")
+(define tk::select-mode	   "")
+(define tk::mouse-moved    #f)
+(define tk::press-x 	   0)
+(define tk::press-y 	   0)
+(define tk::x		   0)
+(define tk::y		   0)
+(define tk::after-id	   "")
+(define tk::active-bg	   "")
+(define tk::active-fg	   "")
+(define tk::dragging	   #f)
+
+
+(define tk::buttons	 0)
+(define tk::focus	 '())
+(define tk::grab	 "")
+(define tk::inMenuButton '())
+(define tk::posted	 #f)
+(define tk::selectMode	 '())
+(define tk::cursor	 "")
+(define tk::kill-buffer  "") ;; One kill buffer shared between all texts. 
+
+
+;; add-binding --
+;; This procedure adds a binding to a widget. It replaces the Tcl "+" mechanism
+;; which is meaningless with closures. Furthermore, this mechanism permits
+;; to add the binding BEFORE the old binding
+;;
+(define (add-binding widget event binding before?)
+  (let ((old (bind widget event)))
+    (if (null? old)
+	(bind widget event binding)
+	;;; We must find the parameters of the old and given bindings
+	;;; The new binding is a new closure with the union of these 
+	;;; parameters.
+	;;; if:
+	;;;   old binding is   (lambda (x y) ....)
+	;;;   given binding is (lambda (x t a) ...)
+	;;; We must construct the binding of the form
+	;;;    (lambda (x y t a)
+	;;;       ((lambda (x y) ....) x y)
+	;;;       ((lambda (x t a) ....) x t a))
+	(let ((body-old (procedure-body (car old)))
+	      (body-new (procedure-body binding)))
+	  (if (and body-old body-new)
+	      (let ((p-old (cadr body-old))
+		    (p-new (cadr body-new)))
+		(bind widget
+		      event 
+		      (if before?
+			  (eval `(lambda ,(set-union p-old p-new)
+				   (,binding ,@(cadr body-new))
+				   ,old))
+			  (eval `(lambda ,(set-union p-old p-new)
+				   ,old
+				   (,binding ,@(cadr body-new)))))))
+	      ;; 
+	      (Error "add-binding: Incorrect binding ~S" binding))))))
+
+;; Tk:cancel-repeat --
+;; This procedure is invoked to cancel an auto-repeat action described
+;; by tk::after-id.  It's used by several widgets to auto-scroll
+;; the widget when the mouse is dragged out of the widget with a
+;; button pressed.
+
+(define (Tk:cancel-repeat)
+  (after 'cancel tk::after-id)
+  (set! tk::after-id ""))
+
+;;;;
+;;;; A procedure to forbid remote executution via the send Tk command
+;;;;
+(define (inhibit-send)
+  ;; Redefine send sommand
+  (set! send @undefined)
+  ;; Issue a GC so that command is effectively deleted from Tk tables NOW
+  (gc))
+
+
+;;;;
+;;;; Define widget which require a lot of initialization as a kind of autoload
+;;;; This allows a faster loading for small programs which use only a few widgets
+;;;; and decreases memory usage
+;;;; 
+
+(define-macro (%redefine-Tk-command widget file)
+  (let ((synonym (string->symbol (format #f "tk:~A" widget))))
+    `(set! ,widget
+	   (let ((tk-cmd ,widget))
+	     (lambda l
+	       ;; Load the library file
+	       (load ,(string-append *STk-library* "/STk/" file ".stk"))
+
+	       ;; Test here that old value is a true closure because when
+	       ;; using STklos some Tk commands are already defined as generic.
+	       ;; Reloading the file and setting widget and Tk:widget breaks
+	       ;; the generic function. Weak but it seems to work
+	       (if (closure? ,widget)  (set! ,widget  tk-cmd))
+	       (if (closure? ,synonym) (set! ,synonym tk-cmd))
+	       
+	       ;; Do the job
+	       (apply tk-cmd l))))))
+
+(%redefine-Tk-command button		"button")
+(%redefine-Tk-command checkbutton	"button")
+(%redefine-Tk-command radiobutton	"button")
+(%redefine-Tk-command entry		"entry")
+(%redefine-Tk-command focus		"focus")
+(%redefine-Tk-command listbox		"listbox")
+(%redefine-Tk-command menu		"menu")
+(%redefine-Tk-command menubutton	"menu")
+(%redefine-Tk-command scale		"scale")
+(%redefine-Tk-command scrollbar		"scrollbar")
+(%redefine-Tk-command text		"text")
+
+
+;;
+;; Make synonyms for all Tk-commands to "protect" them against redefinition
+;;
+(define Tk:button	button)
+(define Tk:checkbutton	checkbutton)
+(define Tk:canvas	canvas)
+(define Tk:entry	entry)
+(define Tk:frame	frame)
+(define Tk:image	image)
+(define Tk:label 	label)
+(define Tk:listbox	listbox)
+(define Tk:menu		menu)
+(define Tk:menubutton	menubutton)
+(define Tk:message	message)
+(define Tk:scale	scale)
+(define Tk:scrollbar	scrollbar)
+(define Tk:radiobutton	radiobutton)
+(define Tk:text		text)
+(define Tk:toplevel	toplevel)
+
+(define Tk:after	after)
+(define Tk:bind		bind)
+(define Tk:bindtags	bindtags)
+(define Tk:bell		bell)
+(define Tk:clipboard	clipboard)
+(define Tk:destroy	destroy)
+(define Tk:focus	focus)
+(define Tk:grab		grab)
+(define Tk:lower	lower)
+(define Tk:option	option)
+(define Tk:pack		pack)
+(define Tk:place	place)
+(define Tk:raise	raise)
+(define Tk:selection	selection)
+(define Tk:tk		tk)
+(define Tk:tkwait	tkwait)
+(define Tk:update	update)
+(define Tk:winfo	winfo)
+(define Tk:wm		wm)
+
+;;;;
+;;;; Some autoloads
+;;;; 
+(autoload "palette"   Tk:set-palette! Tk:bisque)
+(autoload "dialog"    STk:make-dialog STk:center-window)
+(autoload "listener"  listener)
+(autoload "help"      help STk:show-help-file)
+(autoload "menu"      Tk:option-menu)
+(autoload "fileevent" Tk:fileevent fileevent) ; for backward compatibility
+;;;;
+;;;; report-error as a kind of autoload (must be a closure, rather than an 
+;;;; autoload since C error function tests explicitely it is a closure before
+;;;; applying its arguments
+;;;;
+(autoload "error" STk:report-error bgerror *error-info* *error-code*)
+(autoload "sterm" sterm)
+
+(define (report-error . args)
+  (apply STk:report-error args))
+
+;;;;
+;;;; Retain now that Tk is fully initialized
+;;;;
+(set! Tk:initialized? #t)

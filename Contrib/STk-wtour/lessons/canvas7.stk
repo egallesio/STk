@@ -1,0 +1,13 @@
+;;; Widgets embedded in a canvas
+
+(pack (canvas '.c1)
+      :expand #t 
+      :fill "both")
+
+(button '.c1.b1 :text "Embedded button")
+
+(.c1 'create 'rectangle 20 20 80 80 :fill "red")
+(.c1 'create 'rectangle 60 60 120 120 :fill "green")
+(.c1 'create 'rectangle 40 40 100 100 :fill "blue")
+(.c1 'create 'window 100 75 :window .c1.b1)
+

@@ -1,0 +1,99 @@
+;;;;
+;;;; S c r o l l b o x . s t k 	  --  Scroll Listbox composite widget
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
+;;;;    Creation date: 22-Mar-1994 13:05
+;;;; Last file update: 13-Aug-1996 23:23
+
+(require "Frame")
+(require "Listbox")
+(require "Scrollbar")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Scroll-listbox> class definition
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class <Scroll-listbox> (<Tk-composite-widget> <Listbox>)
+  ((listbox 	  :accessor     listbox-of)
+   (h-scrollbar	  :accessor     h-scrollbar-of)
+   (v-scrollbar	  :accessor     v-scrollbar-of)
+   (h-scroll-side :accessor     h-scroll-side
+		  :allocation   :virtual
+		  :init-keyword :h-scroll-side
+		  :slot-ref     (lambda (o)
+				  (let ((hs (slot-ref o 'h-scrollbar)))
+				    (and (winfo 'ismapped hs)
+					 (get-keyword :side (pack 'info hs)))))
+		  :slot-set!    (lambda (o v)
+				  (let ((hs (slot-ref o 'h-scrollbar)))
+				    (if v
+					(pack hs :fill "x" :side v 
+					         :before (slot-ref o 'listbox))
+					(pack 'forget hs)))))
+   (v-scroll-side :accessor     v-scroll-side
+		  :allocation   :virtual
+		  :init-keyword :v-scroll-side
+		  :slot-ref     (lambda (o)
+				  (let ((vs (slot-ref o 'v-scrollbar)))
+				    (and (winfo 'ismapped vs)
+					 (get-keyword :side (pack 'info vs)))))
+		  :slot-set!    (lambda (o v)
+				  (let ((vs (slot-ref o 'v-scrollbar)))
+				    (if v 
+					(pack vs :fill "y" :side v 
+					         :before (slot-ref o 'listbox))
+					(pack 'forget vs)))))
+   ;; Non allocated slots
+   (background   :accessor     background
+		 :init-keyword :background
+		 :allocation   :propagated
+		 :propagate-to (frame listbox h-scrollbar v-scrollbar))
+   (border-width :accessor     border-width 
+		 :allocation   :propagated
+		 :init-keyword :border-width
+		 :propagate-to (frame))
+   (relief	 :accessor     relief
+		 :init-keyword :relief
+		 :allocation   :propagated
+		 :propagate-to (frame))))
+
+;;;;
+;;;;  <Scroll-listbox> methods
+;;;;
+
+(define-method initialize-composite-widget ((self <Scroll-listbox>) initargs parent)
+  (let* ((hs (make <Scrollbar> :parent parent :orientation "horizontal"))
+	 (vs (make <Scrollbar> :parent parent :orientation "vertical"))
+	 (l  (make <Listbox>   :parent parent)))
+
+    ;; Set internal true slots 
+    (slot-set! self 'Id	          (slot-ref l 'Id))
+    (slot-set! self 'listbox      l)
+    (slot-set! self 'h-scrollbar  hs)
+    (slot-set! self 'v-scrollbar  vs)
+
+    ;; Pack internal widgets (Warning: Order is important !!!!)
+    (pack vs :fill "y" :side "right")
+    (pack l  :expand #t :fill "both" :side 'bottom :after vs)
+
+    ;; Attach command to scrollbar and listbox
+    (slot-set! l 'x-scroll-command (lambda l (apply (slot-ref hs 'Id) 'set l)))
+    (slot-set! l 'y-scroll-command (lambda l (apply (slot-ref vs 'Id) 'set l)))
+
+    (slot-set! hs 'command (lambda args (apply (slot-ref l 'Id) 'xview args)))
+    (slot-set! vs 'command (lambda args (apply (slot-ref l 'Id) 'yview args)))
+))
+
+(provide "Scrollbox")

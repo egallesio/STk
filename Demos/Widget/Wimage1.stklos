@@ -1,0 +1,23 @@
+;;;;
+;;;; STk adaptation of the Tk widget demo.
+;;;;
+;;;; This demonstration script displays two image widgets.
+;;;;
+
+(require "Button")
+(require "Image")
+
+(define (demo-image1)
+  (let ((w (make-demo-toplevel "image1"
+			       "Image Demonstration #1"
+			       "This demonstration displays two images, each in a separate label widget.")))
+    
+    (pack (make <Label> 
+		:parent w
+		:image (make <Photo-Image> 
+			     :file (string-append *STk-images* "earth.gif")))
+	  (make <Label> 
+		:parent w
+		:image (make <Photo-Image> 
+			     :file (string-append *STk-images* "earthris.gif")))
+	  :side "top" :padx ".5m" :pady ".5m")))

@@ -1,0 +1,126 @@
+'\" Color=Yellow
+'\"
+'\" Copyright © 1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+'\" 
+'\" Permission to use, copy, and/or distribute this software and its
+'\" documentation for any purpose and without fee is hereby granted, provided
+'\" that both the above copyright notice and this permission notice appear in
+'\" all copies and derived works.  Fees for distribution or use of this
+'\" software or derived works may only be charged with express written
+'\" permission of the copyright holder.  
+'\" This software is provided ``as is'' without express or implied warranty.
+'\"
+'\"           Author: Erick Gallesio [eg@unice.fr]
+'\"    Creation date:  8-Jul-1996 08:16
+'\" Last file update: 19-Jul-1996 11:29
+'\" 
+.so STk-man.macros
+.TH ftp n 3.1 STk "STk procedures"
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+ftp  \- A small (and very incomplete) FTP library
+.SH SYNOPSIS
+(\fBmake \fI<FTP-connection> \fR?\fIoptions\fR?)
+.sp
+(\fBftp-login f user pass\fR)
+.sp
+(\fBftp-quit f\fR)
+.sp
+(\fBftp-chdir f dir\fR)
+.sp
+(\fBftp-pwd f\fR)
+.sp
+(\fBftp-type f mode\fR)
+.sp
+(\fBftp-help f\fR)
+.sp
+(\fBftp-help f command\fR)
+.sp
+(\fBftp-dir f\fR)
+.sp
+(\fBftp-dir f args\fR)
+.sp
+(\fBftp-get f file\fR)
+.sp
+(\fBftp-put f file\fR)
+.sp
+(\fBftp-display f file\fR)
+.BE
+.SH CLASS DESCRIPTION
+.IP \fIIncluded\ with:\fR
+(require "ftp")
+.IP \fIInherits\ from:\fR
+<top>
+.IP \fIDirect\ slots:\fR
+\fBhost\fR contains the name of the host to connect to.
+.SP 
+\fBport\fR specifies the port to use to establish the ftp connection. 
+This slot is initialized by default to 21 by default (the standard ftp port).
+.SP 
+\fBecho\fR is the name of a one parameter procedure used to display
+the messages sent by the ftp server. This slot is initialized to by
+default to the standard \fIdisplay\fR procedure.
+
+.SH DESCRIPTION
+.PP
+This library is a first attempt to make the FTP protocol available
+from the STk interpreter.  It is still very incomplete and has not
+been intensively tested. Any help to make the subset implemented
+conform to RFC 959 would be greatly appreciated.
+
+.PP
+The following procedure are implemented by the library:
+.TP
+(\fBftp-quit f\fR)
+close the connection \fIf\fR to the remote host and the associated files.
+.TP
+(\fBftp-chdir f dir\fR)
+changes the remote working directory on the \fIf\fR connection.
+.TP
+(\fBftp-pwd f\fR)
+returns the remote working directory on the \fIf\fR connection.
+.TP
+(\fBftp-type f mode\fR) 
+set the file transfer type to \fImode\fR on the \fIf\fR
+connection. \fIMode\fR must be a one letter symbol such as
+'a (for ASCII) or 'i (for image).
+.TP
+(\fBftp-help f\fR)
+.TP
+(\fBftp-help f command\fR)
+prints help from the server connected to \fIf\fR on the standard output port.
+.TP
+(\fBftp-dir f\fR)
+.TP
+(\fBftp-dir f args\fR)
+gives the list of files in the current remote directory. If args is specified
+it is passed to the ftp server.
+.TP
+(\fBftp-get f file\fR)
+retrieves \fIfile\fR on the remote server.
+.TP
+(\fBftp-put f file\fR)
+stores \fIfile\fR on the remote server.
+.TP
+(\fBftp-display f file\fR)
+prints on the standard output port the content of the file \fIfile\fR 
+located the remote server.
+
+.LP
+All these procedures return a boolean value which indicate if the requested 
+operation succeeded or not.
+
+.SH EXAMPLE
+Hereafter is a simple session which prints the content of the /pub
+directory and gets the last release of STk on the \fIkaolin\fR
+workstation:
+.CS
+(define f (make <FTP-connection> :host "kaolin.unice.fr"))
+(when (ftp-login "anonymous" "eg@unice.fr")
+   (ftp-chdir f "/pub")
+   (ftp-dir f "-lsa")
+   (ftp-get f "STk.tar.gz")
+   (ftp-quit f))
+.CE
+

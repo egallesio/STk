@@ -1,0 +1,25 @@
+;;;;
+;;;; STk adaptation of the Tk widget demo.
+;;;;
+;;;; This demonstration script creates a simple form with a bunch
+;;;; of entry widgets.
+;;;;
+(require "Tk-classes")
+
+(define (demo-form)
+  (let  ((w (make-demo-toplevel "form"
+				"Form Demonstration"
+				"This window contains a simple form where you can type in the various entries and use tabs to move circularly between the entries.")))
+
+    ;; Make the entries
+    (for-each (lambda (x) 
+		(pack (make <Labeled-entry> 
+			    :parent w 	    :title x 
+			    :title-width 8  :width 40
+			    :anchor "w"	    :entry-relief "sunken")
+		      :padx 5))
+		
+	      (list "Name:" "Address:" "" "" "Phone:"))
+    ;; destroy the window when  <Return> is typed in the current toplevelel
+    (let ((top (winfo 'toplevel w)))
+      (bind top "<Return>" (lambda () (catch (destroy top)))))))

@@ -1,0 +1,5 @@
+;; Frames with options
+
+(frame '.f1 :relief "raised" :borderwidth 3 :width 100 :height 100)
+(frame '.f2 :relief "sunken" :borderwidth 3 :width 100 :height 100)
+(pack .f1 .f2 :side "top" :expand #t)

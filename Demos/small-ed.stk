@@ -1,0 +1,26 @@
+#!/usr/local/bin/stk -f
+;;;; s m a l l - e d . s t k		-- A small editor to create enhanced
+;;;;					   text (used for Help page construction)
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; This software is a derivative work of other copyrighted softwares; the
+;;;; copyright notices of these softwares are placed in the file COPYRIGHTS
+;;;;
+;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
+;;;;    Creation date:  6-Dec-1993 17:25
+;;;; Last file update: 26-Nov-1994 10:41
+
+(require "editor")
+
+;;; Build an editor instance
+(stk:make-editor '.ed '(exit))
+(wm 'withdraw *root*)

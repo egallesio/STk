@@ -1,0 +1,110 @@
+<HTML><HEAD><TITLE>Tk Built-In Commands - label manual page</TITLE></HEAD>
+<BODY bgcolor = #c3c3ff>
+<H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageBlue.gif"> label</H2>
+<I>Create and manipulate label widgets</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<H3><A NAME="M2">SYNOPSIS</A></H3>
+(<B>label</B><I> widget-name </I>?<I>options</I>?)<BR>
+<H3><A NAME="M3">STANDARD OPTIONS</A></H3>
+<PRE>
+<B><A HREF="options.n.html#M:anchor">:anchor</A></B>                                <B><A HREF="options.n.html#M:background">:background</A></B> 
+<B><A HREF="options.n.html#M:bitmap">:bitmap</A></B>                                <B><A HREF="options.n.html#M:borderwidth">:borderwidth</A></B> 
+<B><A HREF="options.n.html#M:cursor">:cursor</A></B>                                <B><A HREF="options.n.html#M:font">:font</A></B> 
+<B><A HREF="options.n.html#M:foreground">:foreground</A></B>                            <B><A HREF="options.n.html#M:highlightbackground">:highlightbackground</A></B> 
+<B><A HREF="options.n.html#M:highlightcolor">:highlightcolor</A></B>                        <B><A HREF="options.n.html#M:highlightthickness">:highlightthickness</A></B> 
+<B><A HREF="options.n.html#M:image">:image</A></B>                                 <B><A HREF="options.n.html#M:justify">:justify</A></B> 
+<B><A HREF="options.n.html#M:padx">:padx</A></B>                                  <B><A HREF="options.n.html#M:pady">:pady</A></B> 
+<B><A HREF="options.n.html#M:relief">:relief</A></B>                                <B><A HREF="options.n.html#M:takefocus">:takefocus</A></B> 
+<B><A HREF="options.n.html#M:text">:text</A></B>                                  <B><A HREF="options.n.html#M:textvariable">:textvariable</A></B> 
+<B><A HREF="options.n.html#M:underline">:underline</A></B>                             <B><A HREF="options.n.html#M:wraplength">:wraplength</A></B> 
+</PRE>
+<H3><A NAME="M24">WIDGET-SPECIFIC OPTIONS</A></H3>
+<DL>
+<P>
+<DT><I>Name</I>:            <B>height</B>
+<DT><I>Class</I>:           <B>Height</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M25">:height</A></B>
+<DT><I>STklos slot name</I>: <B>height</B>
+<DD>Specifies a desired height for the label.
+If an image or bitmap is being displayed in the label then the value is in
+screen units (i.e. any of the forms acceptable to <B>Tk_GetPixels</B>);
+for text it is in lines of text.
+If this option isn't specified, the label's desired height is computed
+from the size of the image or bitmap or text being displayed in it.
+<P>
+<P>
+<DT><I>Name</I>:            <B>width</B>
+<DT><I>Class</I>:           <B>Width</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M26">:width</A></B>
+<DT><I>STklos slot name</I>: <B>width</B>
+<DD>Specifies a desired width for the label.
+If an image or bitmap is being displayed in the label then the value is in
+screen units (i.e. any of the forms acceptable to <B>Tk_GetPixels</B>);
+for text it is in characters.
+If this option isn't specified, the label's desired width is computed
+from the size of the image or bitmap or text being displayed in it.
+<P>
+</DL>
+<H3><A NAME="M27">DESCRIPTION</A></H3>
+The <B>label</B> procedure creates a new window (given by the
+<I>widget-name</I> argument) and makes it into a label widget.
+Additional
+options, described above, may be specified on the procedure line
+or in the option database
+to configure aspects of the label such as its colors, font,
+text, and initial relief.  The <B>label</B> procedure returns its
+<I>widget-name</I> argument.  At the time this procedure is invoked,
+there must not exist a window named <I>widget-name</I>, but
+<I>widget-name</I>'s parent must exist.
+<P>
+A label is a widget
+that displays a textual string, bitmap or image.
+If text is displayed, it must all be in a single font, but it
+can occupy multiple lines on the screen (if it contains newlines
+or if wrapping occurs because of the <B>wrapLength</B> option) and
+one of the characters may optionally be underlined using the
+<B>underline</B> option.
+The label can be manipulated in a few simple ways, such as
+changing its relief or text, using the procedures described below.
+
+<H3><A NAME="M28">WIDGET PROCEDURE</A></H3>
+The <B>label</B> procedure creates a new STk procedure whose
+name is <I>widget-name</I>.  This
+procedure may be used to invoke various
+operations on the widget.  It has the following general form:
+<PRE>(<I>widget-name option </I>?<I>arg arg ...</I>?)</PRE>
+<I>Option</I> and the <I>arg</I>s
+determine the exact behavior of the procedure.  The following
+procedures are possible for label widgets:
+<P>
+<DL>
+<DT><A NAME="M29">(<I>widget-name '</I><B>cget</B> <I>option</I>)</A><DD>
+Returns the current value of the configuration option given
+by <I>option</I>.
+<I>Option</I> may have any of the values accepted by the <B>label</B>
+procedure.
+<P>
+<DT><A NAME="M30">(<I>widget-name '</I><B>configure</B> ?<I>option</I>? ?<I>value option value ...</I>?)</A><DD>
+Query or modify the configuration options of the widget.
+If no <I>option</I> is specified, returns a list describing all of
+the available options for <I>widget-name</I> (see <B>Tk_ConfigureInfo</B> for
+information on the format of this list).  If <I>option</I> is specified
+with no <I>value</I>, then the procedure returns a list describing the
+one named option (this list will be identical to the corresponding
+sublist of the value returned if no <I>option</I> is specified).  If
+one or more <I>option-value</I> pairs are specified, then the procedure
+modifies the given widget option(s) to have the given value(s);  in
+this case the procedure returns an empty string.
+<I>Option</I> may have any of the values accepted by the <B>label</B>
+procedure.
+
+<P>
+</DL>
+<H3><A NAME="M31">BINDINGS</A></H3>
+When a new label is created, it has no default event bindings:
+labels are not intended to be interactive.
+
+<H3><A NAME="M32">SEE ALSO</A></H3>
+<B><A HREF="./message.n.html">message</A></B>
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookBlue.gif"> Back to the <B>STk</B> main page</A>
+</BODY></HTML>

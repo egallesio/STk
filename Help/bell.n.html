@@ -1,0 +1,21 @@
+<HTML><HEAD><TITLE>Tk Built-In Commands - bell manual page</TITLE></HEAD>
+<BODY bgcolor = #c3c3ff>
+<H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageBlue.gif"> bell</H2>
+<I>Ring a display's bell</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<H3><A NAME="M2">SYNOPSIS</A></H3>
+(<B>bell</B>)<BR>
+(<B>bell </B><B>:displayof </B><I>window</I>)<BR>
+<H3><A NAME="M3">DESCRIPTION</A></H3>
+This procedure rings the bell on the display for <I>window</I> and
+returns an empty string.
+If the <B>:displayof</B> option is omitted, the display of the
+application's main window is used by default.
+The procedure uses the current bell-related settings for the display, which
+may be modified with programs such as <B>xset</B>.
+<P>
+This procedure also resets the screen saver for the screen.  Some
+screen savers will ignore this, but others will reset so that the
+screen becomes visible again.
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookBlue.gif"> Back to the <B>STk</B> main page</A>
+</BODY></HTML>

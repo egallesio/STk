@@ -1,0 +1,10 @@
+;; Basic geometry management with the packer (fill and expand options)
+
+(label '.l4 :text "Label #4" :background "red")
+(label '.l5 :text "Label #5" :background "blue")
+(label '.l6 :text "Label #6" :background "green")
+
+
+(pack .l4 :side "top"    :fill "both" :padx 20 :pady 20)
+(pack .l5 :side "left"   :fill "both" :padx 20 :pady 20)
+(pack .l6 :side "bottom" :fill "both" :padx 20 :pady 20)

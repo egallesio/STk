@@ -1,0 +1,14 @@
+(require "Tk-classes")
+
+(define lab  (make <Label> :text "A simple interface"))
+(define box  (make <Frame> :border-width 3 :relief "ridge"))
+(define l    (make <Listbox>   :parent box))
+(define s    (make <Scrollbar> :parent box :orientation "vertical"))
+(define quit (make <Button> :text "Quit" :command '(quit)))
+
+;; Place the listbox and its scrollbar in "box"
+(pack l :expand #t :fill "both" :side "left")
+(pack s :expand #t :fill "y" :side "right")
+
+;; place all widget on the screen
+(pack lab box quit)

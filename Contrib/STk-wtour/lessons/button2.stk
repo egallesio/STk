@@ -1,0 +1,4 @@
+;; A button widget, with options
+
+(button '.hello :text "Hello World!" :relief "raised" :state "disabled")
+(pack .hello)

@@ -1,0 +1,5 @@
+;; New toplevel window
+
+(toplevel '.new)
+(wm 'geometry .new "200x200")
+(wm 'title .new "A new window")

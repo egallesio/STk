@@ -1,0 +1,56 @@
+;;;;
+;;;; T k - c l a s s e s . s t k	-- A set of autoloads for Tk classes
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 19-Sep-1994 16:00
+;;;; Last file update: 17-Aug-1996 17:14
+
+
+(let ()
+  (define-macro (make-autoload name . l)
+    ;; make 'name' autoload iff not already provided.
+    `(unless (provided? ,name)
+       ;; Specify a suffix for autoload because filenames are not case
+       ;; sensitive under Win32!
+       (autoload ,(string-append name ".stklos") ,@l)))
+
+
+  (make-autoload "Button"  	<Label> <Button> <Check-button> <Radio-button>)
+  (make-autoload "Canvas"  	<Canvas> <Canvas-group> <Arc> <Bitmap-item> 
+				<Line> <Oval> <Polygon> <Rectangle> <Text-item>
+				<Window>)
+  (make-autoload "Entry"   	<Entry>)
+  (make-autoload "Frame"   	<Frame>)
+  (make-autoload "Listbox"  	<Listbox>)
+  (make-autoload "Menu"    	<Menu> <Menu-button> make-menubar)
+  (make-autoload "Message" 	<Message>)
+  (make-autoload "Scale"   	<Scale>)
+  (make-autoload "Scrollbar" 	<Scrollbar>)
+  (make-autoload "Text"	 	<Text>)
+  (make-autoload "Toplevel"	<Toplevel> *top-root* deiconify iconify withdraw
+	  			toplevel-frame toplevel-state)
+  (make-autoload "Choicebox"	<Choice-box>)
+  (make-autoload "Defbutton"	<Default-button>)
+  (make-autoload "Filebox"	<File-box> make-file-box)
+  (make-autoload "Lentry"	<Labeled-entry>)
+  (make-autoload "Multiwin"	<Multiple-window> <Inner-window>)
+  (make-autoload "Multipaned"	<MultiPaned>)
+  (make-autoload "Paned"	<HPaned> <VPaned>)
+  (make-autoload "Scrollbox"	<Scroll-Listbox>)
+  (make-autoload "Scrollcanvas"	<Scroll-Canvas>)
+  (make-autoload "Scrolltext"	<Scroll-Text>)
+  (make-autoload "Image" 	<Bitmap-image> <Photo-image>)
+
+  (make-autoload "Basics"	<Tk-widget> <Tk-Composite-Widget>))
+
+(provide "Tk-classes")

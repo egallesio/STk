@@ -1,0 +1,37 @@
+<HTML><HEAD><TITLE>Tk Built-In Commands - report-error manual page</TITLE></HEAD>
+<BODY bgcolor = #c3ffc3>
+<H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageGreen.gif"> report-error</H2>
+<I>Command invoked to process errors</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<H3><A NAME="M2">SYNOPSIS</A></H3>
+(<B>report-error </B><I>head message obj</I>)<BR>
+<H3><A NAME="M3">DESCRIPTION</A></H3>
+<B>Report-error</B> is called by the interpreter when an error occurs.
+This procedure is written in Scheme and can be by an application which
+needs to handle redefined to handle errors. The <I>head</I> argument is
+a string which identify the kind of error. The <I>head</I> argument
+contains the error message and <I>obj</I> contains the object which 
+causes the error (or the empty list when there is no object to incriminate).
+<P>
+The STk library includes a default <B>report-error</B> procedure
+that posts a dialog box containing the error message and offers
+the user a chance to see a stack trace showing where the
+error occurred and its associated environment..
+<P>
+If an error occurs while is <B>report-error</B> execution, the
+interpreter detect that the procedure is buggy and it redirect further
+messages on the standard error port.
+<P>
+Hereafter is a simple non-graphical error reporter.
+<PRE>(define (report-error head message obj)
+  (let ((port (current-error-port)))
+    ;; Display message
+    (format port &quot;~A: ~A ~S\n\n&quot;  head message obj)
+    ;; Display stack
+    (let ((stack (%get-eval-stack))
+	  (env   (%get-environment-stack)))
+      (for-each (lambda (x y) (format port &quot;~A ~A\n&quot; x (uncode y)))
+		env 
+		stack))))</PRE>
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookGreen.gif"> Back to the <B>STk</B> main page</A>
+</BODY></HTML>

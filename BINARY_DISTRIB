@@ -1,0 +1,31 @@
+Binary distributions are available at ftp://kaolin.unice.fr/pub/Binary.
+If you succeed in compiling a version for which no binary is available
+on the previous site, you can probably help other people by sharing 
+your binary.
+To make a machine-specific binary:
+
+	1. Type 'make binary-release' in the main distribution directory.
+	2. Create a README file for your distribution which indicates
+	   the options you chose. A model of the README file is given below.
+	3. Place the binary archive (the .tar.gz) and the README file in 
+	   ftp://kaolin.unice.fr/pub/Incoming/
+
+Thanks
+
+______________________________________________________________________________
+
+		Sample README file for binary-release
+		-------------------------------------
+
+
+	   Author: <place here your name>
+	    Email: <and your email here>
+    Creation date: <insert date here>
+ X11 version used: X11R<???>
+--------------------------------------------------
+Comments: 
+
+--------------------------------------------------
+Configuration:
+	<insert here the content of the file config.make>
+

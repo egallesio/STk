@@ -1,0 +1,6 @@
+;;; Basic canvas widget
+
+(canvas '.c1)
+(pack .c1)
+
+(.c1 'create 'line 10 10 200 200)

@@ -1,0 +1,9 @@
+;; Using frames to group widgets
+
+(frame '.f1 :relief "ridge" :borderwidth 2)
+(pack .f1)
+
+(label '.f1.lab :text "Filename")
+(entry '.f1.e1 :relief "sunken")
+
+(pack .f1.lab .f1.e1 :side "left" :padx 10 :pady 10)

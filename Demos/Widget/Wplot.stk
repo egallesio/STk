@@ -1,0 +1,81 @@
+;;;;
+;;;; STk adaptation of the Tk widget demo.
+;;;;
+;;;; This demonstration script creates a canvas widget showing a 2-D
+;;;; plot with data points that can be dragged with the mouse.
+;;;;
+
+;; demo-plot can be used also by the text embedded windows demos. In this case,
+;; it is called with an argument which its embedding window
+
+(define (demo-plot . arg)
+  (let* ((w          (if (null? arg)
+			 (make-demo-toplevel  "plot"
+					      "Plot Demonstration"
+					      "This window displays a canvas widget containing a simple 2-dimensional plot.  You can doctor the data by dragging any of the points with mouse button 1.")
+			 (car arg)))
+	 (c          (make <Canvas> :parent w :width 450 :height 300
+			   	    :cursor "top_left_arrow"))
+	 (plot-font  "-*-Helvetica-Medium-R-Normal--*-180-*-*-*-*-*-*")
+	 (last-x     0)
+	 (last-y     0))
+
+    (define (plot-down w x y)
+      (delete-tag w 'selected)
+      (add-tag w 'selected 'withtag 'current)
+      (raise c 'current)
+      (set! last-x x)
+      (set! last-y y))
+    
+    (define (plot-move w x y)
+      (move c 'selected (- x last-x) (- y last-y))
+      (set! last-x x)
+      (set! last-y y))
+    
+    (pack c :side "top" :fill "x")
+    
+    (make <Line>      :parent c :coords '(100 250 400 250) :width 2)
+    (make <Line>      :parent c :coords '(100 250 100 50)  :width 2)
+    (make <Text-item> :parent c :coords '(225 20) :text "A Simple Plot"
+	    	      :font plot-font :fill "brown")
+      
+    (dotimes (i 11)
+      (let ((x (+ 100 (* 30 i))))
+	(make <Line> 	    :parent c :coords (list x 250 x 245) :width 2)
+	(make <Text-item> :parent c :coords (list x 254) :anchor "n"
+	      		  :text (* 10 i) :font plot-font)))
+
+    (dotimes (i 6)
+      (let ((y (- 250 (* 40 i))))
+	(make <Line> 	  :parent c :coords (list 100 y 105 y) :width 2)
+	(make <Text-item> :parent c :coords (list 96 y) :anchor "e"
+			  :text (* 50 i) :font plot-font)))
+      
+    (for-each (lambda (point)
+		(let ((x (+ 100 (* 3 (car point))))
+		      (y (- 250 (* 0.8 (cadr point)))))
+		  (make <Oval> :parent  c 
+			       :coords  (list (- x 6) (- y 6) (+ x 6) (+ y 6))
+			       :width 1 
+			       :outline "black"
+			       :fill "SkyBlue2"
+			       :tags "point")))
+	      '((12 56) (20 94) (33 98) (32 120) (61 180) (75 160) (98 223)))
+
+
+    (bind c "point" "<Any-Enter>" 
+	  (lambda () 
+	    (let ((i (car (find-items c 'withtag 'current))))
+	      (set! (fill i) "red"))))
+
+    (bind c "point" "<Any-Leave>" 
+	  (lambda () 
+	    (let ((i (car (find-items c 'withtag 'current))))
+	      (set! (fill i) "SkyBlue2"))))
+      
+    (bind c "point" "<1>" (lambda (x y) (plot-down c x y)))
+    (bind c "point" "<ButtonRelease-1>" (lambda ()
+					  (delete-tag c 'selected)))
+
+    (bind c "<B1-Motion>" (lambda (x y) (plot-move c x y)))
+    c))

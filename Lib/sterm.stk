@@ -1,0 +1,100 @@
+;;;;
+;;;; s t e r m  . s t k  --  A simple terminal emulator written in Scheme
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date:  2-Oct-1995 22:57
+;;;; Last file update: 25-Jun-1996 23:31
+
+(require "process")
+
+(define (sterm)
+  (define prompt-color   "red")
+  (define output-color   "blue")
+  (define update-counter 0)
+
+  (define (close-sterm w)
+    (w 'insert "end" "*** EOF ***" "list-prompt")
+    ;; Set state to "disabled" (or delete the <Return> binding). Not doing so,
+    ;; stops the interpreter. The bugs seems to be in Tk event loop, since 
+    ;; similar code works without event.
+    (tk-set! w :state "disabled"))
+
+  (define (insert-prompt w file)
+    (let Loop ()
+      (when (char-ready? file)
+	(let ((c (read-char file)))
+	  (cond 
+	    ((eof-object? c)  (when-port-readable file #f)
+			      (close-sterm w))
+	    (ELSE             ;; Insert this char and try to read another one
+	                      (w 'insert "end" (string c) "list-prompt")
+			      (Loop))))))
+    ;; Add a mark to the current position
+    (w 'mark 'set "start_expr" "end-1c")
+    (w 'mark 'gravity "start_expr" "left")
+    (w 'see "end"))
+
+  (define (insert-line w line)
+    (w 'insert "insert" line "list-output" "\n" "")
+    (w 'see "end")
+    ;; Force a redisplay when we have a bunch of lines to animate screen
+    (if (= update-counter 5) 
+	(begin (update 'idle) (set! update-counter 0))
+	(set! update-counter (+ update-counter 1))))
+
+  (define (read-a-line w file)
+    (let Loop ()
+      (if (char-ready? file)
+	  (let ((l (read-line file)))
+	    (if (eof-object? l)
+		(when-port-readable file #f)
+		(begin
+		  (insert-line w l)
+		  (Loop)))))))
+
+  (define (make-term name closure . tk-args)
+    (let ((w (apply Tk:text (format #f "~A.t" name) tk-args))
+	  (s (scrollbar (format #f "~A.s" name) :orient "vert")))
+
+      (pack w :expand #t :fill "both" :side "left")
+      (pack s :expand #f :fill "y" :side "right")
+
+      ;; Associate bindings to the scrollbar
+      (tk-set! w :yscroll (lambda l (apply s 'set l)))
+      (tk-set! s :command (lambda l (apply w 'yview l)))
+	     
+      (bind w "<Return>" closure)
+      (w 'tag 'configure "list-prompt" :foreground prompt-color)
+      (w 'tag 'configure "list-output" :foreground output-color)
+      w))
+  
+  (let* ((sh  (or (getenv "SHELL") "/bin/sh"))
+	 (p   (run-process sh "-i" :input :pipe :output :pipe :error :pipe))
+	 (in  (process-input  p))
+	 (out (process-output p))
+	 (err (process-error  p))
+	 (top (toplevel (gensym ".term")))
+	 (t   #f) 	;; Will be set later since it needs C defined below
+	 (C   (lambda () 
+		(let ((txt (t 'get "start_expr" "insert")))
+		  (display txt in) (newline in) (flush in)
+		  'continue))))
+    (set! t (make-term  (widget-name top) C :font "fixed" :setgrid #t))
+    (pack t :expand #t :fill "both")
+
+    ;; Create handlers
+    (when-port-readable err (lambda () (insert-prompt t err)))
+    (when-port-readable out (lambda () (read-a-line t out)))))
+
+(provide "sterm")

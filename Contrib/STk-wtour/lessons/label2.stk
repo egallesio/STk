@@ -1,0 +1,3 @@
+(pack
+   (label '.lab1 :text "This is a label1" :relief "sunken"))
+

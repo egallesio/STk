@@ -1,0 +1,6 @@
+;;;  A basic text widget, with word wrapping
+ 
+(pack (text '.text :wrap "word"))
+
+(.text 'insert "current" "This is a text widget, displaying some text. ")
+(.text 'insert "current" "Notice how lines are broken at words.\n")

@@ -1,0 +1,19 @@
+;; Canvases with scrollbars
+
+(canvas '.c4 :scrollregion '(-10c -10c 50c 20c)
+	     :xscrollcommand (lambda l (apply .s2 'set l))
+	     :yscrollcommand (lambda l (apply .s1 'set l)))
+
+(.c4 'create 'rectangle 100 100 400 400 :fill "red")
+(.c4 'create 'rectangle 300 300 600 600 :fill "green")
+(.c4 'create 'rectangle 200 200 500 500 :fill "blue")
+
+(scrollbar '.s1 :orient "vert" :relief "sunken"
+	   	:command (lambda l (apply .c4 'yview l)))
+(scrollbar '.s2 :orient "hor" :relief "sunken"
+	   	:command (lambda l (apply .c4 'xview l)))
+
+(pack .s2 :side "bottom" :fill "x")
+(pack .s1 :side "right"  :fill "y")
+(pack .c4 :expand "yes"  :fill "both")
+

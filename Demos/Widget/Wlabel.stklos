@@ -1,0 +1,34 @@
+;;;;
+;;;; STk adaptation of the Tk widget demo.
+;;;;
+;;;; This demonstration script creates a toplevel window containing
+;;;; several label widgets.
+;;;;
+
+(require "Button")
+
+(define (demo-label)
+  (let* ((w     (make-demo-toplevel "label"
+				    "Label Demonstration"  
+				    "Five labels are displayed below: three textual ones on the left, and a bitmap label and a text label on the right.  Labels are pretty boring because you can't do anything with them."))
+	 (left  (make <Frame> :parent w))
+	 (right (make <Frame> :parent w)))
+    
+    ;; The labels on the left
+    (pack (make <Label> :parent left :text "First label")
+	  (make <Label> :parent left :text "Second label, raised" :relief "raised")
+	  (make <Label> :parent left :text "Third label, sunken"  :relief "sunken")
+	  :side "top"
+	  :expand #t
+	  :pady 2
+	  :anchor "w")
+
+    ;; labels on the right
+    (pack (make <Label> :parent right :border-width 2 :relief "sunken"
+		:bitmap (string-append "@" *STk-images* "face"))
+	  (make <Label> :parent right :text "Tcl/Tk Proprietor")
+	  :side "top")
+
+    (pack left right :side "left"   :expand #t :padx 10 :pady 10 :fill "both")))
+
+

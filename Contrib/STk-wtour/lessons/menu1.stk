@@ -1,0 +1,9 @@
+;; Basic drop down menu
+
+(pack (menubutton '.mbutton :text "Menu Button" :menu ".mbutton.menu"))
+
+(menu '.mbutton.menu)
+(.mbutton.menu 'add 'command :label "Open")
+(.mbutton.menu 'add 'command :label "Close")
+(.mbutton.menu 'add 'separator)
+(.mbutton.menu 'add 'command :label "Exit")

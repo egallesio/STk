@@ -1,0 +1,168 @@
+<HTML><HEAD><TITLE>STk procedures - posix manual page</TITLE></HEAD>
+<BODY bgcolor = #ffffa0>
+<H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageYellow.gif"> posix </H2>
+<I>Access to posix functions</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<H3><A NAME="M2">SYNOPSIS</A></H3>
+<P>
+<DL>
+<DT><A NAME="M3"><I>ERROR&nbsp;MANAGEMENT</I></A><DD>
+<B>*errno*</B>
+<P>
+<P>
+<P>
+(<B>posix-perror</B> <I>str</I>)
+<P>
+<DT><A NAME="M4"><I>FILES&nbsp;AND&nbsp;DIRECTORIES</I></A><DD>
+(<B>posix-stat</B> <I>filename</I>)
+<P>
+<P>
+<P>
+(<B>posix-stat-&gt;vector</B> <I>descr</I>)
+<P>
+<P>
+<P>
+(<B>posix-access </B><I>filename mode</I>)
+<P>
+<P>
+<P>
+(<B>posix-pipe</B>)
+<P>
+<DT><A NAME="M5"><I>TIME&nbsp;FUNCTIONS</I></A><DD>
+(<B>posix-time</B>)
+<P>
+<P>
+<P>
+(<B>posix-asctime</B>)
+<P>
+<P>
+<P>
+(<B>posix-asctime</B> seconds)
+<P>
+<P>
+<P>
+(<B>posix-ctime</B>)
+<P>
+<P>
+<P>
+(<B>posix-ctime</B> <I>seconds</I>)
+<P>
+<P>
+<P>
+(<B>posix-localtime</B> <I> seconds</I>)
+<P>
+<P>
+<P>
+(<B>posix-gmtime</B> <I>seconds</I>)
+<P>
+<P>
+<P>
+(<B>posix-mktime</B> <I>time</I>)
+<P>
+<P>
+<P>
+(<B>posix-tm-&gt;vector</B> <I>time</I>)
+<P>
+<P>
+<P>
+(<B>vector-&gt;posix-tm</B> <I>vect</I>)
+<P>
+<P>
+<P>
+(<B>posix-strftime</B> <I>format</I>)
+<P>
+<P>
+<P>
+(<B>posix-strftime</B> <I>format time</I>)
+<P>
+<DT><A NAME="M6"><I>PROCESSES&nbsp;FUNCTIONS</I></A><DD>
+<P>
+<P>
+(<B>posix-fork</B>)
+<P>
+<P>
+<P>
+(<B>posix-wait</B>)
+<P>
+<DT><A NAME="M7"><I>SYSTEM&nbsp;INFORMATIONS</I></A><DD>
+<P>
+<P>
+(<B>posix-uname</B>)
+<P>
+<P>
+<P>
+(<B>posix-host</B>)
+<P>
+<P>
+<P>
+(<B>posix-domain</B>)
+<P>
+</DL>
+<H3><A NAME="M8">DESCRIPTION</A></H3>
+The functions of the posix library must be loaded before use with:
+<PRE>(require &quot;posix&quot;)</PRE>
+The functions will not be described here completely. For full details
+about a functions and its behaviour, look at the corresponding Unix
+manual page or to the POSIX.1 document.
+
+<P>
+<DL>
+<DT><A NAME="M9"><I>ERROR&nbsp;MANAGEMENT</I></A><DD>
+</DL>
+<P>
+<P>
+<DL>
+<DT><A NAME="M10"><B>*errno*</B></A><DD>
+is a variable which always contains the error number of last 
+encountered error. It is equivalent to the errno POSIX.1 variable.
+<P>
+<DT><A NAME="M11">(<B>posix-perror</B> <I>str</I>)</A><DD>
+produces a message on the standard error output, describing the last
+ error encountered during a call to a system  or library function. The 
+<I>str</I> parameter is an identifying string which will be printed before 
+the error message.
+See <B>perror(3)</B>.
+
+<P>
+<DT><A NAME="M12"><I>FILES&nbsp;AND&nbsp;DIRECTORIES</I></A><DD>
+</DL>
+<P>
+<P>
+<DL>
+<DT><A NAME="M13">(<B>posix-stat</B> <I>filename</I>)</A><DD>
+returns a C structure which contains a description of <I>filename</I>). This 
+structure is not viewable by itself. Use, <B>posix-stat-&gt;vector</B>
+to access its content in Scheme.If <I>filename</I> does not exists, this procedure
+returns <I>#f</I>.
+<P>
+<DT><A NAME="M14">(<B>posix-stat-&gt;vector</B> <I>descr</I>)</A><DD>
+transforms a file description sructure obtained by <B>posix-stat</B> to a Scheme 
+vector. The components of the vector are given here with their index:
+<P>
+</DL>
+<PRE>st_dev   (0)          st_ino    (1)
+   st_mode  (2)          st_nlink  (3)
+   st_uid   (4)          st_gid    (5)
+   st_size  (6)          st_atime  (7)
+   st_mtime (8)          st_ctime  (9)</PRE>
+<PRE>See <B>fstat(2)</B> for details on the semantic of this fields.</PRE>
+<P>
+<DL>
+<DT><A NAME="M15">(<B>posix-access </B><I>filename mode</I>)</A><DD>
+checks whether the interpreter is  allowed to read, write, execute  or test for 
+existence of <I>filename</I>. <I>Mode</I> must be one of the following constants:
+<B>|R_OK|</B>, <B>|W_OK|</B>, <B>|X_OK|</B> or <B>|F_OK|</B>. 
+If <I>filename</I> does not exit, this function returns <B>#f</B>.
+See <B>access(2)</B> for details.
+<P>
+<DT><A NAME="M16">(<B>posix-pipe</B>)</A><DD>
+returns a pair of Scheme ports associated to a
+pipe inode. If a pipe cannot be created, this function returns
+<B>#f</B>.
+
+<P>
+</DL>
+<P>
+<B>TO BE CONTINUED</B>
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookYellow.gif"> Back to the <B>STk</B> main page</A>
+</BODY></HTML>

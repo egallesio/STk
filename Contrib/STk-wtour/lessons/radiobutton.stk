@@ -1,0 +1,8 @@
+;; A set of radio button widgets
+
+(define color-var1 #f)   ;; The variable to which radiobuttons are "connected"
+
+(radiobutton '.b1 :text "Red"   :variable 'color-var1 :value "R" :anchor "w")
+(radiobutton '.b2 :text "Green" :variable 'color-var1 :value "G" :anchor "w")
+(radiobutton '.b3 :text "Blue"  :variable 'color-var1 :value "B" :anchor "w")
+(pack .b1 .b2 .b3 :fill "x")

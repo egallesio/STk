@@ -1,0 +1,377 @@
+;;;;
+;;;; B a s i c s . s t k 		--  Basic object class definition
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 30-Mar-1993 15:39
+;;;; Last file update: 24-Sep-1996 17:49
+
+
+(require "Tk-meta")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Tk-object> class
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class <Tk-object> ()
+  ((Id      :getter Id)				    ;; Widget Id
+   (Eid	    :getter Eid)			    ;; External widget Id
+   (parent  :getter parent :init-keyword :parent))) ;; Parent widget
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Tk-widget> class
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(define-class <Tk-widget> (<Tk-object>)
+  ())
+
+;;;
+;;; Utility method Id->instance
+;;;
+
+(define-method Id->instance ((id <widget>))
+  (let ((plist (get-widget-data id)))
+    (if plist 
+	(get-keyword :instance plist #f)
+	#f)))
+
+(define-method Id->instance ((id <string>))
+  (let ((var (read-from-string id)))
+    (if (and (not (equal? id "")) (symbol-bound? var))
+	(Id->instance (eval var))
+	#f)))
+
+(define-method Id->instance ((id <symbol>))
+  (if (symbol-bound? id)
+      (Id->instance (eval id))
+      #f))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Tk-simple-widget> class
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class <Tk-simple-widget> (<Tk-widget>)
+  ((background   	 :accessor     background   
+		 	 :init-keyword :background   
+		 	 :allocation   :tk-virtual)
+   (border-width 	 :accessor     border-width 
+		 	 :init-keyword :border-width
+			 :tk-name      bd     
+		 	 :allocation   :tk-virtual)
+   (cursor	 	 :accessor     cursor
+		 	 :init-keyword :cursor  
+		 	 :allocation   :tk-virtual)
+   (highlight-background :accessor     highlight-background  
+			 :init-keyword :highlight-background
+			 :tk-name      highlightback
+			 :allocation   :tk-virtual)
+   (highlight-color 	 :accessor     highlight-color  
+			 :init-keyword :highlight-color
+			 :tk-name      highlightcolor
+			 :allocation   :tk-virtual)
+   (highlight-thickness  :accessor     highlight-thickness  
+			 :init-keyword :highlight-thickness
+			 :tk-name      highlightthick
+			 :allocation   :tk-virtual)
+   (relief	 	 :accessor     relief	
+		 	 :init-keyword :relief       
+		 	 :allocation   :tk-virtual)
+   (take-focus		 :accessor     take-focus
+			 :init-keyword :take-focus
+			 :tk-name      takefocus
+			 :allocation   :tk-virtual))
+  :metaclass <Tk-metaclass>)
+
+
+(define-method initialize ((self <Tk-simple-widget>) initargs)
+  (let* ((parent	(get-keyword :parent     initargs *root*))
+	 (Id		(get-keyword :Id         initargs #f))
+	 (Eid		(get-keyword :Eid        initargs #f))
+	 (tk-options	(get-keyword :tk-options initargs '())))
+
+    (if Eid 
+	;; Eid is already defined. All we have to do is to reconfigure self
+	(letrec ((valids (slot-ref (class-of self) 'tk-valid-options))
+		 (find   (lambda (k l)
+			   (cond
+			    ((null? l) #f)
+			    ((eq? k (vector-ref (car l) 1)) (vector-ref (car l) 2))
+			    (else   (find k (cdr l)))))))
+
+	  (do ((l tk-options (cddr l)))
+	      ((null? l))
+	    (slot-set! self (find (car l) valids) (cadr l))))
+	;; Eid is undefined. Ask Tk to create the widget
+	(begin
+	  (set! Eid (apply (tk-constructor self) 
+			   (Tk::make-tk-name parent Id) 
+			   tk-options))
+	  (slot-set! self 'Id  Eid)  ; retain Tk command which implement this object
+	  (slot-set! self 'Eid Eid))); Eid an Id are the same for non composite 
+
+    ;; Udate parent
+    (slot-set! self 'parent parent)
+    ;; Store the information <self> in the Tk command to allow widget->instance
+    ;; conversion
+    (set-widget-data! Eid (list :instance self)))
+  (next-method))
+
+(define-method tk-constructor ((self <Tk-simple-widget>))
+  ;; Returns the Tk function that makes an object of this kind.
+  (error "tk-constructor: method must be overridden for ~S" 
+	 (class-name (class-of self))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Tk-composite-widget>
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class <Tk-composite-widget> (<Tk-widget>)
+  ((frame	 :accessor   frame-of))
+  :metaclass <Tk-composite-metaclass>)
+
+(define-method initialize ((self <Tk-composite-widget>) initargs)
+  ;; To work properly, the parent slot must be set before anything
+  (let* ((parent (get-keyword  :parent initargs *root*))
+	 (Id     (get-keyword  :Id     initargs #f))
+	 (frame	 (make <Frame> :parent parent :Id Id))
+	 (Eid    (slot-ref frame 'Id)))
+
+    (slot-set! self 'parent parent)
+    (slot-set! self 'Eid    Eid)
+    (slot-set! self 'frame  frame)
+
+    ;; Now call initialize-composite-widget
+    (initialize-composite-widget self initargs frame)
+
+    ;; Continue to initialize with value passed to "make" (and signal that 
+    ;; Eid is already initialized)
+    (next-method self (cons :Eid (cons Eid initargs)))
+
+    ;; Store the information <self> in the Tk command to allow widget->instance
+    ;; conversion
+    (set-widget-data! (slot-ref frame 'Id) (list :instance self))))
+
+(define-method initialize-composite-widget ((c <Tk-composite-widget>) args parent)
+  ;; We are here is no initialize-composite-widget metho is provided for c
+  #f)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Tk-sizeable> class
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class <Tk-sizeable> ()
+  ((width  :accessor width  :init-keyword :width  :allocation :tk-virtual)
+   (height :accessor height :init-keyword :height :allocation :tk-virtual))
+  :metaclass <Tk-metaclass>)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Tk-simple-text> class
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class <Tk-simple-text> ()
+  ((anchor	  :accessor     anchor
+		  :init-keyword :anchor
+		  :allocation   :tk-virtual)
+   (font	  :accessor     font
+		  :init-keyword :font
+		  :allocation   :tk-virtual)
+   (foreground	  :accessor     foreground
+		  :init-keyword :foreground
+		  :allocation   :tk-virtual)
+   (image	  :accessor     image-of
+		  :init-keyword :image
+		  :allocation   :tk-virtual)
+   (justify	  :accessor     justify
+		  :init-keyword :justify
+		  :allocation   :tk-virtual)
+   (pad-x	  :accessor     pad-x
+		  :init-keyword :pad-x
+		  :allocation   :tk-virtual
+		  :tk-name      padx)
+   (pad-y	  :accessor     pad-y
+		  :init-keyword :pad-y
+		  :allocation   :tk-virtual
+		  :tk-name      pady)
+   (text	  :accessor     text-of
+		  :init-keyword :text
+		  :allocation   :tk-virtual)
+   (text-variable :accessor     text-variable
+		  :init-keyword :text-variable
+		  :allocation   :tk-virtual
+		  :tk-name      textvar)
+   (underline	  :accessor     underline
+		  :init-keyword :underline
+		  :allocation   :tk-virtual)
+   (wrap-length	  :accessor     wrap-length
+		  :init-keyword :wrap-length
+		  :tk-name	wraplength
+		  :allocation   :tk-virtual))
+  :metaclass <Tk-metaclass>)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Tk-bitmap> class
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class <Tk-bitmap> ()
+  ((bitmap  :accessor bitmap :init-keyword :bitmap :allocation :tk-virtual))
+  :metaclass <Tk-metaclass>)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Tk-reactive> class
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class <Tk-reactive> ()
+  ((active-background   :accessor     active-background
+			:init-keyword :active-background
+		        :allocation   :tk-virtual
+			:tk-name      activebackground)
+   (active-foreground   :accessor     active-foreground
+			:init-keyword :active-foreground
+			:allocation   :tk-virtual
+			:tk-name      activeforeground)
+   (command 	        :accessor     command
+			:init-keyword :command
+			:allocation   :tk-virtual)
+   (disabled-foreground :accessor     disabled-foreground
+			:init-keyword :disabled-foreground
+			:allocation   :tk-virtual
+			:tk-name      disabledf)
+   (state 		:accessor     state
+			:init-keyword :state
+			:allocation   :tk-virtual))
+  :metaclass <Tk-metaclass>)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Tk-xyscrollable> class
+;;;;
+;;;; 		A Tk-xyscrollable is an object which can be scrolled 
+;;;; 		both horizontally and vertically.
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class <Tk-xyscrollable> ()
+  ((x-scroll-command :init-keyword :x-scroll-command
+		     :accessor     x-scroll-command
+		     :tk-name      xscrollcommand
+		     :allocation   :tk-virtual)
+   (y-scroll-command :init-keyword :y-scroll-command
+		     :accessor     y-scroll-command
+		     :tk-name      yscrollcommand
+		     :allocation   :tk-virtual))
+  :metaclass <Tk-metaclass>)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Tk-editable> class 
+;;;;
+;;;; 		A Tk-editable object is not a graphical object per se. It's a 
+;;;;		recipient for the common slots of all editable objects 
+;;;;		(canvas, entry, ...)
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class <Tk-editable> ()
+  ((insert-background   :init-keyword :insert-background
+			:accessor     insert-background
+			:tk-name      insertbackground
+			:allocation   :tk-virtual)
+   (insert-border-width :init-keyword :insert-border-width
+			:accessor     insert-border-width
+			:tk-name      insertborderwidth
+			:allocation   :tk-virtual)
+   (insert-off-time     :init-keyword :insert-off-time
+			:accessor     insert-off-time
+			:tk-name      insertofftime
+			:allocation   :tk-virtual)
+   (insert-on-time      :init-keyword :insert-on-time
+			:accessor     insert-on-time
+			:tk-name      insertontime
+			:allocation   :tk-virtual)
+   (insert-width        :init-keyword :insert-width
+			:accessor     insert-width
+			:tk-name      insertwidth
+			:allocation   :tk-virtual))
+  :metaclass <Tk-metaclass>)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Tk-selectable> class
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class <Tk-selectable> ()
+  ((select-background   :init-keyword :select-background
+			:accessor     select-background
+			:tk-name      selectbackground
+			:allocation   :tk-virtual)
+   (select-foreground   :init-keyword :select-foreground
+			:accessor     select-foreground
+			:tk-name      selectforeground
+			:allocation   :tk-virtual)
+   (select-border-width :init-keyword :select-border-width
+			:accessor     select-border-width
+			:tk-name      selectborderwidth
+			:allocation   :tk-virtual))
+  :metaclass <Tk-metaclass>)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Tk-text-selectable> class
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class <Tk-text-selectable> ()
+  ((export-selection	:init-keyword :export-selection
+			:accessor     export-selection
+			:tk-name      exportselection
+			:allocation   :tk-virtual)
+   (font		:init-keyword :font
+			:accessor     font
+			:allocation   :tk-virtual)
+   (foreground		:init-keyword :foreground
+			:accessor     foreground
+			:allocation   :tk-virtual))
+  :metaclass <Tk-metaclass>)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Destroyed-object>
+;;;;		This class serves only for destroyed objects (i.e. when a
+;;;;		widget or a canvas item is destroyed, its class is changed 
+;;;;		to destroyed 
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define-class <Destroyed-object> ()
+  ())
+
+(provide "Basics")
+(require "Tk-methods")

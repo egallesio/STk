@@ -1,0 +1,61 @@
+dnl	This file is an input file used by the GNU "autoconf" program to
+dnl	generate the file "configure", which is run during STk installation
+dnl	to configure the system for the local environment.
+
+AC_INIT(stk.h)
+/bin/rm -f config.cache
+CC=${CC-gcc}
+
+AC_HAVE_HEADERS(unistd.h limits.h)
+AC_HAVE_FUNCS(sigaction select)
+AC_CHECK_LIB(dl, dlopen, [LIBS="$LIBS -ldl"])
+LIBS="$LIBS -lm"
+
+#--------------------------------------------------------------------
+# Some system needs extra libraries which are already tested for
+# stk (such as libsocket.a or libnsl.a)
+# I'm unable to test this since I know no machine which need it.
+# Please tell me if I'm wrong
+#--------------------------------------------------------------------
+SNOW_LIBS=""
+AC_CHECK_LIB(socket, socket, [SNOW_LIBS="$SNOW_LIBS -lsocket"])
+AC_CHECK_LIB(nsl, t_accept,   [SNOW_LIBS="$SNOW_LIBS -lnsl"])
+AC_SUBST(SNOW_LIBS, SNOW_LIBS)
+
+#--------------------------------------------------------------------
+#	Check for various typedefs and provide substitutes if
+#	they don't exist. Useful for Sony WS(Sony NEWS, NEWSOS 4.2R)
+#	Thanks to Nobuyuki Hikichi  <hikichi@sran340.sra.co.jp>
+#--------------------------------------------------------------------
+AC_PID_T
+
+#--------------------------------------------------------------------
+#	Include sys/select.h if it exists and if it supplies things
+#	that appear to be useful and aren't already in sys/types.h.
+#	This appears to be true only on the RS/6000 under AIX.  Some
+#	systems like OSF/1 have a sys/select.h that's of no use, and
+#	other systems like SCO UNIX have a sys/select.h that's
+#	pernicious.  If "fd_set" isn't defined anywhere then set a
+#	special flag.
+#--------------------------------------------------------------------
+
+AC_MSG_CHECKING([fd_set and sys/select])
+AC_TRY_COMPILE([#include <sys/types.h>],
+	[fd_set readMask, writeMask;], tk_ok=yes, tk_ok=no)
+if test $tk_ok = no; then
+    AC_HEADER_EGREP(fd_mask, sys/select.h, tk_ok=yes)
+    if test $tk_ok = yes; then
+	AC_DEFINE(HAVE_SYS_SELECT_H)
+    fi
+fi
+AC_MSG_RESULT($tk_ok)
+if test $tk_ok = no; then
+    AC_DEFINE(NO_FD_SET)
+fi
+
+AC_OUTPUT(Makefile)
+
+if test ! -f ../Snow/Makefile
+then
+  ln -s ../Src/Makefile ../Snow/Makefile
+fi

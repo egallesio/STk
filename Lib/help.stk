@@ -1,0 +1,57 @@
+;;;;
+;;;; Help management
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 14-Sep-1993 13:30
+;;;; Last file update: 23-Jul-1996 17:14
+;;;;
+
+(require "html")
+
+(define (STk:show-help-file name)
+  (catch (destroy '.stk-help))
+  (toplevel '.stk-help)
+  (wm 'title .stk-help "STk help")
+
+  ;; Scroll text widget
+  (pack (frame '.stk-help.f) 
+	:expand #t :fill "both" :side "top")
+  (pack (text '.stk-help.f.t :font "fixed" :width 90 :height 25
+	      :yscroll (lambda args (apply .stk-help.f.s 'set args)))
+	:expand #t :fill "both" :side "left")
+  (pack (scrollbar '.stk-help.f.s :orient "vertical"
+		   :command (lambda args (apply  .stk-help.f.t 'yview args)))
+	:expand #f :fill "y" :side "left")
+  ;; Quit button
+  (pack (button '.stk-help.b :text "Quit" :command (lambda () (destroy .stk-help)))
+	:expand #f :fill "x" :side "bottom")
+  
+  ;; Show the file (after having found the Help directory)
+  (let loop ((l *help-path*))
+    (if (null? l)
+	(error "Cannot find help file ~S" name)
+	(let* ((f  (string-append (car l) "/../Help/" name))
+	       (fd (open-file f "r")))
+	  (if fd
+	      (begin
+		(html:set-base-directory! (string-append (car l) "/../Help"))
+		(html:view .stk-help.f.t fd)
+		(close-port fd))
+	      (loop (cdr l)))))))
+
+(define (help . arg)
+  (if (null? arg)
+      (STk:show-help-file "STk-hlp.html")
+      (STk:show-help-file (format #f "~A.n.html" (car arg)))))
+  
+(provide "help")

@@ -1,0 +1,42 @@
+;;;;
+;;;; p o s i x . s t k 		-- Posix function in Scheme
+;;;;
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 15-Mar-1995 16:31
+;;;; Last file update: 13-Aug-1996 22:31
+;;;;
+
+(if (symbol-bound? '%init-posix)
+    ;; Posix.1 module is in the core interpreter
+    (%init-posix)
+    ;; Try to load Posix.1 support dynamically
+    (load (string-append "posix." *shared-suffix*)))
+
+;;;;
+;;;; Time functions
+;;;;
+(define (posix-asctime . time)
+  (apply posix-strftime "%a %b %d %H:%M:%S %Z %Y\n" time))
+
+(define (posix-ctime . time)
+  (let ((t (if (null? time) (list (posix-time)) time)))
+    (posix-asctime (apply posix-localtime t))))
+
+;;;;
+;;;; Backward compatibility
+;;;;
+(define posix-access posix-access?)
+
+(provide "posix")

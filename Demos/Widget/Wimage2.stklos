@@ -1,0 +1,40 @@
+;;;;
+;;;; STk adaptation of the Tk widget demo.
+;;;;
+;;;; This demonstration script displays two image widgets.
+;;;;
+(require "Tk-classes")
+
+(define image-directory *STk-images*)
+
+(define (demo-image2)
+  (let* ((w   (make-demo-toplevel "image2"
+				  "Image Demonstration #2"
+				  "This demonstration allows you to view images using an Tk \"photo\" image.  First type a directory name in the listbox, then type Return to load the directory into the listbox.  Then double-click on a file name in the listbox to see that image."))
+	 (dir (make <Entry> :parent w :width 30 :text-variable 'image-directory))
+	 (lst (make <Scroll-listbox> :parent w 
+		    :value '("earth.gif" "earthris.gif" "mickey.gif" "teapot.ppm")))
+	 (img (make <Photo-Image>))
+	 (lab (make <Label> :parent w :image img)))
+    
+    (pack (make <Label> :parent w :text "Directory:") 
+	  dir 
+	  (make <Label> :parent w :text "File:")
+	  lst
+	  (make <Label> :parent w :text "Image:")
+	  lab
+	  :side "top" :anchor "w")
+    
+    ;; Add binding to listbox and entry
+    (let ((lb (slot-ref lst 'listbox)))
+      (bind lb  "<Double-1>" 
+	    (lambda ()
+	      (let ((file (selection 'get)))
+		(slot-set! img 'file (string-append image-directory "/" file)))))
+
+      (bind dir "<Return>" 
+	    (lambda () 
+	      (slot-set! lb 'value
+			 (sort (map basename 
+				    (glob (string-append image-directory "/*")))
+			       string<?)))))))

@@ -1,0 +1,527 @@
+dnl	This file is an input file used by the GNU "autoconf" program to
+dnl	generate the file "configure", which is run during STk installation
+dnl	to configure the system for the local environment.
+
+AC_INIT(README)
+
+# I have a lot of problems with cache. So ...
+/bin/rm -f ./config.cache Src/config.cache Tk/config.cache Tcl/config.cache
+
+# determine the kind of the machine which is running this script
+os=`uname -s`
+version=`uname -r`
+machine=`uname -m`
+
+case $os in
+  Linux*) 
+	  case $version in
+            1.*) version=1.X;;
+	    2.*) version=2.X;;
+	  esac
+	  case $machine in
+	    i*86) machine=ix86;;
+	  esac;;
+  SunOS*)
+	  case $version in
+	    4.1.*) version=4.1.X;;
+	  esac
+	  case $machine in
+	    sun4*) machine=sun4;;
+	  esac;;
+  IRIX*)
+	  case $version in
+	    5.*) version=5.X;;
+	    6.*) version=6.X;;
+	  esac
+	  case $machine in
+	   IP*) machine=IPxx;;
+	  esac;;
+  HP-UX*)
+ 	  case $version in
+ 	    A.09.*) version=9.X;;
+ 	    A.10.*) version=10.X;;
+ 	  esac
+ 	  case $machine in
+ 	    9000/7*) machine=9000s700;;
+ 	  esac;;
+esac
+
+#
+# General variables:
+#	DFLGS= the -Dxxx options
+#	EDFLGS= the -Dxxx options (which could be erased if dyn. loading is enabled)
+#	EOBJ= Some extra '.o' to build
+#	ETKOBJ= Some extra '.o' to build (when used with Tk)
+#	MACHINE= something which identifies the machine (hard/OS/machine)
+DFLGS="-DSTk_CODE"
+EOBJ=""
+ETKOBJ=""
+EDFLGS=""
+MACHINE=$os-$version-$machine
+AC_SUBST(DFLGS, DFLGS)
+AC_SUBST(EOBJ, EOBJ)
+AC_SUBST(ETKOBJ, ETKOBJ)
+AC_SUBST(MACHINE,MACHINE)
+
+####
+#### Checks for various programs:
+####
+AC_PROG_RANLIB
+STRIP=strip; AC_SUBST(STRIP)
+
+####
+#### Find the C compiler an compile flags
+####
+CC=${CC-gcc}
+echo "Using '$CC' compiler"
+AC_SUBST(CC)
+
+STKCFLAGS=${CFLAGS-"-O2"}
+AC_SUBST(STKCFLAGS, STKCFLAGS)
+echo "Using '$STKCFLAGS' compilation options"
+
+STKLDFLAGS=""
+AC_SUBST(STKLDFLAGS)
+
+####
+#### Try to figure the system we have
+####
+case $MACHINE in
+  SunOS-4*)  OS=SUNOS4;;
+  SunOS-5*)  OS=SUNOS5;;
+  OSF1*)     OS=OSF1;;
+  ULTRIX*)   OS=ULTRIX;;
+  HP*)	     OS=HPUX; DFLGS="$DFLGS -Dhpux";;
+  Linux*)    OS=LINUX;;
+  NetBSD-1*) OS=NETBSD1;;
+  FreeBSD*)  OS=FREEBSD;;
+  IRIX-5*)   OS=IRIX5;;
+  *)         OS=unknown_system;;
+esac
+
+# Set the OS flag soon since it can be augmented with Linux
+DFLGS="$DFLGS -D$OS"
+echo "Assumming OS is $OS"
+
+####
+#### X11 stuff
+####
+AC_PATH_X
+AC_PATH_XTRA
+
+XINCLUDES=""; AC_SUBST(XINCLUDES)
+XLIBSW="";    AC_SUBST(XLIBSW)
+
+if test "$x_includes" != "" 
+then 
+  XINCLUDES="-I$x_includes"
+fi
+
+if test "$x_libraries" != ""
+then
+   XLIBSW="-L$x_libraries"
+fi
+
+XLIBSW="$XLIBSW $X_PRE_LIBS -lX11 $X_EXTRA_LIBS"
+
+
+#--------------------------------------------------------------------
+#	Include sys/select.h if it exists and if it supplies things
+#	that appear to be useful and aren't already in sys/types.h.
+#	This appears to be true only on the RS/6000 under AIX.  Some
+#	systems like OSF/1 have a sys/select.h that's of no use, and
+#	other systems like SCO UNIX have a sys/select.h that's
+#	pernicious.  If "fd_set" isn't defined anywhere then set a
+#	special flag.
+#--------------------------------------------------------------------
+
+AC_MSG_CHECKING([fd_set and sys/select])
+AC_TRY_COMPILE([#include <sys/types.h>],
+	[fd_set readMask, writeMask;], tk_ok=yes, tk_ok=no)
+if test $tk_ok = no; then
+    AC_HEADER_EGREP(fd_mask, sys/select.h, tk_ok=yes)
+    if test $tk_ok = yes; then
+	AC_DEFINE(HAVE_SYS_SELECT_H)
+    fi
+fi
+AC_MSG_RESULT($tk_ok)
+if test $tk_ok = no; then
+    AC_DEFINE(NO_FD_SET)
+fi
+
+
+####
+#### Find the MP library to use
+####
+AC_ARG_WITH(fgmp, 
+	[	--with-fgmp		Use a free replacement of Gnu MP package],
+	MP=libfgmp, 
+	MP=libgmp)
+echo "Multiple precision library: $MP"
+AC_SUBST(MP, MP)
+
+####
+#### Hash tables
+####
+AC_ARG_ENABLE(hash, 
+	[	--enable-hash		Enable hash table support],
+	hashtable="$enable_hash",
+	hashtable="yes")
+
+if test "$hashtable" = "yes" ; 
+then
+  EOBJ="$EOBJ hash.o"; EDFLGS="$EDFLGS -DUSE_HASH"
+fi
+
+echo "Hash tables support: $hashtable"
+
+####
+#### Posix support
+####
+AC_ARG_ENABLE(posix, 
+	[	--enable-posix		Enable posix support],
+	posix="$enable_posix",
+	posix="yes")
+
+if test "$posix" = "yes" ; 
+then
+  EOBJ="$EOBJ posix.o"; EDFLGS="$EDFLGS -DUSE_POSIX"
+fi
+
+echo "Posix support: $posix"
+
+####
+#### Use STklos support
+####
+AC_ARG_ENABLE(stklos,
+	[	--enable-stklos		Provide support for STklos], 
+	stklos="$enable_stklos",
+	stklos="yes")
+
+if test "$stklos" = "yes" ; 
+then
+  if test "$hashtable" != "yes"
+  then
+    echo "*** Hash table support is required for STklos."
+    echo "*** Forcing hash table support building."
+    EOBJ="$EOBJ hash.o"; EDFLGS="$EDFLGS -DUSE_HASH"
+  fi
+  DFLGS="$DFLGS -DUSE_STKLOS"
+fi
+echo "STklos support: $stklos"
+
+####
+#### Use Socket support from David Tolpin (dvd@pizza.msk.su)
+####
+AC_ARG_ENABLE(socket, 
+	[	--enable-socket		Provide support for sockets],
+	socket="$enable_socket",
+	socket="yes")
+
+if test "$socket" = "yes" 
+then
+   EOBJ="$EOBJ socket.o"; EDFLGS="$EDFLGS -DUSE_SOCKET"
+fi
+echo "Socket support: $socket"
+
+
+####
+#### Use Regexp support 
+####
+AC_ARG_ENABLE(regexp, 
+	[	--enable-regexp		Provide support for regular expressions],
+	regexpr="$enable_regexpr",
+	regexpr="yes")
+
+if test "$regexpr" = "yes" 
+then 
+   EOBJ="$EOBJ sregexp.o"; EDFLGS="$EDFLGS -DUSE_REGEXP"
+fi
+echo "Regexp support: $regexpr"
+
+
+####
+#### Use Process support 
+####
+AC_ARG_ENABLE(process, 
+	[	--enable-process	Provide support for Unix processes],
+	process="$enable_process",
+	process="yes")
+
+if test "$process" = "yes" 
+then
+   EOBJ="$EOBJ process.o"; EDFLGS="$EDFLGS -DUSE_PROCESS"
+fi
+echo "Process support: $process"
+
+####
+#### Html support
+####
+AC_ARG_ENABLE(html, 
+	[	--enable-html		Enable html support],
+	html="$enable_html",
+	html="yes")
+
+if test "$html" = "yes" ; 
+then
+  EOBJ="$EOBJ html.o"; EDFLGS="$EDFLGS -DUSE_HTML"
+fi
+
+echo "Html support: $html"
+
+####
+#### Pixmap support
+####
+AC_ARG_ENABLE(pixmap, 
+	[	--enable-pixmap		Enable pixmap images support],
+	pixmapimages="$enable_pixmap",
+	pixmapimages="yes")
+
+if test "$pixmapimages" = "yes" ; 
+then
+  ETKOBJ="$ETKOBJ pixmap.o"; EDFLGS="$EDFLGS -DUSE_PIXMAP"
+fi
+echo "Pixmap Images support: $pixmapimages"
+
+
+##############################################################################
+####
+#### Dynamic loading
+#### 
+##############################################################################
+DYNLOAD=""       ; AC_SUBST(DYNLOAD)
+EXTRA_OBJ=""     ; AC_SUBST(EXTRA_OBJ)
+LIB_DLD=""	 ; AC_SUBST(LIB_DLD)
+HAVE_DYNLOAD=yes
+
+case $OS in
+  unkn*)   HAVE_DYNLOAD="no";;
+  ULTRIX)  HAVE_DYNLOAD="no";;
+  LINUX)   HAVE_DYNLOAD="no";
+	   # Try to see if this system could be a ELF one
+	   elf_hint="no"
+	   for i in /lib/libc.so*
+	   do
+	     set `file  $i`
+	     if test "$2" = "ELF"
+	     then 
+	       elf_hint="yes"
+	       break
+	     fi
+	   done 2> /dev/null
+ 
+           AC_ARG_ENABLE(elf,
+	   [	--enable-elf		Enable Dynamic Loading using ELF (Linux only)],
+	   dynload_elf="$enable_elf",
+	   dynload_elf=$elf_hint)
+	   
+           AC_ARG_ENABLE(dld,
+	   [	--enable-dld		Enable Dynamic Loading using DLD (Linux only)],
+	   dynload_dld="$enable_dld",
+	   dynload_dld="no")
+	   if test "$dynload_elf" = "yes"
+	   then 
+	     if test "$dynload_dld" = "yes"
+	     then
+	       echo "**** You have set both DLD and ELF support. Rerun configure"
+	       exit 1
+	     fi
+	     OS=LINUX_ELF
+	     echo "Linux: Using ELF for dynamic loading"
+	     HAVE_DYNLOAD="yes"
+	   fi
+	   if test "$dynload_dld" = "yes"
+	   then 
+	     OS=LINUX_DLD
+	     echo "Linux: Using DLD for dynamic loading"
+	     HAVE_DYNLOAD="yes"
+	   fi
+	   # Set a compilation flag indicating the format used
+	   DFLGS="$DFLGS -D$OS" ;;
+   *)      AC_ARG_ENABLE(dynload, 
+		[	--enable-dynload	Enable Dynamic loading],
+		dynload="$enable_dynload",
+		dynload="yes")
+
+	   if test "$dynload" = "no"
+	   then
+	     echo "======== Don't use dynamic loading ======="; 
+	     HAVE_DYNLOAD="no";
+	   fi;;
+esac
+	
+
+SH_CCFLAGS=""; AC_SUBST(SH_CCFLAGS)
+SH_LDFLAGS=""; AC_SUBST(SH_LDFLAGS)
+SH_LOADER=":"; AC_SUBST(SH_LOADER)
+SH_SUFFIX="";  AC_SUBST(SH_SUFFIX)
+LIB_MALLOC=""; AC_SUBST(LIB_MALLOC)
+
+echo "Determining options for dynamic loading for $OS"
+case $OS in 
+  SUNOS4) 
+     SH_CCFLAGS="-pic"
+     SH_LDFLAGS="-assert pure-text -o"
+     SH_LOADER="ld"
+     SH_SUFFIX='so';;
+   SUNOS5)
+     SH_CCFLAGS="-K pic"
+     SH_LDFLAGS='-G -z text -h'
+     SH_LOADER="ld"
+     SH_SUFFIX='so';;
+   OSF1)
+     SH_CCFLAGS="-fpic"
+     SH_LDFLAGS="-shared -o"
+     SH_LOADER="ld"
+     SH_SUFFIX='so' ;;
+   NETBSD1) 
+     SH_CCFLAGS="-fpic"
+     SH_LDFLAGS="-Bshareable -o"
+     SH_LOADER="ld"
+     SH_SUFFIX='so';;
+   HPUX)
+     SH_CCFLAGS="+Z"
+     SH_LDFLAGS="-b -o"
+     SH_LOADER="ld"
+     SH_SUFFIX='sl'
+     STKLDFLAGS="$STKLDFLAGS -Wl,-E"
+     LIB_DLD=-ldld;;
+   FREEBSD)
+     SH_CCFLAGS="-pic"
+     SH_LDFLAGS="-Bshareable -o"
+     SH_LOADER="ld"
+     LIB_MALLOC="-lgnumalloc"
+     SH_SUFFIX='so';;
+   IRIX5)
+     if test "$CC" = "gcc"
+     then 
+       SH_CCFLAGS="-fpic"
+     else
+       SH_CCFLAGS="-KPIC"
+     fi
+     SH_LDFLAGS="-shared -o"
+     SH_LOADER="$CC"
+     SH_SUFFIX='so' ;;
+   LINUX)
+     echo "     Linux: no dynamic loading method choosed";;
+   LINUX_DLD)
+     SH_CCFLAGS=''
+     SH_LDFLAGS='-r -o'
+     SH_LOADER='ld'
+     SH_SUFFIX='so'
+     # Define STRIP to true to avoid executables striping when using DLD
+     STRIP=true
+     # Add the -ldld flag 
+     LIB_DLD=-ldld;;
+   LINUX_ELF)
+     SH_CCFLAGS=''
+     SH_LDFLAGS='-shared -o'
+     SH_LOADER='ld'
+     SH_SUFFIX='so' 
+     # Under ELF, use the -rdynamic option at ld phase
+     STKLDFLAGS=-rdynamic;;
+   *) echo " (I don't know how to make shared libraries for $OS)" ;;
+esac
+
+#
+# Transform -pic in -fpic if using gcc
+#
+if test ! -z "SH_CCFLAGS" ; then 
+  if test "$CC" = "gcc" -a "$SH_CCFLAGS" != "" ; then
+    SH_CCFLAGS="-fpic"
+  fi
+fi
+
+if  test "$HAVE_DYNLOAD" = "yes"
+then
+  for _i_ in $EOBJ $ETKOBJ
+  do 
+    EXTRA_OBJ="$EXTRA_OBJ `basename $_i_ .o`.$SH_SUFFIX"
+  done
+  DYNLOAD=-DUSE_DYNLOAD
+  EOBJ=""
+  ETKOBJ=""
+  EDFLGS=""
+fi
+
+# Set final DFLGS
+DFLGS="$DFLGS $EDFLGS"
+
+####
+#### Produce the Makefile
+####
+echo
+AC_OUTPUT(Makefile)
+
+##############################################################################
+
+####
+#### Configuring Sub-directories
+####
+
+echo "**** Configuring Src directory";
+(cd Src; CC=$CC MACH=$MACH /bin/sh ./configure)
+
+echo "**** Configuring Extensions directory";
+(cd Extensions; CC=$CC MACH=$MACH /bin/sh ./configure)
+
+echo "**** Configuring Tcl directory";
+(cd Tcl; CC=$CC /bin/sh ./configure)
+
+echo "**** Configuring Tk directory";
+if test "$x_includes" != "" -a "$x_libraries" != ""
+then
+  (cd Tk/unix; CC=$CC /bin/sh ./configure --x-includes=$x_includes \
+				          --x-libraries=$x_libraries)
+else
+  (cd Tk/unix; CC=$CC /bin/sh ./configure)
+fi
+
+###
+### Some things to terminate
+###
+
+
+# FreeBsd seems to use an old syntax for inclusion in Makefile. Patch
+# Makefiles acordingly 
+
+case $OS in
+   FREEBSD) for i in */Makefile
+	    do
+		sed <$i > X$$X 's%include ../config.make%.include "../config.make"%'
+		mv X$$X $i
+	    done;;
+   *)       ;;
+esac
+
+###
+### SUMMARY
+###
+
+echo " "
+echo " "
+echo "SUMMARY"
+echo "*******"
+echo "   Your system is " $OS
+echo "   C compiler is:" $CC
+echo "   Compilation options:" $STKCFLAGS
+echo "   Dynamic loading enabled:" $HAVE_DYNLOAD
+echo "   X11 libraries directory:" $x_libraries
+echo "   X11 headers directory:"   $x_includes
+echo " "
+echo "   You have choosed the following options"
+echo "		Multiple precision library:     " $MP
+echo "		Hash tables support:            " $hashtable
+echo "		Posix support:                  " $posix
+echo "		STklos support:                 " $stklos
+echo "		Socket support:                 " $socket
+echo "		Regexp support:                 " $regexpr
+echo "		Process support:                " $process
+echo "		Html support:                   " $html
+echo "		Pixmap Images support:          " $pixmapimages
+echo " "
+echo "If this is correct, you can just type 'make' now at your shell prompt."
+echo "Otherwise, rerun configure with proper options (see the README file for"
+echo "a description of STk configure options.)"
+echo " "
+

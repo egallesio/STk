@@ -1,0 +1,29 @@
+;;; Rubber banding
+;;;  (stroke out a box with mousebutton 1)
+
+(define x1 0)
+(define y1 0)
+
+(define (item-delete c)
+  (c 'delete 'area))
+
+(define (item-mark c x y)
+  (set! x1 (c 'canvasx x))
+  (set! y1 (c 'canvasy y))
+  (item-delete c))
+
+(define (item-stroke c x y)
+  (set! x (c 'canvasx x))
+  (set! y (c 'canvasy y))
+  (unless (and (= x1 x) (= y1 y))
+     (item-delete c)
+     (c 'addtag 'area 'withtag (c 'create 'rectangle x1 y1 x y))))
+
+
+(pack (canvas '.c1) :fill "both" :expand #t)
+
+(bind .c1 "<ButtonPress-1>"   (lambda (x y) (item-mark .c1 x y)))
+(bind .c1 "<B1-Motion>"       (lambda (x y) (item-stroke .c1 x y)))
+(bind .c1 "<ButtonRelease-1>" (lambda ()    (item-delete .c1)))
+
+

@@ -1,0 +1,29 @@
+;; Listbox with a scrollbar
+
+(scrollbar '.scroll :relief "groove" :command (lambda l 
+						(apply .list 'yview l)))
+(listbox '.list :yscroll (lambda l 
+			   (apply .scroll 'set l))) 
+
+(pack .scroll :side "right" :fill "y")
+(pack .list :side "left" :expand #t :fill "both")
+
+(.list 'insert 'end "First list item"
+       		    "Second list item"
+		    "Third list item"
+		    "Fourth list item"
+		    "Fifth list item"
+		    "Sixth list item"
+		    "Seventh list item"
+		    "Eighth list item"
+		    "Ninth list item"
+		    "Tenth list item"
+		    "Eleventh list item"
+		    "Twelfth list item"
+		    "Thirteenth list item"
+		    "Fourteenth list item"
+		    "Fifteenth list item"
+		    "Sixteenth list item"
+		    "Seventeenth list item"
+		    "Eighteenth list item"
+		    "Ninteenth list item")

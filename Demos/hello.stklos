@@ -1,0 +1,17 @@
+#!/bin/sh
+:;exec /usr/local/bin/stk -f "$0" "$@"
+;; Simple Tk script to create a button that prints "Hello, world".
+;; Click on the button to terminate the program.
+;; 
+;; The first line below creates the button, and the second line
+;; arranges for packer to manage the button's geometry, centering
+;; it in the application's main window.
+
+(require "Tk-classes")
+
+(define b (make <Button> :text "Hello, world" 
+			 :command (lambda () 
+				    (format #t "Hello, world~%")
+				    (destroy *root*))))
+(pack b)
+

@@ -1,0 +1,161 @@
+;;;;
+;;;; E n t r y . s t k 		--  Entry class definition
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 28-Feb-1994 11:36
+;;;; Last file update:  8-Jul-1996 00:12
+
+(require "Basics")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Entry> class
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class <Entry> (<Tk-simple-widget> <Tk-editable> <Tk-selectable> 
+		       <Tk-text-selectable>)
+  ((justify	     :accessor     justify
+		     :init-keyword :justify
+		     :allocation   :tk-virtual)
+   (x-scroll-command :init-keyword :x-scroll-command
+		     :accessor     x-scroll-command
+		     :tk-name      xscrollcommand
+		     :allocation   :tk-virtual)
+   (text-variable    :accessor     text-variable
+		     :init-keyword :text-variable
+		     :allocation   :tk-virtual
+		     :tk-name      textvar)
+   (show-chars	     :accessor	   show-chars
+		     :init-keyword :show-chars
+		     :allocation   :tk-virtual
+		     :tk-name	   show)
+   (state	     :accessor     state
+		     :init-keyword :state
+		     :allocation   :tk-virtual)
+   (string-value     :accessor     string-value
+		     :init-keyword :string-value
+		     :tk-name      stringval
+		     :allocation   :tk-virtual)
+   (width	     :accessor     width
+		     :init-keyword :width 
+		     :allocation   :tk-virtual)
+   ;; Fictive slot 
+   (value     	     :accessor	 value
+	      	     :init-keyword :value
+	      	     :allocation   :virtual
+	             :slot-ref     (lambda (o)  
+				     ((slot-ref o 'Id) 'get))
+	             :slot-set!    (lambda (o v) 
+				     ;; First delete all present chars
+				     ((slot-ref o 'Id) 'delete 0 'end)
+				     ;; Then insert new text
+				     ((slot-ref o 'Id) 'insert 0 v)))))
+
+(define-method tk-constructor ((self <Entry>))
+  Tk:entry)
+
+;;;
+;;; bounding-box
+;;;
+(define-method bounding-box ((self <Entry>) index)
+  ((slot-ref self 'Id) 'bbox index))
+
+;;;
+;;; Delete
+;;; 
+(define-method text-delete ((self <Entry>) start)
+  ((slot-ref self 'Id) 'delete start))
+
+(define-method text-delete ((self <Entry>) start end)
+  ((slot-ref self 'Id) 'delete start end))
+
+
+;;;
+;;; Cursor and (setter Cursor)
+;;;
+(define-method text-cursor ((self <Entry>))
+  ((slot-ref self 'Id) 'index 'insert))
+
+(define-method (setter text-cursor) ((self <Entry>) index)
+  ((slot-ref self 'Id) 'icursor index))
+
+;;;
+;;; Index 
+;;;
+(define-method text-index ((self <Entry>) index)
+  ((slot-ref self 'Id) 'index index))
+
+;;;
+;;; Insert
+;;;
+(define-method text-insert ((self <Entry>) text)
+  ((slot-ref self 'Id) 'insert 'insert text))
+
+(define-method text-insert ((self <Entry>) text position)
+  (let ((entry (slot-ref self 'Id)))
+    (entry 'icursor (car position))
+    (entry 'insert 'insert text)))
+
+;;;
+;;; Mark 
+;;; 
+(define-method text-mark ((self <Entry>) pos)
+  ((slot-ref self 'Id) 'scan 'mark pos))
+
+;;;
+;;; Drag-to 
+;;; 
+(define-method text-drag-to ((self <Entry>) pos)
+  ((slot-ref self 'Id) 'scan 'dragto pos))
+
+;;;
+;;; Selection-anchor
+;;; 
+(define-method selection-adjust ((self <Entry>) index)
+  ((slot-ref self 'Id) 'selection 'adjust index))
+
+;;;
+;;; Selection-clear
+;;; 
+(define-method selection-clear ((self <Entry>))
+  (apply (slot-ref self 'Id) 'selection 'clear))
+
+;;;
+;;; Selection-present?
+;;; 
+(define-method selection-present? ((self <Entry>))
+  ((slot-ref self 'Id) 'selection 'present))
+
+;;;
+;;; Selection-set!
+;;; 
+(define-method selection-set! ((self <Entry>) first  last)
+  (let ((Id (slot-ref self 'Id)))
+    (Id 'selection 'clear)
+    (Id 'selection 'from first)
+    (Id 'selection 'to last)))
+
+;;;
+;;; Selection-to!
+;;; 
+(define-method selection-to! ((self <Entry>) index)
+  ((slot-ref self 'Id) 'selection 'set index))
+
+;;;
+;;; X-view
+;;; 
+(define-method text-x-view ((self <Entry>) . args)
+  (apply (slot-ref self 'Id) 'xview args))
+
+(provide "Entry")

@@ -1,0 +1,5 @@
+;;A basic entry widget
+
+(pack (entry '.e1 :relief "sunken" :background "Light Sky Blue"))
+
+

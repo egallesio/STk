@@ -1,0 +1,264 @@
+
+
+
+STk(1)                                                     STk(1)
+
+
+_________________________________________________________________
+
+NNAAMMEE
+       stk, snow - A Scheme interpreter using the Tk toolkit
+
+SSYYNNOOPPSSIISS
+       ssttkk  [_o_p_t_i_o_n_s] [_a_r_g _a_r_g _._._.]
+       ssnnooww [_o_p_t_i_o_n_s] [_a_r_g _a_r_g _._._.]
+
+OOPPTTIIOONNSS
+       ssttkk interpreter accepts several command-line options which
+       may be abbreviated, as long as the abbreviation  is  unam­
+       biguous  (e.g.  --hh,  --hhee, --hheell are three possibe abbrevia­
+       tions for the --hheellpp option).
+
+
+       --ddiissppllaayy _d_i_s_p_l_a_y
+                      Display (and screen) on  which  to  display
+                      window.
+
+       --ffiillee _f_i_l_e_N_a_m_e Read  commands  from  _f_i_l_e_N_a_m_e  rather than
+                      standard input.  The last element in  _f_i_l_e_­
+                      _N_a_m_e  will  be  used  as  the title for the
+                      application and name of its interpreter for
+                      sseenndd  commands  (unless  overridden  by the
+                      --nnaammee option).
+
+       --ggeeoommeettrryy _g_e_o_m_e_t_r_y
+                      Initial geometry to use for window.
+
+       --nnaammee _n_a_m_e     Use _n_a_m_e as the title to  be  displayed  in
+                      the  window,  and as the name of the inter­
+                      preter for sseenndd commands.
+
+       --nneeww--ccoolloorrmmaapp  Specifies that the main window should  have
+                      a new private colormap instead of using the
+                      default colormap for the screen.
+
+       --ssyynncc          Execute  all   X   server   commands   syn­
+                      chronously,  so  that  errors  are reported
+                      immediately.   This  will  result  in  much
+                      slower  execution,  but  it  is  useful for
+                      debugging.
+
+       --vviissuuaall _v_i_s_u_a_l Specifies the visual to use  for  the  win­
+                      dow._V_i_s_u_a_l  may  be  one  of the following:
+                      _b_e_s_t,  _d_i_r_e_c_t_c_o_l_o_r,  _g_r_a_y_s_c_a_l_e,  _g_r_e_y_s_c_a_l_e,
+                      _p_s_e_u_d_o_c_o_l_o_r, _s_t_a_t_i_c_c_o_l_o_r, _s_t_a_t_i_c_g_r_a_y, _s_t_a_t_­
+                      _i_c_g_r_e_y, _t_r_u_e_c_o_l_o_r, or _d_e_f_a_u_l_t
+
+       --nnoo--ttkk         Don't initialize the Tk toolkit
+
+       --llooaadd _f_i_l_e_N_a_m_e Evaluate expressions contained in  _f_i_l_e_N_a_m_e
+                      before  reading  expressions  from standard
+
+
+
+July_1996                      3.1                              1
+
+
+
+
+
+STk(1)                                                     STk(1)
+
+
+                      input.
+
+       --iimmaaggee _f_i_l_e_N_a_m_e
+                      Restore the state saved in _f_i_l_e_N_a_m_e by  the
+                      _d_u_m_p  primitive  (Note: For now, _d_u_m_p works
+                      only on SunOS 4.1.x, Linux 1.x (a.out  for­
+                      mat) and FreeBSD).
+
+       --cceellllss _n_u_m_b_e_r  Set the default size for the heap to _n_u_m_b_e_r
+                      cells. The given number is also the  amount
+                      of  cells  used  when  extending  the heap.
+                      Default value is 20000.
+
+       --iinntteerraaccttiivvee   Tell the interpreter that it is used inter­
+                      actively (even if it doesn't think so).
+
+       --hheellpp          Print a summary of the command-line options
+                      and exit.
+
+       ----             Pass all remaining arguments through to the
+                      script's aarrggvv variable without interpreting
+                      them.  This provides a mechanism for  pass­
+                      ing  arguments  such  as  --nnaammee to a script
+                      instead of having wwiisshh interpret them.
+_________________________________________________________________
+
+
+DDEESSCCRRIIPPTTIIOONN
+       SSttkk is a Scheme R4RS interpreter which  provide  a  simple
+       access to the X11 Tk toolkit. If the --nnoo--ttkk option is pro­
+       vided to the interpreter, the Tk library is  not  initial­
+       ized  and  no  main  window is created.  If ssttkk is invoked
+       with no --ff option then it reads Scheme expressions  inter­
+       actively from standard input.  It will continue processing
+       commands until all windows have been deleted or until end-
+       of-file is reached on standard input.
+
+
+       SSnnooww  is a _l_i_g_h_t version of the ssttkk interpreter which does
+       not provide support for the Tk toolkit.  This  interpreter
+       does  not recognize the options --ddiissppllaayy, --ggeeoommeettrryy, --ssyynncc
+       nneeww--ccoolloorrmmaapp, vviissuuaall  and  --nnoo--ttkk  which  are  meaningless
+       without  Tk.  This  interpreter is called, rather than the
+       standard one, when the shell DISPLAY variable is not  ini­
+       tialized.
+
+
+       If  the  --ffiillee  option  is  provided to Tk, then ssttkk reads
+       Scheme forms from the file  named  in  the  --ffiillee  option.
+       These  forms will normally create an interactive interface
+       consisting of one or more widgets.  When the  end  of  the
+       command file is reached, ssttkk will continue to respond to X
+       events until all windows have been deleted.
+
+
+
+
+July_1996                      3.1                              2
+
+
+
+
+
+STk(1)                                                     STk(1)
+
+
+       The --iinntteerraaccttiivvee option forces the interpreter in interac­
+       tive  mode.  In  this  mode,  standard output and standard
+       error are unbuffered.  Use this option when you launch ssttkk
+       from eemmaaccss.
+
+
+
+VVAARRIIAABBLLEESS
+       Following Scheme variables are set when SSttkk starts:
+
+       **aarrggcc**         Contains a count of the number of _a_r_g argu­
+                      ments  (0  if  none),  not  including   the
+                      options described above.
+
+       **aarrggvv**         Contains  a  Scheme list whose elements are
+                      the  _a_r_g  arguments  (not   including   the
+                      options  described  above), in order, or an
+                      empty list if there are no _a_r_g arguments.
+
+       **pprrooggrraamm--nnaammee** Contains  _f_i_l_e_N_a_m_e  if  it  was  specified.
+                      Otherwise,  contains  the name by which ssttkk
+                      was invoked.
+
+
+
+SSCCRRIIPPTT FFIILLEESS
+       If you create a STk script in a file whose first line is
+
+              ##!!//uussrr//llooccaall//bbiinn//ssttkk --ff
+
+       then you can invoke the script  file  directly  from  your
+       shell if you mark it as executable.  This assumes that ssttkk
+       has  been   installed   in   the   default   location   in
+       /usr/local/bin;   if  it's  installed  somewhere else then
+       you'll have to modify the above line to match.
+
+
+EENNVVIIRROONNMMEENNTT VVAARRIIAABBLLEESS
+       ssttkk uses the following shell variables:
+
+       _S_T_K___L_I_B_R_A_R_Y    This variable indicates where  the  library
+                      files  are located. This variable allows to
+                      overload the default value  of  the  Scheme
+                      variable  _*_s_t_k_-_l_i_b_r_a_r_y_*  which is automati­
+                      cally calculated by  the  interpreter.(i.e.
+                      _s_t_k or _s_n_o_w).
+
+       _S_T_K___L_O_A_D___P_A_T_H  This  variable  serves  to  initialize  the
+                      _*_l_o_a_d_-_p_a_t_h_* Scheme variable. This  variable
+                      is  a  list  of paths to try when in a load
+                      command.
+
+       _S_T_K___H_E_L_P___P_A_T_H  This  variable  serves  to  initialize  the
+                      _*_h_e_l_p_-_p_a_t_h_*   Scheme   variable.   It  must
+
+
+
+July_1996                      3.1                              3
+
+
+
+
+
+STk(1)                                                     STk(1)
+
+
+                      contain a list  of  documentation  directo­
+                      ries.  This  variable  is  used by the help
+                      procedure.
+
+
+
+FFIILLEESS
+       _._/_i_n_i_t_._s_t_k
+
+       _$_S_T_K___L_I_B_R_A_R_Y_/_S_T_k_/_i_n_i_t_._s_t_k
+                      When ssttkk starts running, it tries  to  load
+                      the file _i_n_i_t_._s_t_k in the current directory.
+                      If this file is not present,  it  tries  to
+                      load this file in the SSTTkk__LLIIBBRRAARRYY directory
+                      (the value of SSTTkk__LLIIBBRRAARRYY is  automatically
+                      computed  to  be  in a sibling directory of
+                      the interpreter executable.
+
+
+       _~_/_._s_t_k_r_c       Standard _i_n_i_t_._s_t_k file tries  to  load  the
+                      file  _~_/_._s_t_k_r_c.  This  file  can be used to
+                      store  function  definitions  or  variables
+                      settings  that  you  want to be executed at
+                      each interpretater invocation.
+
+
+SSEEEE AALLSSOO
+       wish(1)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+July_1996                      3.1                              4
+
+

@@ -1,0 +1,81 @@
+<HTML><HEAD><TITLE>STk procedure - STk:make-dialog manual page</TITLE></HEAD>
+<BODY bgcolor = #c3ffc3>
+<H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageGreen.gif"> STk:make-dialog</H2>
+<I>Create modal dialog and wait for response</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<H3><A NAME="M2">SYNOPSIS</A></H3>
+(<B>STk:make-dialog</B> <I>arguments ...</I>)<BR>
+<H3><A NAME="M3">DESCRIPTION</A></H3>
+This procedure is part of the STk library. Its arguments describe a dialog box. 
+They can be set using the following keywords.
+<P>
+<DL>
+<DT><A NAME="M4"><B>:window</B></A><DD>
+Name of top-level window to use for dialog. The default value for 
+this parameter is  <I>.dialog</I>. If a window with this name 
+already exists, it is destroyed.
+<P>
+<DT><A NAME="M5"><B>:title</B></A><DD>
+Text to appear in the window manager's title bar for the dialog. Default to 
+<B>&quot;Dialog&quot;</B>.
+<P>
+<DT><A NAME="M6"><B>:text</B></A><DD>
+Message to appear in the top portion of the dialog box. Default to the empty string.
+<P>
+<DT><A NAME="M7"><B>:bitmap</B></A><DD>
+If non-empty, specifies a bitmap to display in the top portion of
+the dialog, to the left of the text.
+If this is an empty string (or if not specified) then no bitmap is displayed 
+in the dialog.
+<P>
+<DT><A NAME="M8"><B>:default</B></A><DD>
+If this is an integer greater than or equal to zero, then it gives
+the index of the button that is to be the default button for the dialog
+(0 for the leftmost button, and so on).
+If less than zero then there won't be any default button.
+By default, there is no default button.
+<P>
+<DT><A NAME="M9"><B>:buttons</B></A><DD>
+the given argument must be a list of couples indicating for each the button text and
+its associated action (a closure). The sepcified buttons are displayed 
+in order from left to right.
+<P>
+<DT><A NAME="M10"><B>:grab</B></A><DD>
+is a boolean value indicating if the <B>STk:make-dialog</B> must wait that a
+button be pressed before returning. Use the symbol <B>global</B> to have
+a global grab. If grabbing is set, <B>STk:make-dialog</B> returns the button
+pressed index (or -1 if the window is detroyed before a button is pressed).
+By default, the grab is unset.
+
+<P>
+</DL>
+<P>
+Hereafter are simple uses of the <B>STk:make-dialog</B> procedure
+<P>
+<I>;; A simple dialog; returns after displaying the window</I>
+<PRE>(STk:make-dialog :text    &quot;Do you want to exit?&quot;
+                 :bitmap  &quot;question&quot;
+                 :buttons (list (list &quot;Yes&quot; (lambda () 
+                                              (display &quot;Yes\n&quot;)))
+                                (list &quot;No&quot;  (lambda () 
+                                              (display &quot;No\n&quot;)))))</PRE>
+<P>
+<I>;; Another one which wait that the user chooses a response</I>
+<BR>
+<I>;; Default is &quot;bar&quot;</I>
+<BR>
+<I>;; Return value will be 0 1 or 2</I>
+<BR>
+<I>;; The @ in a bitmap allows to specify a file</I>
+<PRE>(STk:make-dialog :text    &quot;Choose one&quot;
+                 :bitmap  &quot;@/usr/include/X11/bitmaps/terminal&quot;
+                 :default 1
+                 :grab    #t
+                 :buttons (list (list &quot;foo&quot; (lambda () 
+                                              (display &quot;foo\n&quot;)))
+                                (list &quot;bar&quot; (lambda () 
+                                              (display &quot;bar\n&quot;)))
+                                (list &quot;baz&quot; (lambda ()
+                                              (display &quot;baz\n&quot;)))))</PRE>
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookGreen.gif"> Back to the <B>STk</B> main page</A>
+</BODY></HTML>

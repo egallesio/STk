@@ -1,0 +1,406 @@
+#!/bin/sh
+:;exec /usr/local/bin/stk -f 
+;;
+;;  STk/Scheme widget tour, Version 0.2
+;;
+;;  Originally for Tk/Tcl by:  Andrew Payne  payne@crl.dec.com
+;;  This one simplified and redesigned for STk/Scheme 
+;;  by: Suresh Srinivas ssriniva@cs.indiana.edu
+
+;; Main differences are in the way the demo window is created
+;; The Tk/Tcl version uses send mechanisms extensively.
+;; The STk/Scheme version avoids using send mechanisms and
+;; fixes the user's input so as to make the user widgets to
+;; be children of a top-level widget called .wtour-wdemo
+
+ 
+(option 'add "Tk.geometry"  "+25+405" "startupFile")
+(option 'add "Tk.demo-geometry" "300x300+25+25" "startupFile")
+ 
+(option 'add "*Entry*BorderWidth"   "2")
+(option 'add "*Entry*Background"    "white")
+(option 'add "*Entry*Relief"        "sunken")
+(option 'add "*Entry*Font"          "-*-courier-bold-r-*-*-14-*-*-*-*-*-*-*")
+(option 'add "*Entry*Width"         "40")
+
+;; prefix all the globals with wtour
+;; so that we dont screw up the global name space quite a lot
+
+(define wtour-wdemo       ".wtour-wdemo")
+(define wtour-filename    #f)
+(define wtour-action      #f)
+
+(define wtour-mframe      #f)
+(define wtour-txt         #f)
+
+(define wtour-maxlessons  100)
+(define wtour-nlessons    #f)
+(define wtour-lessons     (make-vector wtour-maxlessons))
+(define wtour-curlesson   #f)
+(define wtour-dir	  (if (null? *argv*) "." (car *argv*)))
+(define wtour-lessondir   (string-append wtour-dir "/lessons/"))
+
+(define wtour-menus       '())
+(define wtour-menu-bar    '())
+
+
+;; some tk goodies (stolen from one of the STk demos)
+
+(define (->string obj)
+  (cond ((string? obj)     obj)
+        ((number? obj)     (number->string obj))
+        ((symbol? obj)     (symbol->string obj))
+        ((tk-command? obj) (widget->string obj))
+        (else              (error "Cannot convert ~S to a string" obj))))
+  
+(define (& . l)
+  (let loop ((l l) (s ""))
+    (if (null? l)
+        s
+        (loop (cdr l) (string-append s (->string (car l)))))))
+ 
+
+
+
+;; Make a text widget with an attached scrollbar
+(define (mktext w)
+  (let ((scl #f)
+	(txt #f))
+    (frame w)
+    (set! scl (scrollbar (& w ".scroll")
+			 :relief  "flat" 
+			 :command (lambda l
+				    (apply txt 'yview l))))
+    (set! txt (text (& w ".text")	
+		    :bd 1 
+		    :relief "raised" 
+		    :yscrollcommand (lambda l
+				      (apply scl 'set l))))
+    (pack scl :side "right" :fill "y")
+    (pack txt :expand #t :fill "both")
+    txt))
+
+;; Set up the demo window
+(begin
+  (catch (destroy .wtour-wdemo))
+  (toplevel wtour-wdemo)
+  (wm 'geometry wtour-wdemo "+300+300")
+  (wm 'minsize wtour-wdemo "100" "100")
+  (wm 'title .wtour-wdemo "STk Demo Window")
+  (wm 'iconname .wtour-wdemo "STk Demo Window")
+  (update "idletasks"))
+
+
+;;
+;;  Set up main window
+;;
+
+(wm 'title "." "STk Widget Tour")
+
+(set! wtour-mframe (frame ".menu" :relief "raised" :borderwidth "1"))
+(pack wtour-mframe :fill "x")
+
+;; having to eval the return values from Tk is indeed a bother
+
+(let ([mframe-help (& wtour-mframe ".help")]
+      [mframe-file (& wtour-mframe ".file")])
+  (let ([mframe-help-menu (& mframe-help ".menu")])
+    (menubutton mframe-help :text "Help" :menu mframe-help-menu)
+    (pack mframe-help :side "right")
+    (let ([m (menu mframe-help-menu)])
+      (m 'add 'command :label "Help!" :command '(mkHelp))))
+  (let ([mframe-file-menu (& mframe-file ".menu")])
+    (menubutton mframe-file :text "File" :menu mframe-file-menu)
+    (pack mframe-file :side "left")
+    (let ([m (menu mframe-file-menu)])
+      (m 'add 'command :label "New" :command '(do-new))
+      (m 'add 'command :label "Open..." :command '(do-open))
+      (m 'add 'command :label "Save..." :command '(do-saveas))
+      (m 'add 'separator)
+      (let ([mframe-file-menu-fonts (& mframe-file-menu ".fonts")])
+	(m 'add 'cascade :label "Screen Font" :menu mframe-file-menu-fonts)
+	(m 'add 'separator)
+	(m 'add 'command :label "Exit" :command '(do-exit))
+	(let ([m (menu mframe-file-menu-fonts)])
+          (m 'add 'command :label "Small" :command 
+             '(set-font "-*-courier-medium-r-*-*-12-*-*-*-*-*-*-*"))
+          (m 'add 'command :label "Medium" :command 
+             '(set-font "-*-courier-medium-r-*-*-14-*-*-*-*-*-*-*"))
+          (m 'add 'command :label "Large" :command 
+             '(set-font "-*-courier-medium-r-*-*-18-*-*-*-*-*-*-*")))))))
+
+
+(set! wtour-txt (mkText ".text"))
+(pack .text :expand "yes" :fill "both")
+
+(bind wtour-txt "<Any-Key-Menu>"  (lambda () (apply-changes)))
+(bind wtour-txt "<Any-Key-Prior>" (lambda () (adjust-lesson -1)))
+(bind wtour-txt "<Any-Key-Next>"  (lambda () (adjust-lesson +1)))
+(focus wtour-txt)
+
+(let ([f (frame ".buttons" :relief "raised" :borderw "1")])
+  (pack f :side "bottom" :fill "x")
+  (let ([f-apply (& f ".apply")]
+	[f-next  (& f ".next")]
+	[f-prev  (& f ".prev")])
+    (button f-apply :text " Apply " :command (lambda () (apply-changes)))
+    (button f-next  :text " Next  " :command (lambda () (adjust-lesson +1)))
+    (button f-prev  :text " Prev  " :command (lambda () (adjust-lesson -1)))
+    (pack f-apply f-next f-prev :side "left" :padx 7 :pady 7)))
+
+;;
+;;  Set the font of both text windows
+;;
+
+(define (set-font reg)
+  (wtour-txt 'configure :font reg))
+
+
+;;  Make a new dialog toplevel window
+;;
+
+(define (mkDialogWindow w)
+  (catch (destroy w))
+  (toplevel w :class "Dialog" :bd 0)
+  (wm 'title w "Dialog box")
+  (wm 'iconname w "Dialog")
+  (wm 'geometry w "+425+300")
+  (grab w)
+  (focus w)
+  (string->symbol w))
+
+(define (centerwindow w)
+  (wm 'withdraw w)
+  (update "idletasks")
+  (let ([x (- ( - (inexact->exact (/ (winfo 'screenwidth w) 2))
+		  (inexact->exact (/ (winfo 'reqwidth w) 2)))
+	      (winfo 'vrootx (eval (winfo 'parent w))))]
+	[y (- ( - (inexact->exact (/ (winfo 'screenheight w) 2))
+		  (inexact->exact (/ (winfo 'reqheight w) 2)))
+	      (winfo 'vrooty (eval (winfo 'parent w))))])
+    (wm 'geom w (format #f "+~A+~A" x y))
+    (wm 'deiconify w)))
+
+(define (mkHelp)
+  (let ([w (mkDialogWindow ".help")])
+    (wm 'title w "Window Tour Help")
+    (let ([w-t (& w ".t")]
+	  [w-f (& w ".buttons")])
+      (let ([t (mkText w-t)])
+	(pack w-t)
+	(let ([f (frame w-f :relief "raised" :borderw "1")])
+	  (pack f :side "bottom" :fill "x")
+	  (let ([f-close (& w-f ".close")])
+	    (button f-close :text " Close " :command `(destroy ,w))
+	    (pack f-close :side "right" :padx "7" :pady "7")))
+	(t 'insert "current"
+"Wtour is an interactive tour of STk widgets.
+ 
+The main window displays a short Scheme/STk program, and the demo window
+displays the results of running the program.
+ 
+You can make changes to the program and apply those changes by clicking
+on the \"Apply\" button or pressing the \"Do\" button.
+ 
+You can navigate through the tour with the \"Prev\" and \"Next\" buttons.  Or,
+you can go directly to a specified lesson with the drop down menus.
+ 
+There is also a command window that can be used to send individual commands
+to the demo process.  You can toggle the command window on and off with an
+option under the \"File\" menu.
+
+Originally by: Andrew Payne (payne@crl.dec.com)
+STk rewrite by: Suresh Srinivas (ssriniva@cs.indiana.edu)
+STk 3.0 port by: Erick Gallesio (eg@unice.fr)")
+	(t 'configure :state "disabled")
+	(centerwindow w)))))
+
+
+;; Make a one-line query dialog box
+
+(define (mkentryquery w prompt var)
+  (let ([w (mkdialogwindow w)])
+    (let ([w-top (& w ".top")]
+	  [w-bot (& w ".bot")])
+      (let ([t (frame w-top :relief "raised" :border "1")]
+	    [b (frame w-bot :relief "raised" :border "1")])
+	(pack t b :fill "both")
+	(let ([t-lab     (& t ".lab")]
+	      [t-ent     (& t ".ent")]
+	      [b-ok      (& b ".ok")]
+	      [b-default (& b ".default")]
+	      [b-cancel  (& b ".cancel")])
+	  (label t-lab :text prompt)
+	  (let ([e (entry t-ent :textvar `,var)])
+	    (bind e "<Any-Return>" `(set! wtour-action 'ok))
+	    (pack t-lab e :side "left" :padx "3m" :pady "3m")
+
+	    (button b-ok :text "Ok" :command '(set! wtour-action "ok"))
+	    (frame b-default :relief "sunken" :bd 1)
+	    (raise b-ok b-default)
+	    (pack b-default :in w-bot :side "left" :expand "1"
+		  :padx "3m" :pady "2m")
+	    (pack b-ok :in b-default :padx "2m" 
+		  :ipadx "2m" :ipady "1m")
+	    (button b-cancel :text "Cancel" :command 
+		    '(set! wtour-action "cancel"))
+	    (pack b-cancel :side "left" :padx "3m" :pady "3m"
+		  :ipadx "2m" :ipady "1m" :expand "yes")
+	    (centerwindow w)
+	    (focus e)
+	    (tkwait 'variable 'wtour-action)
+	    (destroy w)
+	    wtour-action))))))
+
+;; Write the edit buffer to the specified file
+
+(define (write-file fname)
+  (with-output-to-file fname
+    (lambda ()
+      (format #t "~A" (wtour-txt 'get "1.0" "end")))))
+
+;; ignoring file existence check (update)
+
+(define (do-save-file fname)
+  (write-file fname))
+
+(define (do-new)
+  (wtour-txt 'delete "1.0" "end")
+  (apply-changes))
+
+(define (do-saveas)
+  (if (equal? (mkentryquery ".dialog" 
+			 "Enter save file name:" 'wtour-filename) "ok")
+      (do-save-file wtour-filename)))
+
+(define (do-open-file fname)
+  (with-input-from-file fname
+    (lambda ()
+      (wtour-txt 'delete "1.0" "end")
+      (do ((l (read-line) (read-line)))
+	  ((eof-object? l))
+	(wtour-txt 'insert "end" l)
+	(wtour-txt 'insert "end" "\n"))
+      (wtour-txt 'mark 'set 'insert "1.0")))
+    (apply-changes))
+
+(define (do-open)
+  (if (equal? (mkentryquery ".dialog" 
+			    "Enter file name to load:" 'wtour-filename) "ok")
+      (do-open-file wtour-filename)))
+
+
+;; need to do it recursively! (look at X selection to see why it wont work)
+(define (fix-widget-names l)
+  (map
+    (lambda (x)
+      (cond
+       ((symbol? x) (let ([y (symbol->string x)])
+		      (if (eq? (string-ref y 0) #\.)
+			  (string->symbol (string-append ".wtour-wdemo" y))
+			  x)))
+       ((string? x) (if (eq? (string-ref x 0) #\.)
+			(string-append ".wtour-wdemo" x)
+			x))
+       ((list? x) (fix-widget-names x))		    
+       (else        x)))
+    l))
+
+;; mopping up the demo window prior to loading the next lesson
+;; or applying the changes to the demo window.
+ 
+(define (clear-up-wtour-wdemo)
+  (let ([wtour-wdemo-child (winfo 'children .wtour-wdemo)])
+    (if (not (null? wtour-wdemo-child))
+	(if (list? wtour-wdemo-child)
+	    (map (lambda (w) 
+		   (destroy w))
+		 wtour-wdemo-child)
+	    (destroy wtour-wdemo-child)))))
+
+;; apply the changes to the demo window
+(define (apply-changes)
+  (clear-up-wtour-wdemo)
+  (let ([x (wtour-txt 'get "1.0" "end")])
+    (with-input-from-string
+	x
+      (lambda ()
+	(let loop ([y (read)])
+	  (if (not (eof-object? y))
+	      (let ([z (fix-widget-names y)])
+		(eval z)
+		(loop (read)))))))))
+	    
+
+(define-macro (add1! var)
+  `(set! ,var (+ 1 ,var)))
+
+(define-macro (incr! var val)
+  `(set! ,var (+ ,var ,val)))
+
+(define-macro (add-to-menu-assoc item)
+  `(set! wtour-menus (cons ,item wtour-menus)))
+
+
+(define-macro (add-to-menu-list item)
+  `(set! wtour-menu-bar (cons ,item wtour-menu-bar)))
+
+;; Define a new lesson
+
+(define (lesson mname name file)
+  (vector-set! wtour-lessons wtour-nlessons file)
+  (let ([mb (assoc mname wtour-menus)] 
+	[first (assoc mname wtour-menus)])
+    (if (not first)
+	(begin
+	  (set! mb (& (& wtour-mframe ".") wtour-nlessons))
+	  (menubutton mb :text mname :menu (& mb ".menu"))
+	  (pack mb :side "left")
+	  (add-to-menu-assoc (cons mname (menu (& mb ".menu"))))
+	  (add-to-menu-list mb)))
+    (if (not (equal? name ""))
+	(begin
+	  ((eval (cdr (assoc mname wtour-menus))) 'add 'command :label name
+					    :command `(set-lesson ,wtour-nlessons))
+	  (add1! wtour-nlessons))
+	  ((eval (cdr mb)) 'add "separator"))))
+
+
+;; set the current lesson
+(define (set-lesson num)
+  (set! wtour-curlesson num)
+  (do-open-file (& wtour-lessondir "/" (vector-ref wtour-lessons num))))
+
+(define (do-warning-dialog str)
+  (stk:make-dialog :window ".info" :title "Warning"
+		   :text str
+		   :bitmap ""
+		   :grab #t
+		   :defaults 0
+		   :buttons (list (list "Cancel" (lambda () #f)))))
+
+;; adjust the current lesson by some increment
+
+(define (adjust-lesson i)
+  (incr! wtour-curlesson i)
+  (if (>= wtour-curlesson wtour-nlessons)
+      (begin
+	(do-warning-dialog "That was the last lesson")
+	(set! wtour-curlesson (- wtour-nlessons 1)))
+      (if (< wtour-curlesson 0)
+	  (begin
+	    (do-warning-dialog "That was the first lesson")
+	    (set! wtour-curlesson 0))))
+  (set-lesson wtour-curlesson))
+
+
+;; clean up and exit
+
+(define (do-exit)
+  (exit))
+	  
+(set-font "-*-courier-medium-r-*-*-12-*-*-*-*-*-*-*")
+         
+(set! wtour-nlessons 0)
+(load (& wtour-lessondir "/index"))
+(set-lesson 0)

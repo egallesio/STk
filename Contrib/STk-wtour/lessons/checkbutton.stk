@@ -1,0 +1,9 @@
+;; A checkbutton widget
+
+(checkbutton '.c1 :text "Select me" :anchor "w")
+(pack .c1 :fill "x")
+
+;; Shorter ...
+(pack 
+   (checkbutton '.c2 :text "Select me too" :anchor "w") 
+   :fill "x")

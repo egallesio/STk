@@ -1,0 +1,137 @@
+%
+% STk Reference manual (Appendix: Using the Tk toolkit)
+%
+%           Author: Erick Gallesio [eg@unice.fr]
+%    Creation date: ??-Nov-1993 ??:??
+% Last file update:  8-Jul-1996 21:52
+%
+
+\newcommand{\schglob}[1]{*#1*}
+
+This appendix summarizes the main differences between the {\stk} Scheme
+implementation and the language described in {\rrrr}.
+
+\section{Symbols}
+
+{\stk} symbol syntax has been augmented to allow case significant symbols. 
+This extension is discussed in \ref{symbolsection}.
+
+The following symbols are defined in the global environment.
+
+\begin{itemize}
+
+\item {\tt\schglob{debug}}\schindex{\schglob{debug}}. Setting
+    {\tt \schglob{debug}} to {\schtrue} prevents macro inlining and 
+    expression recoding (see~\ref{uncode}).
+        
+\item {\tt\schglob{gc-verbose}}\schindex{\schglob{gc-verbose}}. If 
+      {\tt\schglob{gc-verbose}} is {\schtrue}, a message will be printed before
+      and after each run of garbage collector. The message is printed on the
+      standard error stream.
+     
+\item {\tt\schglob{load-verbose}}\schindex{\schglob{load-verbose}}. If 
+      {\tt\schglob{load-verbose}} is {\schtrue}, the absolute path name of
+      each loaded file is printed before its effective reading. File names
+      are printed on the standard error stream.
+      
+    \item {\tt\schglob{load-path}}\schindex{\schglob{load-path}} must
+      contain a list of strings. Each string is taken as a directory
+      path name in which a file will be searched for loading. This
+      variable can be set automatically from the {\tt STK\_LOAD\_PATH}
+      shell variable. See {\tt stk(1)} for more details.
+
+\item  {\tt\schglob{load-suffixes}}\schindex{\schglob{load-suffixes}}
+      must contain a list of strings. When the system try to load a
+      file in a given directory (according to {\tt\schglob{load-path}}
+      value), it will first try to load it without suffix. If this
+      file does not exist, the system will sequentially try to find the file by
+      appending each suffix of this list. A typical value for this
+      variable may be {\tt ("stk" "stklos" "scm" "so")}.
+      
+    \item {\tt\schglob{help-path}}\schindex{help,
+        getting}\schindex{\schglob{help-path}} must contain a list of
+      strings.  Each string is taken as a directory path name in which
+      documentation files are searched. This variable can be set
+      automatically from the {\tt STK\_HELP\_PATH} shell variable. See
+      {\tt stk(1)} for more details.
+
+\item {\tt\schglob{argc}}\schindex{\schglob{argc}} contains the
+       number of arguments  (0 if none), not including interpreter
+       options. See {\tt stk(1)} for more details.
+
+\item {\tt\schglob{argv}}\schindex{\schglob{argv}} contains a Scheme 
+      list whose elements are the arguments (not including the interpreter
+      options), in order, or an empty list if there are no arguments.
+      See {\tt stk(1)} for more details.
+
+\item {\tt\schglob{program-name}}\schindex{\schglob{program-name}} contains
+      the file name specified with the {\tt -file} option, if present.
+      Otherwise, it contains the name through which the interpreter was invoked.
+      See {\tt stk(1)} for more details.
+
+\item {\tt\schglob{print-banner}}\schindex{\schglob{print-banner}}. If 
+      {\tt\schglob{print-verbose}} is {\schfalse}, the usual copyright
+      message is not displayed when the interpreter is started.
+
+\item {\tt\schglob{root}}\schindex{\schglob{root}} designates the Tk main
+      window (see~A-\ref{root window}). This variable is not set if
+      the Tk toolkit is not initialized.
+\end{itemize}
+
+\section{Types}
+
+{\stk} implements all the types defined as mandatory in {\rrrr}. However, complex
+numbers and rational numbers (which are defined but not required in \rrrr) are
+not implemented. The lack of these types implies that some functions of
+{\rrrr} are not defined.
+
+Some types which are not defined in {\rrrr} are implemented in {\stk}. Those 
+types are listed below:
+\begin{itemize}
+\item input string port type (\ref{inputoutput})
+\item output string port type (\ref{inputoutput})
+\item keyword type (\ref{keywords})
+\item Tk command type (\ref{tkcommand})
+\item environment type (\ref{environment})
+\item macro type (\ref{macros})
+\item address type (\ref{addresses})
+\item hash table type (\ref{hashtables})
+\item Regular expression type (\ref{regexp-type})
+\item process type (\ref{process-type})
+\item socket type (\ref{socket-type})
+\end{itemize}
+
+\section{Procedures}
+
+The following procedures are required by {\rrrr} and are not implemented in the
+{\stk} interpreter.
+\begin{itemize}
+\item{transcript-off}\schindex{transcript-off}
+\item{transcript-on}\schindex{transcript-on}
+\end{itemize}
+
+\ide{Transcript-off} and \ide{transcript-on} can be simulated with 
+various Unix tools such as {\tt script} or {\tt fep}.
+
+\vskip3mm
+The following procedures are not implemented in the {\stk} interpreter whereas
+they are defined in {\rrrr} (but not required). They are all 
+related to complex or rational numbers.
+\begin{itemize}
+\item{numerator}\schindex{numerator}
+\item{denominator}\schindex{denominator}
+\item{rationalize}\schindex{rationalize}
+\item{make-rectangular}\schindex{make-rectangular}
+\item{make-polar}\schindex{make-polar}
+\item{real-part}\schindex{real-part}
+\item{imag-part}\schindex{imag-part}
+\item{magnitude}\schindex{magnitude}
+\item{angle}\schindex{angle}
+\end{itemize}
+
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "manual"
+%%% End: 

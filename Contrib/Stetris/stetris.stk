@@ -1,0 +1,1112 @@
+#!/bin/sh
+:;exec /usr/local/bin/stk -f "$0" "$@"
+;;;;
+;;;; STetris Version 1.1
+;;;;     By Harvey J. Stein      hjstein@math.huji.ac.il
+;;;;     Copyright (C) 1994 Harvey J. Stein, Tel Aviv, ISRAEL
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose is hereby granted, provided that
+;;;; both the above copyright notice and this permission notice appear
+;;;; in all copies and derived works, and that copies and/or derived
+;;;; works are used, copied and/or distributed without fees.  Fees for
+;;;; distribution or use of this software or derived works may only be
+;;;; charged with express written permission of the copyright holder.
+;;;; This software is provided ``as is'' without express or implied
+;;;; warranty.
+
+;;; This is an implementation of a falling block game.  Just run it.
+;;;
+;;; The controls are as follows, but are easily modified (see below):
+;;;    Move to left : j   or   left arrow
+;;;    Move to right: l   or   right arrow
+;;;    Rotate right : k   or   down arrow 
+;;;    Rotate left  : i   or   up arrow
+;;;    Drop quick   : space
+;;;    New game     : n
+;;;    Pause        : p
+;;;    Continue     : c
+;;;    Scramble     : s - Scrambles the blocks so that rotate left &
+;;;                       rotate right actually transform the shape
+;;;                       instead of rotating it.  Only available
+;;;                       between games.
+;;;    Unscramble   : u - Go back to original configuration
+;;;    Help         : h
+;;;    Quit         : q
+;;;    End game     : e
+;;;    Bump up level: b
+;;;
+;;; ------------- Installation -------------------------------
+;;; Should just work fine as is.  If you have xboing, and you have a
+;;; /dev/audio device, this game can produce sounds.  To get the
+;;; sounds, edit the definition of sounddir (first definition of the
+;;; global variables section below).  Make sure it refers to the
+;;; directory with your xboing sounds.
+
+;;; To do:
+;;;   -Maintain high score file.  Question: How can I protect it?
+;;;    (Typically one will make a high score file write only to group
+;;;    games & make the game suid games.  But, this can't be done in
+;;;    general for shellscripts).
+;;;   -Man page.
+;;;   -Next piece preview.
+;;;   -More sounds.
+;;;   -Better way to play sounds than catting to /dev/audio.
+;;;   -Make up sounds for game instead of just "borrowing" sounds from
+;;;    xboing.
+;;;   -Code cleanup - Parameterize the pieces better.  Right now I
+;;;    have the number 7 (for the number of pieces) hard wired into
+;;;    the code, and the colors of each piece are just stuffed into a
+;;;    fcn.  It would be nice to have a global variable (n) for the # of
+;;;    blocks to use in the pieces & then to generate all the pieces
+;;;    containing n squares.
+;;;   -Find better way of playing sounds than catting to /dev/audio
+;;;   -Standardize comment style.
+;;;   -Write STk program which uses send to play stetris.
+;;;   -Need to change name of window before I can write a stetris
+;;;    player that uses send...
+;;;   -Fix bug where game sometimes ends with last piece overlapping
+;;;    another piece.
+
+;;; Changes from v1.0 to v1.1:
+;;;   -Got rid of some of the 7s.
+;;;   -Added scrambling & help.
+;;;   -Didn't fix bug where game sometimes ends with last piece
+;;;    overlapping another piece, but made it more rare.
+;;;   -Now starts of pieces off screen so that they all appear
+;;;    initially as one row.
+;;;   -Added buttons for new game, pause, unpause, help, etc.
+;;;   -Blank screen during pauses.
+;;;   -No need for stetris shellscript (thanks to Erick).
+;;;   -Added <b> to increase level by 1.
+;;;   -Reduced min-fall-delay from 80 to 60 because it seems to be
+;;;    long enough (at least on my 486dx33).  Make it bigger if your
+;;;    top level is jerky.
+
+;;; Helpful for debugging (so that stetris.stk can be reloaded into
+;;; the interpreter):
+(for-each destroy (winfo 'children *root*))
+
+;;; To avoid inopportune garbage collections:
+(cond ((not (symbol-bound? 'heap-expanded)) ; Don't expand after addn'l loads.
+       (expand-heap 75000)
+       (define heap-expanded #t)))
+
+;;; ------------------- Include files ------------------------
+
+(require "Tk-classes")
+(require "unix")
+(require "dialog")
+
+
+;;; ----------- Global variables ---------------------------
+
+;; Sound directory (set for your system, or set to a nonexistent directory to
+;; disable sound):
+(define sounddir "/usr/games/lib/xboing/sounds")
+
+;;; Sounds (modifiable):
+;;; Expects to find (string-append soundir "/" "game_over.au"), for example.
+;;; Sound is played by catting it to /dev/audio
+(define soundmap
+  '((game-over       "game_over.au")
+    (near-end        "looksbad.au")
+    (goto-next-level "warp.au")
+    (piece-landed    "metal.au")
+    (piece-moved     "click.au")
+    (three-in-row    "applause.au")
+    (four-in-row     "youagod.au")))
+
+;; Keyboard mappings & corresponding actions (modifiable).
+;; Now found at end...
+
+;; block size & playing field size parameters (modifyable).
+(define block-width 20)			; Width of a block.
+(define block-height 20)		; Height of a block.
+(define block-border-width 2)		; Width of block borders.
+(define play-cols 9)			; cols # 0-9  = 10 cols.
+(define play-rows 29)			; rows # 0-28 = 29 rows.
+
+;; Window shape & size parameters (modifyable).
+(define frame-border-width 3)		; Width of frame border for
+					; playing field & score box.
+(define score-frame-width 150)		; Width of score box (don't
+					; make too small!).
+
+;; Game parameters (modifiable).
+(define start-fall-delay 750)		; initially, game drops stetris piece
+					; one notch every start-fall-delay
+					; milliseconds. 
+(define level-time (* 40 start-fall-delay)) ; Length of time (in milliseconds)
+					    ; that each level lasts.
+(define min-fall-delay 60)		; Min amt of time allowable btw piece
+					; drops. 
+(define delta-reducer .80)		; Each time level goes up, multiply
+					; fall-delay by this to get new fall
+					; delay.
+(define bump-bonus 300)			; When you bump up the level
+					; manually, you get bump-bonus
+					; pts * the % of time left
+					; until the next level.
+
+;;; -------------- Less modifiable parameters --------------------
+;; Game parameters (don't touch).
+(define winx (* block-width (1+ play-cols))) ; size of playing field
+(define winy (* block-width (1+ play-rows)))
+(define start-delta-count 0)		; # of steps at game start.
+(define delta-count start-delta-count)	; Lapsed time (in steps) of current
+					; level.
+(define level-number 1)			; Current level number.
+(define fall-delay start-fall-delay)	; Current amt of time btw drops (in ms)
+(define move-count 1)			; # drops since beginning of game.
+(define old-count 1)			; # drops since last piece hit bottom.
+(define quit-now #t)			; False causes game to stop.
+(define current-piece ())		; Piece that is currently falling.
+(define score 0)			; Score.
+(define game-over "")			; String to display when game ends.
+(define paused-game #f)
+
+(define (ms-left)
+  (- level-time (* fall-delay  delta-count)))
+
+(define (time-left)
+  (inexact->exact
+   (/ (ms-left) 1000)))
+
+(define time-to-speedup (time-left))	; Time left to current level.
+(define current-block-colors ())	; Used to store block colors
+					; when screen is blanked.
+
+;;; ------------ Start real work ----------------------------
+;;; Check sound validity - First check that sounddir exists & that
+;;; /dev/audio exists.
+(cond ((or
+	(not (file-is-directory? sounddir)) ;;; If sounddir doesn't exist.
+	(not (file-is-writable? "/dev/audio"))) ;; If /dev/audio doesn't exist.
+       (set! soundmap ())))
+
+;;; Now, check that all sounds are readable.  Delete the ones that
+;;; aren't.
+(set! soundmap
+      (let delete-nonexistent ((l soundmap))
+	   (cond ((null? l) ())
+		 ((file-is-readable? (string-append sounddir "/" (cadar l)))
+		  (cons (car l) (delete-nonexistent (cdr l))))
+		 (else (delete-nonexistent (cdr l))))))
+
+(define (reset-vars)
+;;; Clears game variables for start of new game.
+  (set! delta-count start-delta-count)
+  (set! level-number 1)
+  (set! fall-delay start-fall-delay)
+  (set! old-count 1)
+  (set! move-count 1)
+  (set! quit-now #f)
+  (set! score 0)
+  (set! game-over ""))
+ 
+;;; ------------------ Window size setup --------------------------
+(wm 'title *root* "STetris")
+(wm 'minsize *root* 
+    (+ winx score-frame-width)
+    (+ winy (* 2 frame-border-width)))
+(wm 'maxsize *root* 
+    (+ winx score-frame-width)
+    (+ winy (* 2 frame-border-width)))
+
+(wm 'geometry *root* (format #f "~Ax~A"
+			     (+ winx score-frame-width)
+			     (+ winy  (* 2 frame-border-width))))
+
+;;; -------------------- Widget Creation ---------------------------
+
+;;; Playing canvas
+'(define canvas-frame
+  (make <Frame>
+	:relief 'ridge
+	:highlight-thickness -2
+	:border-width frame-border-width))
+'(pack canvas-frame :side 'left)
+
+(define stetris-canvas
+  (make <Canvas>
+	:height winy
+	:border-width 0
+	:relief 'ridge
+	:highlight-thickness 0
+	:width  winx))
+(pack stetris-canvas :side 'left :fill 'both :expand #f)
+
+;;; Statistics frame
+(define score-frame
+  (make <Frame>
+	:relief 'ridge
+	:border-width frame-border-width))
+(pack score-frame :fill 'both :expand #t :side 'left)
+
+(define filler-1 (make <frame> :parent score-frame))
+(define score-title-label 
+  (make <label>
+	:parent score-frame
+	:text "Score"))
+
+(define score-label
+  (make <label>
+	:parent score-frame
+	:text-variable 'score))
+
+(define delay-title-label 
+  (make <label>
+	:parent score-frame
+	:text "Delay"))
+
+(define delay-label
+  (make <label>
+	:parent score-frame
+	:text-variable 'fall-delay))
+
+(define count-title-label 
+  (make <label>
+	:parent score-frame
+	:text "Moves"))
+
+(define count-label
+  (make <label>
+	:parent score-frame
+	:text-variable 'move-count))
+
+(define level-title-label
+  (make <label>
+	:parent score-frame
+	:text "Level"))
+
+(define level-label
+  (make <label>
+	:parent score-frame
+	:text-variable 'level-number))
+
+(define time-to-speedup-title-label 
+  (make <label>
+	:parent score-frame
+	:text "Time to speedup"))
+
+(define time-to-speedup-label
+  (make <label>
+	:parent score-frame
+	:text-variable 'time-to-speedup))
+
+(define game-over-label
+  (make <label>
+	:parent score-frame
+	:text-variable 'game-over))
+
+(define pause-button
+  (make <button>
+	:parent score-frame
+	:text "Pause"
+	:command '(do-pause)))
+
+(define continue-button
+  (make <button>
+	:parent score-frame
+	:text "Continue"
+	:command '(do-continue-game)))
+  
+(define newgame-button
+  (make <button>
+	:parent score-frame
+	:text "New Game"
+	:command '(do-new-game)))
+
+(define endgame-button
+  (make <button>
+	:parent score-frame
+	:text "End Game"
+	:command '(do-end-game)))
+  
+(define help-button
+  (make <button>
+	:parent score-frame
+	:text "Help"
+	:command '(do-help)))
+
+(define quit-button
+  (make <button>
+	:parent score-frame
+	:text "Quit"
+	:command '(do-exit)))
+
+
+(define filler-2 (make <frame> :parent score-frame))
+(define filler-3 (make <frame> :parent score-frame))
+
+(pack filler-1 :expand #t :fill 'both)
+(pack score-title-label score-label
+      delay-title-label delay-label
+      count-title-label count-label
+      level-title-label level-label
+      time-to-speedup-title-label time-to-speedup-label
+      game-over-label)
+
+(pack filler-3 :expand #t :fill 'both)
+(pack pause-button continue-button newgame-button 
+      endgame-button help-button quit-button
+      :fill 'x)
+
+;;;(pack filler-2 :expand #t :fill 'both)
+
+;;; -------------- Convert from block coords to screen coords -----------
+(define (block-pos-coords x y)
+  (list (+ (* x block-width) (/ block-border-width 2))
+	(+ (* y block-height)  (/ block-border-width 2))
+	(- (* (1+ x) block-width) (/ block-border-width 2))
+	(- (* (1+ y) block-height) (/ block-border-width 2))))
+
+;;; --------- Methods for treating rectangles like stetris blocks --------
+(define-method fall ((r <Rectangle>))
+  (slot-set! r 'coords 
+	     (map + (coords r) (list 0 block-height 0 block-height))))
+
+(define-method left ((r <Rectangle>))
+  (slot-set! r 'coords
+	     (map + (coords r) (list (- block-width) 0 (- block-width) 0))))
+
+(define-method right ((r <Rectangle>))
+  (slot-set! r 'coords
+	     (map + (coords r) (list block-width 0 block-width 0))))
+
+(define-method up ((r <Rectangle>))
+  (slot-set! r 'coords
+	     (map + (coords r) (list 0 (- block-height) 0 (- block-height)))))
+
+;;; ------------------- Class stetris-block ----------------------
+;;; Instances of this class are basically just rectangles that keep
+;;; track of their position in block coordinates instead of screen
+;;; coordinates.  There are probably better ways to do this  (such as
+;;; making the coordinates virtual slots).  On the other hand, if they
+;;; were virtual slots, they would have to scale the coordinates,
+;;; which might make things slower.
+;;;
+;;; Also includes methods for checking that a location is legal
+;;; (i.e. - that it isn't already occupied by another block).
+;;; Actually, we call a spot legal if it's on the screen & isn't
+;;; occupied by another block with the same tag.  Each tetris piece
+;;; gets a unique tag which is shared by the blocks which compose it. 
+;;;
+;;; One good improvement would probably be to remove the testing
+;;; against the top of the screen, since blocks should be able to fall
+;;; from above the screen.
+
+(define-class <stetris-block> (<Rectangle>)
+  ((x :init-keyword :x :accessor x-of :initform 3)
+   (y :init-keyword :y :accessor y-of :initform 0)
+   (true-color)
+   (parent :init-keyword :parent :accessor parent-of)))
+
+(define-method initialize ((self <stetris-block>) initargs)
+  (next-method)
+  (slot-set! self 'true-color (slot-ref self 'fill))
+  (slot-set! self 'width block-border-width)
+  (slot-set! self 'coords
+	     (block-pos-coords (x-of self) (y-of self))))
+
+(define-method hide ((self <stetris-block>))
+  (slot-set! self 'fill 'black))
+
+(define-method show ((self <stetris-block>))
+  (slot-set! self 'fill (slot-ref self 'true-color)))
+
+(define-method fall ((self <stetris-block>))
+  (set! (y-of self) (1+ (y-of self)))
+  (next-method))
+
+(define-method up ((self <stetris-block>))
+  (set! (y-of self) (1- (y-of self)))
+  (next-method))
+
+(define-method right ((self <stetris-block>))
+  (set! (x-of self) (1+ (x-of self)))
+  (next-method))
+
+(define-method left ((self <stetris-block>))
+  (set! (x-of self) (1- (x-of self)))
+  (next-method))
+
+(define-method can-fall? ((self <stetris-block>))
+  (ok-spot (x-of self) (1+ (y-of self)) (tags self)))
+
+(define-method can-up? ((self <stetris-block>))
+  (ok-spot (x-of self) (1- (y-of self)) (tags self)))
+
+(define-method can-left? ((self <stetris-block>))
+  (ok-spot (1- (x-of self)) (y-of self) (tags self)))
+
+(define-method can-right? ((self <stetris-block>))
+  (ok-spot (1+ (x-of self)) (y-of self) (tags self)))
+
+(define (ok-spot x y tag)
+  (and (eval 
+	(cons 'and  (map (lambda (x) (string=? tag (car (tags x))))
+			 (apply
+			  find-items
+			  `(,stetris-canvas overlapping
+			       ,@(block-pos-coords x y))))))
+       (onscreen x y)))
+
+(define (onscreen x y)
+  (and (>= x 0)
+       (<= x play-cols)
+;;;       (>= y 0)      ;;; Taken out To allow pieces to drop in from
+                        ;;; above the canvas. 
+       (<= y play-rows)))
+
+;;; -------------- Class stetris-piece ------------------------
+;;; A collection of stetris-blocks.
+;;; Class slot descriptions:
+;;;   parent - Canvas containing stetris-piece
+;;;   blocks - List of blocks composing stetris piece.
+;;;   shape  - Integer indicating shape of piece.  Meaning is defined
+;;;            by shape-list-slow function.  0 = line, 1 = square, etc.
+;;;   tag    - tag for this piece & all the blocks composing it.  It's a
+;;;            unique identifier for this piece.
+;;;   rotation - Better name would be rotation.
+;;;   x        - x coord of piece in game coordinates.
+;;;   y        - y coord of piece in game coordinates.
+;;;
+;;;   Basically, a stetris-piece is a collection of blocks.  A
+;;;   stetris-piece has a location, a shape & a rotation.  The
+;;;   locations of the blocks are defined by the shape-list function.
+;;;   (shape-list shape rotation) function returns a list of
+;;;   coordinates.  The coordinates of the blocks composing a
+;;;   stetris-piece are computed by adding the location of the stetris
+;;;   piece to each of the coordinates returned by shape-list.
+;;;   When the user rotates the stetris piece, the rotation slot is
+;;;   incremented (or decremented).
+;;;
+;;;   For (possibly ineffective) speed reasons, we store the
+;;;   shapes in a vector & use a macro to access them.
+;;;
+
+(define-class <stetris-piece> ()
+  ((parent :accessor parent-of :init-keyword :parent)
+   (blocks :accessor blocks-of)
+   (shape :accessor shape-of :init-keyword :shape :initform 0)
+   (tag   :accessor tag-of :init-keyword :tag :initform "")
+   (rotation :accessor rotation-of :initform 0 :init-keyword :rotation)
+   (x :accessor x-of :initform 0 :init-keyword :x)
+   (y :accessor y-of :initform 0 :init-keyword :y)))
+
+(define-method initialize ((self <stetris-piece>) initargs)
+  (next-method)
+  (set! (blocks-of self)
+	(make-blocks (shape-of self)
+		     (rotation-of self)
+		     (x-of self)
+		     (y-of self)
+		     (parent-of self)))
+  (for-each (lambda (x) (set! (tags x) (tag-of self))) (blocks-of self)))
+
+(define (make-blocks shape rotation x y parent)
+  (define (quick-make p)
+    (make <stetris-block>
+	  :x (+ (car p) x) :y (+ (cadr p) y)
+	  :coords '(0 0 0 0)
+	  :fill (colors-of shape)
+	  :parent parent))
+  (map quick-make (shape-list shape rotation)))
+
+;;; Function which returns, for a given shape & rotation, a list of
+;;; the positions that the blocks must be in relative to the
+;;; stetris-piece.
+
+(define (shape-list-slow shape rotation)
+  (case shape
+	(0 (case rotation ;; line
+		 (0 '( (3 1) (4 1) (5 1) (6 1)))
+		 (1 '( (4 0) (4 1) (4 2) (4 3)))))
+	(1 (case rotation ;; square
+		 (0 '( (3 1) (4 1) (3 2) (4 2)))))
+	(2 (case rotation ;; left zig
+		 (0 '( (3 1) (4 1) (4 2) (5 2)))
+		 (1 '( (4 0) (4 1) (3 1) (3 2)))))
+	(3 (case rotation ;; right zig
+		 (0 '( (3 2) (4 2) (4 1) (5 1)))
+		 (1 '( (4 1) (4 2) (5 2) (5 3)))))
+	(4 (case rotation ;; T
+		 (0 '( (3 1) (4 1) (5 1) (4 0)))
+		 (1 '( (4 0) (4 1) (4 2) (5 1)))
+		 (2 '( (3 1) (4 1) (5 1) (4 2)))
+		 (3 '( (4 0) (4 1) (4 2) (3 1)))))
+	(5 (case rotation ;; right L
+		 (0 '( (3 1) (3 2) (3 3) (4 3)))
+		 (1 '( (3 1) (4 1) (5 1) (3 2)))
+		 (2 '( (4 1) (5 1) (5 2) (5 3)))
+		 (3 '( (3 3) (4 3) (5 3) (5 2)))))
+	(6 (case rotation ;; left L
+		 (0 '( (5 0) (5 1) (5 2) (4 2)))
+		 (1 '( (3 2) (4 2) (5 2) (3 1)))
+		 (2 '( (3 0) (3 1) (3 2) (4 0)))
+		 (3 '( (3 0) (4 0) (5 0) (5 1)))))))
+		 
+;;; given a shape, returns the number of rotations that that shape can
+;;; go through.
+(define (num-rotations-slow shape)
+  (case shape
+	(0 2)
+	(1 1)
+	(2 2)
+	(3 2)
+	(4 4)
+	(5 4)
+	(6 4)))
+
+;;; We initialize a vector to contain the number of rotations of each
+;;; shape & use a macro to access it.  I was hoping for speed
+;;; benefits, but I don't know if it really helps.
+(define num-rotations-vect (make-vector 7))
+
+(dotimes (shape (vector-length num-rotations-vect))
+	 (vector-set! num-rotations-vect shape
+		      (num-rotations-slow shape)))
+
+(define-macro (num-rotations shape)
+  `(vector-ref num-rotations-vect ,shape))
+
+;;; The same applies here for the shape-list.  We store the shapes in
+;;; a vector of vectors, and use a macro for access, hoping that this
+;;; will speed access.
+(define shape-list-vect (make-vector 7))
+
+(dotimes (shape (vector-length shape-list-vect))
+	 (vector-set! shape-list-vect shape 
+		      (make-vector (num-rotations shape))))
+
+(define-macro (shape-list shape rotation)
+  `(vector-ref
+    (vector-ref shape-list-vect ,shape)
+    ,rotation))
+
+(define (set-standard-shape-vect!)
+  (dotimes (shape (vector-length shape-list-vect))
+	   (dotimes (pos (num-rotations shape))
+		    (vector-set! (vector-ref shape-list-vect shape)
+				 pos
+				 (shape-list-slow shape pos)))))
+
+(define (delete-list-el l i)
+;;; Removes element i from list l
+  (cond ((<= i 0) (cdr l))
+	(else (cons (car l) (delete-list-el (cdr l) (- i 1))))))
+
+(define (scramble)
+;;; Scrambles the blocks so that rotate left & rotate right actually
+;;; transform the shape instead of rotating it.  Call this function
+;;; before playing to play a variant of stetris.
+  (let ((l ()))
+    (dotimes (shape (vector-length shape-list-vect))
+	     (dotimes (pos (num-rotations shape))
+		      (set! l
+			    (cons 
+			     (vector-ref (vector-ref shape-list-vect shape)
+					 pos)
+			     l))))
+    (dotimes (shape (vector-length shape-list-vect))
+	     (dotimes (pos (num-rotations shape))
+		      (let ((i (random (length l))))
+			(vector-set! (vector-ref shape-list-vect shape)
+				     pos
+				     (list-ref l i))
+			(set! l (delete-list-el l i)))))))
+		      
+  
+
+;;; Specifies the color that each shape has.
+(define (colors-of shape)
+  (case shape
+	(0 "red")
+	(1 "green")
+	(2 "blue")
+	(3 "yellow")
+	(4 "purple")
+	(5 "orange")
+	(6 "cyan")))
+
+
+(define-method quick-change ((self <stetris-piece>))
+;;; Repositions the blocks of a stetris piece according to it's shape &
+;;; rotation.  Basically just does this by force - setting each blocks
+;;; position according to shape-list.
+  (let ((x (x-of self))
+	(y (y-of self)))
+    (for-each
+     (lambda (b p)
+       (slot-set! b 'x (+ x (car p)))
+       (slot-set! b 'y (+ y (cadr p)))
+       (slot-set! b 'coords (block-pos-coords
+			     (+ x (car p)) (+ y (cadr p)))))
+     (blocks-of self)
+     (shape-list (shape-of self) (rotation-of self)))))
+
+
+(define (ok-spots p x y tag)
+;;; p is a list of coordinate offsets from point (x y).  This routine
+;;; returns true iff each coordinate in p + (x y) is a good
+;;; postion for the block with the specified tag.  Basically, just
+;;; makes sure that each block would be on the screen & not on top of
+;;; any other blocks.  The tag is needed so that we ignore the pieces
+;;; blocks themselves when checking that locations are unoccupied.
+  (cond ((null? p) #t)
+	(else
+	 (and (ok-spot (+ x (caar p)) (+ y (cadar p)) tag)
+	      (ok-spots (cdr p) x y tag)))))
+
+(define (ok-spots-by-type shape rotation x y tag)
+;;; Same as ok-spots, except takes a shape & a rotation instead of a
+;;; list of coordinate offsets.  A convenient wrapper for ok-spots.
+  (ok-spots (shape-list (shape-of self) (rotation-of self))
+	    x y tag))
+  
+(define-method ok-new-spot ((self <stetris-piece>))
+;;; Same as ok-spots, except gets all its arguments from a
+;;; stetris-piece.  Another convenient wrapper for ok-spots.
+  (ok-spots (shape-list (shape-of self) (rotation-of self))
+	    (x-of self) (y-of self) (tag-of self)))
+
+(define-method incr-rotation ((self <stetris-piece>) incr)
+;;; Sets block to next rotation.
+  (slot-set! self 'rotation (modulo (+ (rotation-of self) incr)
+				    (num-rotations (shape-of self))))
+  (if (ok-new-spot self)
+      (quick-change self)
+    (slot-set! self 'rotation (modulo (- (rotation-of self) incr)
+				      (num-rotations (shape-of self))))))
+
+(define-method fall ((t <stetris-piece>))
+;;; Drops piece t one row (if possible).  Returns true iff the piece
+;;; was able to move down.
+  (cond ((can-fall? t)
+	 (slot-set! t 'y (1+ (y-of t)))	   
+	 (for-each fall (blocks-of t))
+	 #t)
+	(else
+	 #f)))
+
+(define-method can-fall? ((t <stetris-piece>))
+;;; Returns true iff t can move down one row.
+  (ok-spots (shape-list (shape-of t) (rotation-of t))
+	    (x-of t) (1+ (y-of t)) (tag-of t)))
+    
+(define-method up ((t <stetris-piece>))
+;;; Moves t up one row (if possible).  Returns true iff t was able to
+;;; move up.
+  (cond ((can-up? t)
+	 (slot-set! t 'y (1- (y-of t)))	   
+	 (for-each up (blocks-of t))
+	 #t)
+	(else
+	 #f)))
+
+(define-method can-up? ((t <stetris-piece>))
+;;; Returns true iff t can move up one row.
+  (ok-spots (shape-list (shape-of t) (rotation-of t))
+	    (x-of t) (1- (y-of t)) (tag-of t)))
+
+(define-method left ((t <stetris-piece>))
+;;; Moves t left one column (if possible).  Returns true iff t was
+;;; able to move left.
+  (cond ((can-left? t)
+	 (slot-set! t 'x (1- (x-of t)))	   
+	 (for-each left (blocks-of t))
+	 #t)
+	(else
+	 #f)))
+
+(define-method can-left? ((t <stetris-piece>))
+;;; Returns true iff t can move left one column.
+  (ok-spots (shape-list (shape-of t) (rotation-of t))
+	    (1- (x-of t)) (y-of t) (tag-of t)))
+
+(define-method right ((t <stetris-piece>))
+;;; Moves t right one column (if possible).  Returns true iff t was
+;;; able to move right.
+  (cond ((can-right? t)
+	 (slot-set! t 'x (1+ (x-of t)))	   
+	 (for-each right (blocks-of t))
+	 #t)
+	(else
+	 #f)))
+
+(define-method can-right? ((t <stetris-piece>))
+;;; Returns true iff t can move right one column.
+  (ok-spots (shape-list (shape-of t) (rotation-of t))
+	    (1+ (x-of t)) (y-of t) (tag-of t)))
+
+(define (new-game)
+;;; Starts new game by clearing the screen, resetting global counts,
+;;; etc.  We bind the piece moving actions here (and unbind them when
+;;; the game stops) so that the user can only move pieces during game
+;;; play.
+  (set! quit-now #t)
+  (after (* 2 fall-delay)
+	 '(begin
+	   (reset-vars)
+	   (for-each destroy (find-items stetris-canvas 'all))
+	   (set! current-piece (make-new-stetris-piece))
+	   (bind-action-list game-play-bindings)
+	   (update-screen))))
+
+(define (continue-game)
+;;; Continues game after a pause.
+  (bind-action-list game-play-bindings)
+  (cond (quit-now
+	 (set! quit-now #f)
+	 (update-screen))))
+
+(define (play-sound soundfile)
+;;; Plays specified sound (very crude for now - just cats it to /dev/audio).
+  (! (format #f "cat ~A >/dev/audio&" soundfile)))
+
+(define (game-sound sound)
+;;; Plays specified game sound (specified by a symbol in the soundmap
+;;; assoc list).
+  (let ((soundfilepair (assq sound soundmap)))
+    (if soundfilepair
+	(play-sound (string-append sounddir "/" (cadr soundfilepair))))))
+
+(define (fini)
+;;; Called when the game is over.
+  (cancel-movement-bindings)
+  (set! game-over "game over")
+  (set! quit-now #t)
+  (game-sound 'game-over))
+
+(define maybe-play-looks-bad
+;;; Play the looks bad sound only when a piece stops within 8 rows
+;;; from the top, and don't play it again until after the top 20 rows
+;;; have been cleared.
+  (let ((play #t))
+    (lambda ()
+      (cond ((and play 
+		  (< (y-of current-piece) 8))
+	     (game-sound 'near-end)
+	     (set! play #f))
+	    ((> (y-of current-piece) 20)
+	     (set! play #t))))))
+
+(define (update-score-value delay count)
+  (set! score 
+	(+ score
+	   (inexact->exact 
+	    (max
+	     (/ 30000 (* delay count)
+	     1))))))
+
+(define (update-delay)
+  (set! delta-count (1+ delta-count))
+  (set! time-to-speedup (time-left))
+  (cond ((> (* fall-delay  delta-count) level-time)
+	 (increase-level))))
+
+(define (increase-level)
+  (let ((new-fall-delay
+	 (max (inexact->exact (* delta-reducer fall-delay))
+	      min-fall-delay)))
+    (cond ((< new-fall-delay fall-delay)
+	   (set! fall-delay new-fall-delay)
+	   (set! delta-count 0)
+	   (set! level-number (1+ level-number))
+	   (set! time-to-speedup (time-left))
+	   (game-sound 'goto-next-level)
+	   #t)
+	  (else #f))))
+
+(define (update-screen)
+;;; This is the game play function.  It makes sure that the pieces
+;;; fall one row every fall-delay milliseconds, updates the screen,
+;;; etc.
+  (cond ((not quit-now)
+	 (after fall-delay '(update-screen))
+	 (cond ((not (fall current-piece))
+;;;		(game-sound 'piece-landed)
+		(maybe-play-looks-bad)
+		(update "idletasks")
+		(clear-filled-rows)
+		(set! current-piece 
+		      (make-new-stetris-piece))
+		(update-score-value fall-delay 
+				    (- move-count old-count))
+		(set! old-count move-count)
+		(cond ((not (can-fall? current-piece))
+		       (fini)))))
+;;;	 (game-sound 'piece-moved)
+	 (set! move-count (1+ move-count))
+	 (update-delay))))
+
+
+(define make-new-stetris-piece
+;;; Called every time a new piece is needed.
+  (let ((count 0)
+	(shape 0))
+    (lambda ()
+      (set! shape (random (vector-length shape-list-vect)))
+      (set! count (1+ count))
+      (make <stetris-piece> 
+	    :parent stetris-canvas
+	    :coords '(0 0 0 0)
+	    :x (center-position shape) :y -2
+	    :shape shape
+	    :tag (number->string count)))))
+
+(define (center-position shape)
+;;; Proper x coord to use to get shape to appear in center of screen.
+;;; I could recompute the piece offsets so that all pieces appear
+;;; centered for the same stetris-piece coordinate, but that's too
+;;; much work...
+  (case shape
+	(0 0)
+	(1 1)
+	(2 0)
+	(3 0)
+	(4 0)
+	(5 1)
+	(6 0)))
+
+;;;;;; ----------------- Game Control Functions -----------------------
+
+;;; Functions for keyboard control of pieces
+
+(define (do-left)
+  (left current-piece)
+  (update "idletasks"))
+
+(define (do-right)
+  (right current-piece)
+  (update "idletasks"))
+
+(define (do-fall)
+  (while (fall current-piece)
+    (update "idletasks")))
+
+(define (do-rotate-right)
+  (incr-rotation current-piece 1)
+  (update "idletasks"))
+
+(define (do-rotate-left)
+  (incr-rotation current-piece -1)
+  (update "idletasks"))
+
+;;; Game control functions.
+
+(define (do-exit)
+  (destroy *root*))
+
+(define (do-new-game)
+  (new-game))
+
+(define (do-end-game)
+  (fini))
+
+(define canvas-background-color (slot-ref stetris-canvas 'background))
+
+(define (hide-game)
+  (for-each hide (find-items stetris-canvas 'all))
+  (slot-set! stetris-canvas 'background 'black))
+
+(define (show-game)
+  (for-each show (find-items stetris-canvas 'all))
+  (slot-set! stetris-canvas 'background canvas-background-color))
+
+(define (do-pause)
+  (cond ((not quit-now)
+	 (set! paused-game #t)
+	 (cancel-movement-bindings)
+	 (hide-game)
+	 (set! quit-now #t))))
+
+(define (do-continue-game)
+  (cond (paused-game
+	 (bind-action-list game-play-bindings)
+	 (show-game)
+	 (set! paused-game #f)
+	 (continue-game))))
+
+;;; Between game functions
+(define (do-help)
+  (stk::make-dialog :title "stetris help"
+		    :text (help-text)
+		    :buttons `( ("Ok" ,(lambda () ())))))
+
+(define (do-scramble)
+  (cond (quit-now
+	 (scramble))))
+
+(define (do-unscramble)
+  (cond (quit-now
+	 (set-standard-shape-vect!))))
+
+
+(define (do-increase-level)
+  (let ((tl (max 0 (ms-left))))
+    (cond ((increase-level)
+	   (set! score (+ score (inexact->exact 
+				 (* bump-bonus 
+				    (/ tl level-time)))))))))
+					       
+
+;;; ---------- Functions for binding actions to keys -----------------
+(define (bind-action-list l)
+  (for-each (lambda (x)
+	 (bind 'all (car x) (cadr x)))
+       l))
+
+(define (cancel-bindings l)
+  (bind-action-list (map (lambda (x) (list (car x) ()))
+			 l)))
+  
+(define (cancel-movement-bindings)
+  (cancel-bindings game-play-bindings))
+
+;;; ----- Dead block maintenance routines.
+
+(define (clear-filled-rows)
+;;; Hairy function which clears all filled rows.  It explicitly
+;;; garbage collects before & after doing all work since this is the
+;;; only decent time for such.  When run with 75000 cells then there
+;;; is no need for gc's (and thus no pauses) when blocks are falling.
+  (define (row-of block) (caar block))
+  (define (block-of block) (cadar block))
+  (gc)
+  (let ((curr-row (make-vector (1+ play-cols)))
+	(curr-row-size -1)
+	(curr-row-num 0)
+	(amt-to-fall 0))
+    (do ((blocks (sort (map (lambda (b) (list (y-of b) b))
+			    (find-items stetris-canvas 'all))
+		       (lambda (x y) (> (car x) (car y))))
+		 (cdr blocks)))
+	((null? blocks))
+	(cond ((not (= curr-row-num (row-of blocks)))
+	       (cond ((= curr-row-size play-cols) ; delete row
+		      (dotimes (j (1+ curr-row-size))
+			       (destroy (vector-ref curr-row j)))
+		      (set! amt-to-fall (1+ amt-to-fall))
+		      ))
+	       (set! curr-row-size -1)
+	       (set! curr-row-num (row-of blocks))))
+	(dotimes (j amt-to-fall)
+		 (fall (block-of blocks))
+		 (update "idletasks"))
+	(set! curr-row-size (1+ curr-row-size))
+	(vector-set! curr-row curr-row-size (block-of blocks)))
+    (set! score (+ score (* amt-to-fall 10)))
+    (if (= amt-to-fall 3) (game-sound 'three-in-row))
+    (if (= amt-to-fall 4) (game-sound 'four-in-row))
+    (gc)))
+
+
+(define (check-blocks)
+;;; This function useful when the above function wasn't working.
+  (for-each (lambda (b) (format #t "~A\n" b))
+	    (sort (map (lambda (b) (list (y-of b) (x-of b) b))
+		       (find-items stetris-canvas 'all))
+		  (lambda (x y) (or (> (car x) (car y))
+				    (and (= (car x) (car y))
+					 (< (cadr x) (cadr y))))))))
+
+
+;;; ----------------- Help Text ---------------------------
+
+(define (help-text)
+;; Constructs help string for help window.
+  (define (pad-to len str)
+    (define (pad-to-aux len l)
+      (cond ((null? l)   (string->list (make-string len #\space)))
+	    ((<= len 0) ())
+	    (else (cons (car l)
+			(pad-to-aux (1- len) (cdr l))))))
+    (list->string (pad-to-aux len (string->list str))))
+
+  (define (help-strings l)
+    (map (lambda (x) (format #f "~A\t~A\n" 
+			     (pad-to 12 (car x))
+			     (action-description (cadr x))))
+	 l))
+  (apply string-append `(
+	     "
+Welcome to stetris - A falling block game reminiscent of another
+falling block game whose name we won't mention :).
+
+The game controls are as follows:\n"
+	    "\n     Game control:\n"
+	    ,@(help-strings control-bindings)
+	    "\n     Movement control:\n"
+	    ,@(help-strings game-play-bindings)
+	    "\n     Other (only available between games):\n"
+	    ,@(help-strings non-game-play-bindings))))
+
+
+;;; ----------------- Define binding maps ---------------
+(define control-bindings		; Game control actions.
+  `(("<q>" ,do-exit)			; Always available.
+    ("<n>" ,do-new-game)
+    ("<e>" ,do-end-game)
+    ("<p>" ,do-pause)
+    ("<c>" ,do-continue-game)
+    ("<h>" ,do-help)
+    ("<b>" ,do-increase-level)))
+
+(define game-play-bindings		; Bindings for moving pieces.
+  `(("<j>"     ,do-left)		; Only available during play.
+    ("<Left>"  ,do-left)
+    ("<l>"     ,do-right)
+    ("<Right>" ,do-right)
+    ("<k>"     ,do-rotate-right)	; clockwise.
+    ("<Down>"  ,do-rotate-right)
+    ("<i>"     ,do-rotate-left)
+    ("<Up>"    ,do-rotate-left)
+    ("<space>" ,do-fall)
+    ("<5>"     ,do-fall)))
+
+(define non-game-play-bindings		; Bindings only available
+  `(("<s>" ,do-scramble)		; between games.
+    ("<u>" ,do-unscramble)))
+
+;; Game action descriptions
+(define (action-description act)
+  (let ((descr (assoc act action-description-list)))
+    (if descr
+	(cadr descr)
+      (format #f "No description for ~s" act))))
+	
+(define action-description-list
+  `((,do-left         "Move left")
+    (,do-right        "Move right")
+    (,do-rotate-left  "Rotate counter-clockwise")
+    (,do-rotate-right "Rotate clockwise")
+    (,do-fall         "Fall")
+    (,do-scramble     "Scramble blocks")
+    (,do-unscramble   "Unscramble blocks")
+    (,do-help         "Help")
+    (,do-exit         "Exit")
+    (,do-new-game     "New game")
+    (,do-end-game     "End game")
+    (,do-pause        "Pause game")
+    (,do-increase-level "Bump up level by one")
+    (,do-continue-game "Continue after pause")))
+
+
+
+;;; ----------------- Bind the keys  --------------------
+
+(bind-action-list control-bindings)
+(bind-action-list non-game-play-bindings)
+
+;;; ----------------- Set up some global vars -----------------
+(set-standard-shape-vect!)
+
+(gc) ; Get a gc in before starting.
+ 
+;;; regexp for finding variable c:
+;;;[ 	()
+;;;]c[ 	()
+;;;]

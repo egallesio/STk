@@ -1,0 +1,34 @@
+;;; Moving an object on a canvas
+;;;   (drag the circle around)
+
+(define last-x 0)
+(define last-y 0)
+
+(define (item-start-drag c x y)
+  (set! last-x (c 'canvasx x))
+  (set! last-y (c 'canvasy y)))
+
+(define (item-drag c x y)
+  (set! x (c 'canvasx x))
+  (set! y (c 'canvasy y))
+  (c 'move 'current (- x last-x) (- y last-y))
+  (set! last-x x)
+  (set! last-y y))
+
+(pack (canvas '.c1) :expand #t :fill "both")
+
+(.c1 'create 'oval 150 150 170 170 :fill "skyblue" :tag "oval")
+
+;;; Bindings 
+(.c1 'bind "oval" "<Any-Enter>"  (lambda ()
+				   (.c1 'itemconfig 'current :fill "red")))
+(.c1 'bind "oval" "<Any-Leave>"  (lambda ()
+				   (.c1 'itemconfig 'current :fill "SkyBlue2")))
+(.c1 'bind "oval" "<1>" 	 (lambda (x y)
+				   (item-start-drag .c1 x y)))
+(.c1 'bind "oval" "<B1-Motion>"  (lambda (x y)
+				   (item-drag .c1 x y)))
+(.c1 'bind "oval" "<ButtonRelease-1>" 
+     				  (lambda ()
+				    (.c1 'dtag 'selected)))
+

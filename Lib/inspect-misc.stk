@@ -1,0 +1,310 @@
+;******************************************************************************
+;
+; Project       : STk-inspect, a graphical debugger for STk
+;
+; File name     : inspect-misc.stk
+; Creation date : Aug-30-1993
+; Last update   : Sep-17-1993
+;
+;******************************************************************************
+;
+; This file contains definitions often used.
+;
+;******************************************************************************
+
+(provide "inspect-misc")
+
+(define BITMAP_MENU 		(& "@" *stk-library* "/bitmaps/menu.bm"))
+(define FIXED_FONT 		"-adobe-courier-bold-r-*-*-*-140-*-*-*-*-*-*")
+(define MEDIUM_FONT 		"-adobe-helvetica-medium-r-*-*-*-120-*-*-*-*-*-*")
+(define BOLD_FONT 		"-adobe-helvetica-bold-r-*-*-*-120-*-*-*-*-*-*")
+(define ITALIC-MEDIUM_FONT 	"-adobe-helvetica-medium-o-*-*-*-120-*-*-*-*-*-*")
+
+(define COURIER_BR14 		"-adobe-courier-bold-r-*-*-*-140-*-*-*-*-*-*")
+(define HELVETICA_BR12 		"-adobe-helvetica-bold-r-*-*-*-120-*-*-*-*-*-*")
+(define HELVETICA_BO12 		"-adobe-helvetica-bold-o-*-*-*-120-*-*-*-*-*-*")
+(define HELVETICA_MR12 		"-adobe-helvetica-medium-r-*-*-*-120-*-*-*-*-*-*")
+(define HELVETICA_MO12 		"-adobe-helvetica-medium-o-*-*-*-120-*-*-*-*-*-*")
+(define HELVETICA_MO10 		"-adobe-helvetica-medium-o-*-*-*-100-*-*-*-*-*-*")
+(define SCREEN_WIDTH		(winfo 'vrootwidth  *root*))
+(define SCREEN_HEIGHT		(winfo 'vrootheight *root*))
+
+
+;******************************************************************************
+;
+; General definitions and macros extending STk.
+;
+;******************************************************************************
+
+;---- A special eval
+(define (inspect::eval x)
+  (if (and (symbol? x) (symbol-bound? x)) (eval x) x))
+
+;---- Predicates
+
+(define-macro (not-equal? x y) `(not (equal? ,x ,y)))
+(define-macro (different? x y) `(not (equal? ,x ,y)))
+
+;---- Operators
+
+(define-macro (<> x y)
+  `(not (= ,x ,y)))
+
+
+(define (inspect::typeof obj)
+  (cond ((boolean? obj)	 'boolean)
+        ((list? obj)	 'list)
+        ((pair? obj)	 'pair)
+        ((symbol? obj)	 'symbol)
+        ((number? obj)	 'number)
+        ((char? obj)	 'char)
+        ((string? obj)	 'string)
+        ((vector? obj)	 'vector)
+        ((widget? obj)	  'widget) ; must be before since widgets are also closures
+        ((closure? obj)	 'closure)
+	((primitive? obj) 'primitive)
+        (else 'unknown)))
+
+;---- Display
+
+(define (write\n . l)
+  (until (null? l)
+         (write (car l))
+         (set! l (cdr l)))
+  (newline))
+
+(define (display\n . l)
+  (until (null? l)
+         (display (car l))
+         (set! l (cdr l)))
+  (newline))
+
+
+;---- Control structures
+
+(define-macro (for var test . body)
+  `(do ,var
+       ((not ,test))
+       ,@body))
+
+;---- Strings
+
+(define (->string obj)
+  (if (widget? obj)
+      (widget->string obj)
+      (format #f "~A" obj)))
+
+(define (->object obj)
+  (if (widget? obj)
+      (widget->string obj)
+      (format #f "~S" obj)))
+
+(define (list->str l)
+  (if (null? l)
+      ""
+      (let loop ((l l) (s ""))
+        (let ((car-l (car l)) (cdr-l (cdr l)) (elem ()))
+          (if (list? car-l)
+              (set! elem (string-append "(" (list->str car-l) ")"))
+              (set! elem (->string car-l)))
+          (if (null? cdr-l)
+              (string-append s elem)
+              (loop cdr-l (string-append s elem " ")))))))
+
+;---- Vectors
+
+(define (vector-index v value)
+  (let ((length (vector-length v))
+        (index #f))
+    (for ((i (- length 1) (- i 1)))
+         (>= i 0)
+         (if (equal? (vector-ref v i) value) (set! index i)))
+    index))
+
+
+;---- Lists
+
+(define (list-first obj lst)
+  (define (_list-first obj lst index)
+    (cond ((null? lst) #f)
+          ((equal? obj (car lst)) index)
+          (else (_list-first obj (cdr lst) (+ index 1)))))
+  (_list-first obj lst 0))
+
+
+(define-macro (list-set! lst index value)
+  `(begin
+     (set! ,lst (list->vector ,lst))
+     (vector-set! ,lst ,index ,value)
+     (set! ,lst (vector->list ,lst))))
+
+
+(define (list-remove obj lst)
+  (define (_list-remove obj lst prev-lst)
+    (cond ((null? lst) prev-lst)
+          ((equal? obj (car lst)) (append prev-lst (cdr lst)))
+          (else (_list-remove obj (cdr lst) (append prev-lst
+                                                    (list (car lst)))))))
+  (_list-remove obj lst ()))
+
+
+;---- Tk goodies
+
+(define-macro (widget . etc)
+  `(string->widget (& ,@etc)))
+
+(define (&& . l)
+  (if (null? l)
+      ""
+      (let loop ((l l) (s ""))
+        (if (null? (cdr l))
+            (string-append s (->string (car l)))
+            (loop (cdr l) (string-append s (->string (car l)) " "))))))
+
+(define-macro (tki-get canvas item option)
+  `(list-ref (,canvas 'itemconfigure ,item ,option) 2))
+
+(define-macro (tki-set canvas item option value)
+  `(,canvas 'itemconfigure ,item ,option ,value))
+
+(define-macro (@ x y)
+  `(& "@" ,x "," ,y))
+
+;******************************************************************************
+;
+; 
+;
+;******************************************************************************
+
+(define objects-infos-list ())
+
+(define (object-infos obj)  (assoc obj objects-infos-list))
+(define (object-type obj)   (list-ref (object-infos obj) 1))
+(define (object-symbol obj) (list-ref (object-infos obj) 2))
+
+(define (add-object-infos obj)
+  (set! objects-infos-list
+	(cons (list obj (inspect::typeof obj) (gensym "__g"))
+	      objects-infos-list)))
+
+(define (remove-object-infos obj)
+  (set! objects-infos-list
+	(list-remove (object-infos obj) objects-infos-list)))
+
+(define (find-object-infos key)
+  (let ((found #f))
+    (do ((l objects-infos-list (cdr l)))
+	((or found (null? l)) found)
+      (when (equal? (list-ref (car l) 2) key) 
+	    (set! found (list-ref (car l) 0))))))
+
+(define (detailer-type obj-type)
+  (case obj-type
+    ((vector pair list) 'VPL)
+    ((procedure) 'PROCEDURE)
+    ((widget) 'WIDGET)
+    (else 'UNKNOWN)))
+
+(define (viewer-type obj-type)
+  (case obj-type
+    ((procedure) 'PROCEDURE)
+    ((widget) 'WIDGET)
+    (else 'GENERAL)))
+
+(define (update-object obj)
+  (let* ((obj-val (inspect::eval obj))
+	 (old-type (object-type obj))
+	 (obj-type (inspect::typeof obj-val)))
+    (unless (equal? old-type obj-type)
+	    (let ((obj-sym (object-symbol obj)))
+	      (remove-object-infos obj)
+	      (set! objects-infos-list
+		    (cons (list obj obj-type obj-sym) objects-infos-list))))
+    (if (inspected? obj) (inspect-display obj))
+    (if (detailed? obj)
+	(if (equal? (detailer-type old-type) (detailer-type obj-type))
+	    (detail-display obj)
+	    (begin
+	      (undetail obj)
+	      (if (different? 'UNKNOWN (detailer-type obj-type)) 
+		  (detail obj)))))
+    (if (viewed? obj)
+	(if (equal? (viewer-type old-type) (viewer-type obj-type))
+	    (view-display obj)
+	    (begin
+	      (unview obj)
+	      (view obj))))
+    (update 'idletask)))
+
+;---- Undebug
+
+(define (undebug)
+  (for-each (lambda (obj-infos)
+	      (let ((obj (car obj-infos)))
+		(if (symbol? obj) (untrace-var obj))))
+	    objects-infos-list)
+  (destroy INSPECTOR_WIDGET_NAME)
+  (set! inspected-objects-list ())
+  (for-each (lambda (obj) (destroy (detail-tl-wid obj))) detailed-objects-list)
+  (set! detailed-objects-list ())
+  (for-each (lambda (obj) (destroy (view-tl-wid obj))) viewed-objects-list)
+  (set! viewed-objects-list ())
+  (set! objects-infos-list ()))
+
+;---- id widget
+
+(define (create-id-widget str)
+  (define wid [frame str])
+  (pack [frame (& str ".f1")] :side "top" :fill "x")
+  (pack [label (& str ".f1.l1") :anchor "w"] :side "left")
+  (pack [label (& str ".f1.l2") 
+	       :relief "groove" :bd 2 :anchor "w" :font MEDIUM_FONT]
+	:fill "x" :expand "yes")
+  (pack [frame (& str ".f2")] :side "top" :fill "x")
+  (pack [label (& str ".f2.l") :anchor "w"] :side "left")
+  (pack [entry (& str ".f2.e") :relief "sunken" :bd 2]
+	:fill "x" :expand "yes")
+  wid)
+
+(define (set-id-label1 wid text width) 
+  ((widget wid ".f1.l1") 'config :text text :width width))
+(define (set-id-label2 wid text width)
+  ((widget wid ".f2.l") 'config :text text :width width))
+
+(define (set-id-object wid text) (tk-set! (widget wid ".f1.l2") :text text))
+(define (get-id-object wid) (tk-get (widget wid ".f1.l2") :text))
+(define (set-id-value wid text)
+  ((widget wid ".f2.e") 'delete 0 'end)
+  ((widget wid ".f2.e") 'insert 0 text))
+(define (get-id-value wid) ((widget wid ".f2.e") 'get))
+
+
+;---- menu widget
+
+(define (create-menu-widget str)
+  (define wid [frame str :relief "raised" :bd 2])
+  (pack [menubutton (& str ".help") :text "Help"] :side "right")
+  (tk-set! (widget str ".help") :menu [menu (& str ".help.m")])
+  ((widget str ".help.m") 'add 'command :label "STk-inspect"
+			  :command '(stk:make-help STk-inspect-help))
+  wid)
+
+
+;---- toplevel widget
+
+(define (create-toplevel-widget str)
+  (define wid [toplevel str])
+  (pack (create-id-widget (& str ".id")) :side "top" :fill "x" :padx 4 :pady 2)
+  (pack (create-menu-widget (& str ".menu"))
+	:side "top" :fill "x" :padx 4 :pady 2)
+  wid)
+
+(define (inspect::shadow-entry e)
+  (tk-set! e :state "disabled")
+  (tk-set! e :bd 1)
+  (tk-set! e :bg "grey50")
+  (tk-set! e :fg "grey95"))
+  
+
+(define (modifiable-object? obj)
+  (and (symbol? obj) (symbol-bound? obj) (not (widget? (inspect::eval obj)))))

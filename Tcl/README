@@ -1,0 +1,5 @@
+This directory contains files of Tcl which are used by Stk without (or
+with very light) modification.
+Those files correspond to utilities which can be used as is in Scheme
+simulation of Tcl.
+

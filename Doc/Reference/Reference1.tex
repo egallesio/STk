@@ -1,0 +1,1370 @@
+%
+% STk Reference manual (Part 1)
+%
+%           Author: Erick Gallesio [eg@unice.fr]
+%    Creation date: ??-Nov-1993 ??:??
+% Last file update: 24-Jul-1996 13:38
+%
+
+\section*{Introduction}
+
+This document provides a complete list of procedures and special forms
+implemented in version {\stkversion} of {\stk}. Since {\stk} is (nearly) 
+compliant with the language described in the {\em Revised$^{4}$ Report on the
+Algorithmic Language Scheme} \mainindex{R4RS}(denoted {\rrrr} hereafter{\footnote{The {\em
+Revised$^{4}$ Report on the Algorithmic Language Scheme} is available
+through anonymous FTP from {\tt ftp.cs.indiana.edu} in the directory
+{\tt /pub/scheme-repository/doc}}})\cite{R4RS}, the organization of
+this manual follows the {\rrrr} and only describes extensions.
+
+\section{Overview of \stk}
+
+Today's graphical toolkits for applicative languages are often not
+satisfactory. Most of the time, they ask the user to be an X window system
+\mainindex{X window system} expert and force him/her to cope with arcane
+details such as server connections and event queues. This is a real
+problem, since programmers using this kind of languages are generally not
+inclined to system programming, and few of them will bridge the gap between
+the different abstraction levels.
+
+
+~~~~Tk\index{Tk toolkit}\index{toolkit} is a powerful graphical tool\-kit
+promising to fill that gap. It was developed at the University of Berkeley
+by John Ousterhout~\cite{Ouster-Tk}. The toolkit offers high level widgets
+such as buttons or menus and is easily programmable, requiring little
+knowledge of X fundamentals. Tk relies on an interpretative shell-like
+language named Tcl~\cite{Ouster-Tcl}.
+
+~~~~{\stk} is an implementation of the Scheme programming language,
+providing a full integration of the Tk toolkit. In this implementation,
+Scheme establishes the link between the user and the Tk toolkit, replacing
+Tcl.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Lexical conventions}
+
+\subsection{Identifiers}
+
+Syntactic keywords can be used as variables in \stk. Users must be
+aware that this extension of the language could lead to ambiguities in
+some situations.
+
+\subsection{Comments}
+
+As in the {\rrrr}, a semicolon (;) indicates the start of a comment.
+In {\stk}, comments can also be introduced by \sharpsign$!$.  This
+extension is particularly useful for building {\stk} scripts. On most
+Unix implementations, if the first line of a script looks like this:
+\begin{scheme}
+\sharpsign$!$/usr/local/bin/stk -file
+\end{scheme}
+then the script can be started directly as if it were a binary. {\stk}
+is loaded behind the scenes and reads and executes the script as a
+Scheme program. Of course this assumes that {\stk} is located in {\tt
+  /usr/local/bin}.
+
+\subsection{Other notations}
+
+{\stk} accepts all the notations defined in {\rrrr} plus
+
+\begin{description}{}{}
+
+\setbox0\hbox{\tt \char"5B{} \char"5D{} }
+\item[\copy0] Brackets are equivalent to parentheses. They are used
+  for grouping and to notate lists. A list opened with a left square
+  bracket must be closed with a right square bracket
+  (section~\ref{listsection}).
+
+\item[\tt:] A colon at the beginning of a symbol introduces a keyword.
+  Keywords are described in section~\ref{keywords}.
+  
+\item[\tt\sharpsign.<expr>] is read as the evaluation of the Scheme
+  expression {\tt <expr>}. The evaluation is done during the
+  \ide{read} process, when the \var{\sharpsign.} is encountered.
+  Evalustaion is done in the global-environment.
+  \begin{scheme}
+    (define foo 1)
+    \sharpsign.foo                                 \lev 1
+    '(foo \sharpsign.foo \sharpsign.(+ foo foo))   \lev (foo 1 2)
+    (let ((foo 2))
+       \sharpsign.foo)                             \lev 1
+    
+  \end{scheme}
+\end{description}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Basic concepts}
+
+{\doc}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Expressions}
+
+\subsection{Primitive expression types}
+
+\begin{entry}{%
+\proto{quote}{ \hyper{datum}}{\exprtype}
+\pproto{\singlequote\hyper{datum}}{\exprtype}}
+\saut
+The quoting mechanism is identical to {\rrrr}. Keywords (see
+section~\ref{keywords}), as
+numerical constants, string constants, character constants, and boolean
+constants evaluate ``to themselves''; they need not be quoted.
+\begin{scheme}
+'"abc"     \ev  "abc"
+"abc"      \ev  "abc"
+'145932    \ev  145932
+145932     \ev  145932
+'\schtrue  \ev  \schtrue
+\schtrue   \ev  \schtrue
+':key      \ev  {:key}
+:key       \ev  {:key}
+\end{scheme}
+\begin{note}
+  {\rrrr} requires to quote constant lists and constant vectors. This
+  is not necessary with {\stk}.
+\end{note}
+\end{entry}
+
+\begin{entry}{%
+\pproto{(\hyper{operator} \hyperi{operand} \dotsfoo)}{\exprtype}}
+\saut
+{\doc} Furthermore, \hyper{operator} can be a macro (see section~\ref{macros}).
+\end{entry}
+
+\begin{entry}{%
+\proto{lambda}{ \hyper{formals} \hyper{body}}{\exprtype}
+\proto{if}{ \hyper{test} \hyper{consequent} \hyper{alternate}} {\exprtype}
+\proto{if}{ \hyper{test} \hyper{consequent}}{\exprtype}
+\proto{set!}{ \hyper{variable} \hyper{expression}}{\exprtype}}
+\saut
+\doc
+\end{entry}
+
+\subsection{Derived expression types}
+
+\begin{entry}{%
+\proto{cond}{ \hyperi{clause} \hyperii{clause} \dotsfoo}{\exprtype}
+\proto{case}{ \hyper{key} \hyperi{clause} \hyperii{clause} \dotsfoo}{\exprtype}
+\proto{and}{ \hyperi{test} \dotsfoo}{\exprtype}
+\proto{or}{ \hyperi{test} \dotsfoo}{\exprtype}}
+\saut
+\doc
+\end{entry}
+
+\begin{entry}{%
+\proto{when}{ \hyper{test} \hyperi{expression} \hyperii{expression} \dotsfoo}{\exprtype}}
+\saut
+If the \hyper{test} expression yields a true value, the \hyper{expression}s are
+evaluated from left to right and the value of the last \hyper{expression} is
+returned.
+\end{entry}
+
+\begin{entry}{%
+\proto{unless}{ \hyper{test} \hyperi{expression} \hyperii{expression} \dotsfoo}
+            {\exprtype}}
+\saut
+If the \hyper{test} expression yields a false value, the \hyper{expression}s are
+evaluated from left to right and the value of the last \hyper{expression} is
+returned.
+\end{entry}
+
+\begin{entry}{%
+\proto{let}{ \hyper{bindings} \hyper{body}}{\exprtype}
+\proto{let}{ \hyper{variable} \hyper{bindings} \hyper{body}}{\exprtype}
+\proto{let*}{ \hyper{bindings} \hyper{body}}{\exprtype}}
+\saut
+\doc
+\end{entry}
+
+\begin{entry}{%
+\proto{fluid-let}{ \hyper{bindings} \hyper{body}}{\exprtype}}
+\saut
+The \var{bindings} are evaluated in the current environment, in some
+unspecified order, the current values of the variables present in
+\var{bindings} are saved, and the new evaluated values are assigned to the 
+\var{bindings} variables. Once this is done, the expressions of \var{body}
+are evaluated sequentially in the current environment; the value of the
+last expression is the result of {\tt fluid-let}. Upon exit, the stored
+variables values are restored. An error is signalled if any of the 
+\var{bindings} variable is unbound.
+\begin{scheme}
+(let* ((a 'out)
+       (f (lambda () a)))
+  (list a 
+        (fluid-let ((a 'in)) (f))
+        a)) \lev (out in out)
+\end{scheme}
+When the body of a \ide{fluid-let} is exited by invoking a continuation,
+the new variable values are saved, and the variables are set to their old 
+values. Then, if the body is reentered by invoking a continuation, the old
+values are saved and new values are restored. The following example illustrates
+this behaviour
+\begin{scheme}
+(let ((cont \schfalse)
+      (l    '())
+      (a    'out))
+
+  (set! l (cons a l))
+  (fluid-let ((a 'in))
+    (set! cont (call/cc (lambda (k) k)))
+    (set! l (cons a l)))
+  (set! l (cons a l))
+
+  (if cont (cont \schfalse) l)) \lev (out in out in out)
+
+\end{scheme}
+\end{entry}
+
+\begin{entry}{%
+\proto{letrec}{ \hyper{bindings} \hyper{body}}{\exprtype}
+\proto{begin}{ \hyperi{expression} \hyperii{expression} \dotsfoo}{\exprtype}
+\proto{do} { \hyper{inits} \hyper{test} \hyper{body}}{\exprtype}
+\proto{delay}{ \hyper{expression}}{\exprtype}
+\proto{quasiquote}{ \hyper{template}}{\exprtype} \nopagebreak
+\pproto{\backquote\hyper{template}}{\exprtype}}
+\saut
+\doc
+\end{entry}
+
+\begin{entry}{
+\proto{dotimes}{ (var count) \hyperi{expression} \hyperii{expression} \dotsfoo} {\exprtype}
+\proto{dotimes}{ (var count result) \hyperi{expression} \hyperii{expression} \dotsfoo} {\exprtype}}
+\saut 
+
+\ide{Dotimes} evaluates the \var{count} form, which must return an
+integer.  It then evaluates the \hyper{expression}s once for each
+integer from zero (inclusive) to \var{count} (exclusive), in order,
+with the variable \var{var} bound to the integer; if the value of
+\var{count} is zero or negative, then the \hyper{expression}s are not
+evaluated. When the loop completes, \var{result} is evaluated and its
+value is returned as the value of the \ide{dotimes} expression. If
+\var{result} is omitted, \ide{dotimes} returns {\schfalse}.
+
+\begin{scheme}
+(let ((l '()))
+  (dotimes (i 4 l)
+     (set! l (cons i l)))) \lev (3 2 1 0)
+\end{scheme}
+\end{entry}
+
+\begin{entry}{
+\proto{while} { \hyper{test} \hyperi{expression} \hyperii{expression} \dotsfoo}{\exprtype}}
+\saut
+\ide{While} evaluates the \hyper{expression}s until \hyper{test} 
+returns a false value. The value of a \ide{while} construct is unspecified.
+\end{entry}
+
+\begin{entry}{
+\proto{until} { \hyper{test} \hyperi{expression} \hyperii{expression} \dotsfoo}{\exprtype}}
+\saut
+\ide{Until} evaluates the \hyper{expression}s while \hyper{test} 
+returns a false value. The value of an \ide{unless} construct is unspecified.
+\end{entry}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Program structure}
+
+\doc
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Standard procedures}
+\label{initialenv}
+\label{builtinchapter}
+
+\mainindex{initial environment}
+\mainindex{top level environment}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Booleans}
+\label{booleansection}
+
+In {\stk} the boolean value {\schfalse} is different from the empty list, as
+required by \rrrr.
+
+\begin{entry}{%
+\proto{not}{ obj}{procedure}
+\proto{boolean?}{ obj}{procedure}}
+\saut
+\doc
+\end{entry}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Equivalence predicates}
+\label{equivalencesection}
+
+\begin{entry}{%
+\proto{eqv?}{ \vari{obj} \varii{obj}}{procedure}}
+\saut
+{\stk} extends the \ide{eqv?} predicate defined in the {\rrrr} to take
+keywords into account: if \vari{obj} and \varii{obj} are both
+keywords, the \ide{eqv?} predicate will yield {\schtrue} if and only
+if
+\begin{scheme}
+(string=? (keyword->string obj1)
+          (keyword->string obj2))
+    \ev  \schtrue%
+\end{scheme}
+\end{entry}
+
+%%%% EQ?
+\begin{entry}{%
+\proto{eq?}{ \vari{obj} \varii{obj}}{procedure}}
+\saut
+{\stk} extends the \ide{eq?} predicate defined in {\rrrr} to take
+keywords into account. On keywords, \ide{eq?} behaves like \ide{eqv?}.
+
+\begin{scheme}
+(eq? :key :key)                 \ev  \schtrue
+\end{scheme}
+\end{entry}
+
+%%%% EQUAL?
+\begin{entry}{%
+\proto{equal?}{ \vari{obj} \varii{obj}}{procedure}}
+\saut
+{\doc}
+\end{entry}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Pairs and lists}
+\label{listsection}
+
+\begin{entry}{%
+\proto{pair?}{ obj}{procedure}
+\proto{cons}{ \vari{obj} \varii{obj}}{procedure}
+\proto{car}{ pair}{procedure}
+\proto{cdr}{ pair}{procedure}
+\proto{set-car!}{ pair obj}{procedure}
+\proto{set-cdr!}{ pair obj}{procedure}
+\setbox0\hbox{\tt(cadr \var{pair})}
+\setbox1\hbox{procedure}
+\proto{caar}{ pair}{procedure}
+\proto{cadr}{ pair}{procedure}
+\pproto{\hbox to 1\wd0 {\hfil$\vdots$\hfil}}{\hbox to 1\wd1 {\hfil$\vdots$\hfil}}
+\proto{cdddar}{ pair}{procedure}
+\proto{cddddr}{ pair}{procedure}
+\proto{null?}{ obj}{procedure}
+\proto{list?}{ obj}{procedure}
+\proto{list}{ \var{obj} \dotsfoo}{procedure}
+\proto{length}{ list}{procedure}
+\proto{append}{ list \dotsfoo}{procedure}
+\proto{reverse}{ list}{procedure}
+\proto{list-tail}{ list \vr{k}}{procedure}
+\proto{list-ref}{ list \vr{k}}{procedure}
+\proto{memq}{ obj list}{procedure}
+\proto{memv}{ obj list}{procedure}
+\proto{member}{ obj list}{procedure}
+\proto{assq}{ obj alist}{procedure}
+\proto{assv}{ obj alist}{procedure}
+\proto{assoc}{ obj alist}{procedure}}
+\saut
+\doc
+\end{entry}
+
+\begin{entry}{%
+\proto{list*}{ obj}{procedure}}
+\saut
+\ide{list*} is like \ide{list} except that the last argument to \ide{list*} is
+used as the {\em cdr} of the last pair constructed.
+\begin{scheme}
+(list* 1 2 3) \ev (1 2 . 3)
+(list* 1 2 3 '(4 5)) \ev (1 2 3 4 5)
+\end{scheme}
+\end{entry}
+
+\begin{entry}{%
+\proto{copy-tree}{ obj}{procedure}}
+\saut
+\ide{Copy-tree} recursively copies trees of pairs. If \ide{obj} is not
+a pair, it is returned; otherwise the result is a new pair whose {\em
+  car} and {\em cdr} are obtained by calling \ide{copy-tree} on the
+{\em car} and {\em cdr} of \ide{obj}, respectively.
+\end{entry}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Symbols}
+\label{symbolsection}
+
+The {\stk} reader can cope with symbols whose names contain special
+characters or letters in the non standard case.  When a symbol is
+read, the parts enclosed in bars (``\verb+|+'') will be entered
+verbatim into the symbol's name. The ``\verb+|+'' characters are not
+part of the symbol; they only serve to delimit the sequence of
+characters that must be entered ``as is''. In order to maintain
+read-write invariance, symbols containing such sequences of special
+characters will be written between a pair of ``\verb+|+''
+
+\begin{scheme}
+'|x|                  \ev x
+(string->symbol "X")  \ev |X|
+(symbol->string '|X|) \ev "X"
+'|a  b|               \ev |a  b|
+'a|B|c                \ev |aBc|
+(write '|FoO|)        \ev writes the string "|FoO|" 
+(display '|FoO|)      \ev writes the string "FoO" 
+\end{scheme}
+
+\begin{note}
+  This notation has been introduced because {\rrrr} states that case
+  must not be significant in symbols whereas the Tk toolkit is case
+  significant (or more precisely thinks it runs over Tcl which is case
+  significant). %% axe:
+  However, symbols containing the character ``\verb+|+'' itself still
+  can't be read in.
+\end{note}
+
+\begin{entry}{%
+\proto{symbol?}{ obj}{procedure}}
+\saut
+Returns \schtrue{} if \var{obj} is a symbol, otherwise returns {\schfalse}.
+
+\begin{scheme}
+(symbol? 'foo)          \ev  \schtrue
+(symbol? (car '(a b)))  \ev  \schtrue
+(symbol? "bar")         \ev  \schfalse
+(symbol? 'nil)          \ev  \schtrue
+(symbol? '())           \ev  \schfalse
+(symbol? \schfalse)     \ev  \schfalse
+(symbol? :key)          \ev  \schfalse
+\end{scheme}
+\end{entry}
+
+\begin{entry}{%
+\proto{symbol->string}{ symbol}{procedure}
+\proto{string->symbol}{ string}{procedure}}
+\saut
+\doc
+\end{entry}
+
+\begin{entry}{%
+\proto{gensym}{}{procedure}
+\proto{gensym}{ prefix}{procedure}}
+\saut
+\ide{Gensym} creates a new symbol. The print name of the generated symbol 
+consists of a prefix (which defaults to {\tt "G"}) followed by the decimal
+representation of a number. If \var{prefix} is specified, it must be a
+string.
+\begin{scheme}
+(gensym) \lev |G100|
+(gensym "foo-") \lev foo-101
+\end{scheme}
+\end{entry}
+
+\subsection {Numbers}
+
+The only numbers recognized by {\stk} are integers (with arbitrary
+precision) and reals (implemented as C {\tt double float}s). 
+
+\begin{entry}{%
+\proto{number?}{ obj}{procedure}}
+\saut
+Returns {\schtrue} if \var{obj} is a number, otherwise returns {\schfalse}.
+\end{entry}
+
+\begin{entry}{%
+\proto{complex?}{ obj}{procedure}}
+\saut
+Returns the same result as \var{number?}.  Note that complex numbers
+are not implemented.
+\end{entry}
+
+\begin{entry}{%
+\proto{real?}{ obj}{procedure}}
+\saut
+Returns {\schtrue} if \var{obj} is a float number, otherwise returns
+{\schfalse}.
+\end{entry}
+
+\begin{entry}{%
+\proto{rational?}{ obj}{procedure}}
+\saut
+Returns the same result as \var{number?}. Note that rational numbers are not
+implemented.
+\end{entry}
+
+\begin{entry}{%
+\proto{integer?}{ obj}{procedure}}
+\saut
+Returns {\schtrue} if \var{obj} is an integer, otherwise returns {\schfalse}.
+\begin{note}
+  The {\stk} interpreter distinguishes between integers which fit in a
+  C {\tt long int} (minus 8 bits) and integers of arbitrary length
+  (aka ``bignums''). This should be transparent to the user, though.
+%% shouldn't it? :-)  axe
+\end{note}
+\end{entry}
+
+\begin{entry}{%
+\proto{exact?}{ \vr{z}}{procedure}
+\proto{inexact?}{ \vr{z}}{procedure}}
+\saut
+In this implementation, integers (C {\tt long int} or ``bignums'') are exact
+numbers and floats are inexact.
+\end{entry}
+
+\begin{entry}{%
+\proto{=}{ \vri{z} \vrii{z} \vriii{z} \dotsfoo}{procedure}
+\proto{<}{ \vri{x} \vrii{x} \vriii{x} \dotsfoo}{procedure}
+\proto{>}{ \vri{x} \vrii{x} \vriii{x} \dotsfoo}{procedure}
+\proto{<=}{ \vri{x} \vrii{x} \vriii{x} \dotsfoo}{procedure}
+\proto{>=}{ \vri{x} \vrii{x} \vriii{x} \dotsfoo}{procedure}
+\proto{zero?} { z}{procedure}
+\proto{positive?} { z}{procedure}
+\proto{negative?} { z}{procedure}
+\proto{odd?} { z}{procedure}
+\proto{even?} { z}{procedure}
+\proto{max}{ \vri{x} \vrii{x} \dotsfoo}{procedure}
+\proto{min}{ \vri{x} \vrii{x} \dotsfoo}{procedure}
+\proto{+}{ \vri{z} \dotsfoo}{procedure}
+\proto{*}{ \vri{z} \dotsfoo}{procedure}
+\proto{-}{ \vri{z} \vrii{z}}{procedure}
+\proto{-}{ \vr{z}}{procedure}
+\proto{-}{ \vri{z} \vrii{z} \dotsfoo}{procedure}
+\proto{/}{ \vri{z} \vrii{z}}{procedure}
+\proto{/}{ \vr{z}}{procedure}
+\proto{/}{ \vri{z} \vrii{z} \dotsfoo}{procedure}
+\proto{abs}{ x}{procedure}
+\proto{quotient}{ \vri{n} \vrii{n}}{procedure}
+\proto{remainder}{ \vri{n} \vrii{n}}{procedure}
+\proto{modulo}{ \vri{n} \vrii{n}}{procedure}
+\proto{gcd}{ \vri{n} \dotsfoo}{procedure}
+\proto{lcm}{ \vri{n} \dotsfoo}{procedure}}
+\saut
+\doc
+\end{entry}
+
+\begin{entry}{%
+\proto{numerator}{ \vr{q}}{procedure}
+\proto{denominator}{ \vr{q}}{procedure}}
+\saut
+Not implemented.
+\end{entry}
+
+\begin{entry}{%
+\proto{floor}{ x}{procedure}
+\proto{ceiling}{ x}{procedure}
+\proto{truncate}{ x}{procedure}
+\proto{round}{ x}{procedure}}
+\saut
+\doc
+\end{entry}
+
+\begin{entry}{%
+\proto{rationalize}{ x y}{procedure}}
+\saut
+not yet implemented.
+\end{entry}
+
+\begin{entry}{%
+\proto{exp}{ \vr{z}}{procedure}
+\proto{log}{ \vr{z}}{procedure}
+\proto{sin}{ \vr{z}}{procedure}
+\proto{cos}{ \vr{z}}{procedure}
+\proto{tan}{ \vr{z}}{procedure}
+\proto{asin}{ \vr{z}}{procedure}
+\proto{acos}{ \vr{z}}{procedure}
+\proto{atan}{ \vr{z}}{procedure}
+\proto{atan}{ \vr{y} \vr{x}}{procedure}
+\proto{sqrt}{ \vr{z}}{procedure}
+\proto{expt}{ \vri{z} \vrii{z}}{procedure}}
+\saut
+\doc
+\end{entry}
+
+\begin{entry}{
+\proto{make-rectangular}{ \vri{x} \vrii{x}}{procedure}
+\proto{make-polar}{ \vri{x} \vrii{x}}{procedure}
+\proto{real-part}{ \vr{z}}{procedure}
+\proto{imag-part}{ \vr{z}}{procedure}
+\proto{magnitude}{ \vr{z}}{procedure}
+\proto{angle}{ \vr{z}}{procedure}}
+\saut
+These procedures are not implemented since complex numbers are not defined.
+\end{entry}
+
+\begin{entry}{%
+\proto{exact->inexact}{ \vr{z}}{procedure}
+\proto{inexact->exact}{ \vr{z}}{procedure}
+\proto{number->string}{ number}{procedure}
+\proto{number->string}{ number radix}{procedure}
+\proto{string->number}{ string}{procedure}
+\proto{string->number}{ string radix}{procedure}}
+\saut
+\doc
+\end{entry}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Characters}
+
+\mainindex{characters}
+Table 1 gives the list of allowed character names together with their ASCII
+equivalent expressed in octal.
+
+\begin{table}[t]
+{\small
+\begin{center}
+% \begin{tabular}{|c|c|c|} \hline
+%   {\em name}&{\em value}&{\em alternate name} \\
+% \hline
+%   nul        &000     & null\\
+%   soh        &001&\\
+%   stx        &002&\\
+%   etx        &003&\\
+%   eot        &004&\\
+%   enq        &005&\\
+%   ack        &006&\\
+%   bel        &007     & bell\\[2mm]
+%   bs         &010     & backspace\\
+%   ht         &011&\\
+%   tab        &011&\\
+%   nl         &012     & newline\\
+%   vt         &013&\\
+%   np         &014     & page\\
+%   cr         &015     & return\\
+%   so         &016&\\
+%   si         &017&\\[2mm]
+%   dle        &020&\\
+%   dc1        &021&\\
+%   dc2        &022&\\
+%   dc3        &023&\\
+%   dc4        &024&\\
+%   nak        &025&\\
+%   syn        &026&\\
+%   etb        &027&\\[2mm]
+%   can        &030&\\
+%   em         &031&\\
+%   sub        &032&\\
+%   esc        &033     & escape\\
+%   fs         &034&\\
+%   gs         &035&\\
+%   rs         &036&\\
+%   us         &037&\\[2mm]
+%   sp       &040       & space\\[2mm]
+%   del      &177       & delete\\
+\begin{tabular}{|c|c|c||c|c|c|} \hline
+{\em name}&{\em value}&{\em alternate name}&{\em name}&{\em value}&{\em alternate name} \\
+\hline
+  nul        &000       & null  &  bs         &010      & backspace\\
+  soh        &001&              &  ht         &011      & tab\\
+  stx        &002&              &  nl         &012      & newline\\
+  etx        &003&              &  vt         &013&\\
+  eot        &004&              &  np         &014      & page\\
+  enq        &005&              &  cr         &015      & return\\
+  ack        &006&              &  so         &016&\\
+  bel        &007       & bell  &  si         &017&\\[2mm]
+%%%%%
+  dle        &020&              &  can        &030&\\
+  dc1        &021&              &  em         &031&\\
+  dc2        &022&              &  sub        &032&\\
+  dc3        &023&              &  esc        &033      & escape\\
+  dc4        &024&              &  fs         &034&\\
+  nak        &025&              &  gs         &035&\\
+  syn        &026&              &  rs         &036&\\
+  etb        &027&              &  us         &037&\\[2mm]
+%%%%%
+  sp         &040       & space&&&\\[2mm]
+%%%%%
+  del        &177       & delete&&&\\
+\hline
+\end{tabular}
+\end{center}
+}
+\caption {Valid character names }
+\end{table}
+
+\begin{entry}{%
+\proto{char?}{ obj}{procedure}
+\proto{char=?}{ \vari{char} \varii{char}}{procedure}
+\proto{char<?}{ \vari{char} \varii{char}}{procedure}
+\proto{char>?}{ \vari{char} \varii{char}}{procedure}
+\proto{char<=?}{ \vari{char} \varii{char}}{procedure}
+\proto{char>=?}{ \vari{char} \varii{char}}{procedure}
+\proto{char-ci=?}{ \vari{char} \varii{char}}{procedure}
+\proto{char-ci<?}{ \vari{char} \varii{char}}{procedure}
+\proto{char-ci>?}{ \vari{char} \varii{char}}{procedure}
+\proto{char-ci<=?}{ \vari{char} \varii{char}}{procedure}
+\proto{char-ci>=?}{ \vari{char} \varii{char}}{procedure}
+\proto{char-alphabetic?}{ char}{procedure}
+\proto{char-numeric?}{ char}{procedure}
+\proto{char-whitespace?}{ char}{procedure}
+\proto{char-upper-case?}{ letter}{procedure}
+\proto{char-lower-case?}{ letter}{procedure}
+\proto{char->integer}{ char}{procedure}
+\proto{integer->char}{ \vr{n}}{procedure}
+\proto{char-upcase}{ char}{procedure}
+\proto{char-downcase}{ char}{procedure}}
+\saut
+\doc
+\end{entry}
+
+\subsection{Strings}
+
+{\stk} string constants allow the insertion of arbitrary characters by
+encoding them as escape sequences, introduced by a backslash
+(\backwhack{}).  The valid escape sequences are shown in Table 2. For
+instance, the string
+
+\begin{scheme}
+"ab\backwhack{}040c\backwhack{}nd\backwhack{}
+e"
+\end{scheme}
+is the string consisting of the characters \sharpsign\backwhack{a}, 
+\sharpsign\backwhack{b},\sharpsign\backwhack{space}, \sharpsign\backwhack{c},
+\sharpsign\backwhack{newline}, \sharpsign\backwhack{d} and \sharpsign\backwhack{e}.
+
+\begin{table}[t]
+{\small
+\begin{center}
+\begin{tabular}{|l|l|} \hline
+\multicolumn{1}{|c|}{\em Sequence}&\multicolumn{1}{|c|}{\em Character inserted}\\
+\hline
+\backwhack{b}& Backspace \\
+\backwhack{e}& Escape \\
+\backwhack{n}& Newline \\
+\backwhack{t}& Horizontal Tab \\
+\backwhack{n}& Carriage Return \\
+\backwhack{0abc}& ASCII character with octal value abc \\
+\backwhack{\tt<newline>}& None (permits to enter a string on several lines)\\
+\backwhack{\tt<other>}& {\tt<other>}\\
+\hline
+\end{tabular}
+\end{center}
+}
+\caption {String escape sequences}
+\end{table}
+
+\begin{entry}{%
+\proto{string?}{ obj}{procedure}
+\proto{make-string}{ \vr{k}}{procedure}
+\proto{make-string}{ \vr{k} char}{procedure}
+\proto{string}{ char \dotsfoo}{procedure}
+\proto{string-length}{ string}{procedure}
+\proto{string-ref}{ string \vr{k}}{procedure}
+\proto{string-set!}{ string k char}{procedure}
+\proto{string=?}{ \vari{string} \varii{string}}{procedure}
+\proto{string-ci=?}{ \vari{string} \varii{string}}{procedure}
+\proto{string<?}{ \vari{string} \varii{string}}{procedure}
+\proto{string>?}{ \vari{string} \varii{string}}{procedure}
+\proto{string<=?}{ \vari{string} \varii{string}}{procedure}
+\proto{string>=?}{ \vari{string} \varii{string}}{procedure}
+\proto{string-ci<?}{ \vari{string} \varii{string}}{procedure}
+\proto{string-ci>?}{ \vari{string} \varii{string}}{procedure}
+\proto{string-ci<=?}{ \vari{string} \varii{string}}{procedure}
+\proto{string-ci>=?}{ \vari{string} \varii{string}}{procedure}
+\proto{substring}{ string start end}{procedure}
+\proto{string-append}{ \var{string} \dotsfoo}{procedure}
+\proto{string->list}{ string}{procedure}
+\proto{list->string}{ chars}{procedure}
+\proto{string-copy}{ string}{procedure}
+\proto{string-fill!}{ string char}{procedure}}
+\saut
+\doc
+\end{entry}
+
+\begin{entry}{%
+\proto{string-find?}{  \vari{string} \varii{string}}{procedure}}
+\saut
+Returns {\schtrue} if \vari{string} appears somewhere in
+\varii{string}; otherwise returns {\schfalse}.
+\end{entry}
+
+\begin{entry}{%
+\proto{string-index}{  \vari{string} \varii{string}}{procedure}}
+\saut
+Returns the index of where \vari{string} is a substring of
+\varii{string} if it exists; returns {\schfalse} otherwise.
+\begin{scheme}
+(string-index "ca" "abracadabra") \lev 4
+(string-index "ba" "abracadabra") \lev \schfalse
+\end{scheme}
+\end{entry}
+
+\begin{entry}{%
+\proto{string-lower}{ string}{procedure}}
+\saut
+Returns a string in which all upper case letters of \ide{string} have been
+replaced by their lower case equivalent.
+\end{entry}
+
+\begin{entry}{%
+\proto{string-upper}{ string}{procedure}}
+\saut
+Returns a string in which all lower case letters of \ide{string} have been
+replaced by their upper case equivalent.
+\end{entry}
+
+
+\subsection {Vectors}
+
+\begin{entry}{%
+\proto{vector?}{ obj}{procedure}
+\proto{make-vector}{ k}{procedure}
+\proto{make-vector}{ k fill}{procedure}
+\proto{vector}{ obj \dotsfoo}{procedure}
+\proto{vector-length}{ vector}{procedure}
+\proto{vector-ref}{ vector k}{procedure}
+\proto{vector-set!}{ vector k obj}{procedure}
+\proto{vector->list}{ vector}{procedure}
+\proto{list->vector}{ list}{procedure}
+\proto{vector-fill!}{ vector fill}{procedure}}
+\saut
+\doc
+\end{entry}
+
+\begin{entry}{%
+\proto{vector-copy}{ vector}{procedure}}
+\saut
+returns a copy of \var{vector}.
+\end{entry}
+
+\begin{entry}{%
+\proto{vector-resize}{ vector size}{procedure}}
+\saut
+\var{vector-resize} physically changes the size of \var{vector}. If
+\var{size} is greater than the old vector size, the contents of the
+newly allocated cells are undefined.
+\end{entry}
+
+\subsection{Control features}
+
+\begin{entry}{%
+\proto{procedure?}{ obj}{procedure}
+\proto{apply}{ proc args}{procedure}
+\proto{apply}{ proc \vari{arg} $\ldots$ args}{procedure}
+\proto{map}{ proc \vari{list} \varii{list} \dotsfoo}{procedure}
+\proto{for-each}{ proc \vari{list} \varii{list} \dotsfoo}{procedure}
+\proto{force}{ promise}{procedure}}
+\saut
+\doc
+\end{entry}
+
+\begin{entry}{%
+\proto{call-with-current-continuation}{ proc}{procedure}
+\proto{call/cc} { proc}{procedure}}
+\saut
+\ide{Call/cc} is a shorter name for \ide{call-with-current-continuation}.
+\mainindex{continuation}
+\end{entry}
+
+\begin{entry}{%
+\proto{closure?}{ obj}{procedure}}
+\saut
+returns {\schtrue} if \var{obj} is a procedure created by evaluating a
+lambda expression, otherwise returns {\schfalse}.
+\end{entry}
+
+\begin{entry}{%
+\proto{primitive?}{ obj}{procedure}}
+\saut
+returns {\schtrue} if \var{obj} is a procedure and is not a closure,
+otherwise returns {\schfalse}.
+\end{entry}
+
+\begin{entry}{% 
+\proto{promise?} { obj}{procedure}}
+\saut
+returns {\schtrue} if \var{obj} is an object returned by the
+application of \ide{delay}, otherwise returns {\schfalse}.
+\end{entry} 
+
+\begin{entry}{%
+\proto{continuation?} { obj} {procedure}}
+\saut
+\mainindex{continuation}
+returns {\schtrue} if \var{obj} is a continuation obtained by
+\ide{call/cc}, otherwise returns {\schfalse}.
+\end{entry}
+
+\begin{entry}{%
+\proto{dynamic-wind}{ \hyperi{thunk} \hyperii{thunk} \hyperiii{thunk}} {procedure}}
+\saut
+\hyperi{Thunk}, \hyperii{thunk} and \hyperiii{thunk} are called in
+order. The result of \ide{dynamic-wind} is the value returned by
+\hyperii{thunk}.  If \hyperii{thunk} escapes from its continuation
+during evaluation (by calling a continuation obtained by \ide{call/cc}
+or on error), \hyperiii{thunk} is called. If \hyperii{thunk} is later
+reentered, \hyperi{thunk} is called.
+\end{entry}
+
+\begin{entry}{%
+\proto{catch} { \hyperi{expression} \hyperii{expression} \dotsfoo} {\exprtype}}
+\saut
+The \hyper{expression}s are evaluated from left to right. If an error
+occurs, evaluation of the \hyper{expression}s is aborted, and {\schtrue}
+is returned to \ide{catch}'s caller.  If evaluation finishes without
+an error, \ide{catch} returns {\schfalse}.
+%% axe: why isn't this a procedure taking a thunk?
+\begin {scheme}
+(let* ((x 0)
+       (y (catch
+             (set! x 1)
+             (/ 0) ; causes a "division by 0" error
+             (set! x 2))))
+  (cons x y))   \lev (1 . {\schtrue})
+\end{scheme}
+\end{entry}
+
+
+\begin{entry}{%
+\proto{procedure-body}{ \hyper{procedure}} {procedure}}
+\saut
+returns the body of \hyper{procedure}. If \hyper{procedure} is not a closure,
+\ide{procedure-body} returns {\schfalse}.
+\begin{scheme}
+(define (f a b)
+   (+ a (* b 2)))
+
+(procedure-body f)     \ev (lambda (a b)
+                                  (+ a (* b 2)))
+(procedure-body car)   \ev \schfalse
+\end{scheme}
+\end{entry}
+
+\subsection{Input and output}
+
+\label{inputoutput}
+The {\rrrr} states that ports represent input and output devices.
+However, it defines only ports which are attached to files.  In
+{\stk}, ports can also be attached to strings or to a external command
+input or output. String ports are similar to file ports, except that
+characters are read from (or written to) a string rather than a file.
+External command input or output ports are implemented with Unix pipes
+and are called pipe ports. A pipe port is created by specifying the
+command to execute prefixed with the string {\tt "|~"}. Specification
+of a pipe port can occur everywhere a file name is needed.
+
+
+\begin{entry}{%
+\proto{call-with-input-file}{ string proc}{procedure}
+\proto{call-with-output-file}{ string proc}{procedure}}
+\saut
+\begin{note}
+if {\var string} starts with the two characters {\tt "| "}, these procedures
+return a pipe port. Consequently, it is not possible to open a file
+whose name starts with those two characters.
+\end{note}
+\end{entry}
+
+\begin{entry}{%
+\proto{call-with-input-string}{ string proc}{procedure}}
+\saut
+behaves exactly as \ide{call-with-input-file} except that the port passed to
+\var{proc} is the string port obtained from \var{string}.
+
+\begin{scheme}
+(call-with-input-string "123 456" (lambda (x) (read x))) \lev 123
+\end{scheme}
+\end{entry}
+
+\begin{entry}{%
+\proto{call-with-output-string}{ proc}{procedure}}
+\saut
+\var{Proc} should be a procedure of one argument.
+\ide{Call-with-output-string} calls \var{proc} with a freshly opened
+output string port. The result of this procedure is a string
+containing all the text that has been written on the string port.
+\begin{scheme}
+(call-with-output-string
+   (lambda (x) (write 123 x) (display "Hello" x))) \lev "123Hello"
+\end{scheme}
+\end{entry}
+
+\begin{entry}{%
+\proto{input-port?}{ obj}{procedure}
+\proto{output-port?}{ obj}{procedure}}
+\saut
+\doc
+\end{entry}
+
+\begin{entry}{%
+\proto{input-string-port?}{ obj}{procedure}
+\proto{output-string-port?}{ obj}{procedure}}
+\saut
+Returns \schtrue{} if \var{obj} is either an input or an output string port,
+otherwise returns {\schfalse}.
+\end{entry}
+
+\begin{entry}{%
+\proto{current-input-port}{}{procedure}
+\proto{current-output-port}{}{procedure}}
+\saut
+\doc
+\end{entry}
+
+\begin{entry}{%
+\proto{current-error-port}{}{procedure}}
+\saut
+Returns the current default error port.
+\end{entry}
+
+\begin{entry}{%
+\proto{with-input-from-file}{ string thunk}{procedure}
+\proto{with-output-to-file}{ string thunk}{procedure}}
+\saut
+\doc
+
+The following example uses a pipe port opened for reading. It permits
+to read all the lines produced by an external {\tt ls} command
+(i.e. the ouput of the {\tt ls} command is {\em redirected} to the
+Scheme pipe port).
+
+\begin{scheme}
+(with-input-from-file "\verb+|+ ls -ls" 
+  (lambda ()
+    (do ((l (read-line) (read-line)))
+        ((eof-object? l))
+      (display l)
+      (newline))))
+\end{scheme}
+
+Hereafter is another example of Unix command redirection. This time,
+it is the standard input of the Unix command which is redirected.
+\begin{scheme}  
+(with-output-to-file "| mail root"
+  (lambda()
+    (format {\schtrue} "A simple mail sent from STk\verb+\+n")))
+\end{scheme}  
+\end{entry}
+
+\begin{entry}{%
+\proto{with-input-from-string}{ string thunk}{procedure}}
+\saut
+A string port is opened for input from \var{string}. \ide{Current-input-port}
+is set to the port and \var{thunk} is called. When \var{thunk} returns,
+the previous default input port is restored.
+\ide{With-input-from-string} returns the value yielded by \var{thunk}.
+
+\begin{scheme}
+(with-input-from-string "123 456" (lambda () (read)))   \lev 123
+\end{scheme}
+\end{entry}
+
+\begin{entry}{%
+\proto{with-output-to-string}{ thunk}{procedure}}
+\saut
+A string port is opened for output. \ide{Current-output-port}
+is set to it and \var{thunk} is called. When the \var{thunk} returns,
+the previous default output port is restored. \ide{With-output-to-string}
+returns the string containing all the text written on the string port.
+
+\begin{scheme}
+(with-output-to-string (lambda () (write 123) (write "Hello"))) \lev "123Hello"
+\end{scheme}
+\end{entry}
+
+\begin{entry}{%
+\proto{open-input-file}{ filename}{procedure}
+\proto{open-output-file}{ filename}{procedure}}
+\saut
+\doc
+
+\begin{note}
+if {\var filename} starts with the string {\tt "| "}, these procedure
+return a pipe port. Consequently, it is not possible to open a file
+whose name starts with those two characters.
+\end{note}
+\end{entry}
+
+\begin{entry}{%
+\proto{open-input-string}{ string}{procedure}}
+\saut
+Returns an input string port capable of delivering characters from
+\var{string}.
+\end{entry}
+
+\begin{entry}{%
+\proto{open-output-string}{}{procedure}}
+\saut
+Returns an output string port capable of receiving and collecting characters.
+\end{entry}
+
+\begin{entry}{%
+\proto{get-output-string}{ port}{procedure}}
+\saut
+Returns a string containing all the text that has been written on the
+output string \var{port}.
+\begin{scheme}
+(let ((p (open-output-string)))
+  (display "Hello, world" p)
+  (get-output-string p))         \lev "Hello, world"
+\end{scheme}
+\end{entry}
+
+
+\begin{entry}{%
+\proto{close-input-port}{ port}{procedure}
+\proto{close-output-port}{ port}{procedure}}
+\saut
+\doc
+\end{entry}
+
+\begin{entry}{%
+\proto{read}{}{procedure}
+\proto{read}{ port}{procedure}
+\proto{read-char}{}{procedure}
+\proto{read-char}{ port}{procedure}
+\proto{peek-char}{}{procedure}
+\proto{peek-char}{ port}{procedure}
+\proto{char-ready?}{}{procedure}
+\proto{char-ready?}{ port}{procedure}}
+\saut
+\doc
+\end{entry}
+
+%% axe: the question of `new line or not new line?' was left open
+\begin{entry}{%
+\proto{read-line}{}{procedure}
+\proto{read-line}{ port}{procedure}}
+\saut
+Reads the next line available from the input port \var{port} and
+returns it as a string. The terminating newline is not included in the
+string. If no more characters are available, an end of file object is
+returned.  \var{Port} may be omitted, in which case it defaults to the
+value returned by \ide{current-input-port}.
+\end{entry}
+
+\begin{entry}{%
+\proto{write}{ obj}{procedure}
+\proto{write}{ obj port}{procedure}
+\proto{display}{ obj}{procedure}
+\proto{display}{ obj port}{procedure}
+\proto{newline}{}{procedure}
+\proto{newline}{ port}{procedure}
+\proto{write-char}{ char}{procedure}
+\proto{write-char}{ char port}{procedure}}
+\saut
+\doc
+\end{entry}
+
+\begin{entry}{%
+\proto{format}{ port string \vri{obj} \vrii{obj} \dotsfoo}{procedure}}
+\saut
+\label{format}
+Writes the \var{obj}s to the given \var{port}, according to the format
+string \var{string}.  \var{String} is written literally, except for
+the following sequences:
+%
+\begin{itemize}
+\item \tilda{}a or \tilda{}A is replaced by the printed representation of the
+next \var{obj}.
+\item \tilda{}s or \tilda{}S is replaced by the ``slashified'' printed
+representation of the next \var{obj}.
+\item \tilda{}\tilda{} is replaced by a single tilde.
+\item \tilda{}\% is replaced by a newline
+\end{itemize}
+
+\var{Port} can be a boolean, a port or a string port.  If \var{port}
+is {\schtrue}, output goes to the current output port; if \var{port}
+is {\schfalse}, the output is returned as a string.  Otherwise, the output is
+printed on the specified port.
+%
+\begin{scheme}
+(format {\schfalse} "A test.")       \lev "A test."
+(format {\schfalse} "A \tilda{}a." "test")  \lev "A test."
+(format {\schfalse} "A \tilda{}s." "test")  \lev "A \backwhack{}"test\backwhack{}"."
+\end{scheme}
+\end{entry}
+
+\begin{entry}{%
+\proto{get-output-string}{ port}{procedure}}
+\saut
+Returns the string associated with the output string \var{port}.
+\begin{scheme}
+(let ((p (open-output-string)))
+  (display "Hello, world" p)
+  (get-output-string p))         \lev "Hello, world"
+\end{scheme}
+\end{entry}
+
+\begin{entry}{%
+\proto{flush}{}{procedure}
+\proto{flush}{ port}{procedure}}
+\saut
+Flushes the buffer associated with the given \var{port}. The
+\var{port} argument may be omitted, in which case it defaults to the value
+returned by \ide{current-output-port}.
+\end{entry}
+
+\begin{entry}{%
+\proto{when-port-readable}{ port handler}{procedure}
+\proto{when-port-readable}{ port}{procedure}}
+\saut
+When \var{port} is ready for reading, \var{handler}, which must be a
+thunk, is called leaving the current evaluation suspended.  When
+\var{handler} execution is terminated, normal evaluation is resumed at
+its suspension point.  If the special value \schfalse{} is provided as
+\var{handler}, the current handler for \var{port} is deleted. If a
+handler is provided, the value returned by \ide{when-port-readable} is
+undefined. Otherwise, it returns the handler currently associated to
+\var{port}.
+
+The example below shows a simple usage of the \ide{when-port-readable} procedure:
+the command \var{cmd} is run with its output redirected in a pipe associated to the 
+\var{p} Scheme port. 
+\begin{scheme}
+(define p (open-input-file "| cmd"))
+(when-port-readable p 
+            (lambda()
+              (let (( l (read-line p)))
+                (if (eof-object? l)
+                    (begin
+                      ;; delete handler
+                      (when-port-readable p \schfalse)
+                      ;; and close port
+                      (close-input-port p))
+                    (format \schtrue{} "Line read: \tilda{}A\verb+\+n" l)))))
+
+\end{scheme}
+\end{entry}
+
+\begin{entry}{%
+\proto{when-port-writable}{ port handler}{procedure}
+\proto{when-port-writable}{ port}{procedure}}
+\saut
+When \var{port} is ready for writing, \var{handler}, which must be a
+thunk, is called leaving the current evaluation suspended.  When
+\var{handler} execution is terminated, normal evaluation is resumed at
+its suspension point.  If the special value \schfalse{} is provided as
+\var{handler}, the current handler for \var{port} is deleted. If a
+handler is provided, the value returned by \ide{when-port-writable} is
+undefined. Otherwise, it returns the handler currently associated to
+\var{port}.
+\end{entry}
+
+
+\begin{entry}{%
+\proto{load}{ filename}{procedure}}
+\saut
+\doc
+
+\begin{note}
+  The \var{load} primitive has been extended to allow loading of
+  object files, though this is not implemented on all systems
+  \footnote{Current version (\stkversion) allows image dumping
+            only on some platforms:SunOs~4.1.x, SunOs~5.3, NetBSD~1.0, 
+            HPUX, Irix 5.3}. See~\cite{STkExtension} for more details.
+\end{note}
+\end{entry}
+
+\begin{entry}{%
+\proto{try-load}{ filename}{procedure}}
+\saut
+Tries to load the file named \var{filename}. If \var{filename} exists and is
+readable, it is loaded, and \ide{try-load} returns {\schtrue}. 
+Otherwise, the result of the call is {\schfalse}.
+\end{entry}
+
+\begin{entry}{%
+\proto{autoload}{ filename \hyperi{symbol} \hyperii{symbol} \dotsfoo}{\exprtype}}
+\saut
+Defines \hyper{symbol}s as autoload symbols associated to file
+\var{filename}. 
+Fisrt evaluation of an autoload symbol will cause the loading of its
+associated file. \var{Filename} must provide a definition for the symbol which
+lead to its loading, otherwise an error is signaled.
+\end{entry}
+
+\begin{entry}{%
+\proto{autoload?}{ symbol}{procedure}}
+\saut
+Returns {\schtrue} if \var{symbol} is an autoload symbol; returns {\schfalse}
+otherwise.
+\end{entry}
+
+\begin{entry}{%
+\proto{require}{ string}{procedure}
+\proto{provide}{ string}{procedure}
+\proto{provided?}{ string}{procedure}}
+\saut
+\ide{Require} loads the file whose name is \var{string} if it was not
+previously ``provided''.\ide{Provide} permits to store \var{string} in
+the list of already provided files. Providing a file permits to avoid
+subsequent loads of this file. \ide{Provided?} returns {\schtrue} if
+\var{string} was already provided; it returns {\schfalse} otherwise.
+\end{entry}
+
+\begin{entry}{%
+\proto{transcript-on}{ filename}{procedure}\nopagebreak{}
+\proto{transcript-off}{}{procedure}}
+\saut
+Not implemented.
+\end{entry}
+
+\begin{entry}{%
+\proto{open-file}{ filename mode}{procedure}}
+\saut
+Opens the file whose name is \var{filename} with the specified
+\var{mode}. \var{Mode} must be ``r'' to open for reading or ``w''
+to open for writing. If the file can be opened, \var{open-file}
+returns the port associated with the given file, otherwise it returns
+{\schfalse}. Here again, the ``magic'' string {\tt "|~``} permit to
+open a pipe port.
+\end{entry}
+
+\begin{entry}{%
+\proto{close-port}{ port}{procedure}}
+\saut
+Closes \var{port}. If \var{port} denotes a string port, further
+reading or writing on this port is disallowed.
+\end{entry}
+
+\begin{entry}{%
+\proto{transcript-on}{ filename}{procedure}\nopagebreak{}
+\proto{transcript-off}{}{procedure}}
+\saut
+Not implemented.
+\end{entry}
+
+\begin{entry}{%
+\proto{port->string}{ port}{procedure}
+\proto{port->list}{ reader port}{procedure}
+\proto{port->string-list}{ port}{procedure}
+\proto{port->sexp-list}{ port}{procedure}}
+\saut
+Those procedures are utility for generally parsing input streams. Their
+specification has been stolen from {\tt scsh}. 
+
+\ide{Port->string} reads the input port until eof, then returns the
+accumulated string. 
+\begin{scheme}
+(port->string (open-input-file "\verb+|+ (echo AAA; echo BBB)"))
+    \ev "AAA\verb+\+nBBB\verb+\+n"
+(define exec 
+        (lambda (command)
+           (call-with-input-file 
+              (string-append "\verb+|+ " command) port->string)))
+
+(exec "ls -l") \ev a string which contains the result of "ls -l"
+\end{scheme}
+
+\ide{Port->list} uses the \var{reader} function to repeatedly read
+objects from \var{port}. Thes objects are accumulated in a list which 
+is returned upon eof.
+\begin{scheme}
+(port->list read-line (open-input-file "\verb+|+ (echo AAA; echo BBB)"))
+   \ev ("AAA" "BBB")
+\end{scheme}
+
+\ide{Port->string-list} reads the input port line by line until eof, 
+then returns the accumulated list of lines. This procedure is defined as
+\begin{scheme}
+(define port->string-list (lambda (p)(port->list read-line p)))
+\end{scheme}
+
+\ide{Port->sexp-list} repeatedly reads data from the port until eof, 
+then returns the accumulated list of items. This procedure is defined as
+\begin{scheme}
+(define port->sexp-list (lambda (p) (port->list read p)))
+\end{scheme}
+For instance, the following expression gives the list of users currently 
+connected on the machine running the {\stk} interpreter.
+\begin{scheme}
+(port->sexp-list (open-input-file "| users"))
+\end{scheme}
+\end{entry}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "manual"
+%%% End: 

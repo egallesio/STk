@@ -1,0 +1,5 @@
+;; An entry widget with options
+
+(entry '.e2 :relief "sunken" :font "-*-helvetica-*-r-*-*-*-240-*-*-*-*-*-*")
+(pack .e2)
+(.e2 'insert 0 "I'm here!!")

@@ -1,0 +1,1182 @@
+%
+% A note on how to extend the STk interpreter
+%
+% Copyright (C) 1993,1994,1995 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+% 
+%
+% Permission to use, copy, and/or distribute this software and its
+% documentation for any purpose and without fee is hereby granted, provided
+% that both the above copyright notice and this permission notice appear in
+% all copies and derived works.  Fees for distribution or use of this
+% software or derived works may only be charged with express written
+% permission of the copyright holder.  
+% This software is provided ``as is'' without express or implied warranty.
+%
+%           Author: Erick Gallesio [eg@unice.fr]
+%    Creation date:  in 1993
+% Last file update: 21-Jul-1996 19:47
+%
+
+\documentclass[10pt]{article}
+\usepackage{a4wide}
+\usepackage{fancyheadings}
+\usepackage{fancybox}
+\usepackage{eg-commands}
+
+\pagestyle{fancyplain}
+\makeindex\parindent0pt\parskip2mm
+\begin{document}
+\bibliographystyle{plain}
+
+\title{Extending the ST{\large\bf{K}} interpreter}
+\author{Erick Gallesio \\
+Universit\'e de Nice~~-~~Sophia-Antipolis \\
+Laboratoire I3S - CNRS URA 1376 - ESSI. \\
+Route des Colles\\
+B.P. 145\\
+06903 Sophia-Antipolis Cedex - FRANCE\\[3mm]
+email: eg@unice.fr}
+\date{July 1995}
+\maketitle
+
+\begin{abstract}
+This document describes how to extend the {\stk} interpreter with new
+primitives procedures and/or new types. Extending the interpreter can be done
+by writing new {\em modules} in C. New C code can be statically linked to the
+core interpreter or dynamically loaded on operating systems which support
+shared libraries. This document also presents how to integrate new
+Tk widgets written for the Tcl interpreter in {\stk}.
+\end{abstract}
+
+
+\pagebreak
+\tableofcontents
+\pagebreak
+\section{Introduction}
+This document describes how to extend the {\stk}\cite{Gallesio93-1}
+interpreter using the C language\cite{Kernighan:CPL88}. To begin, we
+will start with a simple extension which will only consist to add some
+simple new primitives to the interpreter. Second section will describe
+how to add a new type (and the primitives for manipulating this new
+type). Another interesting extension consists to add new kind of
+primitives (i.e.  primitives which evaluate their argument in
+particular way). This kind of extension will be discussed in the third
+section.  Fourth section discusses how to add a new widget to the
+interpreter. Calling some Scheme code from a C function is showed in
+section 5. And last, we will show how to load an extension at load
+time. This facility will permit to extend the {\stk} interpreter
+without having to recompile it, on systems which support dynamic
+loading.
+
+\section{Adding new primitives}
+
+\subsection{A simple example}
+
+\label{simple-example}
+One of the simpler extension one can wish to do consists to add new
+primitives procedures to the interpreter. To illustrate this, suppose
+we want to add two new primitives to the interpreter: {\tt posix-time}
+and {\tt posix-ctime}.  The former function correspond to the
+POSIX.1\cite{POSIX.1-90} function {\tt time}: it returns the number
+of seconds elapsed since 00:00:00 on January 1, 1970, Coordinated
+Universal Time (UTC).  The latter is a wrapper around the POSIX.1
+function {\tt ctime} which returns a string containing the current
+time in an human readable format.
+
+First, we will see how to write the new Scheme primitive {\tt posix-time}.
+Implementing a new primitive requires to write a new C function which will do
+the work. Here, we write the C function {\tt posix\_time} to implement the
+Scheme primitive {\tt posix-time}. The code of this function is given below.
+\begin{Code}
+\begin{listing}[200]{2}
+static PRIMITIVE posix_time(void)
+{
+  return STk_makeinteger((long) time(NULL));
+}
+\end{listing}
+\end{Code}
+This function uses the interpreter \Indextt{STk\_makeinteger} function
+which converts a C long integer to a {\stk} integer. Once the {\tt
+posix\_time} C function is written, we have to bind this new primitive to
+the Scheme symbol {\tt posix-time}. This is achieved by the following C
+function call.
+\begin{Code}
+\begin{listing}[200]{2}
+STk_add_new_primitive("posix-time", tc_subr_0, posix_time);
+\end{listing}
+\end{Code}
+
+\paragraph*{Note:} The C type \Indextt{SCM} is used to describe the objects
+manipulated in Scheme. \Indextt{PRIMITIVE} is an alias for this type; it
+is preferably used when defining a new primitive.
+
+\Indextt{STk\_add\_new\_primitive} tells the interpreter that the Scheme 
+symbol {\tt posix-time} must be bound to the (C written) primitive
+{\tt posix\_time}.  The constant \Indextt{tc\_subr\_0} used as the second
+argument indicates the arity of this primitive. In this case, the
+arity of the primitive is 0.
+
+Let's now have a look at the primitive {\tt posix-ctime}. A first
+writing of this primitive could be
+\begin{Code}
+\begin{listing}[200]{2}
+static PRIMITIVE posix_ctime(void)
+{
+  char *s;
+  time_t t = time(NULL);
+
+  s = ctime(&t);
+  return STk_makestring(s);
+}
+\end{listing}
+\end{Code}
+
+This functions uses another interpreter routine (\Indextt{STk\_makestring})
+which takes as parameter a null terminated string and returns a
+Scheme string. 
+
+Binding of the scheme symbol {\tt time-string} to the C function 
+{\tt get\_time} is done by the call 
+\begin{Code}
+\begin{listing}[200]{2}
+STk_add_new_primitive("posix-ctime", tc_subr_0, posix_ctime);
+\end{listing}
+\end{Code}
+
+A complete listing of this code is given in Figure~\ref{posix-1}.
+Provided that we have done a shared object of this file, and that its
+name is {\tt posix.so}, our two new primitives can be loaded
+dynamically by:
+\begin{Code}
+\begin{listing}[200]{2}
+(load "time.so")
+\end{listing}
+\end{Code}
+
+\paragraph*{Notes:}
+\begin{itemize}
+\item Suffix can be omitted. Suffixes given in the Scheme variable 
+\Indextt{*load-suffixes*} gives the order in which suffixes must be
+tried for loading a file.  Default value for this variable is
+{\tt ("stk" "stklos" "scm" "so")}.
+
+\item When dynamic loading is used, the interpreter try to call a 
+function whose name is equal to the string {\tt "STk\_init\_"} followed by the
+name of the file, without suffix. Definitions of new primitives are generally done
+in this function. Here, the C function in charge of module initialization must
+be called {\tt STk\_init\_posix}.
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure}
+\begin{quote} \footnotesize
+\begin{alltt}
+#include <sys/types.h>
+#include <sys/time.h>
+#include <time.h>
+#include <stk.h>        {\em /* Declaration of STk objects/primitives */}
+
+static PRIMITIVE posix_time(void)
+\{
+  return STk_makeinteger((long) time(NULL));
+\}
+
+static PRIMITIVE posix_ctime(void)
+\{
+  char *s;
+  time_t t = time(NULL);
+
+  s = ctime(&t);
+  return STk_makestring(s);
+\}
+
+PRIMITIVE STk_init_posix(void)
+\{
+  STk_add_new_primitive("posix-time",  tc_subr_0, posix_time);
+  STk_add_new_primitive("posix-ctime", tc_subr_0, posix_ctime);
+  return UNDEFINED;
+\}
+\end{alltt}
+{\caption{A first version of file {\tt posix.c}}}
+\label{posix-1}
+\vskip2mm\hrule\vskip3mm
+\end{quote}
+\end{figure} 
+
+\subsection{Passing arguments to a primitive}
+
+This section shows how to pass arguments to a new primitive written in
+C. To illustrate our purpose, we will rewrite the primitive {\tt
+posix-ctime} to be conform to POSIX.1 (this function should take an
+integer, a count of seconds, and should return corresponding date as a
+string). A second writing of previous function could be:
+
+\begin{Code}
+\begin{listing}[200]{2}
+static PRIMITIVE posix_ctime(SCM seconds)
+{
+  long sec;
+
+  sec = STk_integer_value_no_overflow(seconds);
+  return STk_makestring(ctime((time_t *)&sec));
+}
+\end{listing}
+\end{Code}
+
+
+This function has one parameter since Scheme primitive arity is one. The
+C primitives parameters are always \Indextt{SCM} objects. An object of this type is
+a pointer to a \Indextt{struct obj}: the type which permits to represent all the
+Scheme objects.  The {\tt SCM} and {\tt struct~obj} types definitions can
+be found in the \Indextt{Src/stk.h} header file. 
+
+The first job of this function consists to convert the Scheme
+parameter ({\tt seconds}) to a C integer {\tt long int}. This is done with the
+function \Indextt{STk\_integer\_value\_no\_overflow}which takes a {\tt SCM}
+and returns a {\tt long int}. This functions returns {\tt LONG\_MIN} if
+the argument is not a an integer number (or a number which don't fit in the C
+representation of a C {\tt long int}). Once this conversion is done,
+the rest of the job is similar to the code presented above.
+
+To add this primitive to the global Scheme environment, we have to
+change the previous {\tt STk\_add\_new\_primitive} for this primitive by:
+
+\begin{Code}
+\begin{listing}[200]{2}
+STk_add_new_primitive("posix-ctime", tc_subr_1, posix_ctime);
+\end{listing}
+\end{Code}
+
+in the init section. This call states that the type of this primitive
+is fixed to a \Indextt{tc\_subr\_1} (a arity-1 primitive).
+
+However, this function is not too satisfying, even if close to the
+POSIX definition: it obliges to pass a parameter which will be
+probably most of the time the result of the primitive {\tt
+posix-time} (i.e. the most frequent usage of this function will be
+
+\begin{Code}
+\begin{listing}[200]{2}
+(posix-ctime (posix-time))
+\end{listing}
+\end{Code}
+
+which is not very elegant). A better approach consists to allow this
+primitive to have a optional parameter. This permits to be at the
+same time conform to the POSIX convention and close to Scheme habits. 
+The following version implements the {\tt posix-ctime} with a optional
+parameter:
+\begin{Code}
+\begin{listing}[200]{2}
+static PRIMITIVE posix_ctime(SCM seconds)
+{
+  long sec;
+
+  sec = (seconds==UNBOUND) ? time(NULL)
+                           : STk_integer_value_no_overflow(seconds);
+  return STk_makestring(ctime((time_t *) &sec));
+}
+\end{listing}
+\end{Code}
+
+If the Scheme {\tt posix-ctime} primitive is called with one parameter, it
+will be passed to the C function in the {\tt seconds} parameter. If {\tt
+posix-ctime} is called without parameter, {\tt seconds} is set to the special
+value \Indextt{UNBOUND}. So, the first test in this function consists to set a
+correct value to the variable {\tt sec}; this value is either the current
+time, either the given integer, depending of the number of parameters
+given to {\tt posix-ctime}.
+
+Of course, the type of this new primitive must be changed to allow 0 or 1
+parameter. This is done by changing the {\tt tc\_subr\_0} in the previous 
+{\tt STk\_add\_new\_primitive} by \Indextt{tc\_subr\_0\_or\_1}.
+
+The following types are available for C primitives:
+\begin{itemize}
+\item \Indextt{tc\_subr\_0} for arity-0 primitives
+\item \Indextt{tc\_subr\_1} for arity-1 primitives
+\item \Indextt{tc\_subr\_2} for arity-2 primitives
+\item \Indextt{tc\_subr\_3} for arity-3 primitives
+\item \Indextt{tc\_subr\_0\_or\_1} for primitives 
+      which have 0 or 1 parameter
+      (e.g.~{\tt read}). On the C side you have to declare a function
+      which takes one {\tt SCM} argument. This argument is set to the
+      (evaluated) parameter if present, to {\tt UNBOUND} otherwise.
+\item \Indextt{tc\_subr\_1\_or\_2} for 
+      primitives which have 1 or 2 parameters
+      (e.g.~{\tt write}). Here you have to declare a C function with
+      two {\tt SCM} parameters. The first one will contain the first Scheme 
+      argument and the second will contain the second argument value
+      or {\tt UNBOUND} if omitted.
+\item \Indextt{tc\_subr\_2\_or\_3} for 
+      primitives which have 2 or 3 parameters
+      (there's no primitive of this type in core interpreter).
+      Of course, you'll have to declare a C function with three {\tt SCM}
+      parameters. Apart that, conventions are the same has before.
+\item \Indextt{tc\_lsubr} for primitives which have a variable number of
+      arguments. Actuals arguments are collected in a list which is given as the
+      first argument of the C primitive. The second argument of the C function
+      is an integer counting the actual number of arguments given to the
+      primitive. Hence, the signature of the C function which implement a {\tt
+      tc\_lsubr} must be
+\begin{quote}
+\begin{verbatim}
+PRIMITIVE function(SCM arglist, int argcount);
+\end{verbatim}
+\end{quote}
+      Note that all the Scheme arguments are evaluated during the
+      construction of the list which is passed to the C function.
+\item \Indextt{tc\_fsubr} is similar to {\tt tc\_lsubr} except that
+      arguments are not evaluated. On the C side, you have to declare a function
+      with three {\tt SCM} parameters: the list of (non evaluated) arguments,
+      the current environment and the length of the arguments list. The
+      signature of the C function which implement a {\tt tc\_fsubr} must be
+\begin{quote}
+\begin{verbatim}
+PRIMITIVE function(SCM arglist, SCM env, int argcount);
+\end{verbatim}
+\end{quote}
+      See \ref{evaluating-args} more details about {\tt tc\_fsubr}.
+
+\item {\tt tc\_tkcommand} for primitives which follow  the Tcl
+      command argument passing style (i.e.~{\em \`a la} {\tt argc/argv}). This
+      is this kind of procedure that will be used for to add new widgets in the
+      {\stk} interpreter. See \ref{new-widget} and \cite{ouster-book} for more
+      details.
+\end{itemize}
+
+To illustrate how to write a {\tt tc\_lsubr} primitive, let's have a look at the
+code, given below, of the function which implement the Scheme primitive {\tt
+vector}:
+\begin{quote}{\small
+\begin{verbatim}
+PRIMITIVE STk_vector(SCM arglist, int argcount)
+{
+  int j;
+  SCM z = STk_makevect(argcount, NULL);
+  
+  for (j = 0; j < argcount; j++, arglist=CDR(arglist)) {
+    VECT(z)[j] = CAR(arglist);
+  }
+  return z;
+}
+\end{verbatim}
+}\end{quote}
+
+This function receives the values passed to the {\tt vector} primitives in the
+list arglist (the length of this list is stored in {\tt argcount}). This
+function uses \Indextt{STk\_makevect} which returns a Scheme vector. Its first
+argument is the length of the vector and its second argument is the initial
+value of the vector's elements.  Next section will show how to implement a
+primitive which evaluates itself its parameters (i.e. a {\tt tc\_fsubr}
+primitive.
+
+\subsection{Evaluating arguments}
+
+In some circumstances it could be useful to add new primitives which don't
+evaluate their arguments. This permits to add new control structures to the
+interpreter. To illustrate this, we will add two new primitives to the {\stk}
+interpreter: {\tt when} and {\tt unless}. As explained in the preceding
+section, the C functions which will implement those control structures must be
+of type \Indextt{tc\_fsubr}. A {\tt tc\_fsubr} primitive, on the C
+side, is given three parameters when called: 
+\begin{enumerate}
+\item a list of its (non evaluated) parameters, 
+\item the local environment when it was called (and in which
+evaluations should generally take place),
+\item the length of the parameters list.
+\end{enumerate}
+
+The C function can step through its parameter list using the C macros
+{\tt CAR}, {\tt CDR} and {\tt NULLP} (which do the obvious work) and evaluates elements
+of this list as needed. Evaluation of an expression can be done with
+the \Indextt{STk\_eval} C function. {\tt STk\_eval} takes two parameters: the
+expression to evaluate and the environment in which evaluation takes
+place (the \Indextt{NIL} variable, by convention, denotes the Index{global environment}).
+
+\paragraph*{Note:} {\bf a list of arguments is always a proper list. You don't need to test
+if it is well formed.}
+
+Hereafter is the code of the {\tt when} primitive.
+\begin{Code}
+\begin{listing}[200]{2}
+static PRIMITIVE when(SCM l, SCM env, int argcount)
+{
+  SCM res = UNDEFINED;
+
+  if (argcount > 1) {
+    if (STk_eval(CAR(l), env) != Ntruth) {
+      for (l = CDR(l); !NULLP(l); l = CDR(l)) {
+        res = STk_eval(CAR(l), env);
+      }
+    }
+  }
+  return res;
+}
+\end{listing}
+\end{Code}
+
+\noindent
+Some points to note here:
+\begin{itemize}
+\item \Indextt{UNDEFINED} is an interpreter {\em constant}. It serves to denote
+the notion of {\em ``\Index{unspecified result}''} of {\rrrr}.
+\item \Indextt{Truth} and \Indextt{Ntruth} are two global {\em constants} of the
+interpreter which denote respectively the \Indextt{\#t} and \Indextt{\#f} Scheme
+constants.
+\end{itemize}
+
+\noindent
+Figure~\ref{when} shows a complete implementation of {\tt when} and {\tt unless}.
+
+\begin{figure}
+\begin{quote}\footnotesize
+\begin{verbatim}
+#include <stk.h>
+
+static PRIMITIVE when(SCM l, SCM env, int argcount)
+{
+  SCM res = UNDEFINED;
+
+  if (argcount > 1) {
+    if (STk_eval(CAR(l), env) != Ntruth) {
+      for (l = CDR(l); !NULLP(l); l = CDR(l)) {
+        res = STk_eval(CAR(l), env);
+      }
+    }
+  }
+  return res;
+}
+
+static PRIMITIVE unless(SCM l, SCM env, int argcount)
+{
+  SCM res = UNDEFINED;
+
+  if (argcount > 1) {
+    if (STk_eval(CAR(l), env) == Ntruth) {
+      for (l = CDR(l); !NULLP(l); l = CDR(l)) {
+        res = STk_eval(CAR(l), env);
+      }
+    }
+  }
+  return res;
+}
+
+PRIMITIVE STk_init_when_unless(void)
+{
+  add_new_primitive("when",        tc_fsubr, when);
+  add_new_primitive("unless",      tc_fsubr, unless);
+  return UNDEFINED;
+}
+\end{verbatim}
+\end{quote}
+{\caption{Source listing of file {\tt when\_unless.c}}}
+\label{when}
+\vskip2mm\hrule\vskip3mm
+\end{figure}
+
+\subsection{Signaling errors}
+For now, only one function is provided to signal errors: \Indextt{STk\_err}. This
+function takes two parameters: a C string which constitutes the body of the
+message and a Scheme object (a {\tt SCM} pointer) designating the {\em
+erroneous} object.  If the second argument is \Indextt{NIL}, it will not be
+printed. Execution of the function {\tt STk\_err} never returns.  It provokes a
+jump at the start of the top-level loop. Hereafter, is a new implementation of
+the {\tt when} function which uses {\tt STk\_err} when given an erroneous
+arguments list.
+\begin{Code}
+\begin{alltt}
+static PRIMITIVE when(SCM l, SCM env, int argcount)
+\{
+  SCM res = UNDEFINED;
+
+  switch (argcount) \{
+    case 0:  STk_err("when: no argument list given", NIL);
+    case 1:  STk_err("when: null body", NIL);
+    default: {\em /* Argument list is well formed.
+              * Evaluate each expression of the body 
+              */}
+             if (STk_eval(CAR(l), env) != Ntruth)
+               for (l = CDR(l); !NULLP(l); l = CDR(l)) 
+                 res = STk_eval(CAR(l), env);
+  \}
+  return res;
+\}
+\end{alltt}
+\end{Code}
+
+\section{Variables}
+
+This section shows how you can access a Scheme variable within C code. It also
+shows how you can connect a Scheme and C variable such that modifying it in
+Scheme will modify the associated variable and {\em vice versa}.
+
+\subsection{Scheme Symbols and Variables}
+
+\begin{Lentry}
+\item[Defining a symbol]
+Interning a symbol in the global table of symbols is done with the
+\Indextt{STk\_intern} C function. Since this function is often used, you can use
+the C macro \Indextt{Intern} as a shortcut. The result of Intern is the {\tt SCM}
+object which denotes the scheme symbol associated to the C string passed as parameter.
+For example, assigning the list 
+\begin{Code}
+\begin{listing}[200]{2}
+'(green orange red)
+\end{listing}
+\end{Code}
+to the C variable {\tt fire} can be done by
+\begin{Code}
+\begin{listing}[200]{2}
+SCM fire =  Cons(Intern("green"),
+                 Cons(Intern("orange"),
+                      Cons(Intern("red"), NIL)));
+\end{listing}
+\end{Code}
+Since this notation is difficult to read, some macros have been defined in
+\Indextt{Src/stk.h} for building list. These macros are called \Indextt{LISTx} where
+x is a number (comprised between 1 and 9) which represent the length of the list
+to create. Thus, the previous example could have been written as 
+\begin{Code}
+\begin{listing}[200]{2}
+SCM fire =  LIST3(Intern("green"), Intern("orange"), Intern("red"));
+\end{listing}
+\end{Code}
+
+\item[Reading a variable]
+Reading a variable in Scheme corresponds in fact to look at the value associated
+to a symbol. The value associated to a symbol can be obtained with the 
+\Indextt{STk\_get\_symbol\_value} C macro. This macro returns a {\tt SCM} object
+which correspond to the value associated to the symbol whose name is equal to
+the parameter string. \Indextt{STk\_get\_symbol\_value} returns the special
+value \Indextt{UNBOUND} is this symbols has no value in the global
+environment. The following piece of code
+\begin{Code}
+\begin{listing}[200]{2}
+{
+  SCM val = STk_get_symbol_value("foo");
+
+  if (val == UNBOUND)
+    STk_err("foo is undefined", NIL);
+  else
+    STk_display(val, UNBOUND);
+}
+\end{listing}
+\end{Code}
+displays the value of the {\tt foo} symbol, or a message is {\tt foo} is undefined in the
+global environment. Note the use of the \Indextt{STk\_display} function which
+implement the behavior of the Scheme {\tt display} primitive. This call correspond to
+a call to {\tt display} with only one parameter, since second parameter is set
+to {\tt UNBOUND} (output is done on the standard output port in this case).
+
+\item[Setting a variable]
+Setting a Scheme variable corresponds to associate a new value to a symbol. The
+value of a symbol can be set with the \Indextt{STk\_set\_symbol\_value} C macro.
+For example, 
+\begin{Code}
+\begin{listing}[200]{2}
+STk_set_symbol_value("bar", STk_makeinteger(3L));
+\end{listing}
+\end{Code}
+sets the value of the {\tt bar} symbol to the integer 3. Note that you can set a
+symbol in C without using a {\tt define} form as it is necessary in Scheme.
+\end{Lentry}
+
+\subsection{Connecting Scheme and C variables}
+
+When building a specialized interpreter, it could be useful to have a variable
+you can access both in Scheme an in C. Modifying such a variable in C must
+modify the Scheme associated variable and, symmetrically, modifying it in Scheme
+must modify the corresponding C variable. One way to do this connection consists
+to create a special Scheme variable whose content is read/written by a special
+getter/setter. Definition of such a variable, is done by calling the function
+\Indextt{STk\_define\_C\_variable}. The C prototype for this function is
+\begin{Code}
+\begin{listing}[200]{2}
+void STk_define_C_variable(char *var, 
+                           SCM  (*getter)(char *var), 
+                           void (*setter)(char *var, SCM value));
+\end{listing}
+\end{Code}
+
+The following piece of code shows how we can connect the Scheme variable {\tt *errno*} to the C
+variable {\tt errno}:
+
+\begin{Code}
+\begin{listing}[200]{2}
+static SCM get_errno(char *s)
+{
+  return STk_makeinteger((long) errno);
+}
+\end{listing}
+\end{Code}
+\begin{Code}
+\begin{listing}[200]{2}
+static void set_errno(char *s, SCM value)
+{
+  long n = STk_integer_value_no_overflow(value);
+
+  if (n == LONG_MIN) Err("setting *errno*: bad integer", value);
+  errno = n;
+}
+\end{listing}
+\end{Code}
+\begin{Code}
+\begin{listing}[200]{2}
+{
+  ...
+  STk_define_C_variable("*errno*", get_errno, set_errno);
+  ...
+}
+\end{listing}
+\end{Code}
+
+After this call to {\tt STk\_define\_C\_variable}, reading ({\em
+resp}. writing) the value of the {\tt *errno*} Scheme variable calls the
+{\tt get\_errno} ({\em resp}. {\tt set\_errno}) C function.
+
+\section{Calling Scheme from C}
+
+Sometimes, it could be necessary to execute some Scheme code from a C function.
+If the Scheme function you have to call is a primitive, it is preferred to call
+directly the C function which implement it. To know the name of the C function
+which implement a Scheme primitive, you'll have to look in the C file {\tt
+primitive\.c} which contains the list of all the primitives of the core
+interpreter. If the Scheme code you want to execute is not a call to a
+primitive, it is generally easier to put your code in a C string and call the C
+function \Indextt{STk\_eval\_C\_string}. This function takes two parameters: the string
+to evaluate and the environment in which evaluation must take place. As for {\tt
+STk\_eval}, a \Indextt{NIL} value for the environment denotes the global
+environment. Suppose, for instance, that you have already written in Scheme the
+{\tt fact} procedure; evaluating the factorial of 10 can be done in C with:
+\begin{Code}
+\begin{listing}[200]{2}
+STk_eval_string("(fact 10)", NIL);
+\end{listing}
+\end{Code}
+This call returns a pointer on a Scheme object (a {\tt SCM} pointer) containing
+the result of the evaluation. If an error occurs during evaluation. It is
+signaled to the user and the constant NULL is returned by {\tt STk\_eval\_string}.
+
+\section{Adding new types}
+
+This sections discusses how to add a new type to the {\stk} interpreter. Interested
+reader can find some new types definitions in the {\tt Extensions} directory of
+STk. {\stklos}, in particular, is written as an extended type whose definition
+is dynamically done as soon as {\em objects} are needed. Hash tables, processes
+and sockets are other examples of extended types. 
+
+\subsection{Definition of a Scheme extended type}
+
+Defining a scheme extended type is a little bit more complicated than
+defining new primitives since it implies to take into account how this
+new type interact with the GC (\Index{Garbage Collector}). Note that
+until now we have not discussed about GC problems since the
+interpreter is able to hide you it, as far as you don't define new
+types. 
+
+To illustrate the discussion, we will show how to add the {\em stack}
+type to the {\stk} interpreter in this section. The complete code for
+this section can be found in appendix.\label{stack}
+
+\subsubsection{How the GC works}
+
+Before showing how to define a new Scheme type, it is important to understand
+how the GC works. First a certain number of cells are created\footnote{by
+default 20~000; Use the -cells option of the interpreter to change this
+default}. When the interpreter needs a new cell, in the {\tt cons} primitive for
+instance, it will take an unused cell in the pool of pre-allocated cells. If no
+more cell is available in this area, the GC is called. Its works is divided in
+two phases. First phase consists to mark all the cells which are currently in
+use. Finding the cells which are in used is done by marking recursively all the
+object which are accessible from
+\begin{itemize}
+    \item the Scheme symbol table,
+    \item the registers used by the program,  
+    \item the C stack,
+    \item global variables of type {\tt SCM}.
+\end{itemize}
+Marking phase is recursive; that means that if a variable denotes a list, all
+the elements of this list have to be marked , to avoid that the GC frees some of
+them. Of course, the recursive call for marking the component of a cell depends
+on the cell's type. This first phase is called the {\em \Index{marking phase}}.
+
+The second phase of the GC is called the {\em \Index{sweeping phase}}. It is
+relatively simple: each allocated cells whose mark bit is unset is placed in the
+list of free cells, since nobody points anymore on it.
+
+If no cells can be obtained when the sweeping phase terminates, the pool of
+pre-allocated cells will be extended by a new bank of cells. 
+
+\subsubsection{The Extended type data structure}
+
+Defining a new Scheme type consists mainly to define a new
+\Indextt{STk\_extended\_scheme\_type} structure and fill in this fields. This
+structure is defined as:
+\begin{Code}
+\begin{listing}[200]{2}
+typedef struct {
+  char *type_name;
+  int  flags;                   
+  void (*gc_mark_fct)(SCM x);
+  void (*gc_sweep_fct)(SCM x);
+  SCM  (*apply_fct)(SCM x, SCM args, SCM env);
+  void (*display_fct)(SCM x, SCM port, int mode);
+} STk_extended_scheme_type;
+\end{listing}
+\end{Code}
+Each field of this structure is defined below
+\begin{Lentry}
+\item[type\_name] is a string. It denotes the external name of the new type. The
+purpose of this field is mainly for debugging.
+
+\item[flags] is the union of binary constants. For now, only two constants are
+defined:
+    \begin{itemize}
+    \item \Indextt{EXT\_ISPROC} must be set if the new type is a procedure (i.e. if the Scheme
+    procedure must answer \#t when called with this object).
+    \item \Indextt{EXT\_EVALPARAM} must be set if the new type must evaluates its parameters
+    when used as a function.
+    \end{itemize}
+
+\item [gc\_mark\_fct] is a pointer to the function which marks objects of the
+extended type. The code associated to this function is simple. It consists to
+call \index{STk\_gc\_mark} on each field whose type is {\tt SCM} in the type
+associated data. This function is automatically called by the interpreter when
+it scans all the used cells in the GC \Index{marking phase}.
+One example of {\tt gc\_mark\_fct} is given below. 
+
+\item [gc\_sweep\_fct] is a pointer to the function which frees the resources
+allocated for representing the new type of object. This function is
+automatically called by the GC in the sweeping phase for each cell which is
+unused. 
+
+\item [apply\_function] is a pointer to a function which is called when applying
+this object to a list of arguments.  This function can only be called if the bit
+\Indextt{EXT\_ISPROC} is set. The arguments given to this function are 
+evaluated if the \Indextt{EXT\_EVALPARAM} bit is set. Finally, the environment in
+which the call is done is passed as the third argument of the {\tt
+apply\_function}. It serves principally when the {\tt EXT\_EVALPARAM} bit is
+unset.
+
+Set the {\tt apply\_function} to NULL to use the interpreter default apply
+function. The default function raises an error when called. You can use the
+default function when the new type you define is not a function.
+
+\item [display\_fct] is a pointer to a C function which displays objects of the
+new type. The display function has three parameters. The first parameter is the
+object to print. The second parameter is the port to which the object must be
+printed. Printing an object must be done with one of the following functions
+{\tt
+\begin{itemize}
+\item int  \Index{STk\_getc}(FILE *f);
+\item int  \Index{STk\_ungetc}(int c, FILE *f);
+\item int  \Index{STk\_putc}(int c, FILE *f);
+\item int  \Index{STk\_puts}(char *s, FILE *f);
+\item int  \Index{STk\_eof}(FILE *f);
+\end{itemize}
+}
+Those functions are extensions of their C equivalent: they are able to handle the
+{\stk} string ports.
+
+The third parameter of the {\tt display\_fct} is a mode constant which can take three
+different values. 
+\begin{itemize}
+\item \Indextt{DSP\_MODE} is used when the object must be {\em displayed} in a
+human readable format (as with {\tt display});
+\item \Indextt{WRT\_MODE} is used when the object must be {\em written} in a
+machine readable format (as with {\tt write});
+\item \Indextt{TK\_MODE} is used when the object must be passed to a Tk
+command. This permits to customize the way a Scheme object is converted to a
+string when discussing with the Tk library.
+\end{itemize}
+\paragraph*{Note:} {\tt  display\_fct} can be set to NULL. In this
+case the interpreter uses a default printing format. This default
+format print the name of the type (found in the {\tt type\_name})
+followed by an hexadecimal address.
+\end{Lentry}
+\subsubsection{Registering the new type}
+
+Once a {\tt STk\_extended\_scheme\_type} structure is defined, the new type can
+be registered into the interpreter. Registering a new type is done by the 
+\Indextt{STk\_add\_new\_type} function. 
+The prototype of this function is given below
+\begin{Code}
+\begin{listing}[200]{2}
+int STk_add_new_type(STk_extended_scheme_type *p)
+\end{listing}
+\end{Code}
+The integer returned by this function is the (unique) key associated to the new
+type. This key is stored in each cell of the new type.
+
+We have now enough material to define the {\tt
+STk\_extended\_scheme\_type} for the new type {\em stack}. This
+declaration can be done in the following way:
+\begin{Code}
+\begin{listing}[200]{2}
+static void mark_stack(SCM p);
+static void free_stack(SCM p);
+static void display_stack(SCM s, SCM port, int mode);
+static int tc_stack;
+\end{listing}
+\end{Code}
+\begin{Code}
+\begin{listing}[200]{2}
+static STk_extended_scheme_type stack_type = {
+  "stack",              /* name */
+  0,                    /* is_procp */
+  mark_stack,           /* gc_mark_fct */
+  free_stack,           /* gc_sweep_fct */
+  NULL,                 /* apply_fct */
+  display_stack         /* display_fct */
+};
+\end{listing}
+\end{Code}
+
+This definition tells the interpreter that the new type is not a
+procedure (field  {\tt is\_procp} is set to 0). Consequently, the 
+{\tt apply\_fct} is set to NULL. Note that a display function is
+provided here. It permits to used a customized printing
+function. 
+
+\subsubsection{New type instances creation}
+
+Creation of a new instance of the extended type necessitates the
+definition of a constructor function. This constructor obeys always
+the same framework. First you have to create a new cell with the
+\Indextt{NEWCELL} macro. This macro has two parameters, a {\tt SCM}
+object which will point the new cell and the type of the cell to
+create. The second argument is generally equal to the value returned by 
+\Indextt{STk\_add\_new\_type}. 
+Once the cell is created, we have generally to (dynamically) allocate
+a C structure which contains the informations which are necessary to
+implement the new type. Dynamic allocation  can be done with the
+function \Indextt{STk\_must\_malloc}. The area returned by 
+\Indextt{STk\_must\_malloc} must be stored in the {\tt data} field of
+the new cell. This field can be accessed with the \Indextt{EXTDATA}
+macro. 
+
+Let's go back to the stack example. We can now define a new primitive
+function to make a new stack. Provided that the global variable {\tt tc\_stack}
+already contains the value returned by {\tt STk\_add\_new\_type}, we
+can write
+
+\begin{Code}
+\begin{listing}[200]{2}
+#define STACKP(x)       (TYPEP(x, tc_stack))
+#define NSTACKP(x)      (NTYPEP(x, tc_stack))
+#define STACK(x)        ((Stack *) EXTDATA(x))
+
+typedef struct {
+  int len;
+  SCM values;
+} Stack;
+\end{listing}
+\end{Code}
+\begin{Code}
+\begin{listing}[200]{2}
+static PRIMITIVE make_stack(void)
+{
+  SCM z;
+
+  NEWCELL(z, tc_stack);
+  EXTDATA(z)       = STk_must_malloc(sizeof(Stack));
+  STACK(z)->len    = 0;
+  STACK(z)->values = NIL;
+  return z;
+}
+\end{listing}
+\end{Code}
+
+Here, the {\tt Stack} structure is used to represent a stack. This
+structure contains two fields: {\tt len} and {\tt values}. Since the latter
+field is a {\tt SCM} object, it must be recursively marked when a
+stack is marked. We can now define the utility function necessary for
+the GC:
+\begin{Code}
+\begin{listing}[200]{2}
+static void mark_stack(SCM p)
+{
+  STk_gc_mark(STACK(p)->values);
+}
+
+static void free_stack(SCM p)
+{
+  free(EXTDATA(p));
+}
+\end{listing}
+\end{Code}
+
+To terminate with this example, we give below the code of the primitive 
+{\tt stack\_push!}. Other primitive are built in the same fashion and
+will not be described here. A complete listing of the stack
+implementation is given in appendix.
+\begin{Code}
+\begin{listing}[200]{2}
+static PRIMITIVE stack_push(SCM s, SCM val)
+{
+  Stack *sp;
+
+  if (NSTACKP(s)) STk_err("stack-push: bad stack", s);
+
+  sp         =  STACK(s);
+  sp->len   += 1;
+  sp->values = Cons(val, sp->values);
+  
+  return UNDEFINED;
+}
+\end{listing}
+\end{Code}
+
+\subsection{Definition of a C extended type}
+
+The {\stk} interpreter permits to handle C pointers as first class
+objects. 
+[for eg: find an example to explain how it works: gdbm?]
+
+\subsection{About memory: Common pitfalls}
+
+
+\section{Loading an extension}
+
+{\stk} support dynamic loading for several architectures/systems. The
+way to provide dynamic loadable modules is different from one system
+to another and you will have to adapt what is said here to the
+conventions used by your system, architecture or compiler. 
+Static loading can be used for systems which doesn' support dynamic
+loading (such as Ultrix) or for which the interpreter doesn't support
+yet dynamic loading.
+
+\paragraph*{Note:} {\stk) also supports the \Index{DLD Gnu package} for
+dynamic loading. DlD is a library package of C functions that performs
+"dynamic link editing".  Since the time to load dynamically a module
+with this package is rather long, it is preferred to avoid to use it.
+However, this package is the only way to provide dynamic loading on
+Linux systems which don't support the \Index{ELF} format (versions 1.0
+to 1.2). Since the ELF format is becoming the new standard for Linux,
+this package will be no more necessary in the future.
+
+The last version of the DLD package can be found at several places:
+{\tt
+\begin{itemize}
+\item ftp-swiss.ai.mit.edu:pub/scm
+\item prep.ai.mit.edu:/pub/gnu/jacal
+\item ftp.cs.indiana.edu:/pub/scheme-repository/imp/SCM-support
+\end{itemize}
+}
+
+We suppose here that we want to include the {\tt posix} module defined
+in section\ref{simple-example} into the {\stk} interpreter. 
+\begin{Lentry}
+
+\item [Dynamic Loading]
+If the system running {\stk} supports dynamic loading (and if the
+interpreter has been compiled with dynamic loading support), you
+compile your source file file to make a {\em \Index{shared object}}
+file. On SunOs~4.1, for instance, this can be done by compiling the
+module with the {\em \Index{pic compilation option}} (pic stands for 
+{\em position independent code}). Once compilation is done, you can
+pre-load your file with the line
+\begin{Code}
+\begin{listing}[200]{2}
+ld -assert pure-text -o time.so time.o
+\end{listing}
+\end{Code}
+This will produce a file name {\tt posix.so} which can be loaded with the 
+\Indextt{load} Scheme primitive procedure. The {\tt load} primitive recognizes
+that this file is a shared object and calls a function whose
+name the concatenation of the string 
+{\tt STk\_init\_}\index{STk\_init\_ prefix} and the base name of file
+loaded. Thus, loading the file {\tt posix.so} impies the call of a
+pimitive whose name is {\tt STk\_init\_posix}. 
+
+Look at {\tt Src/Extensions} directory to see some examples of shared
+object construction.
+
+\paragraph*{Note:} when the {\stk} is built, the \Indextt{Makefile}  in
+the {\tt Src/Extensions} is customized for your system/compiler. A
+simple way to determine the options you have to use for compiling your
+program consist to run the \Indextt{make} command on one of the file present in
+this directory. For instance, issuing the following command
+\begin{Code}
+\begin{listing}[200]{2}
+make -n posix.so
+\end{listing}
+\end{Code}
+on a Linux box using the DLD package will output the following lines:
+\begin{Code}
+\begin{listing}[200]{2}
+gcc  -g -DSTk_CODE -DUSE_DLD -DLINUX   -DHAVE_UNISTD_H=1 \
+        -DHAVE_SIGACTION=1 -I../Tk -I../Tcl -I../Src -I../Mp \
+        -I/usr/X11R6/include  -c posix.c -o posix.o
+ld -r -o posix.so posix.o
+\end{listing}
+\end{Code}
+
+\item [Static loading]
+A C module which define a new type can also be statically loded in the
+interepreter. To load your module, you have to modify the {\tt Src/Makefile}
+or {\tt  Snow/Makefile}. Once yo have added your extension object in
+the \Indextt{USER\_OBJ} variable , you must modify the file
+\Indextt{Src/userinit.c} to add you initialization (and eventually
+cleanup) code. The call to your initialization function must be done in
+the \Indextt{STk\_user\_init} C function. Once this is done, you can
+run the {\tt make} command again to build the extended interpreter.
+\end{Lentry}
+
+\section{Adding new Tk widgets}
+
+\subsection{Widget compilation}
+
+Adding a new Tk widget to the {\stk} interpreter is generally a simple
+{\em hack}. Most of the time, extension widgets written
+for Tcl/Tk can be added to the {\stk} interpreter without modifying
+the source code of the widget. However, there is no unique method to
+add a widget to the Tcl interpreter; consequently, what is given below
+is a set of hints to widget integration rather than a {\em always
+working recipe}. To illustrate this section, we will see how we can add
+the {\em fscale} widget (a floating-point scale widget available on the
+Tcl/Tk repository in the {\tt tkFScale-?.?.tar.gz} file)\footnote{
+This widget is now integrated in the standard Tk4.0; it is provided as
+an extension widget with Tk3.6.}.
+
+Generally, the code of a Tcl/Tk extension widget can be divided in two
+parts: the code which implement widget's behavior and the extension
+initialization code. Extension initialization code, in Tcl/Tk, must be
+placed in the procedure {\tt Tcl\_AppInit} which is located in the file
+{\tt tkAppInit.c}. If the extension package adds a lot of widgets, it
+generally defines a function to do all the initializations. On the
+other hand, if the extension only defines a single widget, the
+extension code generally consists to call the C function 
+\Indextt{Tcl\_CreateCommand} for each new widget defined in the
+extension. {\tt Tcl\_CreateCommand} is the Tcl standard way to add a
+new command. This function also exists in the {\stk} interpreter; it
+creates a new \Index{Tk command} object~\cite{Gallesio95-1}. The
+prototype of this function is:
+\begin{Code}
+\begin{listing}[200]{2}
+void Tcl_CreateCommand(Tcl_Interp *interp,
+                       char *cmdName, 
+                       Tcl_CmdProc *proc,
+                       ClientData clientData,
+                       Tcl_CmdDeleteProc *deleteProc));
+\end{listing}
+\end{Code}
+
+For {\stk},
+\begin{itemize}
+\item the {\tt interp} is always the global variable
+                \Indextt{Stk\_main\_interp}
+\item {\tt cmdName} is the name of the widget in the Scheme world.
+\item {\tt proc} is the name of the C function which implement the {\em Tk command}
+\item {\tt clientData} are informations which are associated to the
+widget code. For a new widget, {\tt clientData} can generally set to 
+the result of 
+\begin{Code}
+\begin{listing}[200]{2}
+Tk_MainWindow(Stk_main_interp);
+\end{listing}
+\end{Code}
+\item {\tt deleteProc} is a function which is called when the widget
+is destroyed. You generally don't need to change the value of this
+parameter (which is often set to {\tt NULL}). 
+\end{itemize}
+
+The usual way to integrate this initialization code in a Tcl interpreter
+consists to patch the {\tt tkAppInit.c} file to add the call to the
+initialization (or the {\tt Tcl\_CreateCommand}) function.
+To add an extension written for Tcl/Tk to {\stk}, all that is needed
+consists to adapt the initialization code for {\stk}. For example, the
+{\tt fscale} widget initialization code adds the following call in the
+body of the {\tt Tcl\_AppInit} function:
+\begin{Code}
+\begin{listing}[200]{2}
+Tcl_CreateCommand(interp, "fscale", Tk_FScaleCmd, 
+                  (ClientData) main, 
+                  (void (*)()) NULL);
+\end{listing}
+\end{Code}
+
+For {\stk}, this call can be written 
+\begin{Code}
+\begin{listing}[200]{2}
+Tcl_CreateCommand(STk_main_interp, "fscale", Tk_FScaleCmd, 
+                  (ClientData) Tk_MainWindow(STk_main_interp), 
+                  (void (*)()) NULL);
+\end{listing}
+\end{Code}
+
+This call must executed before trying to create a new {\tt fscale}
+widget.
+
+\subsection{Widget linking}
+
+The cleaner way to add a new widget to {\stk} consists to define a
+special C module for this widget. Defining the widget in a C module
+allows us to make the new widget dynamically loadable. The code for 
+making the {\tt fscale} widget dynamically loadable could be:
+
+\begin{Code}
+\begin{listing}[200]{2}
+/* Contents of the file fscale.c */
+#ifndef USE_TK
+#define USE_TK
+#endif
+\end{listing}
+\end{Code}
+\begin{Code}
+\begin{listing}[200]{2}
+#include <stk.h>
+/* 
+ *include the widget source code. Ugly but this avoid to have two
+ * source files to link
+ */
+#include "tkFScale.c"
+\end{listing}
+\end{Code}
+\begin{Code}
+\begin{listing}[200]{2}
+PRIMITIVE STk_init_fscale(void)
+{
+  Tcl_CreateCommand(STk_main_interp, 
+                    "fscale", 
+                    Tk_FScaleCmd, 
+                    (ClientData) Tk_MainWindow(STk_main_interp), 
+                    (void (*)()) NULL);
+}
+\end{listing}
+\end{Code}
+
+\section{Extending the interpreter with C++}
+
+[for eg : Identify the problems]
+
+\section{Embedding the STk interpreter}
+
+[for eg: This parts need some work in the interpreter]
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\pagebreak
+{\Large\bf Appendix}
+\par
+Hereafter is the complete code for the stack type discussed in \ref{stack}
+{\footnotesize
+\verbatiminput{stack.c}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bibliography{bibliography}
+\input{Extending.ind}
+
+\end{document}
+% LocalWords:  STk RS unsrt pt Erick Gallesio Universit de Antipolis CNRS URA
+% LocalWords:  Laboratoire ESSI des Colles Cedex mm email eg unice fr fancybox
+% LocalWords:  fancyheadings fancyplain posix ctime UTC makeinteger tc subr SCM
+% LocalWords:  arity makestring stk stklos scm init sec struct obj Src int MIN
+% LocalWords:  lsubr argcount fsubr env tkcommand Tcl argc argv makevect CDR GC
+% LocalWords:  VECT NULLP eval Ntruth LISTx val foo var errno resp pre gc fct
+% LocalWords:  args EXT ISPROC EVALPARAM getc ungetc putc eof DSP WRT TK Tk pic
+% LocalWords:  Solaris SunOs ld

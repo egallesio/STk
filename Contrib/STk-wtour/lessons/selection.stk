@@ -1,0 +1,13 @@
+;; X Selection
+
+(pack 
+   [label '.lab :text "Selection is:" :anchor "w"]
+   [text '.t :relief "raised" :bd 1 :height 15]
+   [button '.b1 :text "Get Selection" 
+	   	:command (lambda ()
+			   ;; Clear text buffer
+			   (.t 'delete "1.0" "end")
+			   ;; Insert selection if it exists
+			   (unless (catch (selection 'get))
+			       (.t 'insert "1.0" (selection 'get))))])
+

@@ -1,0 +1,13 @@
+;;; Drawing in a Canvas
+;;;  (draw with mousebutton 1)
+
+(pack (canvas '.c1)
+      :fill "both"
+      :expand "yes")
+
+(bind .c1 "<B1-Motion>" (lambda (x y)
+			  (.c1 'create 'rectangle x y x y :width 5)))
+
+
+
+

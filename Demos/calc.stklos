@@ -1,0 +1,80 @@
+#!/bin/sh
+:;exec /usr/local/bin/stk -f "$0" "$@"
+;;;;
+;;;; c a l c . s t k l o s  --  A very simplistic calculator
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date:  6-Apr-1995 18:11
+;;;; Last file update: 18-Sep-1995 14:25
+
+(require "Tk-classes")
+(define Result   0)
+
+(define (get-Screen)
+  (string->number (value Screen)))
+
+(define (digit? s)
+  (or (string->number s) (string=? s ".")))
+
+(define execute-action 
+  (let ((previous-action "") (Acc 0) (operator +))
+    (lambda (str)
+      (cond
+       ((string=? str "Off")  (exit 0))
+       ((string=? str "Sqrt") (set! Result (sqrt (get-screen))))
+       ((string=? str "C")    (set! Result 0))
+       ((string=? str "/")    (set! operator /))
+       ((string=? str "*")    (set! operator *))
+       ((string=? str "-")    (set! operator -))
+       ((string=? str "+")    (set! operator +))
+       ((string=? str "+/-")  (set! Result (- (get-screen))))
+       ((string=? str "=")    (set! Result (operator Acc (get-screen))))
+       (ELSE		       (if (digit? previous-action)
+				   (set! Result (string-append (value Screen) str))
+				   (begin
+				     (set! Acc (get-screen))
+				     (set! Result str)))))
+	(set! previous-action str))))
+
+;;;;
+;;;; Make the interface
+;;;;
+(define Screen (make <Entry> :text-variable 'Result :border-width 3 
+		     	     :relief 'ridge :foreground "Blue"))
+(define rows ;; Rows is a vector of 5 frames
+  (vector (make <Frame>)(make <Frame>)(make <Frame>)(make <Frame>)(make <Frame>)))
+
+(for-each  (let ((count 0))
+	     (lambda (text)
+	       (pack (make <Button> 
+			   :text   text 
+			   :parent (vector-ref rows (quotient count 4))
+			   :width  6
+			   :command (lambda ()  (execute-action text)))
+		     :side "left" :padx 4 :pady 2)
+	       (set! count (+ 1 count))))
+	   '("Off"  "Sqrt"  "C"  "/"
+	      "7"    "8"    "9"  "*"
+	      "4"    "5"    "6"  "-"
+	      "1"    "2"    "3"  "+"
+	      "0"    "."   "+/-" "="))
+;;;
+;;; And pack its components
+;;;
+(pack Screen :expand #t :fill "x" :padx 5 :pady 5 :ipadx 5 :ipady 5)
+(for-each (lambda (row) (pack row :expand #t :fill "x"))
+	  (vector->list rows))
+
+
+
+

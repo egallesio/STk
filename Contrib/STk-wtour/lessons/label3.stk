@@ -1,0 +1,10 @@
+;; A label widget, with a bitmap instead of text
+;; We use here the fact that "wtour-lessondir" contains the path of the
+;; wtour demo
+
+
+(label '.lab2 :bitmap 	   (string-append "@" wtour-lessondir "/../lib/iu.ridge.xbm")
+              :relief 	   "raised" 
+	      :borderwidth 2)
+(pack .lab2)
+ 

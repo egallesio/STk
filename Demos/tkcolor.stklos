@@ -1,0 +1,128 @@
+#!/bin/sh
+:;exec /usr/local/bin/stk -f "$0" "$@"
+;;;; 
+;;;; A simple color picker in Tk.
+;;;;
+;;;; Clicking button 1 on the color box sets the text color
+;;;; to that color; Clicking button 3 sets the background.
+;;;; We read /usr/X11R6/lib/X11/rgb.txt by default.  Change the
+;;;; file here if it is somewhere else on your system; if it
+;;;; is a different file, it must have the same format, e.g.
+;;;;    rrr ggg bbb color name
+;;;;
+;;;; This demo is inspired from a Tcl program found on the News. 
+;;;; Original author is <schmi107@maroon.tc.umn.edu>. 
+
+(require "Tk-classes")
+(define max-page	10)
+
+(define color-file 	"/usr/X11R6/lib/X11/rgb.txt")
+(define colors		'())
+(define item-text	(make-vector max-page))
+(define item-color	(make-vector max-page))
+(define color-count	0)
+(define color-index	0)
+
+
+;;;; We cannot create all the colors in the canvas immediately because that uses
+;;;; up the colormap. Instead we only display N items and then configure their
+;;;; colors as we do fake scroll.
+
+(define (color-adjust s args)
+  (case (car args)
+    ((moveto) (set! color-index (inexact->exact (* (cadr args) color-count))))
+    ((scroll) (case (caddr args)
+		((pages) (set! color-index (+ color-index 
+					      (* max-page (cadr args)))))
+		((units) (set! color-index (+ color-index (cadr args)))))))
+  (if (< color-index  0) 
+      (set! color-index 0))
+  (if (>  (+ color-index max-page) color-count)
+      (set! color-index (- color-count max-page)))
+
+  (dotimes (i max-page)
+    (let ((col (vector-ref colors (+ color-index i))))
+      (set! (fill    (vector-ref item-color i)) col)
+      (set! (text-of (vector-ref item-text  i)) col)))
+  (update-scrollbar s))
+
+
+(define (update-scrollbar s)
+  (scrollbar-set! s (/ color-index color-count) 
+		    (/ (+ color-index max-page) color-count))
+  (update 'idletasks))
+
+
+;;;; Read the color file
+(define (read-database file)
+  (with-input-from-file file
+    (lambda ()
+      (display "Reading RGB file ...") (flush)
+      (let ((rgx (string->regexp 
+		  "^[ \t]*[0-9]+[ \t]+[0-9]+[ \t]+[0-9]+[ \t]*(.*)$")))
+	(do ((l (read-line) (read-line)))
+	    ((eof-object? l))
+	  (let ((match (rgx l)))
+	    (when match
+	      (set! colors (cons (apply substring l (cadr match)) colors)))))
+	(set! colors (list->vector (reverse colors)))
+	(set! color-count (vector-length colors)))
+      (display " done\n"))))
+
+(define (make-chooser parent)
+  ;; Make the scroll
+  (let* ((f (make <Frame> :parent parent))
+	 (c (make <Canvas> :parent f :width 200 :height 200))
+	 (s (make <Scrollbar> :parent f :relief "sunken" :width 10)))
+    
+    (pack s :side "left" :fill "y")
+    (pack c :expand #t :fill "x")
+    (dotimes (i 10)
+      (let ((pos (* i 20))
+	    (col (vector-ref colors i)))
+	
+	(vector-set! item-color i (make <Rectangle> 
+					:parent c 
+					:coords (list 0 pos 50 (+ pos 19))
+					:fill col 
+					:outline ""))
+	(vector-set! item-text  i (make <Text-item> 
+					:parent c 
+					:coords (list 55 (+ pos 3))
+					:anchor "nw" 
+					:text col 
+					:tags "text"))))
+    (bind c "<Button-1>" (lambda (y)
+			   (let ((item (vector-ref item-text (quotient y 20))))
+			     (set! (background c) (text-of item)))))
+    (bind c "<Button-3>" (lambda (y)
+			   (let ((item (vector-ref item-text (quotient y 20))))
+			     (item-configure c "text" :fill (text-of item)))))
+    ;; Set the command associated to the scrollbar
+    (set! (command s) (lambda l (color-adjust s l)))
+    (update-scrollbar s)
+    (pack f :fill "x")
+
+    (pack (make <Button> :parent parent :text "Select" 
+		:command (let ((e (make <Entry>)))
+			   ;; Create an entry to set the selection
+			   ;; This is silly but can we do better in Tk?
+			   (lambda ()
+			     (let ((s (format #f "-bg ~s -fg ~s"
+					   (background c)
+					   (list-ref (item-configure c "text" :fill)
+						     4))))
+			       (set! (value e) s)
+			       (selection-set! e 0 (string-length s))))))
+
+	  (make <Button> :parent parent :text "Quit" 
+		:command (lambda () (exit 0)))
+	  :side "left" :fill "both" :expand #t)
+    (pack f :expand #t :fill "both")))
+
+(wm 'withdraw ".")
+(read-database color-file)	     
+(make-chooser (make <Toplevel> :title "Tkcolors"))
+
+
+

@@ -1,0 +1,54 @@
+#!/bin/sh
+:;exec /usr/local/bin/stk -l "$0" "$@"
+;;
+;; show-vars w var var var ...
+;;
+;; Create a top-level window that displays a bunch of global variable values
+;; and keeps the display up-to-date even when the variables change value
+;;
+;; Arguments:
+;;    w -        Name to use for new top-level window.
+;;    var -      Name of variable to monitor.
+;;
+;;
+;; Note that this demo is run with the -l option (instead of the classical -f)
+;;
+;;
+;;           Author: Erick Gallesio [eg@unice.fr]
+;;    Creation date:  9-Aug-1993 22:06
+;; Last file update: 17-Jan-1996 16:54
+
+(define (show-vars w . args)
+  (catch (destroy w))
+  (toplevel w)
+  (wm 'title w "Variable values")
+  (label (& w ".title")
+	 :text "Variable values:" 
+	 :width 20
+	 :anchor "center"
+	 :font "-Adobe-helvetica-medium-r-normal--*-180*")
+  (pack (& w ".title") :side "top" :fill "x")
+  
+  (for-each (lambda(i)
+	      (let* ((w.i 	(& w "." i))
+		     (w.i.name  (& w.i ".name"))
+		     (w.i.value (& w.i ".value")))
+		(frame w.i)
+		(label w.i.name :text (format #f "~A: " i))
+		(label w.i.value :textvar i)
+		(pack w.i.name w.i.value :side "left")
+		(pack w.i :side "top" :anchor "w")))
+	    args)
+
+  (pack [button (& w ".ok") :text " OK " :command (lambda () 
+						    (destroy w))]
+	:side "bottom" 
+	:pady 2))
+
+
+(define a 1)
+(define b '(1 2 (a b d) x 1))
+(define c "A string")
+(show-vars '.test 'a 'b 'c)
+(format #t "Try to modify value of displayed variables with set!\n")
+

@@ -1,0 +1,211 @@
+;;;;
+;;;; M u l t i p a n e d . s t k
+;;;;
+;;;; Rewritten version of Paned.stk to allow an arbitrary number of panes.
+;;;; Modified by Harvey J. Stein <hjstein@math.huji.ac.il>
+;;;; Modified again by Erick Gallesio for allowing horizontal and vertical
+;;;; placement
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; Idea of this implementation was found in comp.lang.tcl. 
+;;;; Original author seems to be James Noble and the version from which this 
+;;;; stuff is derivated is Jay Schmidgall (shmdgljd@ghostwind.rchland.ibm.com).
+
+(require "Frame")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <MultiPaned> class definition
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class <MultiPaned> (<Tk-composite-widget>)
+  (;; Public slots
+   (frames       :accessor     frames-of)
+   (grips	 :accessor     grips-of)
+   (ghost	 :accessor     ghost-of)
+   (panes        :accessor     panes-of	   :init-keyword :panes)
+   (width	 :accessor     width	   :init-keyword :width
+		 :allocation   :propagated :propagate-to (frame))
+   (height	 :accessor     height	   :init-keyword :height
+		 :allocation   :propagated :propagate-to (frame))
+
+   ;; Virtual slot
+   (orientation  :accessor      orientation :allocation :virtual
+		 :slot-ref	(lambda (o)
+				  (extend-environment (environment o)
+				     (if vertical? "vertical" "horizontal")))
+		 :slot-set!	(lambda (o v)
+				  (extend-environment (environment o)
+				     (set! vertical? (equal? v "vertical"))
+				     (place-grips o))))
+   ;; Private slots
+   (environment  :accessor     environment)
+   (fractions  	 :accessor     fractions-of)
+   (grip-number  :accessor     grip-number-of)
+   (drag-start   :accessor     drag-start-of)))
+
+(define-method initialize-composite-widget ((self <MultiPaned>) initargs frame)
+  (let* ((panes     (get-keyword :panes initargs 2))
+	 (vertical? (equal? "vertical" 
+			    (get-keyword :orientation  initargs "vertical")))
+	 (fractions (make-vector panes))
+	 (frames    (make-vector panes))
+	 (grips     (make-vector (- panes 1)))
+	 (ghost	    (make <Frame> :parent frame :border-width 2 :relief "ridge")))
+
+    ;; Build the "container" frames
+    (dotimes (i panes)
+       (vector-set! fractions i (/ (+ i 1) panes))
+       (vector-set! frames    i (make <Frame> :parent frame :border-width 2
+				              :relief "raised")))
+
+    ;; Build grips
+    (dotimes (i (- panes 1))
+       (let ((G (make <Frame> :parent frame :width 10 :height 10 :border-width 2
+			      :relief "raised" :cursor "crosshair")))
+	 (vector-set! grips i G)
+	 ;; Associate bindings to the newly created grip
+	 (bind G "<Button-1>"        (lambda (|W| x y) (start-grip  self x y |W|)))
+	 (bind G "<B1-Motion>"       (lambda (x y)     (motion-grip self x y)))
+	 (bind G "<ButtonRelease-1>" (lambda (x y)     (stop-grip self x y)))))
+
+    ;; Initialize slots
+    (slot-set! self 'environment (the-environment))
+    (slot-set! self 'panes 	 panes)
+    (slot-set! self 'frames	 frames)
+    (slot-set! self 'grips	 grips)
+    (slot-set! self 'fractions   fractions)
+    (slot-set! self 'ghost	 ghost)
+    (slot-set! self 'Id		 (Id frame))
+
+    ;; Place grips
+    (place-grips self)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; <MultiPaned> methods 
+;;; 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-method place-grips ((self <MultiPaned>))
+  (extend-environment (environment self)
+    (let ((f     0)
+	  (fp    0))
+      ;; Place frames and grips
+      (dotimes (i (- panes 1))
+	 (set! f (vector-ref fractions i))
+	 (if vertical?
+	     (begin
+	       (place (vector-ref grips i)  :rely 0.95   :relx f  :anchor "center")
+	       (place (vector-ref frames i) :y 0 :relh 1 :relx fp :relw (- f fp)))
+	      (begin
+		(place (vector-ref grips i)  :relx 0.95   :rely f  :anchor "center")
+		(place (vector-ref frames i) :x 0 :relw 1 :rely fp :relh (- f fp))))
+	  (raise (vector-ref grips i))
+	  (set! fp f))
+      
+      ;; Last frame
+      (if vertical?
+	  (place (vector-ref frames (- panes 1))
+		 :y 0 :relx f :relheight 1 :relwidth (- 1.0 f))
+	  (place (vector-ref frames (- panes 1))
+		 :x 0 :rely f :relwidth 1 :relheight (- 1.0 f))))))
+
+;;;
+;;; Methods for moving grips
+;;;
+(define-method find-grip ((self <MultiPaned>) w)
+  (do ((i 0 (+ 1 i)))
+      ((eq? w (slot-ref (vector-ref (grips-of self) i) 'id)) i)))
+
+(define-method start-grip ((self <MultiPaned>) x y w)
+  (extend-environment (environment self)
+    (let* ((grip   (find-grip self w))
+	   (ghost  (ghost-of self))
+	   (fracts (fractions-of self))
+	   (fr	 (vector-ref fracts grip)))
+      
+      (slot-set! self 'grip-number grip)
+      (slot-set! self 'drag-start (cons x y))
+
+      ;; Raise ghost
+      (place 'forget ghost) ; otherwise old constaints seems to stay valid
+      (if vertical?
+	  (place ghost :rely 0 :relx fr :anchor "n" :relh 1)
+	  (place ghost :relx 0 :rely fr :anchor "w" :relw 1))
+      (raise ghost)
+
+      ;; Raise current grip
+      (raise (vector-ref (grips-of self)  grip)))))
+
+(define-method motion-grip ((self <MultiPaned>) x y)
+  (extend-environment (environment self)
+     (let ((fraction (fractions-of self))
+	   (gn 	  (grip-number-of self))
+	   (ghost	  (ghost-of self)))
+
+       (if vertical?
+	   (begin
+	     (vector-set! fraction 
+			  gn
+			  (max 0.0001
+			       (min .9999
+				    (+ (vector-ref fraction gn)
+				       (/ (- x (car (drag-start-of self)))
+					  (+ 1 (winfo 'width (frame-of self))))))))
+	     (place ghost
+		    :rely 0 :relheight 1 :relx (vector-ref fraction gn) :anchor "n")
+	  (place (vector-ref (grips-of self) gn)
+		 :rely 0.95 :relx (vector-ref fraction gn) :anchor "center"))
+	   (begin
+	     (vector-set! fraction 
+			  gn
+		       (max 0.0001
+			    (min .9999
+				 (+ (vector-ref fraction gn)
+				    (/ (- y (cdr (drag-start-of self)))
+				       (+ 1 (winfo 'height (frame-of self))))))))
+	     (place ghost
+		 :relx 0 :relwidth 1 :rely (vector-ref fraction gn) :anchor "w")
+	     (place (vector-ref (grips-of self) gn)
+		 :relx 0.95 :rely (vector-ref fraction gn) :anchor "center"))))))
+
+(define-method stop-grip ((self <MultiPaned>) x y)
+  (let* ((gn 	    (grip-number-of self))
+	 (fractions (fractions-of self))
+	 (cp        (vector-ref fractions gn)))
+    (dotimes (i (- (panes-of self) 1))
+      (cond 
+       ((and (< i gn) (> (vector-ref fractions i) cp))
+		(vector-set! fractions i cp))
+       ((and (> i gn) (< (vector-ref fractions i) cp))
+		(vector-set! fractions i cp)))))
+  (lower (ghost-of self))
+  (place-grips self))
+
+(provide "Multipaned")
+
+;;;
+;;; Example of usage
+;;;
+;;; (define p (make <MultiPaned> 
+;;; 		:panes 4 
+;;; 		:width 400 :height 400
+;;; 		:orientation "horizontal"))
+;;; 
+;;; (define l0 (make <Label> :text "Lab0" :parent (vector-ref (frames-of p) 0)))
+;;; (define l1 (make <Label> :text "Lab1" :parent (vector-ref (frames-of p) 1)))
+;;; (define l2 (make <Label> :text "Lab2" :parent (vector-ref (frames-of p) 2)))
+;;; (pack l0 l1 l2 :expand #t :fill "both")
+;;; (pack p :expand #t)
+;;; 

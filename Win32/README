@@ -1,0 +1,40 @@
+			      Win32 STk
+			     -----------
+
+
+This is the first port of STk on Win32. It has been compiled with BC++
+4.5 and MS VC 4.2.Things are far from perfect, and there are a lot of
+little things to correct (mostly problem with filename conventions
+which are different between Unix and DOS). These problem shoulds be
+corrected in future releases.
+
+Compilation
+-----------
+
+With BC++ 4.5, just type "make -f STk-make.bc " in the current
+directory to build the executable. and "stk-inst" to install the
+package.  Don't forget to set your STK_LIBRARY variable to the
+directory where the package has been installed.
+
+Limitations:
+-----------
+The following limitations are mainly due to the fact that I'm not a Windows 
+programmer and that I try to spend as less as possible time on this system. 
+Consequently, I will probably not try to implements the following for 
+a while. The biggest limitations are 
+	- no dynamic loading
+
+
+The help of a window guru for these tasks would be greatly appreciated.
+
+
+-------------------------------------------------------------------------------
+Erick Gallesio					  tel : (33) 92-96-51-53
+ESSI - I3S					  fax : (33) 92-96-51-55
+Universite de Nice - Sophia Antipolis		email : eg@unice.fr
+Route des colles - BP 145
+06903 Sophia Antipolis CEDEX
+FRANCE
+
+     
+

@@ -1,0 +1,35 @@
+Scheme/STk Widget Tour 0.2
+--------------------------
+
+This is a rewrite of the Tcl/Tk wtour2.0 in Scheme/STk. I wrote it
+while I was learning the nuances of STk. I also avoided using the send
+mechanisms to make it quicker/easier to learn (I had to set up all the
+authentication stuff to have the Tcl/Tk wtour working).
+
+Installing and Running
+----------------------
+
+To start the tour assume that the locations of the STk binary and library
+in "stk-wtour" are correct. Once this is done, just type 
+	% ./stk-wtour
+
+Use the menus to navigate through different lessons.  You can make changes
+to the lesson source code; click on the Apply button to see the results of
+the changes.
+ 
+Acknowledgements and Notes
+--------------------------
+The original,excellent, tour of Tcl/Tk was due to Andrew Payne
+(payne@crl.dec.com). I hope you enjoy the Scheme version
+(Adding some STklos lessons is next in the set of things to do).
+I've tested it on Silicon Graphics running IRIX 5.2 (They are
+the coolest machines around, look them up). 
+
+Suresh Srinivas,
+Graduate Student,
+Parallel Computing Group,
+Indiana University,
+(ssriniva@cs.indiana.edu)
+
+Thesis: Investigating large scale parallel programs.
+Interests: Parallel Computing, Visualization, Scheming.

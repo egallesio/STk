@@ -1,0 +1,15 @@
+;;; Drawing in a Canvas (funky version)
+;;;   (draw with mousebutton 1)
+
+(define wid 0)
+
+(pack (canvas '.c1) :expand #t :fill "both")
+
+(bind .c1 "<ButtonPress-1>" (lambda ()
+			      (set! wid 0)))
+
+(bind .c1 "<B1-Motion>" (lambda (x y)
+			  (.c1 'create 'rectangle x y x y :width wid)
+			  (set! wid (1+ wid))))
+
+

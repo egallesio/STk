@@ -1,0 +1,14 @@
+;; A scale widget with options
+
+(define (display-value n)
+  (format #t "Flow 1 = ~A\n" n))
+
+(scale '.s1 :label "Flow 1" :from -1000 :to 1000 :orient "horizontal" 
+            :command display-value)
+(pack .s1)
+
+;; We could avoid the display-value definition by doing
+(scale '.s2 :label "Flow 2" :from -1000 :to 1000 :orient "horizontal" 
+            :command (lambda (n) 
+		       (format #t "Flow 2 = ~A\n" n)))
+(pack .s2)

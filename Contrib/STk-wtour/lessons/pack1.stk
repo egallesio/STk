@@ -1,0 +1,9 @@
+;; Basic geometry management with the packer
+
+(label '.l1 :text "Label #1" :background "red")
+(label '.l2 :text "Label #2" :background "blue")
+(label '.l3 :text "Label #3" :background "green")
+
+(pack .l1 :side "top")
+(pack .l2 :side "left")
+(pack .l3 :side "bottom")

@@ -1,0 +1,16 @@
+
+IMPORTANT NOTE
+--------------
+
+STk bignums are implemented with the GNU mp APIs. This library provides a 
+VERY EFFICIENT implementation of multiple precision numbers. This library 
+is placed under the GNU GENERAL PUBLIC LICENSE. However, to avoid to fall 
+under the restrictive GPL terms you can use the FGMP package (FGMP is a 
+public domain implementation of a subset of the GNU gmp library with the
+same API, written by Mark  Henderson <markh@wimsey.bc.ca>). This package 
+has the advantage to be FREE, and disadventage to be SLOW.
+
+So, if your concern is speed, and if the GPL is not a problem for you, 
+use the Gnu package. 
+
+

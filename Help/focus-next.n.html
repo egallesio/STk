@@ -1,0 +1,53 @@
+<HTML><HEAD><TITLE>Tk Built-In Commands - Tk:focus-next manual page</TITLE></HEAD>
+<BODY bgcolor = #c3ffc3>
+<H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageGreen.gif"> Tk:focus-next, Tk:focus-prev, Tk:focus-follows-mouse, Tk:focus-on, Tk:focus-off</H2>
+<I>Utility procedures for managing the input focus.</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<H3><A NAME="M2">SYNOPSIS</A></H3>
+(<B>Tk:focus-next </B><I>window</I>)<BR>
+(<B>Tk:focus-prev </B><I>window</I>)<BR>
+(<B>Tk:focus-follows-mouse</B>)<BR>
+<H3><A NAME="M3">DESCRIPTION</A></H3>
+<B>Tk:focus-next</B> is a utility procedure used for keyboard traversal.
+It returns the ``next'' window after <I>window</I> in focus order.
+The focus order is determined by
+the stacking order of windows and the structure of the window hierarchy.
+Among siblings, the focus order is the same as the stacking order, with the
+lowest window being first.
+If a window has children, the window is visited first, followed by
+its children (recursively), followed by its next sibling.
+Top-level windows other than <I>window</I> are skipped, so that
+<B>Tk:focus-next</B> never returns a window in a different top-level
+from <I>window</I>.
+<P>
+After computing the next window, <B>Tk:focus-next</B> examines the
+window's <B>:takefocus</B> option to see whether it should be skipped.
+If so, <B>Tk:focus-next</B> continues on to the next window in the focus
+order, until it eventually finds a window that will accept the focus
+or returns back to <I>window</I>.
+<P>
+<B>Tk:focus-prev</B> is similar to <B>Tk:focus-next</B> except that it
+returns the window just before <I>window</I> in the focus order.
+<P>
+<B>Tk:focus-follows-mouse</B> changes the focus model for the application
+to an implicit one where the window under the mouse gets the focus.
+After this procedure is called, whenever the mouse enters a window
+Tk will automatically give it the input focus.
+The <B><A HREF="./focus.n.html">focus</A></B> command may be used to move the focus to a window
+other than the one under the mouse, but as soon as the mouse moves
+into a new window the focus will jump to that window.
+Note: at present there is no built-in support for returning the
+application to an explicit focus model;  to do this you'll have
+to write a script that deletes the bindings created by
+<B>Tk:focus-follows-mouse</B>.
+
+<P>
+<B>Tk:focus-on</B> and <B>Tk:focus-off</B> are simpy defined as
+<PRE>(define Tk:focus-on  (lambda (w) #t))
+(define Tk:focus-off (lambda (w) #f))</PRE>
+This procedures can be used by the focus traversal algorithm presented in the 
+<B><A HREF="./options.n.html">options</A></B> manual page.
+<H3><A NAME="M4">SEE ALSO</A></H3>
+<B><A HREF="./focus.n.html">focus</A></B>, <B><A HREF="./toplevel.n.html">toplevel</A></B>
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookGreen.gif"> Back to the <B>STk</B> main page</A>
+</BODY></HTML>

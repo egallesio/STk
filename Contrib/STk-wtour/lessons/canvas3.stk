@@ -1,0 +1,14 @@
+;;; Canvas event bindings
+;;;   (click on the bitmap)
+
+(canvas '.c1)
+(pack '.c1 :fill "both" :expand #t)
+
+(define i (.c1 'create 'bitmap 120 100 
+	       :bitmap (string-append "@" 
+				      wtour-lessondir 
+				      "/../lib/iu.seal.small.xbm")
+	       :background "grey"))
+
+(.c1 'bind i "<Button-1>" (lambda () (display "CLICK\n")))
+

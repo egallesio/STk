@@ -1,0 +1,364 @@
+<html>
+<!-- Created by: Erick Gallesio,  1-Sep-1995 -->
+<head>
+<title>Demo directory README (Version 3.1 - July 1996)</title>
+</head>
+<body bgcolor="#FFFFFF">
+<h1><img src="STk-normal.gif"> Demo directory</h1>
+<pre>
+
+
+</pre>
+<p>This directory contains demo programs for <b>STk</b>.
+
+<p>If you want to run a demo <STRONG>BEFORE</STRONG> a complete
+ installation of the <b>STk</b> package, you must use the
+<pre>    ../Src/test-stk</pre> 
+command to run the interpreter.
+
+<p><b>If you view this file with the STk HTML browser, you can click on
+each given command to launch a demo.</b><p>
+To use the STk HTML browser, just type:
+<pre>    ../Src/test-stk -f hbrowse README.html</pre>
+<p><I>Happy STking </I>
+
+<hr></p>
+<h2>
+<center><font COLOR="red">STk demos</font></center>
+</h2>
+<hr>
+
+<DL>
+<DT> File
+<DD> browse.stk
+<DT> Description
+<DD> a simple Unix file browser 
+<DT> Run
+<DD> <A expr=(system "../Src/test-stk -f browse.stk &")>
+	../Src/test-stk -f browse.stk
+     </A>     
+</DL>
+
+<hr>
+<DL>
+<DT> File
+<DD> colormap.stk
+<DT> Description
+<DD> a simple color builder
+<DT> Run
+<DD> <A expr=(system "../Src/test-stk -f colormap.stk &")>
+	../Src/test-stk -f colormap.stk
+     </A>     
+<DT> Comment
+<DD> On exit, the RGB value is printed on the sandard output
+</DL>
+
+
+<hr>
+<DL>
+<DT> File
+<DD> small-ed.stk
+<DT> Description
+<DD> A small editor to create enhanced text
+<DT> Run
+<DD> <A expr=(system "../Src/test-stk -f small-ed.stk &")>
+	../Src/test-stk -f small-ed.stk
+     </A>     
+<DT> Comment
+<DD> <STRONG> Does not work (still) with <I>STk</I> 3.0</STRONG>
+</DL>
+
+<hr>
+<DL>
+<DT> File
+<DD> hanoi.stk
+<DT> Description
+<DD> Hanoi towers animation
+<DT> Run
+<DD> <A expr=(system "../Src/test-stk -f hanoi.stk &")>
+	../Src/test-stk -f hanoi.stk
+     </A>     
+</DL>
+
+<hr>
+<DL>
+<DT> File
+<DD> hello.stk
+<DT> Description
+<DD> a simple button demonstration
+<DT> Run
+<DD> <A expr=(system "../Src/test-stk -f hello.stk &")>
+	../Src/test-stk -f hello.stk
+     </A>     
+</DL>
+
+<hr>
+<DL>
+<DT> File
+<DD> showvars.stk
+<DT> Description
+<DD> a variable shower<br>
+     This program shows the value of three variables (named a,b and c)
+     Changing the value of one of these vars (with a set! for
+     instance)	will redisplay its new value immediatly
+<DT> Run
+<DD> <A expr=(system "../Src/test-stk -load showvars.stk  &")>
+	../Src/test-stk -load showvars.stk 
+     </A>     
+<DT> Comment
+<DT> Exit 
+<DD> type (exit) on the STk prompt
+</DL>
+
+<hr>
+<DL>
+<DT> File
+<DD> turtle.stk
+<DT> Description
+<DD> a Logo turtle package + some demo functions.
+<DT> Run
+<DD> <A expr=(system "../Src/test-stk -f turtle.stk &")>
+	../Src/test-stk -f turtle.stk
+     </A>     
+</DL>
+
+<hr>
+<DL>
+<DT> File
+<DD> inspector.stk
+<DT> Description
+<DD> A simple demo of the inspector on Tk widgets 
+<DT> Run
+<DD> <A expr=(system "../Src/test-stk -f inspector.stk &")>
+	../Src/test-stk -f inspector.stk
+     </A>     
+<DT> Comment
+<DD> <STRONG> Does not work (still) with <I>STk</I> 3.0</STRONG>
+</DL>
+
+<hr>
+<DL>
+<DT> File
+<DD> mc-server.stk
+<DT> Description
+<DD> A multiple-clients server.
+<DT> Run
+<DD> <A expr=(system "xterm -e ../Src/test-stk -load mc-server.stk &")>
+	../Src/test-stk -load mc-server.stk
+     </A>     
+</DL>
+
+<hr>
+<DL>
+<DT> File
+<DD> queens.stk
+<DT> Description
+<DD> The queens problem. You can do it yourself (and it will make
+     sure you follow the rules) or you can ask it to solve the
+     puzzle starting with a given board configuration.
+     <b>This code is a contribution of Grant Edwards</b> 
+     <tt>(grante@rosemount.com)</tt>
+<DT> Run
+<DD> <A expr=(system "../Src/test-stk -f queens.stk &")>
+	../Src/test-stk -f queens.stk
+     </A>     
+</DL>
+
+
+<hr>
+<DL><DT>File
+<DD>  stetris.stk
+<DT> Description
+<DD> This is a falling block game not unlike tetris(tm) :).
+	     It is implemented in STk just to prove it can be done, 
+	     and as a challenge to TCLers. 
+	     It starts slowly and becomes faster and faster. 
+	     Have fun.
+	     This code is a contribution of Harvey J. Stein(hjstein@math.huji.ac.il)
+<DT> Run
+<DD> <A expr=(system "../Src/test-stk -f stetris.stk &")>
+	../Src/test-stk -f stetris.stk
+     </A>     
+</DL>
+
+
+<hr>
+<DL><DT>File
+<DD>  ttt.stk
+<DT> Description
+<DD> A 3D Tic-Tac-Toe, where the board is 4x4x4, a 3 dimensional board
+of four planes with four rows and four columns each.
+<B>This code is a contribution of Edin "Dino" Hodzic</B> &lt;ehodzic@scu.edu&gt;
+<DT> Run
+<DD> <A expr=(system "../Src/test-stk -f ttt.stk &")>
+	../Src/test-stk -f ttt.stk
+     </A>     
+</DL>
+
+<hr>
+<DL><DT>File
+<DD> server.stk
+<DT> Description
+<DD> A simple server showing how to use the socket package.
+	     It creates a xterm window in which a read-eval-print-loop 
+	     is executed. When the window is closed or when an error occurs,
+	     the socket is closed
+<DT> Run
+<DD> <A expr=(system "../Src/test-stk -f server.stk &")>
+	../Src/test-stk -f server.stk
+     </A>
+</DL>
+
+<hr>
+<DL><DT>File
+<DD> term.stk
+<DT> Description
+<DD> A simple terminal emulator (a kind of xterm, but in a text widget). 
+<DT> Run
+<DD> <A expr=(system "../Src/test-stk -f ./term.stk &")>
+	../Src/test-stk -f term.stk
+     </A>
+</DL>
+
+<hr>
+<DL><DT>File
+<DD> wtour.stk
+<DT> Description
+<DD> This is a rewrite of the Tcl/Tk wtour2.0 in Scheme/STk. Use the menus
+to navigate through different lessons.  You can make changes
+to the lesson source code; click on the Apply button to see the results of
+the changes.
+<DT> Run
+<DD> <A expr=(system "../Src/test-stk -f ./wtour.stk ../Contrib/STk-wtour &")>
+	../Src/test-stk -f ./wtour.stk ../Contrib/STk-wtour
+     </A>
+</DL>
+
+<!-- --------------------------------------------------------------------------->
+<hr>
+<h2>
+<center><font COLOR="red"> STklos demos </font></center>
+</h2>
+<hr>
+<!-- --------------------------------------------------------------------------->
+
+There are few demos of STklos. What is interesting is not what they do but
+how they are programmmed (IMO).
+
+<hr>
+<DL>
+<DT> File
+<DD> widget.stklos
+<DT> Description
+<DD> A tour of the Tk widgets. This demo shows all the Tk widgets 
+<DT> Run
+<DD> <A expr=(system "../Src/test-stk -f widget.stk &")>
+	../Src/test-stk -f widget.stklos
+     </A>     
+</DL>
+
+
+<hr>
+<DL><DT>File
+<DD>  stklos-demo.stklos
+<DT> Description
+<DD> a simple demo written in STklos
+<DT> Run
+<DD> <A expr=(system "../Src/test-stk -f stklos-demo.stklos &")>
+	../Src/test-stk -f stklos-demo.stklos
+     </A>     
+</DL>
+
+
+<hr>
+<DL><DT>File
+<DD>  stklos-demo2.stklos
+<DT> Description
+<DD> another simple demo written in STklos
+<DT> Run
+<DD> <A expr=(system "../Src/test-stk -f stklos-demo2.stklos &")>
+	../Src/test-stk -f stklos-demo2.stklos
+     </A>     
+</DL>
+
+
+<hr>
+<DL><DT>File
+<DD>  hello.stklos
+<DT> Description
+<DD> a rewriting of the hello.stk demo in STklos
+<DT> Run
+<DD> <A expr=(system "../Src/test-stk -f hello.stklos &")>
+	../Src/test-stk -f hello.stklos
+     </A>     
+</DL>
+
+<hr>
+<DL><DT>File
+<DD>  browse.stklos
+<DT> Description
+<DD> a rewriting of the browse.stk demo in STklos
+<DT> Run
+<DD> <A expr=(system "../Src/test-stk -f browse.stklos &")>
+	../Src/test-stk -f browse.stklos
+     </A>     
+</DL>
+
+
+<hr>
+<DL><DT>File
+<DD>  calc.stklos
+<DT> Description
+<DD> a very simple calculator
+<DT> Run
+<DD> <A expr=(system "../Src/test-stk -f calc.stklos &")>
+	../Src/test-stk -f calc.stklos
+     </A>     
+</DL>
+
+
+<hr>
+<DL><DT>File
+<DD>  compo-demo.stklos
+<DT> Description
+<DD> A quick demo of the composite widgets which are in the STk release.
+    <BR>
+    <STRONG>This code is a contribution of </STRONG>
+    <TT>&lt;Drew.Whitehouse@anu.edu.au&gt</TT>
+<DT> Run
+<DD> <A expr=(system "../Src/test-stk -f compo-demo.stklos &")>
+	../Src/test-stk -f compo-demo.stklos
+     </A>     
+</DL>
+
+
+<hr>
+<DL><DT>File
+<DD>  filebox.stklos
+<DT> Description
+<DD> a simple program which uses the &lt;File-box&gt compositeclass.
+	     A &lt;File-box&gt is a file requestor with file name completion.
+	     It is a composition of various composite widget classes.
+<DT> Run
+<DD> <A expr=(system "../Src/test-stk -f filebox.stklos &")>
+	../Src/test-stk -f filebox.stklos
+     </A>     
+</DL>
+
+
+<hr>
+<DL><DT>File
+<DD>  tkcolor.stklos
+<DT> Description
+<DD> a simple color picker written in STklos. Clicking button 1 on the color
+ box sets the text color to that color; Clicking button 3 sets the background.
+<DT> Run
+<DD> <A expr=(system "../Src/test-stk -f tkcolor.stklos &")>
+	../Src/test-stk -f tkcolor.stklos
+     </A>     
+</DL>
+
+<hr>
+<address>eg@unice.fr</address>
+</BODY>
+</HTML>

@@ -1,0 +1,133 @@
+#!/bin/sh
+:;exec /usr/local/bin/stk -f "$0" "$@"
+;;
+;; A quick demo of the composite widgets
+;; This code is a contribution of Drew.Whitehouse@anu.edu.au
+;;
+;; Multiple-window added by eg on 96/04/14
+
+(require "Tk-classes")
+
+(define main-frame (make <Frame>))
+(define title (make <Label> :parent main-frame :text "Composite Widgets Demo"))
+(define button-box (make <Frame> :parent main-frame :width 200 :height 100))
+(define quit (make <Button> :parent main-frame 
+                   :text " quit "
+                   :command (lambda () 
+			      (destroy *root*))))
+
+(define composite-widgets '(Choicebox 
+                            Defbutton 
+                            Filebox 
+                            Lentry 
+                            Paned 
+                            Scrollbox
+			    Multiwin))
+(for-each (lambda (x)
+            (let ((cmd (string-append "(demo-" (symbol->string x) ")")))
+              (pack (make <Button> :parent button-box :text x :command cmd)
+                    :fill 'x :padx 5 )))
+          composite-widgets)
+
+(pack title button-box :fill 'x :padx 10 :pady 10)
+(pack quit :padx 10 :pady 10 )
+(pack main-frame)
+
+(define (demo-choicebox)
+  (let* ((tl (make <Toplevel> :title "Choice Box"))
+         (cb (make <Choice-box> :value "empty for now!" :parent tl)))
+    ;; add some entries
+    (for-each (lambda (x) (add-choice cb (symbol->string x))) 
+	      composite-widgets)
+    (pack cb)))
+
+(define (demo-defbutton)
+  (pack (make <Default-button> 
+	      :text "button"
+	      :width 20
+	      :parent (make <Toplevel> :title "Default Button"))))
+         
+(define (demo-filebox)
+  (let ((f (make-file-box)))
+    (if f
+	(format #t "You have selected ~S\n" f)
+	(format #t "Cancel\n"))))
+
+(define (demo-lentry)
+  (pack (make <Labeled-entry> 
+	      :title "title" 
+	      :parent (make <Toplevel> :title "Labeled entry"))
+	:padx 5 :pady 5))
+    
+(define (demo-paned)
+  (let* ((tl (make <Toplevel> :title "Paned demo"))
+         (hp (make <HPaned> :fraction 0.3 :width 300 :height 300 :parent tl))
+         (f1 (make <Label> :text "top pane" :parent (top-frame-of hp)))
+         (f2 (make <Label> :text "bottom-pane" :parent (bottom-frame-of hp)))
+         (vp (make <VPaned> :fraction 0.3 :width 300 :height 300 :parent tl))
+         (f3 (make <Label> :text "left pane" :parent (left-frame-of vp)))
+         (f4 (make <Label> :text "right-pane" :parent (right-frame-of vp))))
+    (pack f1 f2 f3 f4 :expand #t)
+    (pack hp vp)))
+
+(define (demo-scrollbox)
+  (let* ((tl (make <Toplevel> :title "Scroll box"))
+         (sb (make <Scroll-listbox> :parent tl :geometry "20x6")))
+    ;; add some entries into the listbox
+    (for-each (lambda (x) 
+                (insert (listbox-of sb) 0 x))
+              (append composite-widgets composite-widgets))
+    (pack sb)))
+
+
+(define (demo-multiwin) 
+  ;;
+  ;; Make a Menu bar
+  ;;
+  (define tl   (make <Toplevel> :title "Multiple and Inner windows demo"))
+  (define top  (make <Frame> :parent tl))
+  (define col '#("violet" "skyblue1" "Misty Rose" "Plum" "grey40"))
+  (define menu (make-menubar top 
+     `(("Menu" 
+	("Add one"  ,(let ((counter 0))
+		       (lambda () 
+			 (place (make <Inner-window> :parent f
+				      :title (format #f "Window #~A" counter)
+				      :background (vector-ref col (random 5)))
+				:x (random 200) :y (random 200))
+			 (set! counter (1+ counter)))))
+	("")
+	("Quit"     ,(lambda () (destroy tl)))))))
+  (pack menu :side "left" :expand #f)
+  (pack top :fill "x")
+  ;;
+  ;; Make a multiple window
+  ;;
+  (define f (make <Multiple-window> :parent tl :background "cyan4"))
+  (pack f :fill "both" :expand #t)
+
+  ;;
+  ;; First child
+  ;;
+  (define f1 (make <Inner-window> :parent f :title "A Text window"))
+  (define t1 (make <Scroll-Text> :highlight-thickness 0 :parent f1 :height 8 
+		   :background "lightblue3" :wrap "word"
+		   :value "Hi!I'm a text window\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nEnd"))
+  (define t2 (make <Scroll-Text> :highlight-thickness 0 :parent f1 
+		   :background "lightblue3" :wrap "word"
+		   :value "Hi, I'm also embedded in a window.\nUse the mouse in the border of my enclosing window to enlarge or shrink this editor"))
+  (pack t1 t2 :fill "both" :expand #t)
+  (place f1 :x 100 :y 70)
+
+  ;;
+  ;; Second child
+  ;;
+  (define f2 (make <Inner-window> :parent f :title "A canvas window"))
+  (define c1 (make <Canvas> :parent f2 :background "#c4b6a7"))
+  (make <Rectangle> :parent c1 :fill "IndianRed1"     :coords '(0 0 50 50))
+  (make <Oval>	  :parent c1 :fill "DarkOliveGreen" :coords '(100 100 150 150))
+  (bind-for-dragging c1)
+  (pack c1 :fill "both" :expand #t)
+  (place f2 :x 10 :y 10))
+
+

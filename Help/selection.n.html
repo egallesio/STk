@@ -1,0 +1,125 @@
+<HTML><HEAD><TITLE>Tk Built-In Commands - selection manual page</TITLE></HEAD>
+<BODY bgcolor = #c3c3ff>
+<H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageBlue.gif"> selection</H2>
+<I>Manipulate the X selection</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<H3><A NAME="M2">SYNOPSIS</A></H3>
+(<B>selection </B><I>option</I> ?<I>arg arg ...</I>?)<BR>
+<H3><A NAME="M3">DESCRIPTION</A></H3>
+This procedure provides a STk interface to the X selection mechanism and
+implements the full selection functionality described in the
+X Inter-Client Communication Conventions Manual (ICCCM).
+<P>
+The first argument to <B>selection</B> determines the format of the
+rest of the arguments and the behavior of the procedure.  The following
+forms are currently supported:
+<P>
+<P>
+<DL>
+<DT><A NAME="M4">(<B>selection 'clear</B> ?<B>:displayof</B> <I>window</I>? ?<B>:selection</B> <I>selection</I>?)</A><DD>
+If <I>selection</I> exists anywhere on <I>window</I>'s display, clear it
+so that no window owns the selection anymore.  <I>Selection</I>
+specifies the X selection that should be cleared, and should be an
+atom name such as PRIMARY or CLIPBOARD; see the Inter-Client
+Communication Conventions Manual for complete details.
+<I>Selection</I> defaults to PRIMARY and <I>window</I> defaults to ``.''.
+Returns an empty list. 
+<P>
+<DT><A NAME="M5">(<B>selection 'get</B> ?<B>:displayof</B> <I>window</I>? ?<B>:selection</B> <I>selection</I>? ?<B>:type</B> <I>type</I>?)</A><DD>
+Retrieves the value of <I>selection</I> from <I>window</I>'s display and
+returns it as a result.  <I>Selection</I> defaults to PRIMARY and
+<I>window</I> defaults to ``*root*''. 
+<I>Type</I> specifies the form in which the selection is to be returned
+(the desired ``target'' for conversion, in ICCCM terminology), and
+should be an atom name such as STRING or FILE_NAME; see the
+Inter-Client Communication Conventions Manual for complete details.
+<I>Type</I> defaults to STRING.  The selection owner may choose to
+return the selection in any of several different representation
+formats, such as STRING, ATOM, INTEGER, etc. (this format is different
+than the selection type; see the ICCCM for all the confusing details).
+If the selection is returned in a non-string format, such as INTEGER
+or ATOM, the <B>selection</B> procedure converts it to string format as a
+collection of fields separated by spaces: atoms are converted to their
+textual names, and anything else is converted to hexadecimal integers.
+<P>
+</DL>
+<P>
+<P>
+<DL>
+<DT><A NAME="M6">(<B>selection 'handle</B> ?<B>:selection</B> <I>selection</I>? ?<B>:type</B> <I>type</I>? ?<B>:format</B> <I>format</I>? <I>window procedure</I>)</A><DD>
+Creates a handler for selection requests, such that <I>procedure</I> will
+be executed whenever <I>selection</I> is owned by <I>window</I> and
+someone attempts to retrieve it in the form given by <I>type</I>
+(e.g. <I>type</I> is specified in the <B>selection get</B> procedure).
+<I>Selection</I> defaults to PRIMARY, <I>type</I> defaults to STRING, and
+<I>format</I> defaults to STRING.  If <I>procedure</I> is an empty string
+then any existing handler for <I>window</I>, <I>type</I>, and
+<I>selection</I> is removed.
+<P>
+<UL>
+<P>
+When <I>selection</I> is requested, <I>window</I> is the selection owner,
+and <I>type</I> is the requested type, <I>procedure</I> will be applied
+as a STk procedure with a list of two numbers.
+The two additional numbers
+are <I>offset</I> and <I>maxBytes</I>:  <I>offset</I> specifies a starting
+character position in the selection and <I>maxBytes</I> gives the maximum
+number of bytes to retrieve.  The procedure should return a value consisting
+of at most <I>maxBytes</I> of the selection, starting at position
+<I>offset</I>.  For very large selections (larger than <I>maxBytes</I>)
+the selection will be retrieved using several invocations of <I>procedure</I>
+with increasing <I>offset</I> values.  If <I>procedure</I> returns a string
+whose length is less than <I>maxBytes</I>, the return value is assumed to
+include all of the remainder of the selection;  if the length of
+<I>procedure</I>'s result is equal to <I>maxBytes</I> then
+<I>procedure</I> will be invoked again, until it eventually
+returns a result shorter than <I>maxBytes</I>.  The value of <I>maxBytes</I>
+will always be relatively large (thousands of bytes).
+<P>
+If <I>procedure</I> returns an error then the selection retrieval is rejected
+just as if the selection didn't exist at all.
+<P>
+The <I>format</I> argument specifies the representation that should be
+used to transmit the selection to the requester (the second column of
+Table 2 of the ICCCM), and defaults to STRING.  If <I>format</I> is
+STRING, the selection is transmitted as 8-bit ASCII characters (i.e.
+just in the form returned by <I>procedure</I>).  If <I>format</I> is
+ATOM, then the return value from <I>procedure</I> is divided into fields
+separated by white space;  each field is converted to its atom value,
+and the 32-bit atom value is transmitted instead of the atom name.
+For any other <I>format</I>, the return value from <I>procedure</I> is
+divided into fields separated by white space and each field is
+converted to a 32-bit integer;  an array of integers is transmitted
+to the selection requester.
+<P>
+The <I>format</I> argument is needed only for compatibility with
+selection requesters that don't use Tk.  If Tk is being
+used to retrieve the selection then the value is converted back to
+a string at the requesting end, so <I>format</I> is
+irrelevant.
+</UL>
+</DL>
+<P>
+<P>
+<DL>
+<DT><A NAME="M7">(<B>selection 'own</B> ?<B>:displayof</B> <I>window</I>? ?<B>:selection</B> <I>selection</I>?)</A><DD>
+<DT><A NAME="M8">(<B>selection 'own</B> ?<B>:procedure</B> <I>procedure</I>? ?<B>:selection</B> <I>selection</I>? <I>window</I>)</A><DD>
+The first form of <B>selection own</B> returns the path name of the
+window in this application that owns <I>selection</I> on the display
+containing <I>window</I>, or <B>#f</B> if no window in this
+application owns the selection.  <I>Selection</I> defaults to &quot;PRIMARY&quot; and
+<I>window</I> defaults to ``*root*''.
+<P>
+<BR>
+The second form of <B>selection own</B> causes <I>window</I> to become
+the new owner of <I>selection</I> on <I>window</I>'s display, returning
+an empty list as result. The existing owner, if any, is notified
+that it has lost the selection.
+If <I>procedure</I> is specified, it is a STk script to execute when
+some other window claims ownership of the selection away from
+<I>window</I>. <I>Selection</I> defaults to &quot;PRIMARY&quot;.
+
+<P>
+</DL>
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookBlue.gif"> Back to the <B>STk</B> main page</A>
+</BODY></HTML>

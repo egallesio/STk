@@ -1,0 +1,502 @@
+;;;;
+;;;; i n i t . s t k			-- The file launched at startup
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
+;;;;    Creation date: ??-Sep-1993 ??:??
+;;;; Last file update: 22-Jul-1996 15:47
+;;;;
+
+
+(define *debug*    	#f)	; #t for debuggging (disable macro inlining)
+(define *gc-verbose* 	#f)	; #t to have a message at start/stop of a GC
+(define *print-banner*  #t)	; #f to avoid the copyright message
+
+
+(define @undefined (if #f #t))
+(define *argc* (length *argv*)) 
+
+(define call/cc		call-with-current-continuation)
+(define !		system)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Some stuff for defining macros
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define define-macro #f)
+(define %replace     #f)
+(define %beginify    #f)
+
+(let ((if if) (and and) (begin begin) (set-car! set-car!) (set-cdr! set-cdr!)
+      (not not) (pair? pair?) (car car) (cdr cdr) 
+      (null? null?) (cons cons) 
+      (let let) (macro macro) (list list) (append append))
+
+  (set! %replace
+	(lambda (before after)
+	  (if (and (not *debug*) (pair? before) (pair? after))
+	      (begin
+		(set-car! before (car after))
+		(set-cdr! before (cdr after))))
+	  after))
+
+  (set! %beginify 
+	(lambda (forms)
+	  (if (null? (cdr forms)) (car forms) (cons 'begin forms))))
+
+  (set! define-macro 
+	(macro form
+	  (let ((name (car (car (cdr form))))
+		(args (cdr (car (cdr form)))))
+	    (list 'define name
+		  (list 'macro 'params
+			(list '%replace 
+			      'params
+			      (list 'apply
+				    (append (list 'lambda args)
+					    (cdr (cdr form)))
+				    (list 'cdr 'params)))))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Some utilities
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define gensym 
+  (let ((counter 0))
+    (lambda prefix
+      (set! counter (+ counter 1))
+      (string->symbol
+         (string-append (if (null? prefix) "G" (car prefix))
+			(number->string counter))))))
+
+(define (apropos s)
+  (if (not (symbol? s)) (error "apropos: bad symbol" s))
+  (let ((res '())
+	(env (the-environment)) 
+	(str (symbol->string s)))
+
+    (do ((l (cdr (environment->list env)) (cdr l))); cdr to avoid the binding to "s"
+	((null? l) (if (null? res) #f res))
+      (do ((v (car l) (cdr v)))
+	  ((null? v))
+	(if (and (string-find? str (symbol->string (caar v))) 
+		 (symbol-bound? (caar v)))
+	    (set! res (cons (caar v) res)))))))
+
+(define (documentation x)
+  "provides documentation for its parameter if it exists"
+  (define (nodoc)
+    (format #t "No documentation available for ~A\n" x))
+  (cond
+    ((closure? x) (let ((body (procedure-body x)))
+		    (if (string? (caddr body)) 
+			(format #t "~A\n" (caddr body))
+			(nodoc))))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Random 
+;;;;	This version of random is constructed over the C one. It can return
+;;;;	bignum numbers. Idea is due to Nobuyuki Hikichi <hikichi@sra.co.jp>
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define random 
+  (let ((C-random random)
+	(max-rand #x7fffffff)) ; Probably more on 64 bits machines
+    (letrec ((rand (lambda (n)
+		     (cond 
+		      ((zero? n)	   0)
+		      ((< n max-rand) (C-random n))
+		      (else 	  (+ (* (rand (quotient n max-rand)) max-rand)
+				     (rand (remainder n max-rand))))))))
+      (lambda (n)
+	(if (zero? n)
+	    (error "random: bad number: 0")
+	    (rand n))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; do
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-macro (do inits test . body)
+  (let ((loop-name (gensym)))
+    `(letrec ((,loop-name 
+	       (lambda ,(map car inits)
+		 (if ,(car test)
+		     (begin ,@(if (null? (cdr test)) 
+				  (list @undefined) 
+				  (cdr test)))
+		     (begin ,@body
+			    (,loop-name ,@(map (lambda (init)
+						 (if (null? (cddr init))
+						     (car init)
+						     (caddr init)))
+					       inits)))))))
+       (,loop-name ,@(map cadr inits)))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; dotimes
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-macro (dotimes binding . body)
+  (if (list? binding)
+      ;; binding is a list
+      (let ((var   #f) (count #f) (result #f))
+	(case (length binding)
+	  (2  (set! var    (car binding))
+	      (set! count  (cadr binding)))
+	  (3  (set! var    (car binding))
+	      (set! count  (cadr binding))
+	      (set! result (caddr binding)))
+	  (else (error "dotimes: bad binding construct: ~S" binding)))
+	`(do ((,var 0 (+ ,var 1)))
+	     ((= ,var ,count) ,result)
+	   ,@body))
+      ;; binding is ill-formed
+      (error "dotimes: binding is not a list: ~S" binding)))
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; case
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-macro (case key . clauses)
+  ;; conditionally execute the clause eqv? to key
+  (define (case-make-clauses key)
+    `(cond ,@(map
+              (lambda (clause)
+                (if (pair? clause)
+                    (let ((case (car clause))
+                          (exprs (cdr clause)))
+                      (cond ((eq? case 'else)
+                             `(else ,@exprs))
+                            ((pair? case)
+                             (if (= (length case) 1)
+                                 `((eqv? ,key ',(car case)) ,@exprs)
+                                 `((memv ,key ',case) ,@exprs)))
+                            (else
+                             `((eqv? ,key ',case) ,@exprs))))
+                    (error "case: invalid syntax in ~a" clause)))
+              clauses)))
+  (if (pair? key)
+      (let ((newkey (gensym)))
+        `(let ((,newkey ,key))
+           ,(case-make-clauses newkey)))
+      (case-make-clauses key)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; fluid-let
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-macro (fluid-let bindings . body)
+  (let* ((vars (map car bindings))
+	 (vals (map cadr bindings))
+	 (tmps (map (lambda (x) (gensym)) vars)))
+    `(let ,(map list tmps vars)
+       (dynamic-wind
+	  (lambda () ,@(map (lambda (x y) `(set! ,x ,y)) vars vals))
+	  (lambda () ,@body)
+	  (lambda () ,@(map (lambda (x y) `(set! ,x ,y)) vars tmps))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Some usal macros 
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-macro (unquote form) 
+  (error "Usage of unquote outside of quasiquote in ,~A" form))
+
+(define-macro (unquote-splicing form) 
+  (error "Usage of unquote-splicing outside of quasiquote in ,@~A" form))
+
+(define 1+ (macro form (list + (cadr form) 1)))
+(define 1- (macro form (list - (cadr form) 1)))
+
+(define macroexpand-1 macro-expand)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Section 6.10
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (call-with-input-file string proc)
+  (let* ((file   (open-input-file string))
+	 (result (proc file)))
+    (close-input-port file)
+    result))
+
+(define (call-with-output-file string proc)
+  (let* ((file   (open-output-file string))
+	 (result (proc file)))
+    (close-output-port file)
+    result))
+
+(define (call-with-input-string string proc)
+  (proc (open-input-string string)))
+
+(define (call-with-output-string proc)
+  (let ((str (open-output-string)))
+    (proc str)
+    (get-output-string str)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; File management
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define *shared-suffix* (cond 
+			 ((string=? (substring (machine-type) 0 2) "HP") "sl")
+			 (ELSE      "so")))
+(define *load-suffixes*	(list "stk" "stklos" "scm" *shared-suffix*))
+
+(define *load-path*	#f)
+(define *help-path*	#f)
+(define *load-verbose* 	#f)
+
+
+(let ((build-path (lambda (path)
+		    (and path 
+			 (let ((len (string-length path))
+			       (new '())
+			       (i 0))
+			   (do ((j 0 (+ j 1)))
+			       ((= j len))
+			     (if (eqv? (string-ref path j) #\:)
+				 (begin
+				   (set! new (cons (substring path i j) 
+						   new))
+				   (set! i (+ j 1)))))
+			   ;; don't forget the last path
+			   (reverse (cons (substring path i len) new))))))
+      (lib	   (%library-location)))
+
+  ;; If user has specified a load path with STK_LOAD_PATH, use it
+  ;; Always append STK_LIBRARY at end to be sure to find our files
+  (set! *load-path* (append (list ".")
+			    (or (build-path (getenv "STK_LOAD_PATH")) '())
+			    (list (expand-file-name 
+				         (string-append lib "/../site-scheme"))
+				  (string-append lib "/STk")
+				  (string-append lib "/" (machine-type)))))
+  ;; The same thing for the *help-path*
+  (set! *help-path* (append (list ".")
+			    (or (build-path (getenv "STK_HELP_PATH")) '())
+			    (list lib
+				  (string-append lib "/Help")))))
+  
+
+;
+; Require/Provide/Provided?
+;
+(define require   #f)
+(define provide   #f)
+(define provided? #f)
+
+(let ((provided '()))
+
+  (set! require (lambda (what)
+		  (unless (member what provided)
+		     (load what)
+		     (unless (member what provided)
+			(format #t "WARNING: ~S was not provided~%" what)))
+		  what))
+
+  (set! provide (lambda (what)
+		  (unless (member what provided)
+			  (set! provided (cons what provided)))
+		  what))
+	
+  (set! provided? (lambda (what)
+		    (and (member what provided) #t))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Port conversions
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (port->string p)
+  (unless (or (input-port? p) (input-string-port? p))
+     (error "port->string: Bad port ~S" p))
+  (let loop ((res '()))
+    (let ((line (read-line p)))
+      (if (eof-object? line)
+          (apply string-append (reverse res))
+	  (loop (cons "\n" (cons line res)))))))
+
+(define (port->list reader p)
+  (unless (or (input-port? p) (input-string-port? p))
+     (error "port->list: Bad port ~S" p))
+  ;; Read all the lines of port and put them in a list
+  (let loop ((res '()) (sexp (reader p)))
+    (if (eof-object? sexp) 
+	(reverse res)
+	(loop (cons sexp res) (reader p)))))
+ 
+(define (port->sexp-list p) 
+  (port->list read p))
+
+(define (port->string-list p)
+  (port->list read-line p))
+
+(define (exec command)
+  (call-with-input-file (string-append "| " command) port->string))
+
+(define (exec-string-list command)
+  (call-with-input-file (string-append "| " command) port->string-list))
+    
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Misc
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (closure? obj)
+  (and (procedure? obj) (procedure-body obj) #t))
+
+(define (primitive? obj)
+  (and (procedure? obj) (not (procedure-body obj)) #t))
+
+(define (widget? obj)
+  (and (tk-command? obj) (not (catch (obj 'configure)))))
+
+
+(define (& . l)
+  (let loop ((l l) (res ""))
+    (if (null? l)
+        res
+        (let ((e (car l)))
+          (loop (cdr l) 
+		(string-append res 
+			       (cond 
+				  ((string? e) e)
+				  ((symbol? e) (symbol->string e))
+				  ((widget? e) (widget->string e))
+				  ((number? e) (number->string e))
+				  (ELSE	       (format #f "~S" e)))))))))
+
+(define-macro (unwind-protect body . unwind-forms)
+  `(dynamic-wind
+    (lambda () #f)
+    (lambda () ,body)
+    (lambda () ,@unwind-forms)))
+
+(define-macro (when test . body)
+  `(if ,test ,@(if (= (length body) 1) body `((begin ,@body)))))
+
+(define-macro (unless test . body)
+  `(if (not ,test) ,@(if (= (length body) 1) body `((begin ,@body)))))
+
+(define-macro (multiple-value-bind vars form . body)
+  `(apply (lambda ,vars ,@body) ,form))
+
+
+;;; 
+;;; Set functions
+;;;
+
+(define (list->set l)
+  (letrec ((rem-dupl (lambda (l res)
+		       (cond
+			((null? l) 	     res)
+			((memv (car l) res) (rem-dupl (cdr l) res))
+			(ELSE		(rem-dupl (cdr l) (cons (car l) res)))))))
+    (rem-dupl l '())))
+
+(define (set-union l1 l2)
+  (list->set (append l1 l2)))
+
+(define (set-intersection l1 l2)
+  (cond ((null? l1) 	     l1)
+	((null? l2) 	     l2)
+	((memv (car l1) l2)  (cons (car l1) (set-intersection (cdr l1) l2)))
+	(else 		     (set-intersection (cdr l1) l2))))
+
+(define (set-difference l1 l2)
+  (cond ((null? l1) 	     l1)
+	((memv (car l1) l2)  (set-difference (cdr l1) l2))
+	(else 		     (cons (car l1) (set-difference (cdr l1) l2)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Autoloads
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(autoload "unix" 	basename dirname decompose-file-name)
+(autoload "process"	run-process process?)
+(autoload "regexp"	string->regexp regexp? regexp-replace regexp-replace-all)
+
+;; STklos
+(autoload "stklos" 	define-class define-method make define-generic slot-ref 
+	  		slot-set!)
+
+(autoload "describe"	describe)
+(autoload "hash"   	make-hash-table hash-table-hash)
+(autoload "socket"   	make-server-socket make-client-socket)
+
+
+;; martine packages 
+(autoload "pp"    pp)
+(autoload "trace" trace)
+
+
+
+;;;
+;;; quit and bye procedures. Since Tk redefine exit, they cannot be simple aliases
+;;;
+(define quit (lambda l (apply exit l)))
+(define bye  (lambda l (apply exit l)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Tk initializations
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define Tk:initialized?  #f)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Try to load user init file 
+;;;; Idea from (Olaf Burkart) burkart@zeus.informatik.rwth-aachen.de
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(let ((user-init ".stkrc"))
+  ;; First look in the current directory for an user initialization file.
+  (or (try-load (string-append "./" user-init))
+      ;; Otherwise have a look in the HOME directory.
+      (let ((home-dir (getenv "HOME")))
+	(and home-dir
+	     (try-load (string-append home-dir "/" user-init))))))

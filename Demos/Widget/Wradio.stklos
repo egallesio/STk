@@ -1,0 +1,46 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; STk adaptation of the Tk widget demo.
+;;;;
+;;;; This demonstration script creates a toplevel window containing
+;;;; several  radiobutton widgets.
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(require "Button")
+
+(define (demo-radio)
+  (let* ((w      (make-demo-toplevel "radio"
+				     "Radiobutton Demonstration"
+				     "Two groups of radiobuttons are displayed below.  If you click on a button then the button will become selected exclusively among all the buttons in its group.  A Tcl variable is associated with each group to indicate which of the group's buttons is selected.  Click the \"See Variables\" button to see the current values of the variables."
+				     'radio-size 'radio-color))
+	 (radios (make <Frame> :parent w))
+	 (left   (make <Frame> :parent radios))
+	 (right  (make <Frame> :parent radios)))
+
+	;; Create radiobuttons
+	(for-each (lambda (pt)
+		    (pack (make <Radio-button>
+				:parent left
+				:text (format #f "Point Size ~A" pt)
+				:variable 'radio-size
+				:relief "flat"
+				:width 15
+				:anchor "w"
+				:value pt)))
+		  '(10 12 18 24))
+	
+	(for-each (lambda (color)
+		    (pack (make <Radio-button>
+				:parent right
+				:text color 
+				:variable 'radio-color
+				:relief "flat"
+				:width 15
+				:anchor "w"
+				:value color)))
+		  '("Red" "Green" "Blue" "Yellow" "Orange" "Purple"))
+	
+	(pack left right :side "left" :expand #f :pady ".5c" :padx ".5c")
+	(pack radios)))
+

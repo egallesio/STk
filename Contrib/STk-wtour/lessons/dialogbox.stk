@@ -1,0 +1,21 @@
+;; A Dialog box
+
+(define do-dialog
+  (lambda ()
+    (let ([i (stk:make-dialog :title "A Dialog Box" 
+			       :text "What do you want to do?" 
+			       :bitmap "question"
+			       :grab #t
+			       :defaults 0
+			       :buttons 
+			       (list
+				  `("Ok"     ,(lambda () (display "Ok\n")))
+				  `("Cancel" ,(lambda () (display "Cancel\n")))
+				  `("Abort"  ,(lambda () (display "Abort\n")))
+				  `("Retry"  ,(lambda () (display "Retry\n"))
+				  `("Help"   ,(lambda () (display "Help\n"))))))])
+      
+      (format #t "You pressed button #~s\n" i))))
+
+(button '.b :text "Press Me" :width 40 :command (lambda () (do-dialog)))
+(pack .b :ipadx 10 :ipady 10)

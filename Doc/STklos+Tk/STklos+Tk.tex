@@ -1,0 +1,141 @@
+%
+% STklos + Tk  Documentation
+%
+%           Author: Erick Gallesio [eg@kaolin.unice.fr]
+%    Creation date:  4-Nov-1992 15:37
+% Last file update:  5-Jun-1995 14:04
+
+\documentclass[10pt]{report}
+\usepackage{a4wide}
+\usepackage{alltt}
+\usepackage[dvips]{epsfig}
+\usepackage{fancyheadings}
+\usepackage{fancybox}
+
+\pagestyle{fancyplain}
+\makeindex
+\parindent0pt
+\parskip2mm
+\begin{document}
+
+%
+% Commands
+% 
+
+%%%% STklos
+\newcommand{\stk}{{\sc STk}}
+\newcommand{\stklos}{{\sc STklos}}
+\newcommand{\Indextt}[1]{{\tt{#1}}\index{#1}}
+\newcommand{\Index}[1]{{#1}\index{#1}}
+
+%%%% schemetitle
+%\newcommand{\schemetitle}[2]{\vbox{\vskip0.5cm\hrule\vskip10pt\noindent
+%{\tt\LARGE{#1}\index{#1}}\hfill{\em{#2}}\vskip10pt\hrule}\penalty10000}
+
+\newcommand{\schemetitle}[2]{%
+\begin{center}
+\vskip2mm
+\Ovalbox{\parbox{0.95\textwidth}{%
+\vskip1mm~~{\tt\LARGE{#1}\index{#1}}\hfill{\tt{#2}}~~\vskip1mm}}
+\vskip2mm
+\end{center}}
+
+
+%%%% ITEM
+\newcommand{\ITEM}[1]{\item[{\bf{#1}}]\index{#1}\item[]}
+
+%
+% Environments
+%
+%\newenvironment{schemedoc}[1]{\vskip3mm\noindent{\em #1}\samepage
+%\begin{list} {} {\setlength {\rightmargin}{0cm}\setlength {\leftmargin}
+%{1cm}\setlength {\topsep} {0cm}\setlength {\partopsep} {0cm}
+%\setlength {\parskip} {0cm}\item}}{\end{list}}
+\newenvironment{schemedoc}[1]{\vskip0mm\noindent{\em #1}
+\begin{list} {} {\setlength {\rightmargin}{0cm}\setlength {\leftmargin}
+{1cm}\setlength {\topsep} {0cm}\setlength {\partopsep} {0cm}
+\setlength {\parskip} {0cm}\item}}{\end{list}}
+
+%%%% ip
+\newenvironment{ip}{\noindent
+\begin{list} {} {\setlength {\rightmargin}{0cm}
+\setlength {\leftmargin}{2cm}
+\setlength {\topsep} {0cm}
+\setlength {\labelsep} {0cm}
+\setlength {\listparindent} {0cm}
+\setlength {\partopsep} {0cm}
+\setlength {\parskip} {0cm}
+\item}}{\end{list}\vskip3mm}
+
+
+%
+% Title page
+%
+\thispagestyle{empty}
+\begin{center}   
+\ \\[3cm]
+{\huge\bf Using ST{\large\bf{KLOS}} for graphic programming}\\[3mm]
+{\large or}\\[4mm]
+{\large\bf{``Programming the Tk toolit with an OO Scheme''}}\\[3cm]
+{\large Erick Gallesio ({\tt eg\@unice\.fr})}\\
+{\large\em any other volunteers are welcome}
+\end{center}
+\vskip10cm
+\begin{flushright}
+April 1995
+\end{flushright}
+%
+% Table of content
+%
+\tableofcontents
+
+\input{Chap1}
+\input{Chap2}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Simple widget methods}
+\section{pack}
+\section{raise}
+\section{lower}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{The Canvas widget}
+
+\section{The <Canvas> class}
+
+\section{The <Canvas-item> class}
+\subsection{<Rectangle> class}
+\subsection{<Oval> class}
+
+......\\
+......\\
+......
+\section{Grouping canvas item objects}
+
+\ldots
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{The Text widget}
+
+\section{The <Text> class}
+\section{The <Text-tag> class}
+\section{The <Text-mark>}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{Composite widgets}
+\section{Standard composite widgets}
+
+\subsection{Labeled Entry}
+\subsection{Default button}
+\subsection{Choice button}
+\subsection{Paned window}
+\subsection{Scrool Listbox}
+\subsection{Scroll Text}
+\subsection{Scroll Canvas}
+\subsection{File box}
+
+\section{Writing composite widgets}
+
+\input{STklos+Tk.ind}
+\end{document}
+
+

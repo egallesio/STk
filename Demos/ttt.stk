@@ -1,0 +1,665 @@
+#!/bin/sh
+:;  exec /usr/local/bin/stk -f "$0" "$@"
+;;;
+;;; 3D Tic-Tac-Toe
+;;; written by Edin "Dino" Hodzic
+;;; mailto:ehodzic@scu.edu
+
+;;; last update: Jun 30, 1996.
+
+;;; This is a free program written for STk 3.0.
+
+;;; GUI related variables
+
+; sizes and positions
+(define cell-width 15)
+(define cell-height 15)
+(define distance 15)			; vertical between planes
+(define x0 distance)
+(define y0 distance)
+(define modx0 0)				; actual x0
+(define mody0 0)				; actual y0
+(define angle 45)			; plane drawing angle
+(define delx 0)				; x change from row to row
+(define dely 0)				; y change from row to row
+
+; colors
+(if (eq? (winfo 'visual '.) 'staticgray)
+    (begin
+      (define grid-color 'black)
+      (define sign-color 'black)
+      (define win-sign-color 'black)
+      (define last-move-sign-color 'black)
+      (define show-line-color 'black))
+    (begin
+      (define grid-color 'white)
+      (define sign-color 'navy)
+      (define win-sign-color 'red)
+      (define last-move-sign-color 'blue)
+      (define show-line-color 'magenta)))
+
+;;; GUI related functions
+
+(define (set-angle! ang)
+  (set! angle ang)
+  (let* ((pi (* (atan 1) 4))
+	 (rangle (* angle (/ pi 180))))
+    (set! delx (round (- (* cell-height (cos rangle)))))
+    (set! dely (round (* cell-height (sin rangle))))))
+
+; draw a 4x4 plane with x0 y0 reference point (in the canvas)
+(define (draw-plane x0 y0)
+  (for-each-5
+   (lambda (i)
+     (let* ((rowx1 (+ x0 (* delx i)))
+	    (rowy1 (+ y0 (* dely i)))
+	    (rowx2 (+ rowx1 (* cell-width 4)))
+	    (rowy2 rowy1)
+	    (colx1 (+ x0 (* cell-width i)))
+	    (coly1 y0)
+	    (colx2 (+ colx1 (* delx 4)))
+	    (coly2 (+ y0 (* dely 4))))
+       (.board 'create 'line		; horizontal line
+	       rowx1 rowy1 
+	       rowx2 rowy2
+	       :fill grid-color
+	       :width 1)
+       (.board 'create 'line		; vertical line
+	       colx1 coly1
+	       colx2 coly2
+	       :fill grid-color
+	       :width 1)
+       (if (= i 4)
+	   (begin
+	     (.board 'create 'line	; plane bottom horizontal line
+		     rowx1 (+ 2 rowy1)
+		     rowx2 (+ 2 rowy2)
+		     :fill grid-color
+		     :width 2)
+	     (.board 'create 'line	; plane side vertical line
+		     colx1 (+ 2 coly1)
+		     colx2 (+ 2 coly2)
+		     :fill grid-color
+		     :width 2)))))))
+
+; screen coordinates to point
+(define (screenxy->point x y)
+  (let* ((canx (.board 'canvasx x))
+	 (cany (.board 'canvasy y))
+	 (x0 modx0)
+	 (y0 mody0)
+	 (plane (inexact->exact 
+		 (floor (/ (- cany y0)
+			   (+ (* dely 4) distance)))))
+	 (rowq (/ (- cany y0 (+ (* dely 4 plane) (* distance plane)))
+		  dely))
+	 (row (inexact->exact (floor rowq)))
+	 (col (inexact->exact (floor 
+			       (/ (- canx (+ x0 (* delx rowq))) 
+				  cell-width)))))
+    (if (and (<= 0 plane 3) (<= 0 row 3) (<= 0 col 3))
+	(make-point plane row col)
+	#f)))
+
+; north-west corner of a point to board screen coordinates
+(define (point->screen point)
+  (let ((plane (point-plane point))
+	(row (point-row point))
+	(col (point-column point)))
+    (cons (inexact->exact (+ modx0 (* delx row) 
+			     (* cell-width col)))
+	  (inexact->exact (+ mody0 (* plane dely 4) 
+			     (* row dely) (* plane distance))))))
+
+; center of a point to board screen coordinates
+(define (point->screen-center point)
+  (let* ((scr (point->screen point))
+	 (x (inexact->exact (+ (car scr) (* cell-width 0.5) (* delx 0.5))))
+	 (y (inexact->exact (+ (cdr scr) (* dely 0.5)))))
+    (cons x y)))
+
+; the last point for which lines have been shown
+(define shown-lines-point #f)
+
+; line showing flag
+(define show-lines-flag #f)
+
+(define (show-lines point)
+  (if (and point (or (not shown-lines-point)
+		     (not (point-equal? point shown-lines-point))))
+      (begin
+	(set! shown-lines-point point)
+	(.board 'delete "lines")
+	(for-each
+	 (lambda (line)
+	   (let* ((first (line 0))
+		  (last (line 3))
+		  (scr-first (point->screen-center first))
+		  (scr-last (point->screen-center last)))
+	     (.board 'create 'line	; draw the line
+		     (car scr-first) (cdr scr-first)
+		     (car scr-last) (cdr scr-last)
+		     :tag  "lines"
+		     :width 0
+		     :fill show-line-color)
+	     (for-each-point-in-line	; mark the point thru which line goes
+	      (lambda (point)
+		(let ((scr (point->screen-center point)))
+		  (.board 'create 'text (car scr) (cdr scr)
+			  :text "="
+			  :tag "lines"
+			  :fill show-line-color)))
+	      line)))
+	 (point-lines point))))
+  (if (not show-lines-flag)
+      (.board 'delete "lines")))
+
+(define (toggle-show-lines point)
+  (set! show-lines-flag (not show-lines-flag))
+  (set! shown-lines-point #f)
+  (note (string-append "Line showing is " (if show-lines-flag "ON" "OFF")))
+  (show-lines point))
+
+; show the move on the board
+(define (draw-move point val . high)
+  (let* ((scr (point->screen-center point))
+	 (x (car scr))
+	 (y (cdr scr)))
+    (.board 'delete (point->string point))
+    (.board 'create 'text x y
+	    :text (value->sign val) 
+	    :tag (point->string point)
+	    :fill (cond
+		   ((or (null? high) (eq? (car high) 'plain)) sign-color)
+		   ((equal? (car high) 'highlight) win-sign-color)
+		   ((equal? (car high) 'last) last-move-sign-color)
+		   (#t sign-color)))))
+
+(define (clear-move point)
+  (.board 'delete (point->string point)))
+
+; draw the 3D 4x4x4 board
+(define (draw-board)
+  (catch (entry '.note :state 'disabled))
+  (catch (canvas '.board :relief 'sunken :borderwidth 2))
+  (catch
+   (menubutton '.mb :text "File")
+   (menu '.mb.m)
+   (.mb.m 'add 'command :label "New Game" :command new-game)
+   (.mb.m 'add 'command :label "Take Back" :command take-back-move)
+   (.mb.m 'add 'command :label "Toggle Lines" 
+	  :command (lambda () (toggle-show-lines #f)))
+   (.mb.m 'add 'command :label "Resize" :command tune)
+   (.mb.m 'add 'command :label "Quit" :command (lambda () (quit)))
+   (.mb 'config :menu '.mb.m))
+  (catch
+   (menubutton '.help :text "Help")
+   (menu '.help.m)
+   (.help.m 'add 'command :label "About" :command about)
+   (.help 'config :menu '.help.m))
+  (.board 'delete 'all)
+  (bind '.board "<1>" (lambda (x y) (action x y)))
+  (bind '.board "<2>" take-back-move)
+  (bind '.board "<3>" tune)
+  (bind '.board "<Any-Motion>" 
+	(lambda (x y) (show-lines (screenxy->point x y))))
+  (bind '.board "<l>" 
+	(lambda (x y) (toggle-show-lines (screenxy->point x y))))
+  (bind '.board "<L>" 
+	(lambda (x y) (toggle-show-lines (screenxy->point x y))))
+  (bind '. "<Q>" (lambda () (quit)))
+  (bind '. "<q>" (lambda () (quit)))
+  (bind '. "<space>" new-game)
+  (bind '. "<m>" (lambda () (display moves) (newline)))
+  (focus '.board)
+  (for-each-4				; draw plane
+   (lambda (i)
+     (draw-plane 0 (+ (* dely 4 i) (* distance i)))))
+  (let* ((bbox (.board 'bbox 'all))
+	 (width (+ (- (caddr bbox) (car bbox)) x0 x0))
+	 (height (+ (- (cadddr bbox) (cadr bbox)) y0 y0)))
+    (set! modx0 (- x0 (car bbox)))
+    (set! mody0 (- y0 (cadr bbox)))
+    (.board 'move 'all modx0 mody0)
+    (.board 'configure :width width :height height)
+    (pack '.note :expand #t :fill "x" :side 'bottom)
+    (pack '.board :expand #t :fill "both" :side 'bottom)
+    (pack '.mb :side 'left)
+    (pack '.help :side 'right))
+  (for-each-point1			; draw point state sign
+   (lambda (point)
+     (let ((val (state-ref1 point)))
+       (if (not (= val empty-value))
+	   (if (crosses? win-line point)
+	       (draw-move point val 'highlight)
+	       (if (or (and (not (null? moves))
+			    (point-equal? (car moves) point))
+		       (and (not (null? (cdr moves)))
+			    (point-equal? (cadr moves) point)))
+		   (draw-move point val 'last)
+		   (draw-move point val)))))))
+  (let ((point shown-lines-point))	; show lines if on
+    (set! shown-lines-point #f)
+    (show-lines point))
+  (note ""))
+
+(define (about)
+  (catch (destroy .about))
+  (toplevel '.about)
+  (message '.about.m 
+	   :width 250
+	   :justify 'center
+	   :text 
+	   "3D Tic-Tac-Toe\n\
+by\n\
+Edin \"Dino\" Hodzic\n\
+mailto:ehodzic@scu.edu")
+  (button '.about.ok :text "OK" :command (lambda () (destroy '.about)))
+  (pack '.about.m :expand #t :fill 'both :side 'top)
+  (pack '.about.ok :side 'top))
+
+; reset the board size/angle
+(define (tune-reset)
+  (set! cell-width 15)
+  (set! cell-height 15)
+  (set-angle! 45))
+
+; show the resizing window
+(define (tune)
+  (catch (destroy '.tune))
+  (toplevel '.tune)
+  (scale '.tune.cw 
+	 :label "Cell Width"
+	 :variable 'cell-width 
+	 :command (lambda (v) (set-angle! angle) (draw-board))
+	 :relief 'sunken
+	 :orient 'horizontal)
+  (scale '.tune.ch 
+	 :label "Cell Height"
+	 :variable 'cell-height
+	 :command (lambda (v) (set-angle! angle) (draw-board))
+	 :relief 'sunken
+	 :orient 'horizontal)
+  (scale '.tune.an
+	 :label "Angle"
+	 :variable 'angle
+	 :orient 'horizontal
+	 :relief 'sunken
+	 :to 180
+	 :command (lambda (v) (set-angle! angle) (draw-board)))
+  (button '.tune.quit :text "Close"
+	  :command (lambda () (destroy '.tune)))
+  (button '.tune.reset :text "Reset"
+	  :command (lambda () (tune-reset) (draw-board)))
+  (pack '.tune.cw :fill 'x :side 'top)
+  (pack '.tune.ch :fill 'x :side 'top)
+  (pack '.tune.an :fill 'x :side 'top)
+  (pack '.tune.reset :fill 'x :side 'left)
+  (pack '.tune.quit :fill 'x :side 'right))
+
+; highlight the winning line
+(define (show-winning move)
+  (let ((val (state-ref1 move)))
+    (for-each-point-in-line		; draw highlighed point
+     (lambda (point)
+       (draw-move point val 'highlight))
+     win-line)
+    (note (string-append 
+	   "Game Over - " 
+	   (if (= val comp-value) 
+	       "I win!" 
+	       "You win!")))))
+
+; show a note
+(define (note str)
+  (.note 'config :state 'normal)
+  (.note 'delete 0 'end)
+  (.note 'insert 0 str)
+  (.note 'config :state 'disabled))
+
+; clear up everything and restart the game
+(define (new-game)
+  (clear-state!)
+  (set! game-over #f)
+  (set! win-line #f)
+  (set! moves '())
+  (draw-board))
+
+;;; state and other game related variables
+
+
+(define signs (vector #f "o" "x"))	; player signs
+(define game-over #f)			; game over flag
+(define win-line #f)			; the winning line
+(define empty-value 0)			; available point value in the state
+(define user-value 1)			; user value in the state vector
+(define comp-value 2)			; compute value in the state vector
+(define state #f)			; the board state
+(define moves '())			; the list of all moves played
+
+;;; state access functions
+
+(define (value->sign val) 
+  (vector-ref signs val))
+
+(define (state-ref p r c)
+  (let ((ind (inexact->exact (+ c (* 4 (+ r (* 4 p)))))))
+    (vector-ref state ind)))
+
+(define (state-ref1 point)
+  (state-ref (point-plane point)
+	     (point-row point)
+	     (point-column point)))
+
+(define (state-set! p r c v)
+  (let ((ind (inexact->exact (+ c (* 4 (+ r (* 4 p)))))))
+    (vector-set! state ind v)))
+
+(define (state-set1! point val)
+  (state-set! (point-plane point)
+	      (point-row point)
+	      (point-column point) val))
+
+(define (clear-state!)
+  (set! state (make-vector 64 empty-value)))
+
+;;; playing functions
+
+; entry point on user click
+(define (action x y)
+  (let* ((user-move (screenxy->point x y)))
+    (if (and (not game-over) user-move)
+	(play user-move))))
+
+(define (acceptable-move? move)
+  (and (not game-over)
+       (= (state-ref1 move) empty-value)))
+
+; play with user's move
+(define (play move)
+  (if (acceptable-move? move)
+      (begin
+	(note "")
+	(enter-move move user-value)
+	(if (won? move)
+	    (show-winning move)
+	    (let ((comp-move (make-move)))
+	      (enter-move comp-move comp-value)
+	      (if (won? comp-move)
+		  (show-winning comp-move)
+		  (if (draw?)
+		      (note "It's a draw!"))))))
+      (note "Bad move")))
+
+; change the state and draw the move on the board
+(define (enter-move move val)
+  (if move
+      (begin
+	(state-set1! move val)
+	(set! moves (cons move moves))
+	(if (and 
+	     (not (null? (cdr moves)))
+	     (not (null? (cddr moves))))
+	    (begin
+	      (clear-move (caddr moves))
+	      (draw-move (caddr moves) val 'plain)))
+	(draw-move move val 'last)
+	(update 'idletasks))))
+
+; take a move back
+(define (take-back-move)
+  (if (null? moves)
+      (note "No more moves")
+      (let ((take-one
+	     (lambda ()
+	       (if (not (null? moves))
+		   (begin
+		     (state-set1! (car moves) empty-value)
+		     (clear-move (car moves))
+		     (set! moves (cdr moves)))))))
+	(take-one)
+	(if (= (state-ref1 (car moves)) user-value)
+	    (take-one)) ; one more for the user move
+	(set! game-over #f)
+	(set! win-line #f)
+	(draw-board))))
+
+; deciding among same score moves
+(define (doexchange?)
+  (= (random 5) 0))
+
+; find the best move
+(define (make-move)
+  (let ((best-score -1)
+	(best-move #f))
+    (for-each-point1
+     (lambda (point)
+       (if (= (state-ref1 point) empty-value)
+	   (let ((score (score-if-played point)))
+	     (if (or (> score best-score)
+		     (and (= score best-score) (doexchange?)))
+		 (begin
+		   (set! best-score score)
+		   (set! best-move point)))))))
+    best-move))
+
+; position evaluation
+(define (score-if-played point)
+  (let ((score 0))
+    (for-each 
+     (lambda (line)
+       (let ((user-count 0)
+	     (comp-count 1))
+	 (for-each-point-in-line
+	  (lambda (point)
+	    (let ((val (state-ref1 point)))
+	      (cond 
+	       ((= val comp-value)
+		(set! comp-count (1+ comp-count)))
+	       ((= val user-value)
+		(set! user-count (1+ user-count))))))
+	  line)
+	 (cond ((= user-count 0) ; offensive
+		(begin
+		  (set! score (+ score (vector-ref
+					#(0 80 100 2000 100000)
+					comp-count)))
+		  (if (= comp-count 2)
+		      (for-each-point-in-line
+		       (lambda (p)
+			 (if (and (= (state-ref1 p) empty-value)
+				  (not (point-equal? point p)))
+			     (for-each
+			      (lambda (line)
+				(let ((user-count 0)
+				      (comp-count 0))
+				  (for-each-point-in-line
+				   (lambda (point)
+				     (let ((val (state-ref1 point)))
+				       (cond 
+					((= val comp-value)
+					 (set! comp-count (1+ comp-count)))
+					((= val user-value)
+					 (set! user-count 
+					       (1+ user-count))))))
+				   line)
+				  (if (and (= user-count 0)
+					   (>= comp-count 2))
+				      (set! score (+ score 800)))))
+			      (point-lines p))))
+		       line))))
+	       ((= comp-count 1) ; defensive
+		(set! score (+ score (vector-ref
+				      #(0 50 1500 10000)
+				      user-count)))))))
+     (point-lines point))
+    score))
+
+; checking if the game is won
+(define (won? move)
+  (let ((val (state-ref1 move)))
+    (for-each
+     (lambda (line)
+       (if (full-line? line val)
+	   (set! win-line line)))
+     (point-lines move)))
+  (set! game-over win-line)
+  game-over)
+
+; is it a draw?
+(define (draw?)
+  (= (length moves) 64))
+
+;;; point functions
+
+(define (make-point p r c)
+  (vector p r c))
+
+(define (point-equal? p1 p2)
+  (and (= (point-plane p1) (point-plane p2))
+       (= (point-row p1) (point-row p2))
+       (= (point-column p1) (point-column p2))))
+
+(define (point-plane point)
+  (vector-ref point 0))
+
+(define (point-row point)
+  (vector-ref point 1))
+
+(define (point-column point)
+  (vector-ref point 2))
+
+(define (point->string point)
+  (string-append
+   (number->string (point-plane point))
+   ","
+   (number->string (point-row point))
+   ","
+   (number->string (point-column point))))
+
+;;; line functions
+
+(define (complement x)
+  (- 3 x))
+
+; line templates:
+; car is the predicate for the line to go through a point. 
+; cdr is the line.
+(define line-tpl
+  (list
+   (cons 
+    (lambda (p r c) #t)
+    (lambda (p r c) (lambda (x)	(make-point p r x))))
+   (cons 
+    (lambda (p r c) #t)
+    (lambda (p r c) (lambda (x) (make-point p x c))))
+   (cons 
+    (lambda (p r c) #t)
+    (lambda (p r c) (lambda (x) (make-point x r c))))
+   (cons 
+    (lambda (p r c) (= r c))
+    (lambda (p r c) (lambda (x) (make-point p x x))))
+   (cons 
+    (lambda (p r c) (= r (complement c)))
+    (lambda (p r c) (lambda (x) (make-point p x (complement x)))))
+   (cons 
+    (lambda (p r c) (= p c))
+    (lambda (p r c) (lambda (x) (make-point x r x))))
+   (cons 
+    (lambda (p r c) (= p (complement c)))
+    (lambda (p r c) (lambda (x) (make-point x r (complement x)))))
+   (cons 
+    (lambda (p r c) (= p r))
+    (lambda (p r c) (lambda (x) (make-point x x c))))
+   (cons 
+    (lambda (p r c) (= p (complement r)))
+    (lambda (p r c) (lambda (x) (make-point x (complement x) c))))
+   (cons 
+    (lambda (p r c) (= p r c))
+    (lambda (p r c) (lambda (x) (make-point x x x))))
+   (cons 
+    (lambda (p r c) (= p r (complement c)))
+    (lambda (p r c) (lambda (x) (make-point x x (complement x)))))
+   (cons 
+    (lambda (p r c) (= p (complement r) c))
+    (lambda (p r c) (lambda (x) (make-point x (complement x) x))))
+   (cons 
+    (lambda (p r c) (= (complement p) r c))
+    (lambda (p r c) (lambda (x) (make-point (complement x) x x))))))
+
+; list of lines going through a point
+(define (point-lines point)
+  (let ((plane (point-plane point))
+	(row (point-row point))
+	(column (point-column point))
+	(lines '()))
+    (for-each
+     (lambda (tpl)
+       (if ((car tpl) plane row column)
+	   (set! lines
+		 (cons 
+		  ((cdr tpl) plane row column)
+		  lines))))
+     line-tpl)
+    lines))
+
+; whther line crosses point
+(define (crosses? line point)
+  (if line
+      (let ((crosses?
+	     (lambda (return)
+	       (for-each-point-in-line 
+		(lambda (line-point)
+		  (if (point-equal? line-point point)
+		      (return #t)))
+		line)
+	       (return #f))))
+	(call/cc crosses?))
+      #f))
+
+;;; iterators
+
+(define (for-each-4 func)
+  (for-each func '(0 1 2 3)))
+
+(define (for-each-5 func)
+  (for-each func '(0 1 2 3 4)))
+
+; each point on the board (func plane row col)
+(define (for-each-point func)
+  (for-each-4
+   (lambda (plane)
+     (for-each-4
+      (lambda (row)
+	(for-each-4
+	 (lambda (col)
+	   (func plane row col))))))))
+
+; similar to the above (func point)
+(define (for-each-point1 func)
+  (for-each-point 
+   (lambda (plane row col)
+     (func (make-point plane row col)))))
+
+; for each point in a line call (func point)
+(define (for-each-point-in-line func line)
+  (for-each-4
+   (lambda (x)
+     (func (line x)))))
+
+; is the line full of value
+(define (full-line? line value)
+  (let ((full?
+	 (lambda (return)
+	   (for-each-point-in-line
+	    (lambda (point)
+	      (if (not (= (state-ref1 point) value))
+		  (return #f)))
+	    line)
+	   (return #t))))
+    (call/cc full?)))
+
+;;; game initiation
+
+(tune-reset)
+(new-game)

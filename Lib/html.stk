@@ -1,0 +1,747 @@
+;;;;
+;;;; h t m l . s t k 		-- HTML support (no forms yet)
+;;;;
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date:  1-Sep-1995 09:52
+;;;; Last file update: 21-Jul-1996 18:41
+;;;;
+
+(if (symbol-bound? '%init-html)
+    ;; Html module is in the core interpreter
+    (%init-html)
+    ;; Try to load hash table dynamically
+    (load (string-append "html." *shared-suffix*)))
+
+;;;;
+;;;;   Exported routines
+;;;;
+(define html:view-URL 			#f)
+(define html:view     			#f)
+(define html:set-base-directory! 	#f)
+
+
+;; Hooks (They do nothing. overload them if needed)
+(define (html:hook-title title)    #f) ;; called when title change
+(define (html:hook-location title) #f) ;; called when location URL change
+(define (html:hook-start-loading)  #f) ;; called when a new page is loaded
+(define (html:hook-stop-loading)   #f) ;; called when a new page has been loaded
+(define (html:hook-formatting)     #f) ;; called often when formatting (pulse)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(let ()
+  (define default-indent-step   30)		; default indentation step 
+  (define default-border	8)
+  (define default-font		"times")	; Font to use for display
+  (define default-size		14)		; Default point size
+
+  (define point-size 		14)		; Point size
+  (define weight 		#f)
+  (define slant  		#f)
+  (define underline 		#f)
+  (define verbatim		#f)
+  (define strike		#f)
+  (define current-font		"times")
+  (define fixed-font		"courier")	; Fixed-width font
+  (define header-font		"times")	; Font for headers
+  (define left	 		default-border)	; left margin indent
+  (define right 		default-border)	; right margin indent
+  (define justify 		'left)
+  (define text-color		"black")	; Color for displaying text
+  (define color 		"black")	; Current color for text
+  (define color-link 		"blue")		; Color for display hyperlinks
+  (define color-old-link	"violet")
+  (define base-dir		#f)
+  (define list-stack 		'())
+  (define ignore-spaces 	#t)		; control multiple spaces
+  (define NL-count 		2)		; control multiple \n
+  (define buffered-text 	"")
+  (define list-level		-1)
+  (define list-stack 		'())
+  (define list-color		"IndianRed1")
+  (define font-info		'(("helvetica"  (medium bold)   (r o))
+				  ("times"      (medium bold)   (r i))
+				  ("symbol"	(medium medium) (r r))
+				  ("courier"    (medium bold)   (r o))
+				  ("lucida"     (medium bold)   (r i))))
+  (define header-info		'(("h1"	24 bold) ("h2" 20 bold) ("h3" 18 bold)
+				  ("h4"	16 bold) ("h5" 16 italic) ("h6" 0 italic)))
+
+  (define html 			#f)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; URL management
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define parse-URL
+  ;; Syntax is scheme://host[:port]/path/filename[#anchor]
+  ;; We can probably make better....
+  (let ((rgxp1   (string->regexp "^(.[a-zA-Z]*):.*"))
+	(rgxp2   (string->regexp "[^/]*//([^/:#]*)"))
+	(rgxp3   (string->regexp ".*:.*//.*:([^/#]*)"))
+	(rgxp4-1 (string->regexp "[^/]*([^#]+)"))
+	(rgxp4-2 (string->regexp "//[^/]*(/[^#]*)"))
+	(rgxp5   (string->regexp "[^#]*#(.*)$")))
+    (lambda (str)
+      (let ((scheme "file")
+	    (host   "localhost")
+	    (port   "80")
+	    (file   str)
+	    (anchor ""))
+	
+	;; Scheme
+	(let ((res (rgxp1 str)))
+	  (when res (set! scheme (apply substring str (cadr res)))))
+	;; Host 
+	(let ((res (rgxp2 str)))
+	  (when res (set! host (apply substring str (cadr res)))))
+	;; Port
+	(let ((res (rgxp3 str)))
+	  (when res (set! port (apply substring str (cadr res)))))
+	;; Filename
+	(let ((res (rgxp4-1 str)))
+	  (when res
+	    (let ((res (rgxp4-2 str)))
+	      (when res (set! file (apply substring str (cadr res)))))))
+	;; Anchor
+	(let ((res (rgxp5 str)))
+	   (when res (set! anchor (apply substring str (cadr res)))))
+	
+	(vector scheme host port file anchor)))))
+
+(define (URL->port url)
+  (let ((scheme (string-lower (vector-ref url 0)))
+	(host   (string-lower (vector-ref url 1)))
+	(file   (vector-ref url 3)))
+    (cond 
+       ((and (string=? scheme "file") (string=? host "localhost"))
+	       ;; Local file
+	       (unless base-dir
+		  (set! base-dir (dirname file)))
+	       (unless (eq? (string-ref file 0) #\/)
+		  (set! file (string-append base-dir "/" file)))
+	       (let ((fd (open-file file "r")))
+		 (unless fd (error "Cannot open the Html file \"~S\"."  file))
+		 fd))
+       ((string=? scheme "http")
+	        ;; HTTP file
+	        (open-distant-file host (vector-ref url 2) file))
+       (ELSE    (error "Cannot (yet) get file located at ~S" url)))))
+
+(define (open-distant-file host port file)
+  (error "Cannot open distant files for now"))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; view-URL and view
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (view-URL txt f)
+  (let ((p (URL->port (parse-URL f))))
+    (html:hook-location f)
+    (view txt p)
+    (close-port p)))
+
+(define (view txt fd)
+  (html:hook-title "No title")
+  (html:hook-start-loading)
+  (set! html (make-hash-table string=?))
+  (set! current-font default-font)	; Initialize font
+  (set! point-size default-size)	; Point size
+  (set! verbatim #f)
+  (set! weight #f)			
+  (set! slant  #f)
+  (set! underline #f)			
+  (set! strike #f)
+  (set! left default-border)		; left margin indent
+  (set! right default-border)		; right margin indent
+  (set! list-level -1)
+  (set! list-stack '())
+  (set! justify 'left)
+  (set! color text-color)		; Current color for text
+  (set! list-stack '())
+  (set! ignore-spaces #t)		; Don't output multiple blanks in a row
+  (set! NL-count 2)			; Don't output more than two \n in a row.
+  (set! buffered-text "")
+
+  ;;
+  ;; Let's go
+  ;;
+  (tk-set! txt :state "normal" :wrap "word" :tabs (quotient default-indent-step 2))
+  (txt 'delete 1.0 "end")
+  (parse-port fd txt "")
+  (tk-set! txt :state "disabled")
+  (html:hook-stop-loading))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Parsing
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (parse-port fd txt delimiter)
+  (let loop ((token (%html:next-token fd)))
+    (html:hook-formatting)
+    (cond
+      ((eof-object? token) #f)
+      ((string? token)	   ;; This is simple text
+       			   (insert-simple-text txt token)
+			   (loop (%html:next-token fd)))
+      (ELSE		   ;; This is an HTML request
+			   (let ((command (car token))
+				 (args    (cdr token)))
+			     (unless (string=? command delimiter)
+				(html:handle-request fd txt command args)
+				(loop (%html:next-token fd)))))))
+  (mark-up txt))
+
+(define (insert-simple-text txt token)
+  (if verbatim 
+      (set! buffered-text (string-append buffered-text token))    
+      (let* ((t           (%html:clean-spaces token ignore-spaces))
+	     (next        (car t))
+	     (only-spaces (cdr t)))
+	(unless (string=? next "")
+	   (let ((c (string-ref next (- (string-length next) 1))))
+	     (set! ignore-spaces (char-whitespace? c))
+	     (unless only-spaces (set! NL-count 0))
+	     (set! buffered-text (string-append buffered-text next)))))))
+
+(define (html:handle-request fd txt token args)
+  (let ((proc (string->symbol (string-append "html:" token))))
+    (if (symbol-bound? proc (the-environment) )
+	((eval proc (the-environment)) fd txt args)
+	;; Signal an error only if 1rst char is not a / 
+	;; (to allow non paired <x> </x>)
+	(unless (eq? (string-ref token 0) #\/)
+	   (format (current-error-port) 
+		   "html: `~a'request not implemented\n" token)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; 
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(define (html:make-font-name name weight slant point-size)
+  (let ((info (cdr (assoc name font-info))))
+    (format #f "-*-~a-~a-~a-normal-*-~a-*-*-*-*-*-*-*"
+	    name
+	    ((if weight cadr car) (car  info))
+	    ((if slant  cadr car) (cadr info))
+	    point-size)))
+
+(define last-tag "")
+
+(define (mark-up txt)
+  (unless (string=? buffered-text "")
+    (let ((tag (format #f "Tag-~A-~A-~A-~A-~A-~A-~A-~A-~A-~A-~A" 
+		       current-font
+		       (if weight    "b" "")
+		       (if slant     "i" "")
+		       (if underline "u" "")
+		       (if strike    "s" "")
+		       point-size
+		       left 
+		       left
+		       right
+		       color
+		       justify)))
+      (set! last-tag tag)
+      ;; configure it
+      (let ((font (html:make-font-name current-font weight slant point-size)))
+	(unless (hash-table-get html tag #f)
+	   ;; New tag; configure it
+	   (hash-table-put! html tag font)
+	   (txt 'tag 'configure tag
+		:font	     font
+		:foreground  color
+		:underline   underline
+		:overstrike  strike
+		:justify     justify
+		:lmargin1    (if (> left 0) left "")
+		:lmargin2    (if (> left 0) left "")
+		:rmargin     (if (> right 0) right ""))))
+      ;; apply formatting
+      (txt 'insert "end" buffered-text tag)
+      (set! buffered-text ""))))
+
+(define (output-newline count)
+  ;; Output newlines. Try and limit how many consequtive newlines get output.
+  (when (< NL-count count)
+     (if (> (+ count NL-count) 2)
+	 (set! count (- 2 NL-count)))
+     (set! buffered-text (string-append buffered-text 
+					(make-string count #\newline)))
+     (set! NL-count count)
+     (set! ignore-spaces #t)))
+
+;;; Split-fields is used to decompose a complex HTML command such as
+;;;         ALIGN=top SRC="image_URL" alt=""
+;; In this case, it returns
+;;	    (("align" . "top") ("src" . "image_URL") (alt . ""))
+(define html:split-fields 
+  (let ((rgxp  (string->regexp  " *([^=> ]+) *= *\"?([^ >\"]+)\"?"))) ; Yeah!!
+    
+    (lambda (str)
+      (let loop ((str str) (res '()))
+	(let ((one (rgxp str)))
+	  (if one
+	      (let ((len   (string-length str))
+		    (key   (apply substring str (cadr one)))
+		    (value (apply substring str (caddr one))))
+		
+		(set! res (cons (cons (string-lower key) value) res))
+		(if (< (cadar one) (- len 1))
+		    ;; see if other matches
+		    (loop (substring str (+ (cadar one) 1) len) res)
+		    ;; We have finished 
+		    res))
+	      res))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Mark-up procedures
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;; <P>
+(define (html:p fd txt unused)
+  (output-newline 2))
+
+
+;;;; <BR>
+(define (html:br fd txt unused)
+  (output-newline 1))
+
+
+;;;; <TT>
+(define (html:teletype fd txt delimiter)
+  (mark-up txt)
+  ;; decrement size since fixed font are generally larger than proportionnal ones
+  ;; Be careful to not decrement if already in fixed font (i.e. </tt> forgotten)
+  (fluid-let ((point-size   (if (equal? current-font fixed-font) 
+				point-size 
+				(- point-size 2)))
+	      (current-font fixed-font))
+    (parse-port fd txt delimiter)))
+
+(define (html:tt     fd txt unused)  (html:teletype fd txt "/tt"))
+(define (html:code   fd txt unused)  (html:teletype fd txt "/code"))
+(define (html:kbd    fd txt unused)  (html:teletype fd txt "/kbd"))
+(define (html:samp   fd txt unused)  (html:teletype fd txt "/samp"))
+
+
+;;;; <B>
+(define (html:bold fd txt unused)
+  (mark-up txt)
+  (set! weight #t))
+
+(define (html:/bold fd txt unused)
+  (mark-up txt)
+  (set! weight #f))
+
+(define html:b	     html:bold)
+(define html:strong  html:bold)
+(define html:/b	     html:/bold)
+(define html:/strong html:/bold)
+
+
+;;;; <I>
+(define (html:italic fd txt unused)
+  (mark-up txt)
+  (set! slant #t))
+
+(define (html:/italic fd txt unused)
+  (mark-up txt)
+  (set! slant #f))
+
+(define html:i     html:italic)
+(define html:em    html:italic)
+(define html:var   html:italic)
+(define html:cite  html:italic)
+(define html:dfn   html:italic)
+(define html:/i    html:/italic)
+(define html:/em   html:/italic)
+(define html:/var  html:/italic)
+(define html:/cite html:/italic)
+(define html:/dfn  html:/italic)
+
+
+;;;; <U>
+(define (html:u  fd txt unused)
+  (mark-up txt)
+  (set! underline #t))
+
+(define (html:/u fd txt unused)
+  (mark-up txt)
+  (set! underline #f))
+
+
+;;;; <STRIKE>
+(define (html:strike fd txt unused)
+  (mark-up txt)
+  (set! strike #t))
+
+(define (html:/strike fd txt unused)
+  (mark-up txt)
+  (set! strike #f))
+
+;;;; <CENTER>
+(define (html:center fd txt unused)
+  (mark-up txt)
+  (fluid-let ((justify 'center))
+    (parse-port fd txt "/center")))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Headers
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (header fd txt token pre-skip)
+  (let* ((info  (cdr (assoc token header-info)))
+	 (point (if (> (car info) 0)  (car info) point-size))
+	 (mode  (cadr info))
+	 (end	(string-append "/" token)))
+    
+    (output-newline pre-skip)
+    (mark-up txt)
+
+    (fluid-let ((point-size   point)
+		(current-font header-font)
+		(weight	      (eq? mode 'bold))
+		(slant 	      (eq? mode 'italic))
+		(underline    (eq? mode 'underline)))
+      (parse-port fd txt end)
+      (output-newline 2))))
+
+(define (html:h1 fd txt unused) (header fd txt "h1" 2))
+(define (html:h2 fd txt unused) (header fd txt "h2" 2))
+(define (html:h3 fd txt unused) (header fd txt "h3" 2))
+(define (html:h4 fd txt unused) (header fd txt "h4" 2))
+(define (html:h5 fd txt unused) (header fd txt "h5" 2))
+(define (html:h6 fd txt unused) (header fd txt "h6" 1))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Lists
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (start-list fd txt delimiter value)
+  (mark-up txt)
+  (output-newline 1)
+
+  (fluid-let ((left 	  (+ left default-indent-step))
+	      (list-level (+ list-level 1))
+	      (list-stack (cons value list-stack)))
+    (parse-port fd txt delimiter))
+  
+  (output-newline 1))
+  
+(define (html:ul   fd txt unused) (start-list fd txt "/ul" #f))
+(define (html:ol   fd txt unused) (start-list fd txt "/ol" 1))
+(define (html:dir  fd txt unused) (start-list fd txt "/dir" #f))
+(define (html:menu fd txt unused) (start-list fd txt "/menu" #f))
+
+
+(define (html:li fd txt unused)
+  (when (>= list-level 0)
+     (output-newline 1)
+     (mark-up txt)
+
+     (let* ((half-dist (quotient default-indent-step 2))
+	    (value     (car list-stack))
+	    (mark      (if (number? value)
+			   (format #f "~A." value)
+			   (if (even? list-level) "*" "-"))))
+       
+       ;; Push new value in the stack if it is a numbered list
+       (if value  (set-car! list-stack (+ value 1)))
+       (set! buffered-text (string-append buffered-text mark "\t"))
+
+       (fluid-let ((left   (- left half-dist))
+		   (weight #t)
+		   (color  list-color))
+	 (mark-up txt)
+	 (set! ignore-spaces #t)))))
+
+;;
+;; Definition Lists
+;; 
+
+(define dlist-stack '()) ; stores (left . weight) for each <dl>
+
+(define (html:dl fd txt unused)
+  (mark-up txt)
+  (output-newline 1)
+  (set! dlist-stack (cons (cons left weight) dlist-stack))
+
+  (parse-port fd txt "/dl")
+    
+  (set! left        (caar dlist-stack))
+  (set! weight      (cdar dlist-stack))
+  (set! dlist-stack (cdr dlist-stack))
+  (mark-up txt)
+  (output-newline 1))
+
+(define (html:dt fd txt unused)
+  (mark-up txt)
+  (output-newline 1)
+  (set! left (caar dlist-stack))
+  (set! weight #t))
+
+(define (html:dd fd txt unused)
+  (mark-up txt)
+  (output-newline 1)
+  (set! left   (+ (caar dlist-stack) default-indent-step))
+  (set! weight (cdar dlist-stack)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Anchors
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define html:a 
+  (let ((enter-binding (lambda (|W|) (|W| 'configure :cursor "hand2")))
+	(leave-binding (lambda (|W|) (|W| 'configure :cursor "top_left_arrow"))))
+    (lambda (fd txt args)
+      (mark-up txt)
+      (let* ((start    (txt 'index "end-1c"))
+	     (fields   (html:split-fields args))
+	     (tag      (gensym "tag-"))
+	     (href     (assoc "href" fields))
+	     (name     (assoc "name" fields))
+	     (expr     (assoc "expr" fields))
+	     (make-tag (lambda (name)
+			 (or (hash-table-get html name #f)
+			     (let ((res (gensym "anchor-")))
+			       (hash-table-put! html name res)
+			       res)))))
+	(if (or href expr)
+	    (fluid-let ((underline #t)
+			(color     color-link))
+	      (parse-port fd txt "/a"))
+	    (parse-port fd txt "/a"))
+	
+	(mark-up txt)
+	(txt 'tag 'add  tag start "end-1c")
+	(txt 'tag 'bind tag "<Enter>" enter-binding)
+	(txt 'tag 'bind tag "<Leave>" leave-binding)
+	
+	(when href
+	  (let* ((href (cdr href))
+		 (htag (if (eq? (string-ref href 0) #\#) href #f)))
+	    (txt 'tag 'bind tag "<ButtonRelease>"
+		 (if htag
+		     (lambda () (html:name txt tag (make-tag htag)))
+		     (lambda () (html:href txt href tag))))))
+	(when name
+	  (txt 'tag 'add (make-tag (string-append "#" (cdr name)))
+	       start "end-1c"))
+	
+	(when expr
+	  (txt 'tag 'bind tag "<ButtonRelease>"
+	       (lambda () (html:eval txt tag args))))))))
+	  
+(define (html:href txt href tag)
+  (txt 'tag 'configure tag :foreground color-old-link)
+  ;; View the page at given URL
+  (view-URL txt href))
+
+(define (html:name txt from-tag to-tag)
+  (let ((start (format #f "~A.first" to-tag)))
+    (unless (null? (txt 'tag 'ranges to-tag))
+       (txt 'see (txt 'index start))
+       (txt 'tag 'configure from-tag :foreground color-old-link))))
+  
+(define (html:eval txt tag str)
+  (let ((expr  (substring str 5 (string-length str))))
+    ;; Replace &amp &gt and &lt by & > and < (to allow those chars in scripts)
+    (regexp-replace-all "&gt" expr ">")
+    (regexp-replace-all "&lt" expr "<")
+    (regexp-replace-all "&amp" expr "&")
+    (eval-string expr (global-environment)))
+  (txt 'tag 'configure tag :foreground color-old-link))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Images
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (html:insert-image txt img align)
+  (let ((lab    (gensym (format #f "~A.lab" (widget-name txt))))
+	(start  (txt 'index "insert")))
+    (label lab :image img :borderwidth 0 :highlightthickness 0)
+    (txt 'window 'create "end" :window lab :pady 2 :padx 2 :align align)
+
+    ;; Extend last tag to the image (so it can pass through)
+    (txt 'tag 'add last-tag start "end")
+
+    (set! NL-count 0)
+    (set! ignore-spaces #f)))
+
+    
+(define (html:img fd txt args)
+  (let* ((fields  (html:split-fields args))
+	 (align   (assoc "align" fields))
+	 (alt     (assoc "alt"   fields))
+	 (src	  (assoc "src"   fields)))
+    (when src
+      (let* ((src-url (parse-URL (cdr src)))
+	     (file   "")
+	     (img    #f))
+	(mark-up txt)
+	;; We manage only local images for now
+	(set! file (vector-ref src-url 3))
+
+	;; Look alignment
+	(if align
+	    (begin
+	      (set! align (string-lower (cdr align)))
+	      ;; I have problems with align which doesn't seem to work. Only
+	      ;; baseline seem to be correct.... 
+	      (cond 
+	       ((string=? align "middle") (set! align "center"))
+	       ((string=? align "bottom") (set! align "baseline")))) ; WEIRD
+	    (set! align "baseline"))
+
+	;; Try loading image as a photo and if it fails as a bitmap
+	(unless (eq? (string-ref file 0) #\/)
+	  (set! file (string-append base-dir "/" file)))
+	(if (catch (set! img (image 'create 'photo :file file)))
+	    (catch (set! img (image 'create 'bitmap :file file))))
+	(if img
+	    (html:insert-image txt img align)
+	    ;; Image not found insert the ALT field (if present)
+	    (fluid-let ((color      "red")
+			(point-size 18))
+	      (set! buffered-text (if alt (cdr alt) "Image "))
+	      (mark-up txt)))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Fonts
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (html:font fd txt args)
+
+  (define (compute-size old new)
+    (let ((v (read-from-string new)))
+      (if (number? v)
+	  (max 4 (min 48 (+ old v)))
+	  old)))
+
+  (let* ((fields (html:split-fields args))
+	 (col    (assoc "color" fields))
+	 (sz     (assoc "size"  fields)))
+    (mark-up txt)
+    (fluid-let ((color       (if col (cdr col) color))
+		(point-size  (compute-size point-size (if sz (cdr sz) "0"))))
+      (parse-port fd txt "/font"))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Misc
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;; Address
+
+(define (html:address fd txt unused)
+  (mark-up txt)
+  (output-newline 1)
+  (fluid-let ((justify 'right)
+	      (slant   #t))
+    (parse-port fd txt "/address")))
+
+;;;; Blockquote: extended quotations
+
+(define (html:blockquote fd txt unused)
+  (mark-up txt)
+  (output-newline 2)
+  (fluid-let ((left  (+ left default-indent-step))
+	      (right (+ right default-indent-step))
+	      (slant #t))
+    (parse-port fd txt "/blockquote"))
+  (output-newline 2))
+
+;;;; Horizontal Rules
+
+(define (html:hr fd txt token)
+  (output-newline 2)
+  (mark-up txt)
+  (fluid-let ((justify 'left)
+	      (underline #f)
+	      (left default-border)
+	      (right default-border))
+    (set! buffered-text " \n\n")
+    (mark-up txt)
+    (let ((line (car (txt 'index "end"))))
+      (txt 'tag 'add "separator" (cons (- line 3) 0) (cons (- line 2) 0))
+      (txt 'tag 'configure "separator" :relief "ridge" :borderwidth 1
+	   :font "-*-times-*-*-*-*-4-*-*-*-*-*-*-*" :justify "left")))
+    (output-newline 1))
+
+;;;; Preformatted Text
+
+(define (html:pre fd txt unused)
+  (mark-up txt)
+  (output-newline 1)
+  (fluid-let ((verbatim #t))
+    (html:teletype fd txt "/pre")
+    (output-newline 2)))
+
+(define (html:title fd txt unused)
+  (html:hook-title ""))
+
+(define (html:/title fd txt unused)
+  (html:hook-title buffered-text)
+  (set! buffered-text ""))
+
+;;;; <BODY> + some common extensions
+(define (html:body fd txt args)
+  (let* ((fields  (html:split-fields args))
+	 (bgcolor (assoc "bgcolor" fields))
+	 (fgcolor (assoc "text"    fields)))
+
+    (when bgcolor (txt 'configure :background (cdr bgcolor)))
+    (when fgcolor (set! color (cdr fgcolor)))))
+  
+
+;;;; Commands which do nothing in STk
+(define (html:html fd txt unused)  'OK)
+(define (html:head fd txt unused)  'OK)
+(define (html:!--  fd txt unused)  'OK)
+
+
+;;;; Exports symbols
+(set! html:view-URL 		view-URL)
+(set! html:view     		view)
+(set! html:set-base-directory!	(lambda (dir) (set! base-dir dir)))
+)
+
+(provide "html")

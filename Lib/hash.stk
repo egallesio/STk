@@ -1,0 +1,33 @@
+;;;;
+;;;; h a s h . s t k 		-- Hash table initialisation
+;;;;
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date:  9-May-1994 11:52
+;;;; Last file update: 21-Jul-1996 18:41
+;;;;
+
+(if (symbol-bound? '%init-hash)
+    ;; Hash table module is in the core interpreter
+    (%init-hash)
+    ;; Try to load hash table dynamically
+    (load (string-append "hash." *shared-suffix*)))
+
+(define (hash-table->list h)
+  (unless (hash-table? h)
+	  (error "hash-table->list: bad hash table ~S" h))
+  (hash-table-map h (lambda (key value)
+                       (cons key value))))
+
+(provide "hash")

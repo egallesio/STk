@@ -1,0 +1,135 @@
+'\" Color=Yellow
+'\"
+'\" Copyright © 1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+'\" 
+'\" Permission to use, copy, and/or distribute this software and its
+'\" documentation for any purpose and without fee is hereby granted, provided
+'\" that both the above copyright notice and this permission notice appear in
+'\" all copies and derived works.  Fees for distribution or use of this
+'\" software or derived works may only be charged with express written
+'\" permission of the copyright holder.  
+'\" This software is provided ``as is'' without express or implied warranty.
+'\"
+'\"           Author: Erick Gallesio [eg@unice.fr]
+'\"    Creation date:  8-Jul-1996 08:16
+'\" Last file update: 19-Jul-1996 14:47
+'\" 
+.so STk-man.macros
+.TH posix n 3.1 STk "STk procedures"
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+posix  \- Access to posix functions
+.SH SYNOPSIS
+
+.IP \fIERROR\ MANAGEMENT\fR
+\fB*errno*\fR
+.SP
+(\fBposix-perror\fR \fIstr\fR)
+.IP \fIFILES\ AND\ DIRECTORIES\fR
+(\fBposix-stat\fR \fIfilename\fR)
+.SP
+(\fBposix-stat->vector\fR \fIdescr\fR)
+.SP
+(\fBposix-access \fIfilename mode\fR)
+.SP
+(\fBposix-pipe\fR)
+.IP \fITIME\ FUNCTIONS\fR
+(\fBposix-time\fR)
+.SP
+(\fBposix-asctime\fR)
+.SP
+(\fBposix-asctime\fR seconds)
+.SP
+(\fBposix-ctime\fR)
+.SP
+(\fBposix-ctime\fR \fIseconds\fR)
+.SP
+(\fBposix-localtime\fR \fI seconds\fR)
+.SP
+(\fBposix-gmtime\fR \fIseconds\fR)
+.SP
+(\fBposix-mktime\fR \fItime\fR)
+.SP
+(\fBposix-tm->vector\fR \fItime\fR)
+.SP
+(\fBvector->posix-tm\fR \fIvect\fR)
+.SP
+(\fBposix-strftime\fR \fIformat\fR)
+.SP
+(\fBposix-strftime\fR \fIformat time\fR)
+.IP \fIPROCESSES\ FUNCTIONS\fR
+.SP
+(\fBposix-fork\fR)
+.SP
+(\fBposix-wait\fR)
+.IP \fISYSTEM\ INFORMATIONS\fR
+.SP
+(\fBposix-uname\fR)
+.SP
+(\fBposix-host\fR)
+.SP
+(\fBposix-domain\fR)
+.BE
+
+.SH DESCRIPTION
+
+The functions of the posix library must be loaded before use with:
+.CS
+(require "posix")
+.CE
+The functions will not be described here completely. For full details
+about a functions and its behaviour, look at the corresponding Unix
+manual page or to the POSIX.1 document.
+
+.IP \fIERROR\ MANAGEMENT\fR
+.sp
+.TP 
+\fB*errno*\fR 
+is a variable which always contains the error number of last 
+encountered error. It is equivalent to the errno POSIX.1 variable.
+.TP
+(\fBposix-perror\fR \fIstr\fR)
+produces a message on the standard error output, describing the last
+ error encountered during a call to a system  or library function. The 
+\fIstr\fR parameter is an identifying string which will be printed before 
+the error message.
+See \fBperror(3)\fR.
+
+.IP \fIFILES\ AND\ DIRECTORIES\fR
+.sp
+.TP
+(\fBposix-stat\fR \fIfilename\fR)
+returns a C structure which contains a description of \fIfilename\fR). This 
+structure is not viewable by itself. Use, \fBposix-stat->vector\fR
+to access its content in Scheme.If \fIfilename\fR does not exists, this procedure
+returns \fI#f\fR.
+.TP
+(\fBposix-stat->vector\fR \fIdescr\fR)
+transforms a file description sructure obtained by \fBposix-stat\fR to a Scheme 
+vector. The components of the vector are given here with their index:
+.CS
+   st_dev   (0)          st_ino    (1)
+   st_mode  (2)          st_nlink  (3)
+   st_uid   (4)          st_gid    (5)
+   st_size  (6)          st_atime  (7)
+   st_mtime (8)          st_ctime  (9)
+.CE
+.DS
+See \fBfstat(2)\fR for details on the semantic of this fields.
+.DE
+.TP
+(\fBposix-access \fIfilename mode\fR)
+checks whether the interpreter is  allowed to read, write, execute  or test for 
+existence of \fIfilename\fR. \fIMode\fR must be one of the following constants:
+\fB|R_OK|\fR, \fB|W_OK|\fR, \fB|X_OK|\fR or \fB|F_OK|\fR. 
+If \fIfilename\fR does not exit, this function returns \fB#f\fR.
+See \fBaccess(2)\fR for details.
+.TP
+(\fBposix-pipe\fR) 
+returns a pair of Scheme ports associated to a
+pipe inode. If a pipe cannot be created, this function returns
+\fB#f\fR.
+
+.LP
+\fBTO BE CONTINUED\fR

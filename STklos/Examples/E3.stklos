@@ -1,0 +1,143 @@
+;;;;
+;;;; E x a m p l e 3 .  s t k
+;;;;
+;;;; Copyright (C) 1993,1994,1995 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
+;;;;    Creation date:  4-Aug-1994 17:33
+;;;; Last file update:  5-Aug-1994 12:04 
+;;;;
+
+
+;;;; This file demonstates the use of grouped canvas items.
+;;;; Grouping can be viewed
+;;;;	- statically by defining a class which is the composition of
+;;;;	  several items (such as <Chair> or <Table> classes below)
+;;;;    - dynamically by making a <Canvas-group> instance 
+;;;;	  of several items (such as the red-group below)
+
+
+
+(require "Canvas")
+;;;; Create canvas
+(define c (make <Canvas> :width 800 :height 600))
+(pack c)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; The <Table> class
+;;;; 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class <Table> (<Tk-composite-item>)
+  (deck f1 f2
+   (fill :init-keyword :fill 
+	 :accessor 	fill
+	 :allocation 	:propagated 
+	 :propagate-to  (deck f1 f2))))
+
+(define-method initialize-item ((self  <Table>) canvas coords args)
+  (let* ((parent      (slot-ref self 'parent))
+	 (x	      (car coords))
+	 (y	      (cadr coords))
+	 (deck	      (make <Line> :parent parent :width 8
+			    :coords (list x y (+ x 200) y)))
+	 (f1	      (make <Polygon> :parent parent
+			    :coords (list (+ x 40) y (+ x 20) (+ y 150)
+					  (+ x 25) (+ y 150) (+ x 55) y)))
+	 (f2	      (make <Polygon> :parent parent
+			    :coords (list (+ x 160) y (+ x 180) (+ y 150)
+					  (+ x 175) (+ y 150) (+ x 145) y))))
+    (let ((Cid (gensym "group")))
+      ;; Initialize true slots
+      (slot-set! self 'Cid  Cid)
+      (slot-set! self 'deck deck)
+      (slot-set! self 'f1   f1)
+      (slot-set! self 'f2   f2)
+      ;; Add the deck f1 f2 components to the "Group" whith tag "Cid"
+      (add-to-group self deck f1 f2)
+      ;; Give this association a default binding allowing it to be moved with mouse
+      (bind-for-dragging parent :tag Cid :only-current #f)
+      ;; Return Cid
+      Cid)))
+ 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; The <Chair> class
+;;;; 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define-class <Chair> (<Tk-composite-item>)
+  (deck back f1 f2 
+   (fill :init-keyword :fill 
+	 :accessor 	fill
+	 :allocation 	:propagated 
+	 :propagate-to  (deck back f1 f2))))
+
+(define-method initialize-item ((self  <Chair>) canvas coords args)
+  (let* ((parent      (slot-ref self 'parent))
+	 (x	      (car coords))
+	 (y	      (cadr coords))
+	 (deck	      (make <Line> :parent parent :width 8
+			    :coords (list x y (+ x 100) y)))
+	 (back	      (make <Line> :parent parent :width 5
+			    :coords (list (+ x 70) y (+ x 100) (- y 90))))
+	 (f1	      (make <Polygon> :parent parent
+			    :coords (list (+ x 20) y x (+ y 90)
+					  (+ x 5) (+ y 90) (+ x 30) y)))
+	 (f2	      (make <Polygon> :parent parent
+			    :coords (list (+ x 80) y (+ x 100) (+ y 90)
+					  (+ x 95) (+ y 90) (+ x 70) y))))
+    (let ((Cid (gensym "group")))
+      ;; Initialize true slots
+      (slot-set! self 'Cid  Cid)
+      (slot-set! self 'deck deck)
+      (slot-set! self 'back back)
+      (slot-set! self 'f1   f1)
+      (slot-set! self 'f2   f2)
+      ;; Add the deck f1 f2 components to the "Group" whith tag "Cid"
+      (add-to-group self deck back f1 f2)
+      ;; Give this association a default binding allowing it to be moved with mouse
+      (bind-for-dragging parent :tag Cid :only-current #f)
+      ;; Return Cid
+      Cid)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;; Define a table and two chairs
+(define t1 (make <Table> :parent c :coords '(120 50) :fill "red"))
+(define c1 (make <Chair> :parent c :coords '(320 110) :fill "green"))
+(define c2 (make <Chair> :parent c :coords '(450 110) :fill "red"))
+
+
+;;;; Define the group of red objects
+(define red-group (make <Canvas-group> :parent c))
+(add-to-group red-group t1 c2)
+
+;;;; Using button 2 of the mouse will move all the components of the red-group
+(bind-for-dragging c :tag (Cid red-group) :button 2 :only-current #f)
+
+
+;;;; Zoom in and out the red-group
+(update)
+(dotimes (i 20)
+   (rescale red-group 0 0 0.9 0.9)
+   (update))
+(dotimes (i 20)
+   (rescale red-group 0 0 1.1 1.1)
+   (update))
+
+
+(update)
+(delay 1000)
+
+		      
+			    

@@ -1,0 +1,534 @@
+<HTML><HEAD><TITLE>Tk Built-In Commands - options manual page</TITLE></HEAD>
+<BODY bgcolor = #c3c3ff>
+<H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageBlue.gif"> options</H2>
+<I>Standard options supported by widgets</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<H3><A NAME="M2">DESCRIPTION</A></H3>
+This manual entry describes the common configuration options supported
+by widgets in the Tk toolkit.  Every widget does not necessarily support
+every option (see the manual entries for individual widgets for a list
+of the standard options supported by that widget), but if a widget does
+support an option with one of the names listed below, then the option
+has exactly the effect described below.
+<P>
+In the descriptions below, ``Command-Line Name'' refers to the
+switch used in class commands and <B>configure</B> widget commands to
+set this value.  For example, if an option's command-line switch is
+<B>:foreground</B> and there exists a widget <B>.a.b.c</B>, then the
+command
+<PRE><B>(.a.b.c  'configure  :foreground &quot;black&quot;</B>)</PRE>
+may be used to specify the value <B>black</B> for the option in the
+the widget <B>.a.b.c</B>.  Command-line switches may be abbreviated,
+as long as the abbreviation is unambiguous.
+``Name'' refers to the option's name in the option database (e.g.
+in .Xdefaults files).  ``Class'' refers to the option's class value
+in the option database. For each option, the <B>STklos</B> name is also 
+specified. The <B>STklos</B> name is usually the same as the option 
+name, except when it is a composite word, in which case words 
+are separated with a dash.
+
+
+<DL>
+<P>
+<DT><I>Name</I>:            <B>activeBackground</B>
+<DT><I>Class</I>:           <B>Foreground</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:activebackground">:activebackground</A></B>
+<DT><I>STklos slot name</I>: <B>active-background</B>
+<DD>Specifies background color to use when drawing active elements.
+An element (a widget or portion of a widget) is active if the
+mouse cursor is positioned over the element and pressing a mouse button
+will cause some action to occur.
+If strict Motif compliance has been requested by setting the
+<B>*tk-strict-motif*</B> variable, this option will normally be
+ignored;  the normal background color will be used instead.
+<P>
+<P>
+<DT><I>Name</I>:            <B>activeBorderWidth</B>
+<DT><I>Class</I>:           <B>BorderWidth</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:activeborderwidth">:activeborderwidth</A></B>
+<DT><I>STklos slot name</I>: <B>active-border-width</B>
+<DD>Specifies a non-negative value indicating
+the width of the 3-D border drawn around active elements.  See above for
+definition of active elements.
+The value may have any of the forms acceptable to <B>Tk_GetPixels</B>.
+This option is typically only available in widgets displaying more
+than one element at a time (e.g. menus but not buttons).
+<P>
+<P>
+<DT><I>Name</I>:            <B>activeForeground</B>
+<DT><I>Class</I>:           <B>Background</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:activeforeground">:activeforeground</A></B>
+<DT><I>STklos slot name</I>: <B>active-foreground</B>
+<DD>Specifies foreground color to use when drawing active elements.
+See above for definition of active elements.
+<P>
+<P>
+<DT><I>Name</I>:            <B>anchor</B>
+<DT><I>Class</I>:           <B>Anchor</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:anchor">:anchor</A></B>
+<DT><I>STklos slot name</I>: <B>anchor</B>
+<DD>Specifies how the information in a widget (e.g. text or a bitmap)
+is to be displayed in the widget.
+Must be one of the values <B>n</B>, <B>ne</B>, <B>e</B>, <B>se</B>,
+<B>s</B>, <B>sw</B>, <B>w</B>, <B>nw</B>, or <B>center</B>.
+For example, <B>nw</B> means display the information such that its
+top-left corner is at the top-left corner of the widget.
+<P>
+<P>
+<DT><I>Name</I>:            <B>background</B>
+<DT><I>Class</I>:           <B>Background</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:background">:background</A></B>
+<DT><I>STklos slot name</I>: <B>background</B>
+<DD>Specifies the normal background color to use when displaying the
+widget. This option can also be specified as <B>:bg</B>.
+<P>
+<P>
+<DT><I>Name</I>:            <B>bitmap</B>
+<DT><I>Class</I>:           <B>Bitmap</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:bitmap">:bitmap</A></B>
+<DT><I>STklos slot name</I>: <B>bitmap</B>
+<DD>Specifies a bitmap to display in the widget, in any of the forms
+acceptable to <B>Tk_GetBitmap</B>.
+The exact way in which the bitmap is displayed may be affected by
+other options such as <B>anchor</B> or <B>justify</B>.
+Typically, if this option is specified then it overrides other
+options that specify a textual value to display in the widget;
+the <B>bitmap</B> option may be reset to an empty string to re-enable
+a text display.
+In widgets that support both <B>bitmap</B> and <B>image</B> options,
+<B>image</B> will usually override <B>bitmap</B>.
+<P>
+<P>
+<DT><I>Name</I>:            <B>borderWidth</B>
+<DT><I>Class</I>:           <B>BorderWidth</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:borderwidth">:borderwidth</A></B>
+<DT><I>STklos slot name</I>: <B>:border-width</B>
+<DD>Specifies a non-negative value indicating the width
+of the 3-D border to draw around the outside of the widget (if such a
+border is being drawn;  the <B>relief</B> option typically determines
+this).  The value may also be used when drawing 3-D effects in the
+interior of the widget.
+The value may have any of the forms acceptable to <B>Tk_GetPixels</B>.
+This option can also be specified as <B>:bd</B>.
+<P>
+<P>
+<DT><I>Name</I>:            <B>cursor</B>
+<DT><I>Class</I>:           <B>Cursor</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:cursor">:cursor</A></B>
+<DT><I>STklos slot name</I>: <B>cursor</B>
+<DD>Specifies the mouse cursor to be used for the widget.
+The value may have any of the forms acceptable to <B>Tk_GetCursor</B>.
+<P>
+<P>
+<DT><I>Name</I>:            <B>disabledForeground</B>
+<DT><I>Class</I>:           <B>DisabledForeground</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:disabledforeground">:disabledforeground</A></B>
+<DT><I>STklos slot name</I>: <B>disabled-foreground</B>
+<DD>Specifies foreground color to use when drawing a disabled element.
+If the option is specified as an empty string (which is typically the
+case on monochrome displays), disabled elements are drawn with the
+normal foreground color but they are dimmed by drawing them
+with a stippled fill pattern.
+<P>
+<P>
+<DT><I>Name</I>:            <B>exportSelection</B>
+<DT><I>Class</I>:           <B>ExportSelection</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:exportselection">:exportselection</A></B>
+<DT><I>STklos slot name</I>: <B>export-selection</B>
+<DD>Specifies whether or not a selection in the widget should also be the
+X selection.  The value must be a boolean value. If the selection is
+exported, then selecting in the widget deselects the current X
+selection, selecting outside the widget deselects any widget
+selection, and the widget will respond to selection retrieval requests
+when it has a selection.  The default is usually for widgets to export
+selections.
+<P>
+<P>
+<DT><I>Name</I>:            <B>font</B>
+<DT><I>Class</I>:           <B>Font</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:font">:font</A></B>
+<DT><I>STklos slot name</I>: <B>font</B>
+<DD>Specifies the font to use when drawing text inside the widget.
+<P>
+<P>
+<DT><I>Name</I>:            <B>foreground</B>
+<DT><I>Class</I>:           <B>Foreground</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:foreground">:foreground</A></B>
+<DT><I>STklos slot name</I>: <B>foreground</B>
+<DD>Specifies the normal foreground color to use when displaying the widget.
+This option can also be specified as <B>:fg</B>.
+<P>
+<P>
+<DT><I>Name</I>:            <B>geometry</B>
+<DT><I>Class</I>:           <B>Geometry</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:geometry">:geometry</A></B>
+<DT><I>STklos slot name</I>: <B>geometry</B>
+<DD>Specifies the desired geometry for the widget's window, in the
+form <I>width</I><B>x</B><I>height</I>, where <I>width</I> is the desired
+width of the window and <I>height</I> is the desired height.  The
+units for <I>width</I> and <I>height</I> depend on the particular
+widget.  For widgets displaying text the units are usually the
+size of the characters in the font being displayed;  for other
+widgets the units are usually pixels.
+<P>
+<P>
+<DT><I>Name</I>:            <B>highlightBackground</B>
+<DT><I>Class</I>:           <B>HighlightBackground</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:highlightbackground">:highlightbackground</A></B>
+<DT><I>STklos slot name</I>: <B>highlight-background</B>
+<DD>Specifies the color to display in the traversal highlight region when
+the widget does not have the input focus.
+<P>
+<P>
+<DT><I>Name</I>:            <B>highlightColor</B>
+<DT><I>Class</I>:           <B>HighlightColor</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:highlightcolor">:highlightcolor</A></B>
+<DT><I>STklos slot name</I>: <B>highlight-color</B>
+<DD>Specifies the color to use for the traversal highlight rectangle that is
+drawn around the widget when it has the input focus.
+<P>
+<P>
+<DT><I>Name</I>:            <B>highlightThickness</B>
+<DT><I>Class</I>:           <B>HighlightThickness</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:highlightthickness">:highlightthickness</A></B>
+<DT><I>STklos slot name</I>: <B>highlight-thickness</B>
+<DD>Specifies a non-negative value indicating the width of the highlight
+rectangle to draw around the outside of the widget when it has the
+input focus.
+The value may have any of the forms acceptable to <B>Tk_GetPixels</B>.
+If the value is zero, no focus highlight is drawn around the widget.
+<P>
+<P>
+<DT><I>Name</I>:            <B>image</B>
+<DT><I>Class</I>:           <B>Image</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:image">:image</A></B>
+<DT><I>STklos slot name</I>: <B>image</B>
+<DD>Specifies an image to display in the widget, which must have been
+created with the <B><A HREF=.././image.n.html>image create</A></B> command.
+Typically, if the <B>image</B> option is specified then it overrides other
+options that specify a bitmap or textual value to display in the widget;
+the <B>image</B> option may be reset to an empty string to re-enable
+a bitmap or text display.
+<P>
+<P>
+<DT><I>Name</I>:            <B>insertBackground</B>
+<DT><I>Class</I>:           <B>Foreground</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:insertbackground">:insertbackground</A></B>
+<DT><I>STklos slot name</I>: <B>insert-background</B>
+<DD>Specifies the color to use as background in the area covered by the
+insertion cursor.  This color will normally override either the normal
+background for the widget (or the selection background if the insertion
+cursor happens to fall in the selection).
+<P>
+<P>
+<DT><I>Name</I>:            <B>insertBorderWidth</B>
+<DT><I>Class</I>:           <B>BorderWidth</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:insertborderwidth">:insertborderwidth</A></B>
+<DT><I>STklos slot name</I>: <B>insert-border-width</B>
+<DD>Specifies a non-negative value indicating the width
+of the 3-D border to draw around the insertion cursor.
+The value may have any of the forms acceptable to <B>Tk_GetPixels</B>.
+<P>
+<P>
+<DT><I>Name</I>:            <B>insertOffTime</B>
+<DT><I>Class</I>:           <B>OffTime</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:insertofftime">:insertofftime</A></B>
+<DT><I>STklos slot name</I>: <B>insert-off-time</B>
+<DD>Specifies a non-negative integer value indicating the number of
+milliseconds the insertion cursor should remain ``off'' in each blink cycle.
+If this option is zero then the cursor doesn't blink:  it is on
+all the time.
+<P>
+<P>
+<DT><I>Name</I>:            <B>insertOnTime</B>
+<DT><I>Class</I>:           <B>OnTime</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:insertontime">:insertontime</A></B>
+<DT><I>STklos slot name</I>: <B>insert-on-time</B>
+<DD>Specifies a non-negative integer value indicating the number of
+milliseconds the insertion cursor should remain ``on'' in each blink cycle.
+<P>
+<P>
+<DT><I>Name</I>:            <B>insertWidth</B>
+<DT><I>Class</I>:           <B>InsertWidth</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:insertwidth">:insertwidth</A></B>
+<DT><I>STklos slot name</I>: <B>insert-width</B>
+<DD>Specifies a  value indicating the total width of the insertion cursor.
+The value may have any of the forms acceptable to <B>Tk_GetPixels</B>.
+If a border has been specified for the insertion
+cursor (using the <B>insertBorderWidth</B> option), the border
+will be drawn inside the width specified by the <B>insertWidth</B>
+option.
+<P>
+<P>
+<DT><I>Name</I>:            <B>jump</B>
+<DT><I>Class</I>:           <B>Jump</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:jump">:jump</A></B>
+<DT><I>STklos slot name</I>: <B>jump</B>
+<DD>For widgets with a slider that can be dragged to adjust a value,
+such as scrollbars, this option determines when
+notifications are made about changes in the value.
+The option's value must be a boolean of the form accepted by
+<B>Tcl_GetBoolean</B>.
+If the value is false, updates are made continuously as the
+slider is dragged.
+If the value is true, updates are delayed until the mouse button
+is released to end the drag;  at that point a single notification
+is made (the value ``jumps'' rather than changing smoothly).
+<P>
+<P>
+<DT><I>Name</I>:            <B>justify</B>
+<DT><I>Class</I>:           <B>Justify</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:justify">:justify</A></B>
+<DT><I>STklos slot name</I>: <B>justify</B>
+<DD>When there are multiple lines of text displayed in a widget, this
+option determines how the lines line up with each other.
+Must be one of <B>left</B>, <B>center</B>, or <B>right</B>.
+<B>Left</B> means that the lines' left edges all line up, <B>center</B>
+means that the lines' centers are aligned, and <B>right</B> means
+that the lines' right edges line up.
+<P>
+<P>
+<DT><I>Name</I>:            <B>orient</B>
+<DT><I>Class</I>:           <B>Orient</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:orient">:orient</A></B>
+<DT><I>STklos slot name</I>: <B>orientation</B>
+<DD>For widgets that can lay themselves out with either a horizontal
+or vertical orientation, such as scrollbars, this option specifies
+which orientation should be used.  Must be either <B>horizontal</B>
+or <B>vertical</B> or an abbreviation of one of these.
+<P>
+<P>
+<DT><I>Name</I>:            <B>padX</B>
+<DT><I>Class</I>:           <B>Pad</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:padx">:padx</A></B>
+<DT><I>STklos slot name</I>: <B>padx</B>
+<DD>Specifies a non-negative value indicating how much extra space
+to request for the widget in the X-direction.
+The value may have any of the forms acceptable to <B>Tk_GetPixels</B>.
+When computing how large a window it needs, the widget will
+add this amount to the width it would normally need (as determined
+by the width of the things displayed in the widget);  if the geometry
+manager can satisfy this request, the widget will end up with extra
+internal space to the left and/or right of what it displays inside.
+Most widgets only use this option for padding text:  if they are
+displaying a bitmap or image, then they usually ignore padding
+options.
+<P>
+<P>
+<DT><I>Name</I>:            <B>padY</B>
+<DT><I>Class</I>:           <B>Pad</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:pady">:pady</A></B>
+<DT><I>STklos slot name</I>: <B>pady</B>
+<DD>Specifies a non-negative value indicating how much extra space
+to request for the widget in the Y-direction.
+The value may have any of the forms acceptable to <B>Tk_GetPixels</B>.
+When computing how large a window it needs, the widget will add
+this amount to the height it would normally need (as determined by
+the height of the things displayed in the widget);  if the geometry
+manager can satisfy this request, the widget will end up with extra
+internal space above and/or below what it displays inside.
+Most widgets only use this option for padding text:  if they are
+displaying a bitmap or image, then they usually ignore padding
+options.
+<P>
+<P>
+<DT><I>Name</I>:            <B>relief</B>
+<DT><I>Class</I>:           <B>Relief</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:relief">:relief</A></B>
+<DT><I>STklos slot name</I>: <B>relief</B>
+<DD>Specifies the 3-D effect desired for the widget.  Acceptable
+values are <B>raised</B>, <B>sunken</B>, <B>flat</B>, <B>ridge</B>,
+and <B>groove</B>.
+The value
+indicates how the interior of the widget should appear relative
+to its exterior;  for example, <B>raised</B> means the interior of
+the widget should appear to protrude from the screen, relative to
+the exterior of the widget.
+<P>
+<P>
+<DT><I>Name</I>:            <B>repeatDelay</B>
+<DT><I>Class</I>:           <B>RepeatDelay</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:repeatdelay">:repeatdelay</A></B>
+<DT><I>STklos slot name</I>: <B>repeat-delay</B>
+<DD>Specifies the number of milliseconds a button or key must be held
+down before it begins to auto-repeat.  Used, for example, on the
+up- and down-arrows in scrollbars.
+<P>
+<P>
+<DT><I>Name</I>:            <B>repeatInterval</B>
+<DT><I>Class</I>:           <B>RepeatInterval</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:repeatinterval">:repeatinterval</A></B>
+<DT><I>STklos slot name</I>: <B>repeat-interval</B>
+<DD>Used in conjunction with <B>repeatDelay</B>:  once auto-repeat
+begins, this option determines the number of milliseconds between
+auto-repeats.
+<P>
+<P>
+<DT><I>Name</I>:            <B>selectBackground</B>
+<DT><I>Class</I>:           <B>Foreground</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:selectbackground">:selectbackground</A></B>
+<DT><I>STklos slot name</I>: <B>select-background</B>
+<DD>Specifies the background color to use when displaying selected
+items.
+<P>
+<P>
+<DT><I>Name</I>:            <B>selectBorderWidth</B>
+<DT><I>Class</I>:           <B>BorderWidth</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:selectborderwidth">:selectborderwidth</A></B>
+<DT><I>STklos slot name</I>: <B>select-border-width</B>
+<DD>Specifies a non-negative value indicating the width
+of the 3-D border to draw around selected items.
+The value may have any of the forms acceptable to <B>Tk_GetPixels</B>.
+<P>
+<P>
+<DT><I>Name</I>:            <B>selectForeground</B>
+<DT><I>Class</I>:           <B>Background</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:selectforeground">:selectforeground</A></B>
+<DT><I>STklos slot name</I>: <B>select-foreground</B>
+<DD>Specifies the foreground color to use when displaying selected
+items.
+<P>
+<P>
+<DT><I>Name</I>:            <B>setGrid</B>
+<DT><I>Class</I>:           <B>SetGrid</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:setgrid">:setgrid</A></B>
+<DT><I>STklos slot name</I>: <B>set-grid</B>
+<DD>Specifies a boolean value that determines whether this widget controls the
+resizing grid for its top-level window.
+This option is typically used in text widgets, where the information
+in the widget has a natural size (the size of a character) and it makes
+sense for the window's dimensions to be integral numbers of these units.
+These natural window sizes form a grid.
+If the <B>setGrid</B> option is set to true then the widget will
+communicate with the window manager so that when the user interactively
+resizes the top-level window that contains the widget, the dimensions of
+the window will be displayed to the user in grid units and the window
+size will be constrained to integral numbers of grid units.
+See the section GRIDDED GEOMETRY MANAGEMENT in the <B><A HREF="./wm.n.html">wm</A></B> manual
+entry for more details.
+<P>
+<P>
+<DT><I>Name</I>:            <B>takeFocus</B>
+<DT><I>Class</I>:           <B>TakeFocus</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:takefocus">:takefocus</A></B>
+<DT><I>STklos slot name</I>: <B>take-focus</B>
+<DD>Determines whether the window accepts the focus during keyboard
+traversal (e.g., Tab and Shift-Tab).
+Before setting the focus to a window, the traversal scripts
+consult the value of the <B>takeFocus</B> option.
+A value of <B>#f</B> means that the window should be skipped entirely
+during keyboard traversal. 
+<B>#t</B> means that the window should receive the input
+focus as long as it is viewable (it and all of its ancestors are mapped).
+An empty string for the option means that the traversal scripts make
+the decision about whether or not to focus on the window:  the current
+algorithm is to skip the window if it is
+disabled, if it has no key bindings, or if it is not viewable.
+Value can also be a one parameter procedure. This procedure is called
+by the traversal algorithm with the window as parameter. The 
+value retuned by he procedure must be <B>#f</B>, <B>#t</B>, or an empty string:  a 
+<B>#f</B> or <B>#t</B> value specifies whether the window will receive
+the input focus, and an empty string results in the default decision
+described above. See the <B>focus-next</B> page for the <B>focus-on</B>
+and <B>focus-off</B> procedures.
+<B>Note</B>: this interpretation of the option is defined entirely by
+the STk scripts that implement traversal:  the widget implementations
+ignore the option entirely, so you can change its meaning if you
+redefine the keyboard traversal scripts.
+<P>
+<P>
+<DT><I>Name</I>:            <B><A HREF="./text.n.html">text</A></B>
+<DT><I>Class</I>:           <B><A HREF="./text.n.html">Text</A></B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:text">:text</A></B>
+<DT><I>STklos slot name</I>: <B><A HREF="./text.n.html">text</A></B>
+<DD>Specifies a string to be displayed inside the widget.  The way in which
+the string is displayed depends on the particular widget and may be
+determined by other options, such as <B>anchor</B> or <B>justify</B>.
+<P>
+<P>
+<DT><I>Name</I>:            <B>textVariable</B>
+<DT><I>Class</I>:           <B>Variable</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:textvariable">:textvariable</A></B>
+<DT><I>STklos slot name</I>: <B>text-variable</B>
+<DD>Specifies the name of a variable.  The value of the variable is a text
+string to be displayed inside the widget;  if the variable value changes
+then the widget will automatically update itself to reflect the new value.
+The way in which the string is displayed in the widget depends on the
+particular widget and may be determined by other options, such as
+<B>anchor</B> or <B>justify</B>.
+<P>
+<P>
+<DT><I>Name</I>:            <B>troughColor</B>
+<DT><I>Class</I>:           <B>Background</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:troughcolor">:troughcolor</A></B>
+<DT><I>STklos slot name</I>: <B>trough-color</B>
+<DD>Specifies the color to use for the rectangular trough areas
+in widgets such as scrollbars and scales.
+<P>
+<P>
+<DT><I>Name</I>:            <B>underline</B>
+<DT><I>Class</I>:           <B>Underline</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:underline">:underline</A></B>
+<DT><I>STklos slot name</I>: <B>underline</B>
+<DD>Specifies the integer index of a character to underline in the widget.
+This option is used by the default bindings to implement keyboard
+traversal for menu buttons and menu entries.
+0 corresponds to the first character of the text displayed in the
+widget, 1 to the next character, and so on.
+<P>
+<P>
+<DT><I>Name</I>:            <B>wrapLength</B>
+<DT><I>Class</I>:           <B>WrapLength</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:wraplength">:wraplength</A></B>
+<DT><I>STklos slot name</I>: <B>wrap-length</B>
+<DD>For widgets that can perform word-wrapping, this option specifies
+the maximum line length.
+Lines that would exceed this length are wrapped onto the next line,
+so that no line is longer than the specified length.
+The value may be specified in any of the standard forms for
+screen distances.
+If this value is less than or equal to 0 then no wrapping is done:  lines
+will break only at newline characters in the text.
+<P>
+<P>
+<DT><I>Name</I>:            <B>xScrollCommand</B>
+<DT><I>Class</I>:           <B>ScrollCommand</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:xscrollcommand">:xscrollcommand</A></B>
+<DT><I>STklos slot name</I>: <B>x-scroll-command</B>
+<DD>Specifies the procedure used to communicate with horizontal scrollbars.
+When the view in the widget's window changes (or
+whenever anything else occurs that could change the display in a
+scrollbar, such as a change in the total size of the widget's
+contents), the widget call this procedure with two numbers as parameters.
+Each of the numbers is a fraction between 0 and 1, which indicates
+a position in the document.  0 indicates the beginning of the document,
+1 indicates the end, .333 indicates a position one third the way through
+the document, and so on.
+The first fraction indicates the first information in the document
+that is visible in the window, and the second fraction indicates
+the information just after the last portion that is visible.
+Typically the
+<B>xScrollCommand</B> option consists of a procedure of the form
+<P>
+</DL>
+<PRE>(lambda l (apply .x.scrollbar 'set l))</PRE>
+this will cause the scrollbar to be updated whenever the view in the
+window changes.  If this option is not specified, then no command will
+be executed.
+<DL>
+<P>
+<DT><I>Name</I>:            <B>yScrollCommand</B>
+<DT><I>Class</I>:           <B>ScrollCommand</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M:yscrollcommand">:yscrollcommand</A></B>
+<DT><I>STklos slot name</I>: <B>y-scroll-command</B>
+<DD>Specifies the prefix for a command used to communicate with vertical
+scrollbars.  This option is treated in the same way as the
+<B>xScrollCommand</B> option, except that it is used for vertical
+scrollbars and is provided by widgets that support vertical scrolling.
+See the description of <B>xScrollCommand</B> for details
+on how this option is used.
+
+<P>
+</DL>
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookBlue.gif"> Back to the <B>STk</B> main page</A>
+</BODY></HTML>

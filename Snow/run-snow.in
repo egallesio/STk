@@ -1,0 +1,30 @@
+#!/bin/sh
+# Snow launcher
+
+# determine the kind of the machine which is running this script
+os=`uname -s`
+version=`uname -r`
+machine=`uname -m`
+
+case $os in
+  Linux*)
+	  case $version in
+            1.*) version=1.X;;
+	  esac
+	  case $machine in
+	    i*86) machine=ix86;;
+	  esac;;
+  SunOS*)
+	  case $machine in
+	    sun4*) machine=sun4;;
+	  esac
+esac
+id=$os-$version-$machine
+
+STK_LIBRARY=@libdir@
+export STK_LIBRARY
+
+exec $STK_LIBRARY/$id/snow-bin $*
+
+
+

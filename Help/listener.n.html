@@ -1,0 +1,83 @@
+<HTML><HEAD><TITLE>Tk Built-In Commands - listener manual page</TITLE></HEAD>
+<BODY bgcolor = #c3ffc3>
+<H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageGreen.gif"> listener</H2>
+<I>Create and manipulate listener widgets</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<H3><A NAME="M2">SYNOPSIS</A></H3>
+(<B>listener</B><I> widget-name </I>?<I>options</I>?)<BR>
+<BR>
+<H3><A NAME="M3">WIDGET-SPECIFIC OPTIONS</A></H3>
+<DL>
+<P>
+<DT><I>Name</I>:            <B></B>
+<DT><I>Class</I>:           <B></B>
+<DT><I>Option keyword</I>:  <B><A NAME="M4">:command</A></B>
+<DT><I>STklos slot name</I>: <B>command</B>
+<DD>Specifies a STk procedure to associate with the listener.  This procedure
+is invoked when a complete s-expr is entered in the listener. This s-expr is
+passed as a string to the procedure. The procedure must return the string
+which will be inserted in response to the s-expr input. The default procedure
+is the Identity procdure.
+<P>
+<P>
+<DT><I>Name</I>:            <B></B>
+<DT><I>Class</I>:           <B></B>
+<DT><I>Option keyword</I>:  <B><A NAME="M5">:output-color</A></B>
+<DT><I>STklos slot name</I>: <B>output-color</B>
+<DD>Specifies the color used the output lines
+<P>
+<P>
+<DT><I>Name</I>:            <B></B>
+<DT><I>Class</I>:           <B></B>
+<DT><I>Option keyword</I>:  <B><A NAME="M6">:prompt-color</A></B>
+<DT><I>STklos slot name</I>: <B>prompt-color</B>
+<DD>Specifies the color used for the prompt
+<P>
+<P>
+<DT><I>Name</I>:            <B></B>
+<DT><I>Class</I>:           <B></B>
+<DT><I>Option keyword</I>:  <B><A NAME="M7">:prompt</A></B>
+<DT><I>STklos slot name</I>: <B>prompt</B>
+<DD>Specifies the prompt used for reading s-expr. Defaults to &quot;&gt; &quot;
+<P>
+</DL>
+<H3><A NAME="M8">DESCRIPTION</A></H3>
+The <B>listener</B> procedure creates a new text window (given by the
+<I>widget-name</I> argument) and associates it bindiangs suitable for a listener.
+Since a listener is in fact a text widget, all the options of <B><A HREF="./text.n.html">text</A></B>
+are applicable to a listener.
+The <B>listener</B> procedure returns its
+<I>widget-name</I> argument.  At the time this procedure is invoked,
+there must not exist a window named <I>widget-name</I>, but
+<I>widget-name</I>'s parent must exist.
+<P>
+A listener is a widget for doing interactive I/O. Typical usage for
+this widget consists of a text window whose inputs are sent to the
+Scheme evaluator and whose result is displayed in the listener. An
+example for this is shown at the end of this page.
+
+<H3><A NAME="M9">WIDGET PROCEDURE</A></H3>
+All the <B><A HREF="./text.n.html">text</A></B> procedure are avialble for a listener, plus
+
+<P>
+<DL>
+<DT><A NAME="M10">(<B>listener-insert-string</B> <I>widget-name str</I>)</A><DD>
+inserts the string <I>str</I> just before the input prompt. 
+<P>
+</DL>
+<H3><A NAME="M11">EXAMPLE</A></H3>
+Hereafter is a simple use of the listener widget which interact with the 
+evaluator.
+<P>
+<PRE>(listener '.t :width   50 
+              :height  10
+              :command (lambda (x) 
+                         (eval-string x (global-environment))))
+(pack .t)</PRE>
+<H3><A NAME="M12">DEFAULT BINDINGS</A></H3>
+The defaults bindings are identical to the <B><A HREF="./text.n.html">text</A></B> bindings.
+
+<H3><A NAME="M13">SEE ALSO</A></H3>
+<B><A HREF="./text.n.html">text</A></B>
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookGreen.gif"> Back to the <B>STk</B> main page</A>
+</BODY></HTML>

@@ -1,0 +1,528 @@
+;;;;
+;;;; T e x t . s t k      --  Text class definition
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
+;;;;    Creation date: 22-Aug-1993 10:55
+;;;; Last file update: 13-Sep-1996 22:10
+
+(require "Basics")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Text> class definition
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define-class <Text> (<Tk-simple-widget> <Tk-sizeable> <Tk-editable> 
+		      <Tk-selectable> <Tk-text-selectable>)
+  ((spacing1         :init-keyword :spacing1
+		     :accessor     spacing1
+		     :allocation   :tk-virtual)
+   (spacing2         :init-keyword :spacing2
+		     :accessor     spacing2
+		     :allocation   :tk-virtual)
+   (spacing3         :init-keyword :spacing3
+		     :accessor     spacing3
+		     :allocation   :tk-virtual)
+   (state            :init-keyword :state
+		     :accessor     state
+		     :allocation   :tk-virtual)
+   (tabs	     :init-keyword :tabs
+		     :accessor     tabs
+		     :allocation   :tk-virtual)
+   (x-scroll-command :init-keyword :x-scroll-command
+		     :accessor     x-scroll-command
+		     :tk-name      xscrollcommand
+		     :allocation   :tk-virtual)
+   (y-scroll-command :init-keyword :y-scroll-command
+		     :accessor     y-scroll-command
+		     :tk-name      yscrollcommand
+		     :allocation   :tk-virtual)
+   (wrap             :init-keyword :wrap
+		     :accessor     wrap
+		     :allocation   :tk-virtual)
+   (set-grid         :accessor     set-grid
+		     :init-keyword :set-grid
+		     :allocation   :tk-virtual
+		     :tk-name      setgrid)
+   (pad-x            :accessor     pad-x
+		     :init-keyword :pad-x
+		     :allocation   :tk-virtual
+		     :tk-name      padx)
+   (pad-y            :accessor     pad-y
+		     :init-keyword :pad-y
+		     :allocation   :tk-virtual
+		     :tk-name      pady)
+   (value            :accessor     value
+		     :init-keyword :value
+		     :allocation   :virtual
+		     :slot-ref     (lambda (o)
+				     ;; use "end-1c", rather than "end"
+                                     ;; because the text widget likes to tack
+                                     ;; on trailing newlines, which means
+                                     ;; (set! [value t] [value t])
+                                     ;; actually changes t's value.
+				     ((slot-ref o 'Id) 'get "1.0" "end-1c"))
+		     :slot-set!    (lambda (o v)
+				     ((slot-ref o 'Id) 'delete "1.0" "end")
+				     ((slot-ref o 'Id) 'insert "1.0" v)))
+   ;; The hash-table of associated tags
+   (tags	     :initform	   (make-hash-table))))
+
+(define-method tk-constructor ((self <Text>))
+  Tk:text)
+
+
+(define-method initialize ((self <Text>) initargs)
+  (next-method)
+  ;; Create a tag text selection (because Tk handle the tag "sel" specifically
+  (make <Text-tag> :parent self :Tid "sel")
+  ;; Create "insert" and "current" mark
+  (make <Text-mark> :parent self :Mid "insert"  :index "1.0")
+  (make <Text-mark> :parent self :Mid "current" :index "1.0"))  
+
+
+(define-method destroy ((self <Text>))
+  ;; Destroy all the embedded tags 
+  (hash-table-for-each (slot-ref self 'tags) 
+		       (lambda (k v) (catch (destroy v))))
+  (next-method))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Text> methods
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;
+;;; Bounding-box
+;;;
+(define-method bounding-box ((self <Text>) index)
+  ((slot-ref self 'Id) 'bbox index))
+
+;;;
+;;; Compare-index
+;;;
+(define-method compare-index ((self <Text>) index1 op index2)
+  ((slot-ref self 'Id) 'compare index1 op index2))
+
+;;;
+;;; Text-delete
+;;;
+(define-method text-delete ((self <Text>) index1)
+  ((slot-ref self 'Id) 'delete index1))  
+
+(define-method text-delete ((self <Text>) index1 index2)
+  ((slot-ref self 'Id) 'delete index1 index2))
+
+
+;;;
+;;; Text-line-info
+;;; 
+(define-method text-line-info ((self <Text>) index)
+  ((slot-ref self 'Id) 'dlineinfo index))
+
+;;;
+;;; Text-get
+;;;
+(define-method text-get ((self <Text>) index1)
+  ((slot-ref self 'Id) 'get index1)) 
+
+(define-method text-get ((self <Text>) index1 index2)
+  ((slot-ref self 'Id) 'get index1 index2))
+
+;;;
+;;; Text-index
+;;;
+(define-method text-index ((self <Text>) index)
+  ((slot-ref self 'Id) 'index index))
+
+;;;
+;;; Text-insert
+;;;
+(define-method text-insert ((self <Text>) . l)
+  (apply (slot-ref self 'Id) 'insert l))
+
+;;;
+;;; Text-search
+;;;
+(define-method text-search ((self <Text>) . l)
+  (apply (slot-ref self 'Id) 'search l))
+
+;;;
+;;; Text-see
+;;;
+(define-method text-see ((self <Text>) index)
+  (apply (slot-ref self 'Id) 'see index))
+
+;;;
+;;; Text-tags
+;;; 
+(define-method text-tags ((self <Text>) . args)
+  (map (lambda (x) (Tid->instance self x))
+       (apply (slot-ref self 'Id) 'tag 'names args)))
+
+;;;
+;;; Text-marks
+;;;
+(define-method text-marks ((self <Text>))
+  (map (lambda (x) (Tid->instance self x))
+       ((slot-ref self 'Id) 'mark 'names)))
+
+;;;
+;;; Text-x-view
+;;;
+(define-method text-x-view ((self <Text>) . l)
+  (apply (slot-ref self 'Id) 'xview l))
+
+;;;
+;;; Text-x-view
+;;;
+(define-method text-y-view ((self <Text>) . l)
+  (apply (slot-ref self 'Id) 'yview l))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Other <Text> methods
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-method get-line ((self <Text>) line)
+  (let ((l (format #f "~A.0" line)))
+    (if (compare-index self l ">" "end") 
+	#f
+	((slot-ref self 'Id) 'get (& line ".0" ) (& line ".0 lineend")))))
+
+(define-method text-save ((self <Text>) filename)
+  (with-output-to-file filename (lambda() (display (slot-ref self 'value)))))
+
+(define-method text-read ((self <Text>) filename)
+  (slot-set! self 'value (with-input-from-file filename 
+			   (lambda() 
+			     (let ((res ""))
+			       (do ((l (read-line) (read-line)))
+				   ((eof-object? l) (string-append res "\n"))
+				 (set! res (if (string=? res "")
+					       l
+					       (string-append res "\n" l)))))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Text-tag> class definition
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class <Text-tag> (<Tk-object>)
+  ((Tid            :getter       Tid)
+   (background     :accessor 	 background    
+		   :init-keyword :background   
+		   :allocation   :tk-virtual)
+   (bg-stipple     :accessor     bg-stipple    
+		   :init-keyword :bg-stipple   
+		   :tk-name      bgstipple 
+		   :allocation   :tk-virtual)
+   (border-width   :accessor     border-width  
+		   :init-keyword :border-width 
+		   :tk-name      borderwidth 
+		   :allocation   :tk-virtual)
+   (fg-stipple     :accessor     fg-stipple    
+		   :init-keyword :fg-stipple   
+		   :tk-name      fgstipple 
+		   :allocation   :tk-virtual)
+   (font           :accessor     font          
+		   :init-keyword :font   
+		   :allocation   :tk-virtual)
+   (foreground     :accessor     foreground    
+		   :init-keyword :foreground   
+		   :allocation   :tk-virtual)
+   (justify	   :accessor	 justify
+		   :init-keyword :justify
+		   :allocation   :tk-virtual)
+   (lmargin1	   :accessor	 lmargin1
+		   :init-keyword :lmargin1
+		   :allocation   :tk-virtual)
+   (lmargin2	   :accessor	 lmargin2
+		   :init-keyword :lmargin2
+		   :allocation   :tk-virtual)
+   (offset	   :accessor	 offset
+		   :init-keyword :offset
+		   :allocation   :tk-virtual)
+   (overstrike	   :accessor	 overstrike
+		   :init-keyword :overstrike
+		   :allocation   :tk-virtual)
+   (relief         :accessor     relief        
+		   :init-keyword :relief   
+		   :allocation   :tk-virtual)
+   (rmargin	   :accessor	 rmargin
+		   :init-keyword :rmargin
+		   :allocation   :tk-virtual)
+   (spacing1	   :accessor	 spacing1
+		   :init-keyword :spacing1
+		   :allocation   :tk-virtual)
+   (spacing2	   :accessor	 spacing2
+		   :init-keyword :spacing2
+		   :allocation   :tk-virtual)
+   (spacing3	   :accessor	 spacing3
+		   :init-keyword :spacing3
+		   :allocation   :tk-virtual)
+   (tabs	   :accessor	 tabs
+		   :init-keyword :tabs
+		   :allocation   :tk-virtual)
+   (underline      :accessor     underline
+		   :init-keyword :underline
+		   :allocation   :tk-virtual)
+   (wrap	   :accessor	 wrap
+		   :init-keyword :wrap
+		   :allocation   :tk-virtual))
+  :metaclass <Tk-tag-metaclass>)
+
+(define-method initialize ((self <Text-tag>) initargs)
+  (let ((parent (get-keyword :parent initargs #f)))
+    ;; Verify that parent exists and that it is a <Text>
+    (unless  parent
+       (error "**** You must specify the text which contain this tag"))
+    (unless (is-a? parent <Text>)
+       (error "**** Specified text ~A is not valid" parent))
+
+    (let ((parent-Id (slot-ref parent 'Id))
+	  (Tid 	     (get-keyword :Tid initargs (gensym "tag_"))))
+      (slot-set! self 'Id     parent-Id)
+      (slot-set! self 'Eid    parent-Id)
+      (slot-set! self 'parent parent)
+      (slot-set! self 'Tid    Tid)
+
+      ;; Create the tag (configuring it suffice to create it)
+      (apply (slot-ref parent 'Id) 'tag 'configure Tid 
+	     			   (get-keyword :tk-options initargs '()))
+
+      ;; Add this tag to the hash-table
+      (hash-table-put! (slot-ref parent 'tags) Tid self)
+      (next-method))))
+
+
+;;; Tk-write-object is called when a STklos object is passed to a Tk-command.
+;;; By default, we do the same job as write; but if an object is a <Tk-widget>
+;;; we will pass it its Eid. This method does this job.
+(define-method Tk-write-object((self <Text-tag>) port)
+  (write (slot-ref self 'Tid) port))
+
+;;;
+;;; Utility: Tid->instance
+;;;
+(define (Tid->instance text id)
+  (hash-table-get (slot-ref text 'tags) id id))
+
+;;;
+;;; Tag-add
+;;;
+(define-method tag-add ((self <Text-tag>) index1)
+  ((slot-ref self 'Id) 'tag 'add (slot-ref self 'Tid) index1))
+
+(define-method tag-add ((self <Text-tag>) index1 index2)
+  ((slot-ref self 'Id) 'tag 'add (slot-ref self 'Tid) index1 index2))
+
+;;;
+;;; Bind
+;;;
+(define-method bind ((self <Text-tag>) . args)
+  (apply (slot-ref self 'Id) 'tag 'bind (slot-ref self 'Tid) args))
+
+;;;
+;;; Destroy (for tags)
+;;;
+(define-method destroy ((self <Text-tag>))
+  (let ((parent (slot-ref self 'parent))
+	(Tid    (slot-ref self 'Tid)))
+    ;; Destroy the tag from the Text
+    ((slot-ref self 'Id) 'tag 'delete Tid)
+    ;; Delete it from the hash table
+    (hash-table-remove! (slot-ref parent 'tags) Tid)
+    ;; Change its class to <Destroyed-object>
+    (change-class self <Destroyed-object>)))
+
+;;;
+;;; Tag-lower
+;;;
+(define-method tag-lower ((self <Text-tag>))
+  ((slot-ref self 'Id) 'tag 'lower (slot-ref self 'Tid)))
+
+(define-method tag-lower ((self <Text-tag>) below-this)
+  ((slot-ref self 'Id) 'tag 'lower (slot-ref self 'Tid) below-this))
+
+;;;
+;;; Tag Raise
+;;;
+(define-method tag-raise ((self <Text-tag>))
+  ((slot-ref self 'Id) 'tag 'raise (slot-ref self 'Tid)))
+
+(define-method tag-raise ((self <Text-tag>) below-this)
+  ((slot-ref self 'Id) 'tag 'raise (slot-ref self 'Tid) below-this))
+
+;;;
+;;; Tag-next-range
+;;;
+(define-method tag-next-range ((self <Text-tag>) index1)
+  ((slot-ref self 'Id) 'tag 'nextrange (slot-ref self 'Tid) index1))
+
+(define-method tag-next-range ((self <Text-tag>) index1 index2)
+  ((slot-ref self 'Id) 'tag 'nextrange (slot-ref self 'Id) index1 index2))
+
+  
+;;;
+;;; Tag-ranges
+;;;
+(define-method tag-ranges ((self <Text-tag>))
+  ((slot-ref self 'Id) 'tag 'ranges (slot-ref self 'Tid)))
+
+;;;
+;;; Tag Remove
+;;;
+(define-method tag-remove ((self <Text-tag>) index1)
+  ((slot-ref self 'Id) 'tag 'remove (slot-ref self 'Tid) index1)) 
+
+(define-method tag-remove ((self <Text-tag>) index1 index2)
+  ((slot-ref self 'Id) 'tag 'remove (slot-ref self 'Tid) index1 index2))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Text-mark> class definition
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class <Text-mark> (<Tk-object>)
+  ((Mid     :getter  Mid)
+   (gravity :accessor 	  gravity
+	    :init-keyword :gravity
+	    :allocation   :virtual
+	    :slot-ref	  (lambda (o)   
+			    ((slot-ref o 'Id) 'mark 'gravity (slot-ref o 'Mid)))
+	    :slot-set!	  (lambda (o v)
+			    ((slot-ref o 'Id) 'mark 'gravity (slot-ref o 'Mid) v))))
+   :metaclass <Tk-metaclass>)
+
+(define-method Tk-write-object ((self <Text-mark>) port)
+  (write (slot-ref self 'Mid) port))
+
+(define-method initialize ((self <Text-mark>) initargs)
+  (let ((parent (get-keyword :parent initargs #f))
+	(index  (get-keyword :index  initargs #f)))
+    
+    ;; Verify that parent exists and that it is a <Text>
+    (unless  parent
+       (error "**** You must specify the text which contain this mark"))
+    (unless (is-a? parent <Text>)
+       (error "**** Specified text ~A is not valid" parent))
+    (unless index
+       (error "**** You must supply an index for the mark"))
+
+    (let ((parent-Id (slot-ref parent 'Id))
+	  (Mid 	     (get-keyword :Mid initargs (gensym "mark_"))))
+      (slot-set! self 'Id     parent-Id)
+      (slot-set! self 'Eid    parent-Id)
+      (slot-set! self 'parent parent)
+      (slot-set! self 'Mid    Mid)
+
+      ;; Add this mark to the hash-table
+      (hash-table-put! (slot-ref parent 'tags) Mid self)
+     
+      ;; Create the mark 
+      (parent-Id 'mark 'set Mid index)))
+  (next-method))
+
+(define-method mark-set ((self <Text-mark>) where)
+  ((slot-ref self 'Id) 'mark 'set (slot-ref self 'Mid) where))
+
+(define-method mark-unset ((self <Text-mark>))
+  ((slot-ref self 'Id) 'mark 'unset (slot-ref self 'Mid)))
+
+
+;;;
+;;; Destroy (for marks)
+;;;
+(define-method destroy ((self <Text-mark>))
+  (let ((parent (slot-ref self 'parent))
+	(Mid    (slot-ref self 'Mid)))
+    ;; Destroy the tag from the Text
+    ((slot-ref self 'Id) 'tag 'delete Mid)
+    ;; Delete it from the hash table
+    (hash-table-remove! (slot-ref parent 'tags) Mid)
+    ;; Change its class to <Destroyed-object>
+    (change-class self <Destroyed-object>)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Text-window> class definition
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class <Text-window> (<Tk-object>)
+  ((index	:accessor	index)
+    (align	:init-keyword 	:align
+		:accessor     	align
+		:allocation   	:tk-virtual)
+   (create	:init-keyword	:create
+		:accessor	create
+		:allocation	:tk-virtual)
+   (pad-x	:init-keyword	:pad-x
+		:accessor	pad-x
+		:tk-name	padx
+		:allocation	:tk-virtual)
+   (pad-y	:init-keyword	:pad-y
+		:accessor	pad-y
+		:tk-name	pady
+		:allocation	:tk-virtual)
+   (stretch	:init-keyword	:stretch
+		:accessor	stretch
+		:allocation	:tk-virtual)
+   (window	:init-keyword	:window
+		:accessor	window
+		:allocation	:tk-virtual))
+   :metaclass <Tk-text-window-metaclass>)
+
+(define-method initialize ((self <Text-window>) initargs)
+  (let ((parent (get-keyword :parent initargs #f))
+	(window (get-keyword :window (get-keyword :tk-options initargs '()) #f))
+	(index  (get-keyword :index  initargs #f)))
+
+    ;; Verify that parent exists and that it is a <Text>
+    (unless  (or parent window)
+       (error "**** You must specify the text which contain this window"))
+    (if window
+	(unless (is-a? (slot-ref window 'parent) <Text>)
+	   (error "**** Parent of widget '~S' is not a text" window))
+	(unless (is-a? parent <Text>)
+	   (error "**** Specified text ~A is not valid" parent)))
+    (unless index
+       (error "**** No index specified for this window"))
+
+    (let* ((parent    (if window (slot-ref window 'parent) parent))
+	   (parent-Id (slot-ref parent 'Id)))
+      (slot-set! self 'Id     parent-Id)
+      (slot-set! self 'Eid    parent-Id)
+      (slot-set! self 'parent parent)
+      (slot-set! self 'index  index)
+
+      ;; Create the tag (configuring it suffice to create it)
+      (apply parent-Id 'window 'create index 
+	               (get-keyword :tk-options initargs '()))
+
+      ;; Add the window to the hash-table
+      (hash-table-put! (slot-ref parent 'tags) (gensym) self)
+      (next-method))))
+
+(define-method embedded-text-windows ((self <Text>))
+  ((slot-ref self 'Id) 'window 'names))
+
+(require "STF")
+(provide "Text")

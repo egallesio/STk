@@ -1,0 +1,30 @@
+;;;;
+;;;; STk adaptation of the Tk widget demo.
+;;;;
+;;;; This demonstration script shows an example with a vertical scale.
+;;;;
+
+(define (demo-vscale)
+  
+  (define (set-height! c poly line height)
+    (let* ((height (+ height 21))
+	   (y2     (max (- height 30) 21)))
+      (set! (coords poly) (list 15 20 35 20 35 y2 45 y2 25 height 5 y2 15 y2 15 20))
+      (set! (coords line) (list 15 20 35 20 35 y2 45 y2 25 height 5 y2 15 y2 15 20))))
+
+  (let* ((w (make-demo-toplevel  "vscale"
+				 "Vertical Scale Demonstration"
+				 "An arrow and a vertical scale are displayed below.  If you click or drag mouse button 1 in the scale, you can change the size of the arrow."))
+	 (f    (make <Frame> :parent w :border-width 10))
+	 (c    (make <Canvas> :parent f :width 50 :height 50 :border-width 0 
+		     :highlight-thickness 0))
+	 (poly  (make <Polygon> :parent c :coords '(0 0 1 1 2 2) :fill "SeaGreen3"))
+	 (line  (make <Line> :parent c :coords '(0 0 1 1 2 2 0 0) :fill "black"))
+	 (s     (make <Scale> :parent f :orientation "vertical" :scale-length 284 
+		      :from 0 :to 250
+		      :tick-interval 50 :value 75
+		      :command (lambda (v) (set-height! c poly line v)))))
+    
+    (pack f)
+    (pack s :side "left" :anchor "ne")
+    (pack c :side "left" :anchor "nw" :fill "y")))

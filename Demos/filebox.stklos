@@ -1,0 +1,37 @@
+#!/usr/local/bin/stk -f
+;;;; f i l e b o x  . s t k l o s 	-- A demo of the <FileBox> class
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; This software is a derivative work of other copyrighted softwares; the
+;;;; copyright notices of these softwares are placed in the file COPYRIGHTS
+;;;;
+;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
+;;;;    Creation date: 12-Jun-1994 11:24
+;;;; Last file update: 22-Aug-1996 18:14
+
+(require "Tk-classes")
+
+(define b (make <Button> :text "Quit the demo" :foreground "red" 
+		         :command (lambda () (exit))))
+(pack b)
+
+
+;;; Just create a filebox and return the selected value
+(let loop ((result (make-file-box)))
+  (apply format #t (if result
+		       (list "You have selected the file ~S\n" result)
+		       (list "CANCEL. No file selected\n")))
+  (loop (make-file-box)))
+
+
+
+

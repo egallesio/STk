@@ -1,0 +1,149 @@
+;;;;
+;;;; Dialog box creation utility
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; This software is a derivative work of other copyrighted softwares; the
+;;;; copyright notices of these softwares are placed in the file COPYRIGHTS
+;;;;
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date:  4-Aug-1993 11:05
+;;;; Last file update: 25-Sep-1996 14:48
+;;;;
+
+(provide "dialog")
+
+(define stk::button-pressed   #f)
+;;
+;; STk:make-dialog
+;;
+;; This procedure displays a dialog box following the spcifications given in
+;; arguments. Arguments are given as keywords.
+;;
+;; window (.dialog)	Window name to use for dialog top-level.
+;; title ("Dialog")	Title to display in dialog's decorative frame.
+;; text ("")		Message to display in dialog.
+;; bitmap ("")		Bitmap to display in dialog (empty string means none).
+;; default (-1) 	Index of button that is to display the default ring
+;;			(-1 means none).
+;; grab (#f)		Indicates if make-dialog must wait that a button be
+;;			pressed before returning. Use 'global to heve a global
+;;			grab.
+;; buttons ('())	A list of couples indicating the button text and its
+;;			associated action (a closure)
+;;
+;; If grabbing is set, this procedure returns the button pressed index.
+;;
+
+(define (STk:make-dialog . arguments)
+  (let ((w 	   (get-keyword :window  arguments '.dialog))
+	(title	   (get-keyword :title   arguments "Dialog"))
+	(text	   (get-keyword :text    arguments ""))
+	(bitmap    (get-keyword :bitmap  arguments ""))
+	(default   (get-keyword :default arguments -1))
+	(grabbing  (get-keyword :grab    arguments #f))
+	(buttons   (get-keyword :buttons arguments '()))
+	(old-focus (Tk:focus)))
+
+    (catch (Tk:destroy w))
+
+    ;; 1. Create the top-level window and divide it into top and bottom parts.
+    (define w.top (format #f "~A.top" w))
+    (define w.bot (format #f "~A.bot" w))
+    (define w.msg (format #f "~A.top.msg" w))
+    (define w.bmp (format #f "~A.top.bmp" w))
+
+    (Tk:toplevel w :class "Dialog")
+    (Tk:wm 'title w title)
+    (Tk:wm 'iconname w "Dialog")
+	
+    (Tk:pack [Tk:frame w.top :relief "raised" :bd 1] :expand #t :fill "both")
+    (Tk:pack [Tk:frame w.bot :relief "raised" :bd 1] :fill "x")
+
+    ;; 2. Fill the top part with bitmap and message (use the option
+    ;;    database for -wraplength so that it can be overridden by
+    ;;    the caller).
+
+    (option 'add "*Dialog.msg.wrapLength" "3i" "widgetDefault")
+    (Tk:pack [message w.msg :justify "left" :text text :aspect 1000 
+		      :font "-Adobe-Times-Medium-R-Normal-*-180-*"]
+	     :side "right"
+	     :expand #t 
+	     :padx 10
+	     :pady 10
+	     :fill "both")
+
+    (unless (equal? bitmap "")
+	(Tk:pack [Tk:label w.bmp :bitmap bitmap :fg "red"]
+		 :side "left"
+		 :padx 10
+		 :pady 10))
+
+    ;; 3. Create a row of buttons at the bottom of the dialog.
+    (do ([i 0 (+ i 1)] [but buttons (cdr but)])
+	([null? but] '())
+      
+      (let ((name (format #f "~A.but-~A" w  i)))
+	(Tk:button name :text (caar but) 
+		   	:command (lambda ()
+				   (if old-focus (Tk:focus old-focus))
+				   (set! stk::button-pressed i)
+				   (Tk:destroy w)
+				   (apply (cadar but) '())))
+	(if (equal? i default)
+	    (Tk:focus name))
+	(Tk:pack name :side "left" :expand #t :padx 20 :pady 8 :ipadx 2 :ipady 2)))
+
+    ;; 4. Center window
+    (STk:center-window w)
+
+    ;; 5. Wait until a button is pressed if grab is set 
+    (when grabbing
+      (let* ((old-grab    (Tk:grab 'current *root*))
+	     (grab-status (if old-grab
+			      (grab 'status old-grab)
+			      #f)))
+	(if (eqv? grabbing 'global) 
+	    (Tk:grab :global '.dialog)
+	    (Tk:grab 'set w))
+
+	;; Add a binding that sets the result to -1 if the window is detroyed
+	(bind w "<Destroy>" (lambda () (set! stk::button-pressed -1)))
+
+	(Tk:tkwait 'variable 'stk::button-pressed)
+	(if old-grab
+	    (if (equal? grab-status "global")
+		(Tk:grab :global old-grab)
+		(Tk:grab old-grab))))
+	stk::button-pressed)))
+
+
+(define (STk:center-window w)
+  ;; Withdraw the window, then update all the geometry information
+  ;; so we know how big it wants to be, then center the window in the
+  ;; display and de-iconify it.
+
+  (wm 'withdraw w)
+  (update 'idletasks)
+  (let ((x (- (/ [winfo 'screenwidth w] 2) 
+	      (/ [winfo 'reqwidth w] 2)
+	      (winfo 'vrootx [eval [winfo 'parent w]])))
+	(y (- (/ [winfo 'screenheight w] 2)
+	      (/ [winfo 'reqheight w] 2)
+	      (winfo 'vrooty [eval [winfo 'parent w]]))))
+    (wm 'geom w (format #f "+~A+~A" (inexact->exact (floor x)) 
+				    (inexact->exact (floor y))))
+    (wm 'deiconify w)))
+
+
+;;;;; Compatibility
+(define stk::make-dialog STk:make-dialog)

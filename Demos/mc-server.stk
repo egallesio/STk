@@ -1,0 +1,88 @@
+#!/usr/local/bin/stk -load
+;;;;
+;;;; m c - s e r v e r  . s t k		-- A simple server which accept
+;;;;					   multiple client connections
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; This software is a derivative work of other copyrighted softwares; the
+;;;; copyright notices of these softwares are placed in the file COPYRIGHTS
+;;;;
+;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
+;;;;    Creation date: 23-Jul-1996 09:00
+;;;; Last file update: 23-Jul-1996 10:09
+
+(require "posix")
+(require "socket")
+
+(define register-connection
+  (let ((sockets '()))
+
+    (lambda (s cnt)
+      ;; Accept connection
+      (socket-accept-connection s)
+
+      ;; Save socket somewher to avoid GC problems
+      (set! sockets (cons s sockets))
+  
+      (let ((in   (socket-input s))
+	    (out  (socket-output s))
+	    (who  (socket-host-name s))
+	    (addr (socket-host-address s)))
+		 
+	;; Display a greeting message
+	(format out "Welcome ~A on server ~A\n" who (posix-host-name))
+	(flush out)
+
+	;; Signal new connection on standard output
+	(format #t  "New connection detected from ~A (~A)\n" who addr)
+
+	;; Create a handler for reading inputs from this new connection
+	(when-port-readable in 
+		(lambda ()
+		  ;; And read all the lines comming from distant machine
+		  (let ((l (read-line in)))
+		    (if (eof-object? l)
+			;; delete current handler
+			(begin
+			  (when-port-readable in #f)
+			  (socket-shutdown s))
+			;; Just write the line read on the socket
+			(begin
+			  (format out "On connection #~S I've read --> ~A\n" cnt l)
+			  (flush out))))))))))
+
+;;;;
+;;;; Program starts here
+;;;;
+(system "clear")
+
+(define s (make-server-socket))
+
+(format #t "Welcome on the multi-server demo
+To use it you can open several windows and you can create a new connection with
+	telnet ~A ~A
+To exit this demo, just type
+	(exit)
+at the STk prompt
+---------------------------------\n\n"
+(posix-host-name) (socket-port-number s))
+
+(when-socket-ready s (let ((count 0))
+		       (lambda ()
+			 (set! count (+ count 1))
+			 (register-connection (socket-dup s) count))))
+
+
+(format #t "Server ~A (~A) is waiting connection on port ~A ...\n"
+	(posix-host-name) (socket-local-address s) (socket-port-number s))
+(flush (current-output-port))
+

@@ -1,0 +1,55 @@
+;;;;
+;;;; STk adaptation of the Tk widget demo.
+;;;;
+;;;; This demonstration script creates a text widget with bindings set
+;;;; up for hypertext-like effects.
+;;;;
+(require "Tk-classes")
+
+(define (demo-bind)
+  (let* ((w      (make-demo-toplevel "bind"
+				     "Text Demonstration - Tag Bindings"
+				     ""))
+	 (t      (make <Text> :parent w :setgrid #t :width 60  :height 24
+		       :font demo-font :wrap "word"))
+	 (bold   (make <Text-tag> :parent t :background "#43ce80"
+		       :relief "raised" :border-width 1))
+	 (tags   (make-vector 6))
+	 (action '#(demo-items demo-plot  demo-ctext 
+		    demo-arrow  demo-ruler demo-cscroll)))
+
+    (when (= (winfo 'depth w) 1)	        ; Monochrome
+      (slot-set! bold   :foreground "white")
+      (slot-set! bold   :background "black"))
+
+    (pack t :expand #t :fill "both")
+
+    ;; Add bindings
+    (dotimes (i 6)
+       (let ((tag (make <Text-tag> :parent t)))
+	 (vector-set! tags i tag)
+	 (bind tag "<Any-Enter>" (lambda () 
+				   (apply tag-add bold (tag-ranges tag))))
+	 (bind tag "<Any-Leave>" (lambda () 
+				   (apply tag-remove bold (tag-ranges tag))))
+	 (bind tag "<1>"	 (lambda ()
+				   (apply (eval (vector-ref action i)) '())))))
+
+    ;; Add text to widget.
+    (text-insert t "end" 
+"The same tag mechanism that controls display styles in text widgets can also be used to associate Tcl commands with regions of text, so that mouse or keyboard actions on the text cause particular Tcl commands to be invoked.  For example, in the text below the descriptions of the canvas demonstrations have been tagged.  When you move the mouse over a demo description the description lights up, and when you press button 1 over a description then that particular demonstration is invoked.\n\n" '()
+"1. Samples of all the different types of items that can be created in canvas widgets." 								(vector-ref tags 0)
+"\n\n"								'()
+"2. A simple two-dimensional plot that allows you to adjust the positions of the data points."  							(vector-ref tags 1)
+"\n\n"								'()
+"3. Anchoring and justification modes for text items." 		(vector-ref tags 2)
+"\n\n"								'()
+"4. An editor for arrow-head shapes for line items."		(vector-ref tags 3)
+"\n\n"								'()
+"5. A ruler with facilities for editing tab stops."		(vector-ref tags 4)
+"\n\n"								'()
+"6. A grid that demonstrates how canvases can be scrolled."	(vector-ref tags 5)
+)))
+
+
+

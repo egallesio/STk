@@ -1,0 +1,268 @@
+;;;;
+;;;;  M e n u  . s t k			-- Menu Class definition 
+;;;; 
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;
+;;;; This software is a derivative work of other copyrighted softwares; the
+;;;; copyright notices of these softwares are placed in the file COPYRIGHTS
+;;;;;
+;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
+;;;;    Creation date:  3-Mar-1994 21:03
+;;;; Last file update: 25-Mar-1996 22:57
+
+(require "Basics")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Menu> class definition
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class <Menu> (<Tk-simple-widget>)
+  (;; The slots hilight* are overloaded here since they don't exist in Tk
+   ;; Change the hierarchy?
+   (highlight-background :accessor     highlight-background  
+			 :init-keyword :highlight-background
+			 :allocation   :virtual
+			 :slot-ref     (lambda (o) #f)
+			 :slot-set!    (lambda (o v) v))
+   (highlight-color 	 :accessor     highlight-color  
+			 :init-keyword :highlight-color
+			 :tk-name      highlightcolor
+			 :allocation   :virtual
+			 :slot-ref     (lambda (o) #f)
+			 :slot-set!    (lambda (o v) v))
+   (highlight-thickness  :accessor     highlight-thickness  
+			 :init-keyword :highlight-thickness
+			 :tk-name      highlightthick
+			 :allocation   :virtual
+			 :slot-ref     (lambda (o) #f)
+			 :slot-set!    (lambda (o v) v))
+
+   (active-background	 :init-keyword :active-background 
+			 :accessor active-background
+			 :tk-name activebackground
+			 :allocation :tk-virtual)
+   (active-border-width	 :init-keyword :active-border-width 
+			 :accessor active-border-width
+			 :tk-name activeborderwidth
+			 :allocation :tk-virtual)
+   (active-foreground	 :init-keyword :active-foreground 
+			 :accessor active-foreground
+			 :tk-name activeforeground
+			 :allocation :tk-virtual)
+   (disabled-foreground  :init-keyword :disabled-foreground 
+			 :accessor disabled-foreground
+			 :tk-name disabledforeground
+			 :allocation :tk-virtual)
+   (font 		 :init-keyword :font 
+			 :accessor font 
+			 :allocation  :tk-virtual)
+   (foreground 	 	 :init-keyword :foreground 
+			 :accessor foreground 
+			 :allocation :tk-virtual)
+   (post-command 	 :init-keyword :post-command 
+			 :accessor post-command
+			 :tk-name postcommand
+			 :allocation :tk-virtual)
+   (select-color 	 :init-keyword :select-color 
+			 :accessor select-color
+			 :tk-name selectcolor
+			 :allocation :tk-virtual)
+   (tear-off 		 :init-keyword :tear-off 
+			 :accessor tear-off
+			 :tk-name tearoff
+			 :allocation :tk-virtual))
+  :metaclass <Tk-metaclass>)
+
+
+(define-method tk-constructor ((self <Menu>))
+  Tk:menu)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Menu> methods
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;
+;;; Activate
+;;;
+(define-method activate ((self <Menu>) index)
+  ((slot-ref self 'Id) 'activate index))
+
+;;;
+;;; Menu-add
+;;;
+(define-method menu-add ((self <Menu>) type . args)
+  (apply (slot-ref self 'Id) 'add type args))
+
+;;;
+;;; Delete
+;;;
+(define-method delete ((self <Menu>) index1 . index2)
+  (apply (slot-ref self 'Id) 'delete index1 index2))
+
+
+;;;
+;;; Disable
+;;;
+(define-method disable ((self <Menu>) index)
+  ((slot-ref self 'Id) 'entryconfigure index :state "disabled"))
+
+;;;
+;;; Enable
+;;;
+(define-method enable ((self <Menu>) index)
+  ((slot-ref self 'Id) 'entryconfigure index :state "normal"))
+
+;;;
+;;; Menu-entry-configure
+;;;
+(define-method menu-entry-configure ((self <Menu>) index . args)
+  (apply (slot-ref self 'Id) 'entryconf index args))
+
+;;;
+;;; Menu-index
+;;;
+(define-method menu-index ((self <Menu>) index)
+  ((slot-ref self 'Id) 'index index))
+
+;;;
+;;; Invoke
+;;;
+(define-method invoke ((self <Menu>) index)
+  ((slot-ref self 'Id) 'invoke index))
+
+;;;
+;;; Menu-Post
+;;; 
+(define-method menu-post ((self <Menu>) x y)
+  ((slot-ref self 'Id) 'post x y))
+
+;;;
+;;; Menu-unpost
+;;; 
+(define-method menu-unpost ((self <Menu>))
+  ((slot-ref self 'Id) 'unpost))
+
+;;;
+;;; Menu-y-position
+;;;
+(define-method menu-y-position ((self <Menu>) index)
+  ((slot-ref self 'Id) 'ypos index))
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Menu-button> class definition
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class <Menu-button> (<Tk-simple-widget> <Tk-sizeable> <Tk-bitmap> 
+			     <Tk-simple-text>)
+  ((active-background   :accessor     active-background
+			:init-keyword :active-background
+		        :allocation   :tk-virtual
+			:tk-name      activebackground)
+   (active-foreground   :accessor     active-foreground
+			:init-keyword :active-foreground
+			:allocation   :tk-virtual
+			:tk-name      activeforeground)
+   (disabled-foreground :accessor     disabled-foreground
+			:init-keyword :disabled-foreground
+			:allocation   :tk-virtual
+			:tk-name      disabledf)
+   (indicator-on	:init-keyword :indicator-on
+			:accessor     indicator-on
+			:allocation   :tk-virtual
+			:tk-name      indicatoron)
+   (menu		:accessor     menu-of
+			:allocation   :tk-virtual)
+   (state 		:accessor     state
+			:init-keyword :state
+			:allocation   :tk-virtual)
+   (underline 		:accessor     underline
+			:init-keyword :underline
+			:allocation   :tk-virtual)))
+
+(define-method tk-constructor ((self <Menu-button>))
+  Tk:menubutton)
+
+(define-method initialize ((self <Menu>) initargs)
+  ;; Do normal initialization
+  (next-method)
+  ;; If a parent is specified, modify the parent menu-button to point self
+  (let ((parent (get-keyword :parent initargs #f)))
+    (if (and parent (is-a? parent <Menu-button>))
+	(slot-set! parent 'menu (Id self)))))
+
+;;;
+;;; Define new accessors for menu slot to allow (set! (menu m-b) m) where m is an
+;;; instance. 
+;;; Note that not init-keyword exists for menu since a menu must be descendant 
+;;; of its's menu button (this implies it must be created after its menu button).
+;;;
+(define-method (setter menu-of) ((self <Menu-button>) (v <Menu>))
+  (slot-set! self 'menu (slot-ref v 'Id)))
+
+(define-method menu-of ((self <Menu-button>))
+  (Id->instance (slot-ref self 'menu)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Make-menubar	-- A simper way to make menus
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define (make-menubar parent l)
+  (define (make-menu parent items)
+    (let ((m (make <Menu> :parent parent)))
+      (for-each (lambda (item)
+		  (cond
+		   ; Separator
+		   ((equal? (car item) "")
+		         (menu-add m 'separator))
+		   ; Normal Menu
+		   ((and (= (length item) 2)
+			 (procedure? (cadr item))
+			 (menu-add m 'command :label   (car item)
+				   	      :command (cadr item))))
+		   ; Cascade menu
+		   ((and (= (length item) 2)
+			 (list? (cadr item))
+			 (menu-add m 'cascade :label (car item)
+				   	      :menu (make-menu m (cadr item)))))
+		   (ELSE
+		         (apply menu-add m item))))
+		items)
+      m))
+  (let ((f (make <Frame> :parent parent)))
+    ;; Store l in the f object to avoid GC problems
+    (set-widget-data! (Id f) 
+		      `(:menu ,l ,@(get-widget-data (Id f))))  
+    (for-each (lambda (x)
+		(let* ((title (if (list? (car x)) (caar x) (car x)))
+		       (rest  (cdr x))
+		       (mb    (make <Menu-button> :text title :parent f)))
+
+		  (if (list? (car x))
+		      ;; User has specified pack options. Use them.
+		      (apply pack mb (cdar x))
+		      ;; Pack menubutton on left and create its associated menu
+		      (pack mb :side "left"))
+		  (make-menu mb rest)))
+	    l)
+    ;; Return the created frame as result
+    f))
+ 
+(provide "Menu")

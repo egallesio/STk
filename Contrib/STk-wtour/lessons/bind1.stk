@@ -1,0 +1,9 @@
+;; Event binding
+
+(entry '.e1 :relief "sunken")
+(pack .e1 :expand #t :fill "x")
+
+(bind .e1 "<Tab>" 	    (lambda () 
+			      (display "You pressed Tab!\n")))
+(bind .e1 "<ButtonPress-2>" (lambda ()
+			      (display "You pressed Button 2!\n")))

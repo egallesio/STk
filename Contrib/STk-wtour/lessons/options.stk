@@ -1,0 +1,9 @@
+;; Widget options
+
+(option 'add "*background" "red")
+(option 'add "*Button.foreground" "white")
+
+(button '.a :text "Press Me!")
+(button '.b :text "And Me Too!")
+(pack .a .b)
+

@@ -1,0 +1,52 @@
+#!/usr/local/bin/stk -f
+;;;;
+;;;; s t k l o s - d e m o . s t k 	  --  A demo which use some STklos classes
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 24-Aug-1993 19:55
+;;;; Last file update: 21-Jul-1996 11:32
+
+(require "Tk-classes")
+
+;;;; Utilities
+
+(define (make-rectangle coords tags)
+  (make <Rectangle> :parent c :coords coords :fill "Ivory4" :tags tags))
+
+(define (make-circle coords tags)
+  (make <Oval> :parent c :coords coords :fill "Ivory4" :tags tags))
+
+;;;; Make canvas
+(define f (make <Frame>))
+(define l (make <Label>  :parent f :text "A simple demo written in STklos"))
+(define c (make <Canvas> :parent f :relief "groove" :height 400 :width 700))
+(define m (make <Label>  :parent f :font "fixed"
+			 :foreground "red"
+		         :text "Left button to move squares. Right button to move circles"))
+(define q (make <Button> :text "Quit" :command '(exit)))
+
+(pack l c m q :in f :expand #t :fill 'both)
+(pack f)
+
+;;;; Make items
+(define r1 (make-rectangle '(0 0 50 50) 	"Rect"))
+(define r2 (make-rectangle '(100 100 150 150)   "Rect"))
+(define r3 (make-rectangle '(200 200 250 250)   "Rect"))
+
+(define c1 (make-circle '(50 50 100 100)   "Circle"))
+(define c2 (make-circle '(150 150 200 200) "Circle"))
+(define c3 (make-circle '(250 250 300 300) "Circle"))
+
+;;;; Make rectangles movable with button 1 and circles with button 2
+(bind-for-dragging c :button 1 :tag "Rect")
+(bind-for-dragging c :button 3 :tag "Circle")

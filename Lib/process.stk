@@ -1,0 +1,27 @@
+;;;;
+;;;; p r o c e s s . s t k 		-- Processes 
+;;;;
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date:  9-Nov-1994 13:24
+;;;; Last file update: 13-Aug-1996 21:43
+;;;;
+
+(if (symbol-bound? '%init-process)
+    ;; Process module is in the core interpreter
+    (%init-process)
+    ;; Try to load it dynamically
+    (load (string-append "process." *shared-suffix*)))
+
+(provide "process")

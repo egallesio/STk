@@ -1,0 +1,97 @@
+'\"
+'\" Copyright (c) 1990-1994 The Regents of the University of California.
+'\" Copyright (c) 1994-1995 Sun Microsystems, Inc.
+'\"
+'\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" @(#) after.n 1.21 95/09/01 10:35:38
+'\" 
+.so STk-man.macros
+.TH after n 3.1 STk "Tk Built-In Commands"
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+after \- Execute a command after a time delay
+.SH SYNOPSIS
+(\fBafter \fIms\fR)
+.sp
+(\fBafter \fIms \fR\fIthunk\fR)
+.sp
+(\fBafter 'cancel \fIid\fR)
+.sp
+(\fBafter 'cancel \fIthunk)\fR
+.sp
+(\fBafter 'idle \fR?\fIthunk\fR?)
+.sp
+(\fBafter info\fR)
+.sp
+(\fBafter info \fR\fIid\fR)
+.BE
+
+.SH DESCRIPTION
+.PP
+The \fBafter\fR procedure is used to delay execution of the program or to execute
+a procedure in background after a delay.  It has several forms,
+depending on the first argument to the procedure:
+.TP
+(\fBafter \fIms\fR)
+\fIMs\fR must be an integer giving a time in milliseconds.
+The procedure sleeps for \fIms\fR milliseconds and then returns.
+While the procedure is sleeping the application does not respond to
+X events or any other events.
+.TP
+(\fBafter \fIms \fIthunk\fR)
+In this form the procedure returns immediately, but it arranges
+for a STk procedure to be executed \fIms\fR milliseconds later as a
+background event handler.
+The procedure will be executed exactly once, at the given time.
+The delayed procedure must be a \fIthunk\fR.
+If an error occurs while executing the delayed procedure then the
+\fBtkerror\fR mechanism is used to report the error.
+The \fBafter\fR procedure returns a symbol that can be used
+to cancel the delayed procedure using \fBafter cancel\fR.
+.TP
+(\fBafter 'cancel \fIid\fR)
+Cancels the execution of a delayed procedure that
+was previously scheduled.
+\fIId\fR indicates which procedure should be canceled;  it must have
+been the return value from a previous \fBafter\fR procedure.
+If the procedure given by \fIid\fR has already been executed then
+the \fBafter cancel\fR procedure has no effect.
+.TP
+(\fBafter 'cancel \fIthunk\fR)
+This procedure also cancels the execution of a delayed procedure. If there is
+a pending procedure that matches \fIthunk\fR, it is cancelled and will
+never be executed; if no such procedure is currently
+pending then the \fBafter cancel\fR procedure has no effect.
+.TP
+(\fBafter 'idle \fIthunk\fR)
+Arranges for the given \fIthunk\fR to be evaluated later as an idle handler
+The script will be run exactly once, the next time the Tk event
+loop is entered and there are no events to process.
+The procedure returns an identifier that can be used
+to cancel the delayed procedure using \fBafter cancel\fR.
+If an error occurs while executing the script then the
+\fBtkerror\fR mechanism is used to report the error.
+.TP
+(\fBafter 'info \fR\fIid\fR)
+.TP
+(\fBafter 'info\fR)
+This procedure returns information about existing event handlers.
+If no \fIid\fR argument is supplied, then the procedure returns
+a list of the identifiers for all existing
+event handlers created by the \fBafter\fR procedure for this
+interpreter.
+If \fIid\fR is supplied, it specifies an existing handler;
+\fIid\fR must have been the return value from some previous call
+to \fBafter\fR and it must not have triggered yet or been cancelled.
+In this case the procedure returns a list with two elements.
+The first element of the list is the script associated
+with \fIid\fR, and the second element is either
+\fBidle\fR or \fBtimer\fR to indicate what kind of event
+handler it is.
+
+
+.SH "SEE ALSO"
+tkerror

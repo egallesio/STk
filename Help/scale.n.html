@@ -1,0 +1,324 @@
+<HTML><HEAD><TITLE>Tk Built-In Commands - scale manual page</TITLE></HEAD>
+<BODY bgcolor = #c3c3ff>
+<H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageBlue.gif"> scale</H2>
+<I>Create and manipulate scale widgets</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<H3><A NAME="M2">SYNOPSIS</A></H3>
+(<B>scale</B><I> widget-name </I>?<I>options</I>?)<BR>
+<H3><A NAME="M3">STANDARD OPTIONS</A></H3>
+<PRE>
+<B><A HREF="options.n.html#M:activebackground">:activebackground</A></B>                      <B><A HREF="options.n.html#M:background">:background</A></B> 
+<B><A HREF="options.n.html#M:borderwidth">:borderwidth</A></B>                           <B><A HREF="options.n.html#M:cursor">:cursor</A></B> 
+<B><A HREF="options.n.html#M:font">:font</A></B>                                  <B><A HREF="options.n.html#M:foreground">:foreground</A></B> 
+<B><A HREF="options.n.html#M:highlightbackground">:highlightbackground</A></B>                   <B><A HREF="options.n.html#M:highlightcolor">:highlightcolor</A></B> 
+<B><A HREF="options.n.html#M:highlightthickness">:highlightthickness</A></B>                    <B><A HREF="options.n.html#M:orient">:orient</A></B> 
+<B><A HREF="options.n.html#M:relief">:relief</A></B>                                <B><A HREF="options.n.html#M:repeatdelay">:repeatdelay</A></B> 
+<B><A HREF="options.n.html#M:repeatinterval">:repeatinterval</A></B>                        <B><A HREF="options.n.html#M:takefocus">:takefocus</A></B> 
+<B><A HREF="options.n.html#M:troughcolor">:troughcolor</A></B>                          
+</PRE>
+<H3><A NAME="M19">WIDGET-SPECIFIC OPTIONS</A></H3>
+<DL>
+<P>
+<DT><I>Name</I>:            <B>bigIncrement</B>
+<DT><I>Class</I>:           <B>BigIncrement</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M20">:bigincrement</A></B>
+<DT><I>STklos slot name</I>: <B>big-increment</B>
+<DD>Some interactions with the scale cause its value to change by
+``large'' increments;  this option specifies the size of the
+large increments.  If specified as 0, the large increments default
+to 1/10 the range of the scale.
+<P>
+<P>
+<DT><I>Name</I>:            <B>command</B>
+<DT><I>Class</I>:           <B>Command</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M21">:command</A></B>
+<DT><I>STklos slot name</I>: <B>command</B>
+<DD>Specifies a STk command to invoke whenever the scale's
+value is changed via a widget command.
+The procedure is called with a real number indicating the
+new value of the scale. Example:
+<P>
+</DL>
+<UL>
+<UL>
+(scale '.s :command (lambda (x) 
+                       (format #t &quot;New position is ~S\n&quot; x)))
+</UL>
+</UL>
+<DL>
+<P>
+<DT><I>Name</I>:            <B>digits</B>
+<DT><I>Class</I>:           <B>Digits</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M22">:digits</A></B>
+<DT><I>STklos slot name</I>: <B>digits</B>
+<DD>An integer specifying how many significant digits should be retained
+when converting the value of the scale to a string.
+If the number is less than or equal to zero, then the scale picks
+the smallest value that guarantees that every possible slider
+position prints as a different string.
+<P>
+<P>
+<DT><I>Name</I>:            <B>from</B>
+<DT><I>Class</I>:           <B>From</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M23">:from</A></B>
+<DT><I>STklos slot name</I>: <B>from</B>
+<DD>A real value corresponding to the left or top end of the scale.
+<P>
+<P>
+<DT><I>Name</I>:            <B><A HREF="./label.n.html">label</A></B>
+<DT><I>Class</I>:           <B><A HREF="./label.n.html">Label</A></B>
+<DT><I>Option keyword</I>:  <B><A NAME="M24">:label</A></B>
+<DT><I>STklos slot name</I>: <B><A HREF="./label.n.html">label</A></B>
+<DD>A string to display as a label for the scale.  For
+vertical scales the label is displayed just to the right of the
+top end of the scale.  For horizontal scales the label is displayed
+just above the left end of the scale.  If the option is specified
+as an empty string, no label is displayed.
+<P>
+<P>
+<DT><I>Name</I>:            <B>length</B>
+<DT><I>Class</I>:           <B>Length</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M25">:length</A></B>
+<DT><I>STklos slot name</I>: <B>length</B>
+<DD>Specifies the desired long dimension of the scale in screen units
+(i.e. any of the forms acceptable to <B>Tk_GetPixels</B>).
+For vertical scales this is the scale's height;  for horizontal scales
+it is the scale's width.
+<P>
+<P>
+<DT><I>Name</I>:            <B>resolution</B>
+<DT><I>Class</I>:           <B>Resolution</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M26">:resolution</A></B>
+<DT><I>STklos slot name</I>: <B>resolution</B>
+<DD>A real value specifying the resolution for the scale.
+If this value is greater than zero then the scale's value will always be
+rounded to an even multiple of this value, as will tick marks and
+the endpoints of the scale.  If the value is less than zero then no
+rounding occurs.  Defaults to 1 (i.e., the value will be integral).
+<P>
+<P>
+<DT><I>Name</I>:            <B>showValue</B>
+<DT><I>Class</I>:           <B>ShowValue</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M27">:showvalue</A></B>
+<DT><I>STklos slot name</I>: <B>show-value</B>
+<DD>Specifies a boolean value indicating whether or not the current
+value of the scale is to be displayed.
+<P>
+<P>
+<DT><I>Name</I>:            <B>sliderLength</B>
+<DT><I>Class</I>:           <B>SliderLength</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M28">:sliderlength</A></B>
+<DT><I>STklos slot name</I>: <B></B>
+<DD>Specifies the size of the slider, measured in screen units along the slider's
+long dimension.  The value may be specified in any of the forms acceptable
+to <B>Tk_GetPixels</B>.
+<P>
+<P>
+<DT><I>Name</I>:            <B>sliderRelief</B>
+<DT><I>Class</I>:           <B>SliderRelief</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M29">:sliderrelief</A></B>
+<DT><I>STklos slot name</I>: <B>slider-relief</B>
+<DD>Specifies the relief to use when drawing the slider, such as <B>raised</B>
+or <B>sunken</B>.
+<P>
+<P>
+<DT><I>Name</I>:            <B>state</B>
+<DT><I>Class</I>:           <B>State</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M30">:state</A></B>
+<DT><I>STklos slot name</I>: <B>state</B>
+<DD>Specifies one of three states for the scale:  <B>&quot;normal&quot;</B>,
+<B>&quot;active&quot;</B>, or <B>&quot;disabled&quot;</B>.
+If the scale is disabled then the value may not be changed and the scale
+won't activate.
+If the scale is active, the slider is displayed using the color
+specified by the <B>activeBackground</B> option.
+<P>
+<P>
+<DT><I>Name</I>:            <B>tickInterval</B>
+<DT><I>Class</I>:           <B>TickInterval</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M31">:tickinterval</A></B>
+<DT><I>STklos slot name</I>: <B>tick-interval</B>
+<DD>Must be a real value.
+Determines the spacing between numerical
+tick marks displayed below or to the left of the slider.
+If 0, no tick marks will be displayed.
+<P>
+<P>
+<DT><I>Name</I>:            <B>to</B>
+<DT><I>Class</I>:           <B>To</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M32">:to</A></B>
+<DT><I>STklos slot name</I>: <B>to</B>
+<DD>Specifies a real value corresponding
+to the right or bottom end of the scale.
+This value may be either less than or greater than the <B>from</B> option.
+<P>
+<P>
+<DT><I>Name</I>:            <B>variable</B>
+<DT><I>Class</I>:           <B>Variable</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M33">:variable</A></B>
+<DT><I>STklos slot name</I>: <B>variable</B>
+<DD>Specifies the name of a global variable to link to the scale.  Whenever the
+value of the variable changes, the scale will update to reflect this
+value.
+Whenever the scale is manipulated interactively, the variable
+will be modified to reflect the scale's new value.
+<P>
+<P>
+<DT><I>Name</I>:            <B>width</B>
+<DT><I>Class</I>:           <B>Width</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M34">:width</A></B>
+<DT><I>STklos slot name</I>: <B>width</B>
+<DD>Specifies the desired narrow dimension of the trough in screen units
+(i.e. any of the forms acceptable to <B>Tk_GetPixels</B>).
+For vertical scales this is the trough's width;  for horizontal scales
+this is the trough's height.
+<P>
+</DL>
+<H3><A NAME="M35">DESCRIPTION</A></H3>
+The <B>scale</B> procedure creates a new window (given by the
+<I>widget-name</I> argument) and makes it into a scale widget.
+Additional
+options, described above, may be specified on the procedure line
+or in the option database
+to configure aspects of the scale such as its colors, orientation,
+and relief.  The <B>scale</B> procedure returns its
+<I>widget-name</I> argument.  At the time this procedure is invoked,
+there must not exist a window named <I>widget-name</I>, but
+<I>widget-name</I>'s parent must exist.
+<P>
+A scale is a widget that displays a rectangular <I>trough</I> and a
+small <I>slider</I>.  The trough corresponds to a range
+of real values (determined by the <B>from</B>, <B>to</B>, and
+<B>resolution</B> options),
+and the position of the slider selects a particular real value.
+The slider's position (and hence the scale's value) may be adjusted
+with the mouse or keyboard as described in the BINDINGS
+section below.  Whenever the scale's value is changed, a STk
+procedure is invoked (using the <B>command</B> option) to notify
+other interested widgets of the change.
+In addition, the value
+of the scale can be linked to a STk variable (using the <B>variable</B>
+option), so that changes in either are reflected in the other.
+<P>
+Three annotations may be displayed in a scale widget:  a label
+appearing at the top right of the widget (top left for horizontal
+scales), a number displayed just to the left of the slider
+(just above the slider for horizontal scales), and a collection
+of numerical tick marks just to the left of the current value
+(just below the trough for horizontal scales).  Each of these three
+annotations may be enabled or disabled using the
+configuration options.
+
+<H3><A NAME="M36">WIDGET PROCEDURE</A></H3>
+The <B>scale</B> procedure creates a new STk procedure whose
+name is <I>widget-name</I>.  This
+procedure may be used to invoke various
+operations on the widget.  It has the following general form:
+<PRE>(<I>widget-name option </I>?<I>arg arg ...</I>?)</PRE>
+<I>Option</I> and the <I>arg</I>s
+determine the exact behavior of the procedure.  The following
+procedures are possible for scale widgets:
+<P>
+<DL>
+<DT><A NAME="M37">(<I>widget-name '</I><B>cget</B> <I>option</I>)</A><DD>
+Returns the current value of the configuration option given
+by <I>option</I>.
+<I>Option</I> may have any of the values accepted by the <B>scale</B>
+procedure.
+<P>
+<DT><A NAME="M38">(<I>widget-name '</I><B>configure</B> ?<I>option</I>? ?<I>value option value ...</I>?)</A><DD>
+Query or modify the configuration options of the widget.
+If no <I>option</I> is specified, returns a list describing all of
+the available options for <I>widget-name</I> (see <B>Tk_ConfigureInfo</B> for
+information on the format of this list).  If <I>option</I> is specified
+with no <I>value</I>, then the procedure returns a list describing the
+one named option (this list will be identical to the corresponding
+sublist of the value returned if no <I>option</I> is specified).  If
+one or more <I>option-value</I> pairs are specified, then the procedure
+modifies the given widget option(s) to have the given value(s);  in
+this case the procedure returns an empty list.
+<I>Option</I> may have any of the values accepted by the <B>scale</B>
+procedure.
+<P>
+<DT><A NAME="M39">(<I>widget-name '</I><B>coords </B>)</A><DD>
+<DT><A NAME="M40">(<I>widget-name '</I><B>coords </B><I>value</I>)</A><DD>
+Returns a list whose elements are the x and y coordinates of
+the point along the centerline of the trough that corresponds
+to <I>value</I>.
+If <I>value</I> is omitted then the scale's current value is used.
+<P>
+<DT><A NAME="M41">(<I>widget-name '</I><B>get</B>)</A><DD>
+<DT><A NAME="M42">(<I>widget-name '</I><B>get</B> <I>x y</I>)</A><DD>
+If <I>x</I> and <I>y</I> are omitted, returns the current value
+of the scale.  If <I>x</I> and <I>y</I> are specified, they give
+pixel coordinates within the widget;  the procedure returns
+the scale value corresponding to the given pixel.
+Only one of <I>x</I> or <I>y</I> is used:  for horizontal scales
+<I>y</I> is ignored, and for vertical scales <I>x</I> is ignored.
+<P>
+<DT><A NAME="M43">(<I>widget-name '</I><B>identify</B> <I>x y</I>)</A><DD>
+Returns a string indicating what part of the scale lies under
+the coordinates given by <I>x</I> and <I>y</I>.
+A return value of <B>&quot;slider&quot;</B> means that the point is over
+the slider;  <B>&quot;trough1&quot;</B> means that the point is over the
+portion of the slider above  or to the left of the slider;
+and <B>&quot;trough2&quot;</B> means that the point is over the portion
+of the slider below or to the right of the slider.
+If the point isn't over one of these elements, an empty list
+is returned.
+<P>
+<DT><A NAME="M44">(<I>widget-name '</I><B>set</B> <I>value</I>)</A><DD>
+This procedure is invoked to change the current value of the scale,
+and hence the position at which the slider is displayed.  <I>Value</I>
+gives the new value for the scale.
+The procedure has no effect if the scale is disabled.
+
+<P>
+</DL>
+<H3><A NAME="M45">BINDINGS</A></H3>
+Tk automatically creates class bindings for scales that give them
+the following default behavior.
+Where the behavior is different for vertical and horizontal scales,
+the horizontal behavior is described in parentheses.
+<OL>
+<LI>
+If button 1 is pressed in the trough, the scale's value will
+be incremented or decremented by the value of the <B>resolution</B>
+option so that the slider moves in the direction of the cursor. 
+If the button is held down, the action auto-repeats.
+<LI>
+If button 1 is pressed over the slider, the slider can be dragged
+with the mouse.
+<LI>
+If button 1 is pressed in the trough with the Control key down,
+the slider moves all the way to the end of its range, in the
+direction towards the mouse cursor.
+<LI>
+If button 2 is pressed, the scale's value is set to the mouse
+position.  If the mouse is dragged with button 2 down, the scale's
+value changes with the drag.
+<LI>
+The Up and Left keys move the slider up (left) by the value
+of the <B>resolution</B> option.
+<LI>
+The Down and Right keys move the slider down (right) by the value
+of the <B>resolution</B> option.
+<LI>
+Control-Up and Control-Left move the slider up (left) by the
+value of the <B>bigIncrement</B> option.
+<LI>
+Control-Down and Control-Right move the slider down (right) by the
+value of the <B>bigIncrement</B> option.
+<LI>
+Home moves the slider to the top (left) end of its range.
+<LI>
+End moves the slider to the bottom (right) end of its range.
+</OL>
+<P>
+If the scale is disabled using the <B>state</B> option then
+none of the above bindings have any effect.
+<P>
+The behavior of scales can be changed by defining new bindings for
+individual widgets or by redefining the class bindings.
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookBlue.gif"> Back to the <B>STk</B> main page</A>
+</BODY></HTML>

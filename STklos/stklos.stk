@@ -1,0 +1,553 @@
+;;;;
+;;;; s t k l o s . s t k    -- A variation of the Gregor Kickzales tiny-clos
+;;;;			      for STk
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 20-Feb-1994 21:09
+;;;; Last file update:  1-May-1996 12:13
+;;;;
+
+(require "hash")
+
+(UNLESS (PROVIDED? "stklos")
+  ;; Initialize STklos
+  (%init-stklos)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; First define some macros to ease further writing
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (build-scheme-name l)
+  (cond
+   ((and (list? l) (= (length l) 2) (eq? (car l) 'setter))
+       		        (string->symbol (format #f "the setter of ~A" (cadr l))))
+   ((symbol? l)		l)
+   (else    		(error "bad Scheme name ~S" l))))
+
+(define (build-specializers-list l)
+  ;; returns a pair where specializers and parameters are dissociated
+  (let loop ((l l) (args '()) (spec '()))
+    (cond
+     ((pair? l) ;; Something like ((x <integer>) ...) or (z (x <integer>) ...)
+             (let ((arg (car l)))
+	       (if (list? arg)
+		  (loop (cdr l) (cons (car arg) args) (cons (eval (cadr arg)) spec))
+		  (loop (cdr l) (cons arg args) (cons <top> spec)))))
+     ((null? l) ;; We have finished
+             (cons (reverse spec) (reverse args)))
+     (else      ;; We have an original list with a "dotted" cdr - i.e (a (b c) . d)
+      		(cons 
+		   (append (reverse spec) <top>)
+		   (append (reverse args) l))))))
+
+;;; Define-class
+(define-macro (define-class name supers slots . options)
+  `(define ,name
+     (make (or ,(get-keyword :metaclass options #f)
+	       ,(ensure-metaclass (map eval supers)))
+	   :dsupers ,(if (null? supers)
+			 `(list <object>)
+			 `(list ,@supers))
+	   :slots ',slots
+	   :name ',name)))
+
+
+;;; Method
+(define-macro (method args . body)
+  (let ((decomposition (build-specializers-list args)))
+    `(make <method>
+	   :specializers ',(car decomposition)
+	   :procedure	 (lambda (next-method ,@(cdr decomposition))
+			   ,@body))))
+
+;;; Define-generic
+(define-macro (define-generic name . l)
+  `(define ,name (apply make <generic> :name ',name ',l)))
+
+;;; Define-method
+(define-macro (define-method name args . body)
+  (let* ((name     (build-scheme-name name))
+	 (glob-env (global-environment))
+	 (previous (if (symbol-bound? name glob-env)
+		       (eval name glob-env)
+		       #f))
+	 (m	   (gensym "%M ")))
+    `(begin
+       (unless (and (symbol-bound? ',name) (is-a? ,name <generic>))
+	  (define-generic ,name :default ,previous))
+       (let ((,m (method ,args ,@body)))
+	 ;; Set the generic-function slot of the new method
+	 (slot-set! ,m 'generic-function ,name)
+	 (add-method ,name ,m))
+       ',name)))
+
+;;; is-a?
+(define-macro (is-a? obj class)
+  `(and (member ,class (class-precedence-list (class-of ,obj))) #t))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Metaclass utilities
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (ensure-metaclass supers)
+  (if (null? supers) <class>
+      (let* ((all-metas (map class-of supers))
+	     (all-cpls (apply append
+			      (map (lambda (m) (cdr (class-precedence-list m))) 
+				   all-metas)))
+	     (needed-metas ()))
+	;; Find the most specific metaclasses.  The new metaclass will be
+	;; a subclass of these.
+	(for-each
+	 (lambda (meta)
+	   (when (and (not (member meta all-cpls)) (not (member meta needed-metas)))
+		 (set! needed-metas (append needed-metas (list meta)))))
+	 all-metas)
+	;; Now return a subclass of the metaclasses we found.
+	(if (null? (cdr needed-metas))
+	    (car needed-metas)  ;; If there's only one, just use it.
+	    (ensure-metaclass-with-supers needed-metas)))))
+
+
+(define ensure-metaclass-with-supers
+  (let ((table-of-metas (make-hash-table)))
+    (lambda (meta-supers)
+      (let* ((name (string->symbol (apply & (map class-name meta-supers))))
+	     (entry (hash-table-get table-of-metas name #f)))
+	(if entry entry
+	    (let ((new-metaclass (make <class>
+				      :dsupers meta-supers
+				      :slots ()
+				      :name (gensym "metaclass"))))
+	      (hash-table-put! table-of-metas name new-metaclass)
+	      new-metaclass))))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Utilities
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (compute-slot-getters class slots)
+  (for-each 
+      (lambda (s)
+	(if (pair? s)
+	     (let ((getter-name (get-keyword :getter (cdr s) #f)))
+	       (if getter-name
+		   (eval `(define-method ,getter-name ((self ,class))
+			    (slot-ref self ',(car s))))))))
+      slots))
+
+(define (compute-slot-setters class slots)
+  (for-each
+      (lambda (s)
+	(if (pair? s)
+	     (let ((setter-name (get-keyword :setter (cdr s) #f)))
+	       (if setter-name
+		   (eval `(define-method ,setter-name ((self ,class) value)
+			    (slot-set! self ',(car s) value)))))))
+      slots))
+
+(define (compute-slot-accessors class slots)
+  (for-each
+      (lambda (s)
+	(if (pair? s)
+	     (let ((accessor-name (get-keyword :accessor (cdr s) #f)))
+	       (if accessor-name
+		   (eval `(begin
+			    (define-method ,accessor-name ((self ,class))
+			      (slot-ref self ',(car s)))
+			    (define-method (setter ,accessor-name) ((self ,class) v)
+			      (slot-set! self ',(car s) v))))))))
+      slots))
+
+
+(define (get-slot-allocation s)
+  (if (symbol? s)
+      :instance
+      (get-keyword :allocation (cdr s) :instance)))
+
+;;;
+;;; compute-getters-n-setters
+;;; 
+
+(define (compute-getters-n-setters class slots)
+  (map (lambda (s)
+	 (if (pair? s)
+	     (cons (car s) (compute-get-n-set class s))
+	     (cons s	   (compute-get-n-set class (list s)))))
+       slots))
+
+
+;;;
+;;; compute-cpl
+;;;
+
+(define (compute-cpl class)
+  
+  (define (filter-cpl class)
+    (let ((res  '()))
+      (for-each (lambda (item)
+		  (unless (or (eq? item <object>) 
+			      (eq? item <top>) 
+			      (member item res))
+		   (set! res (cons item res))))
+	      class)
+      res))
+
+  (let* ((supers   (slot-ref class 'direct-supers))
+	 (big-list (apply append (cons class supers) (map compute-cpl supers))))
+    (reverse (list* <top> <object> (filter-cpl big-list)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Compute-get-n-set
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-method compute-get-n-set ((class <class>) s)
+  (case (get-slot-allocation s)
+    (:instance ;; Instance slot
+               ;; get-n-set is just its offset
+     	       (let ((already-allocated (slot-ref class 'nfields)))
+		 (slot-set! class 'nfields (+ already-allocated 1))
+		 already-allocated))
+
+    (:class  ;; Class slot
+             ;; Class-slots accessors are implemented as 2 closures around 
+     	     ;; a Scheme variable. As instance slots, class slots must be
+	     ;; unbound at init time. Since assignement to an unbound variable 
+  	     ;; is not possible with our set! (in this case set! thinks that
+	     ;; the variable has not been defined), our variable is in fact 
+	     ;; a vector of length 1. This permits to circumvent this problem, 
+             ;; without introducing a "set-environment" primitive.
+             (let ((shared-cell (make-vector 1)))
+	       (list (lambda (o)   (vector-ref shared-cell 0))
+		     (lambda (o v) (vector-set! shared-cell 0 v)))))
+
+    (:virtual;; No allocation
+     	     ;; slot-ref and slot-set! function must be given by the user
+     	     (let ((get (get-keyword :slot-ref  (cdr s) #f))
+		   (set (get-keyword :slot-set! (cdr s) #f)))
+	       (unless (and get set)
+		  (error "You must supply a :slot-ref and a :slot-set! in ~A" s))
+	       (list (eval get) 
+		     (eval set))))
+    (else    (error "Allocation \"~S\" is unknown" (get-slot-allocation s)))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Initialize
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-method initialize ((object <object>) initargs)
+  (%initialize-object object initargs))
+
+(define-method initialize ((class <class>) initargs)
+  (next-method)
+  (let ((dslots (get-keyword :slots initargs '())))
+    (slot-set! class 'name	  	(get-keyword :name    initargs '???))
+    (slot-set! class 'direct-supers 	(get-keyword :dsupers initargs '()))
+    (slot-set! class 'direct-slots  	dslots)
+    (slot-set! class 'cpl		(compute-cpl class))
+    (let ((slots (%compute-slots class)))
+      (slot-set! class 'slots	  	  slots)
+      (slot-set! class 'nfields	  	  0)
+      (slot-set! class 'initializers      (%compute-initializers slots))
+      (slot-set! class 'getters-n-setters (compute-getters-n-setters class slots)))
+
+    ;; Build getters - setters - accessors
+    (compute-slot-getters   class dslots)
+    (compute-slot-setters   class dslots)
+    (compute-slot-accessors class dslots)))
+
+
+(define-method initialize ((generic <generic>) initargs)
+  (let ((previous-definition (get-keyword :default initargs #f)))
+    (next-method)
+    (slot-set! generic 'name    (get-keyword :name initargs '???))
+    (slot-set! generic 'methods (if (is-a? previous-definition <procedure>)
+				    (list (make <method>
+						:specializers <top>
+						:procedure 
+						    (lambda (nm . l)
+						      (apply previous-definition 
+							     l))))
+				    ()))))
+
+(define-method initialize ((method <method>) initargs)
+  (next-method)
+  (slot-set! method 'generic-function #f)
+  (slot-set! method 'specializers (get-keyword :specializers initargs '()))
+  (slot-set! method 'procedure	  (get-keyword :procedure initargs (lambda l '()))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Allocate-instance
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-method allocate-instance ((class <class>) initargs)
+  (%allocate-instance class))
+
+(define-method make-instance ((class <class>) initargs)
+  (let ((instance (allocate-instance class initargs)))
+    (initialize instance initargs)
+    instance))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Make. 
+;;;;
+;;;; A new definition which overwrite the previous one which was built-in
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (MAKE class . initargs)
+  (make-instance class initargs))
+
+;;;;
+;;;; Protocol for calling standard generic functions. 
+;;;; This protocol is not used for real <generic> function (in this case
+;;;; we use a completly C hard-coded protocol).
+;;;; The method apply-generic is called by the interpreter when a subclass
+;;;; of <generic> is applied.
+;;;;
+(define-method apply-generic ((gf <generic>) args)
+  ;; Verify that this function has associated methods
+  (if (null? (slot-ref gf 'methods))
+      (no-method gf args))
+  
+  (let ((applicable (apply find-method gf args)))
+    (if applicable
+	(let* ((methods (sort-applicable-methods gf applicable args))
+	       (procs   (map (lambda (x) (slot-ref x 'procedure)) methods)))
+	  ;; Call the first applicable method
+	  (letrec ((next (lambda (procs args)
+			   (lambda new-args
+			     (let ((a (if (null? new-args) args new-args)))
+			       (if (null? procs)
+				   (no-next-method gf a)
+				   (apply (car procs)
+					  (next (cdr procs) a)
+					  a)))))))
+	    (apply (car procs) (next (cdr procs) args) args)))
+	;; No applicable method
+	(no-applicable-method gf args))))
+
+(define-method sort-applicable-methods ((gf <generic>) methods args)
+  (let ((targs (map class-of args)))
+    (sort methods (lambda (m1 m2) (method-more-specific? m1 m2 targs)))))
+
+(define-method method-more-specific? ((m1 <method>) (m2 <method>) targs)
+  (%method-more-specific? m1 m2 targs))
+
+;;;;
+;;;; Methods for the possible error we can encounter when calling a gf
+;;;;
+
+(define-method no-next-method ((gf <generic>) args)
+  (error "No next method when calling ~S (name=~S) with ~S as argument" 
+	 gf (slot-ref gf 'name) args))
+
+(define-method no-applicable-method ((gf <generic>) args)
+  (error "No applicable method for ~S\nin call ~S" 
+	 gf (append (cons (slot-ref gf 'name) args))))
+
+(define-method no-method ((gf <generic>) args)
+  (error "No method defined for ~S (name=~S)"  gf (slot-ref gf 'name)))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Change-class
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-method change-class ((old-instance <object>) (new-class <class>))
+  (let ((new-instance (allocate-instance new-class ()))
+	(old-slots    (map (lambda (x) (if (pair? x) (car x) x)) 
+			   (class-slots (class-of old-instance)))))
+    ;; Set all the common slots to their old value
+    (for-each (lambda (slot)
+		(if (and (slot-exists? new-instance slot)
+			 (slot-bound? old-instance slot))
+		    (slot-set! new-instance slot (slot-ref old-instance slot))))
+	      old-slots)
+    (%modify-instance old-instance new-instance)))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Clone functions (from rdeline@CS.CMU.EDU)
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-method shallow-clone ((self <object>))
+  (let ((clone (%allocate-instance (class-of self)))
+	(slots (map (lambda (x) (if (pair? x) (car x) x)) 
+		    (class-slots (class-of self)))))
+    (for-each (lambda (slot)
+		(if (slot-bound? self slot)
+		    (slot-set! clone slot
+			       (slot-ref self slot))))
+	      slots)
+    clone))
+
+(define-method deep-clone ((self <object>))
+  (let ((clone (%allocate-instance (class-of self)))
+	(slots (map (lambda (x) (if (pair? x) (car x) x)) 
+		    (class-slots (class-of self)))))
+    (for-each (lambda (slot)
+		(if (slot-bound? self slot)
+		    (slot-set! clone slot
+			       (let ((value (slot-ref self slot)))
+				 (if (instance? value)
+				     (deep-clone value)
+				     value)))))
+	      slots)
+    clone))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; method-body
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-method method-body ((self <method>))
+  (let* ((spec (map class-name (slot-ref self 'specializers)))
+	 (proc (procedure-body (slot-ref self 'procedure)))
+	 (args (cdadr proc))
+	 (body (cddr proc)))
+    (list* 'method (map list args spec) body)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Composite-metaclass> metaclass
+;;;; 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class <Composite-metaclass> (<class>)
+  ())
+
+(define-method compute-get-n-set ((class <Composite-metaclass>) slot)
+  (if (memv (get-slot-allocation slot) '(:propagated :special))
+      (compute-propagated-get-n-set slot)
+      (next-method)))
+
+(define (compute-propagated-get-n-set s)
+  (let ((prop   	(or (get-keyword :propagate-to  (cdr s) #f)
+			    (get-keyword :propagate     (cdr s) #f)))
+	(s-name   	(car s))
+	(build-reader   (lambda (s default)
+			  (unless (pair? s) (set! s (list s default)))
+			  `(slot-ref (slot-ref o ',(car s)) ',(cadr s))))
+	(build-writer	(lambda (s default)
+			  (unless (pair? s) (set! s (list s default)))
+			  `(slot-set! (slot-ref o ',(car s)) ',(cadr s) v))))
+
+    (unless prop (error "Propagation not specified for slot ~s" s-name))
+    (unless (pair? prop) (error "Bad propagation list for slot ~s" s-name))
+
+    (list 
+       ;; The getter
+       (eval `(lambda (o) ,(build-reader (car prop) s-name)))
+       ;; The setter
+       (eval `(lambda (o v)
+		,@(map (lambda (item) (build-writer item s-name))
+		       prop))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Methods to compare objects
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define-method object-eqv? (x y)
+  #f)
+
+(define-method object-equal? (x y)
+  #f)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Methods to display/write an object
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;; Write
+(define-method write-object (o file)
+  (format file "#[~A ~A]" (class-name (class-of o)) (address-of o)))
+
+(define-method write-object((self <class>) file)
+   (format file "#[~A ~A]" (class-name (class-of self)) 
+	   		   (class-name self)))
+
+(define-method write-object((self <generic>) file)
+  (format file "#[~A ~A]" (class-name (class-of self)) 
+	  		  (slot-ref self 'name)))
+
+;;; Display (do the same thing as write by default)
+(define-method display-object (o file) 
+  (write-object o file))
+
+;;; Tk-write-object is called when a STklos object is passed to a Tk-command.
+;;; By default, we do the same job as write; but if an object is a <Tk-widget>
+;;; we will pass it its Eid. The method for <Tk-widget> is defined elsewhere.
+(define-method Tk-write-object (o file)
+  (write-object o file))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Dylan Setters.
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define %syntax-set! 	set!)
+(define %syntax-define 	define)
+(define %dylan-setters	'initialized)
+
+(define-macro (setter var)
+  (let ((x (build-scheme-name `(setter ,var))))
+    `(if (symbol-bound? ',x)
+	 ,x
+	 (error "setter of ~s is undefined" ',var))))
+
+(define-macro (define var . val)
+  (when (null? val) (error "define: no value provided for ~A" var))
+  (if (and (pair? var) (eqv? (car var) 'setter))
+      `(%syntax-define ,(build-scheme-name var) ,@val)
+      `(%syntax-define ,var ,@val)))
+
+(define-macro (set! var val)
+  (if (list? var) 
+      `(,(build-scheme-name `(setter ,(car var))) ,@(cdr var) ,val)
+      `(%syntax-set! ,(build-scheme-name var) ,val)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Backward compatibility
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define class-cpl class-precedence-list)
+
+(provide "stklos")
+)

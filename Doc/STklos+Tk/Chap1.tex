@@ -1,0 +1,809 @@
+%
+% Chapter Getting Started
+%
+%           Author: Erick Gallesio [eg@kaolin.unice.fr]
+%    Creation date:  4-Nov-1992 15:37
+% Last file update: 24-Jul-1996 16:28
+
+\chapter{Getting Started}
+
+%\begin{flushright}
+%{\Huge\bf 1}\\[5mm]
+%{\Huge\bf Getting Started}
+%\end{flushright}
+
+
+This chapter will explain the things you must know to begin to manipulate Tk
+widgets as {\stklos} objects. This is a short introduction for programming the
+Tk toolkit with objects. If you know how to program it with the Tcl language,
+you will see that things are not too much different (at least at first
+sight). A good introduction to Tk programming in Tcl can be found in
+\cite{Ouster-bok} or \cite{Welch-book}.
+
+\section{First steps}
+
+When you want to use the Tk toolkit with the {\stklos}, you must first call
+the {\stk} interpreter. Launching the interpreter is usually done by a
+call to the shell script {\tt stk} which must have been installed in a
+standard place. Once, the interpreter is initialized, a small square window
+will appear on your display. This window is called the {\em root
+window\index{root window}}. Its value is always retained in the global
+variable {\tt *top-root*\index{*top-root*}}.
+
+Once the Tk initialization is complete, you have to load the file 
+{\tt Tk-classes}. This can be done by 
+\begin{quote}
+\begin{verbatim}
+(require "Tk-classes")
+\end{verbatim}
+\end{quote}
+
+The {\tt Tk-classes} file contains a set of {\tt autoload}s for all the
+Tk widgets defined in the {\stk} release. If you plan to always work with
+those classes, you can put this line in your {\stk} init file (i.e. in the
+file ``{\tt \~/.stkrc}'') to avoid (manual) loading of this file.
+
+From now, we are able to interact with the Tk toolkit. Try to enter the following
+lines at the {\stk} prompt: 
+\begin{quote}
+\begin{verbatim}        
+(define hello (make <Label> :text "Hello, world"))
+\end{verbatim}
+\end{quote}
+
+The call to {\tt make} creates a new object (i.e. an instance of the class {\tt
+<Label>}) with its slot {\tt text} filled with the string {\tt "Hello,
+world"}. In the above example, this new object is assigned to the symbol
+{\tt hello}. Even, if a new label is created, nothing will be displayed on
+your screen. You'll have to use a {\em geometry manager}\index{geometry
+manager} for displaying a Tk widget onto screen. Two window managers are
+provided with Tk, namely the {\em packer}\index{packer} and the {\em
+placer}\index{placer}. Both command have a full set of options which will
+be detailed later (see \ref{packer}). For now, we will just use the packer
+in its simpler form:
+\begin{quote}
+\begin{verbatim}        
+(pack hello)
+\end{verbatim}
+\end{quote}
+permits to map the {\tt hello} button onto screen. 
+
+Let us see further how the {\tt hello} button is built. Using describe
+on it will display:
+\begin{quote}
+\begin{verbatim}
+#[<label> e1444] is an instance of class <label>
+Slots are: 
+     id = #[Tk-command .v1]
+     eid = #[Tk-command .v1]
+     parent = #[Tk-command .]
+     bitmap = ""
+     width = 0
+     height = 0
+     anchor = "center"
+     font = "9x15"
+     foreground = "Black"
+     pad-x = 1
+     pad-y = 1
+     text = "Hello, world"
+     text-variable = ""
+     background = "#cccccc"
+     border-width = 0
+     cursor = ""
+     relief = "flat"
+\end{verbatim}
+\end{quote}
+
+{\tt Id\index{Id slot}}, {\tt Eid\index{Eid slot}} and {\tt
+parent\index{parent slot}} slots are present in all Tk widgets and are used
+by the system. Don't try to change their value.  Other slots depend of the
+kind (i.e. the class) of widget. The slots listed above correspond to
+the various Tk options available on a label.  Of course you can
+consult/change their value with the standard {\tt slot-ref} or {\tt
+slot-set!} primitives.  For instance, one can change the background color
+of the {\tt hello} button with the following form:
+\begin{quote}
+\begin{verbatim}
+(slot-set! hello 'background "Chocolate")
+\end{verbatim}
+\end{quote}
+or, using the {\stklos} generalized assignment,
+\begin{quote}
+\begin{verbatim}
+(set! (background hello) "Chocolate")
+\end{verbatim}
+\end{quote}
+
+Of course, the background value can be queried with
+\begin{quote}
+\begin{verbatim}
+(slot-ref hello 'background)
+        --> "Chocolate"
+\end{verbatim}
+\end{quote}
+\noindent
+or
+\begin{quote}
+\begin{verbatim}
+(background hello)
+        --> "Chocolate"
+\end{verbatim}
+\end{quote}
+
+Here, {\tt background} is used as an accessor\index{accessor} of the label
+background. It would be also possible to specify this value at label
+instantiation with the {\tt :background} {\em initialization keyword
+\index{initialization keyword}} and the same window could have be obtained
+with the following {\tt make} call 
+\begin{quote}
+\begin{verbatim}
+(define hello (make <Label> :text "Hello world" 
+                            :background "Chocolate"))
+\end{verbatim}
+\end{quote}
+
+\section{Class Hierarchy}
+
+{\stklos} Tk classes permit to {\em reify} the Tk widgets into {\stklos
+objects}. It means that every graphical object used in a program such as a
+menu, a label or a button is represented as a {\stklos} object. All the
+defined {\stklos} classes build a hierarchy which is briefly described
+here. Firstly, all the classes shared a unique ancestor: the {\tt <Tk-object>}
+class. Instances of this class contain informations which are necessary for
+establishing a communication between the Scheme and Tk worlds. Principally,
+objects of this class have the three slots cited before {\tt Id\index{Id
+slot}}, {\tt Eid\index{Eid slot}} and {\tt parent\index{parent slot}}. The
+{\tt Id} slot contains a Tk command \cite{STk-ref-man}, generated by
+{\stklos} itself, which correspond to the {\stk} command which implement the
+object.  The {\tt parent} slot contains a reference to the object which
+(graphically) include the current object. This slot will be discussed later.
+Normally, end users will not have to use direct instances of the {\tt
+<Tk-object>} class\footnote{All classes whose name begin with the ``Tk-''
+prefix are not are not intended for the final user. They will be discussed in
+this document only if it seems necessary for a good class hierarchy
+comprehension.}.
+
+The next level in our class hierarchy define a fork with two branches: the
+{\tt <Tk-widget>}\index{<Tk-widget> class} class and {\tt<Tk-canvas-item>}
+\index{<Tk-canvas-item> class} class. Instances of the
+former class are classical widgets such as buttons, menus or canvases since
+instances of the later are objects contained in a canvas such as lines or
+rectangles.  {\tt <Tk-widget>}s are also divided in two categories: {\tt
+<Tk-simple-widget>}s and {\tt <Tk-composite-widget>}s. Simples widgets are
+directly implemented as Tk objects and composite ones are build upon simple
+widgets (e.g. file browser, alert messages and so on). The head of the
+{\stklos} hierarchy is shown in Figure \ref{Head-hierarchy}.
+\begin{figure}
+%\centerline{\epsfig{figure={Fig1-1.idraw},height={2.00in},width={2.00in}}}
+\centerline{\epsfig{file={Fig1-1.eps}}}
+\caption{Head of the {\stklos} hierarchy}
+\label{Head-hierarchy}
+\end{figure}
+
+\subsection{The {\tt <Tk-widget>} class}
+
+No slot is defined for this class. However, since this class is common to all
+the interface objects (menus, buttons, label, \ldots), it permits to define
+their common behavior. The behavior of those objects is described using
+{\stklos} methods with one of their argument (generally the first) which is a
+{\tt <Tk-widget>}. The {\em pack\index{pack}} geometry manager cited below is
+one of such methods. The {\em packer} will be fully described below (see
+\pageref{packer-doc}); however, briefly stated, we can say that it permits to
+explain the geometry of a widget depending of its neighbors.  The example below
+shows how to use the pack primitive with arguments.
+\begin{quote}
+\begin{verbatim}
+(define lab1 (make <Label> :text "Label 1"))
+(define lab2 (make <Label> :text "Label 2"))
+
+(pack lab1 :side "bottom")
+(pack lab2 :side "top" :expand #t :fill "both")
+\end{verbatim}
+\end{quote}
+
+Here, two labels are defined {\tt lab1} and {\tt lab2}. The first call to
+pack says that {\tt lab1} should occupy the bottom of the window. Second
+call states that {\tt lab2} will occupy the top of the window. Furthermore,
+the  options {\tt :expand} and {\tt :fill} specified during {\tt lab2}
+packing tells to the packer that its geometry must be adjusted to fill all
+the space if its containing window is resized. If we do now 
+\begin{quote}
+\begin{verbatim}
+(define lab3 (make <Label> :text "Label 3"))
+(pack lab3 :after lab2)
+\end{verbatim}
+\end{quote}
+we will define a new label which will be inserted between the {\tt lab1} and
+{\tt lab2} labels.  Of course, the window containing the two labels  will
+be {\em automagically} resized to take into account the insertion of the third.
+
+Windows can also be unmapped from screen with the {\tt
+unpack\index{unpack}} method. This method tells {\em pack} to suspend
+geometry management of the specified window. Another call to a geometry
+manager should be used to map again the window on display.
+
+Suppose now that we want to delete the top most label of our previous
+window (i.e. {\tt lab2}). 
+This can be done with the {\tt <Tk-widget>} method {\tt destroy} as
+shown below: 
+\begin{quote}
+\begin{verbatim}
+(destroy lab2)
+\end{verbatim}
+\end{quote}
+\noindent
+Here, the window is unmapped from screen and definitively destroyed
+(i.e. it cannot be mapped on the screen anymore). Technically speaking, the
+widget will be destroyed and its class will be changed to the special class
+{\tt <Destroyed-object>}\index{<Destroyed-object>}.
+
+\paragraph{\bf Note:} Destroying the root window 
+({\tt *top-root*\index{*top-root*}}) will destroy the root window
+and, consequently, the interpreter since it as nothing more to manage.
+
+\subsection{The {\tt <Tk-simple-widget>} class}
+
+{\stklos} defines a class for each simple widgets (such as labels, buttons or
+messages) of the Tk library. The {\tt <Tk-simple-widget>} class defines slots
+and methods which are common to all those objects. The main slots defined for
+simple widgets are:
+\begin {ip}
+\ITEM{background}\label{background}
+which specifies
+the normal background color to use when displaying the widget.  The value of
+this slot should be a {\em string} or a {\em symbol}. It can be 
+\begin{itemize}
+\item a textual name
+for a color defined in the server's color database file (e.g. "Chocolate" or
+"Dark Olive Green").
+\item a numeric specification of the red, green, and blue intensities
+to use to display the color (such as {\tt \#aabbcc} or even {\tt rgb:aa/bb/cc})
+using the standard X11 notation.
+\end{itemize}
+
+\ITEM{border-width}\label{border-width}
+which specifies a non-negative value indicating the width of the 3-D border to
+draw around the outside of the widget (if such a border is being drawn; the
+{\em relief} option typically determines this).
+
+\ITEM{cursor}\label{cursor}
+which specifies the mouse
+cursor to be used for the widget. Valid values for this slot are given in
+Table~\ref{cursor-table}. Be aware that case is significant when naming a cursor.
+
+\ITEM{relief}\label{relief}
+which specifies the 3-D
+effect desired for the widget.  Acceptable values are {\tt :raised}, {\tt
+:sunken}, {\tt :flat}, {\tt :ridge} or {\tt :groove}.  The value indicates how
+the interior of the widget should appear relative to its exterior; for
+example, {\tt :raised} means the interior of the widget should appear to
+protrude from the screen, relative to the exterior of the widget.
+\end{ip}
+\begin{table}
+{\footnotesize
+\begin{center}
+\begin{tabular}{|l|l|l|l|} \hline
+X\_cursor               & fleur                 & sailboat      \\
+arrow                   & gobbler               & sb\_down\_arrow       \\
+based\_arrow\_down      & gumby                 & sb\_h\_double\_arrow  \\
+based\_arrow\_up                & hand1                 & sb\_left\_arrow       \\
+boat                    & hand2                 & sb\_right\_arrow      \\
+bogosity                & heart                 & sb\_up\_arrow \\
+bottom\_left\_corner    & icon                  & sb\_v\_double\_arrow  \\
+bottom\_right\_corner   & iron\_cross           & shuttle       \\
+bottom\_side            & left\_ptr             & sizing        \\
+bottom\_tee             & left\_side            & spider        \\
+box\_spiral             & left\_tee             & spraycan      \\
+center\_ptr             & leftbutton            & star  \\
+circle                  & ll\_angle             & target        \\
+clock                   & lr\_angle             & tcross        \\
+coffee\_mug             & man                   & top\_left\_arrow      \\
+cross                   & middlebutton          & top\_left\_corner     \\
+cross\_reverse          & mouse                 & top\_right\_corner    \\
+crosshair               & pencil                & top\_side     \\
+diamond\_cross          & pirate                & top\_tee      \\
+dot                     & plus                  & trek  \\
+dotbox                  & question\_arrow       & ul\_angle     \\
+double\_arrow           & right\_ptr            & umbrella      \\
+draft\_large            & right\_side           & ur\_angle     \\
+draft\_small            & right\_tee            & watch \\
+draped\_box             & rightbutton           & xterm \\
+exchange                & rtl\_logo             & {\ } \\ \hline 
+\end{tabular}
+\end{center}
+}
+\caption {Valid cursor values for slot {\tt cursor}}
+\label{cursor-table}
+\end{table}
+These slots are defined for all the basic widgets of the {\stklos}
+package. However, they are not defined as real {\stklos} slots (i.e. they are not
+implanted in the Scheme world). Instead, this kind of slot has its value which
+is stored inside the internal structures of the Tk library. Those slots are
+allocated with a special allocation scheme which is called {\tt
+:tk-virtual}. Tk virtual slots are managed by the {\tt
+<With-Tk-virtual-slots-metaclass>} meta-class.
+
+Consequently, reading or writing a {\em tk-virtual} slot will provoke a direct
+reading or writing of a field of the Tk-library C-structure associated to the
+object (this avoid to have to synchronize values in the Tk and Scheme
+world). For each {\em tk-virtual}, {\stklos} provides an accessor; the
+following example shows some simple usages of this kind of slots.
+
+\noindent
+{\em Example:}
+\begin{quote}
+\begin{verbatim}
+(define lab (make <Label> :text "Hello" :relief "raised" :background "grey"))
+(relief lab)
+        --> "raised"
+(set! (border-width lab) 4)
+(border-width lab)
+        --> 4
+\end{verbatim}
+\end{quote}
+\noindent
+The first expression creates a new instance of a label, as we have seen before. The
+second one queries the Tk server about the relief of the label {\tt lab}.
+Finally, the {\tt set!} expression permits to change the value of the
+width of {\tt lab}'s border.
+
+\subsection{The {\tt <Tk-canvas-item>} class}
+
+Instances of {\tt <Tk-canvas-item>} class, as said before, are objects such as
+rectangles, circles or bitmaps which are contained in a window. A window
+containing this kind of object is a special simple widget called a {\em
+canvas}. All the objects defined in a {\em canvas} can be manipulated
+(e.g. moved, re-colored or re-sized) and even Scheme command can be associated
+to them.  All the actions available for {\tt <Tk-canvas-item>}s 
+are deferred to a next chapter (\ref{Canvas-chapter}).
+
+\section{Functions of this chapter}
+This section presents in details the methods and functions seen in this
+chapter (or methods and functions related to things seen in this chapter).
+Functions are listed below in alphabetical order.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% DESTROY
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\label{packer-doc}
+\schemetitle{destroy}{method}
+
+\begin{schemedoc}{Syntax}
+\begin{verbatim}
+destroy         ((self <Tk-widget>))
+destroy         l
+\end{verbatim}
+\end{schemedoc}
+
+\begin{schemedoc}{Arguments (first form)}
+\begin{description}
+\item[self] the window to destroy.
+\end{description}
+\end{schemedoc}
+
+\begin{schemedoc}{Arguments (second form)}
+\begin{description}
+\item[l] a list of window to destroy (this form maps in facts the previous one to
+all its arguments to allow multiple destruction).
+\end{description}
+\end{schemedoc}
+
+\begin{schemedoc}{Description}
+{\tt Destroy} deletes the {\tt self} widget window and all of its descendants.
+If {\tt self} equals to {\tt *top-root*}, the interpreter terminates its execution.
+\end{schemedoc}
+
+\begin{schemedoc}{Result}
+The destroyed object (see note below)
+\end{schemedoc}
+
+\begin{schemedoc}{Example}
+\begin{verbatim}
+(define l1 (make <Label> :text "lab1"))
+...
+(define l5 (make <Label> :text "lab5"))
+(destroy l1)             ;; direct call of first form
+(destroy l2 l3 l4 l5)    ;; call of the second form
+\end{verbatim}
+\end{schemedoc}
+
+
+\begin{schemedoc}{Note}
+When a widget is destroyed, its class is changed to <Destroyed-object> as
+shown below:
+\begin{quote}
+\begin{verbatim}
+(define lab (make <Label> :text "A label"))
+(class-name (class-of lab))
+        --> <label>
+(destroy lab)
+(class-name (class-of lab))
+        --> <destroyed-object>
+\end{verbatim}
+\end{quote}
+
+\end{schemedoc}
+
+\begin{schemedoc}{See also}
+{\tt destroy} method for canvases, unpack
+\end{schemedoc}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% PACK
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\schemetitle{pack}{procedure}
+\label{pack-doc}
+\begin{schemedoc}{Syntax}
+\begin{verbatim}
+pack l 
+\end{verbatim}
+\end{schemedoc}
+
+\begin{schemedoc}{Arguments}
+{\tt pack} accepts a list of arguments whose behavior depends on the first
+element of this list.
+
+\paragraph{\tt (pack 'slave [slave ...] [option])}
+\begin{quote}
+If the first argument to {\tt pack} is a widget, then the command is
+processed in the same way as {\tt (pack 'configure ...)}.
+\end{quote}
+
+\paragraph{\tt (pack 'configure [slave ...] [option])}
+
+\begin{quote}
+The arguments consist of one or more slave windows followed by pairs of
+arguments that specify how to manage the slaves.  See ``THE PACKER
+ALGORITHM'' below for details on how the options are used by the packer.
+The following options are supported:
+\begin{quote}
+\par
+{\tt :after  other}\\
+{\tt :before other}
+        \begin{quote}
+                     {\tt Other} must the name of another window.   Use
+                     its master as the master for the slaves, and
+                     insert the slaves just after (or before)  {\tt other} 
+                     in  the packing order.
+        \end{quote}
+
+\par
+{\tt :anchor anchor}
+        \begin{quote}
+                     {\tt Anchor} must be a valid anchor position such as
+                     ``{\tt n}'' or ``{\tt sw}''; it specifies where to
+                     position each slave in its parcel.  Defaults to 
+                     ``{\tt center}''.
+        \end{quote}
+\par
+{\tt :expand boolean}
+        \begin{quote}
+                     Specifies   whether  the  slaves  should  be
+                     expanded to consume  extra  space  in  their
+                     master.  Defaults to {\tt \#f}.
+        \end{quote}
+\par
+{\tt :fill style}
+        \begin{quote}
+         If a  slave's  parcel  is  larger  than  its
+         requested  dimensions,  this  option  may be
+         used to stretch the slave.  {\tt Style} must  have
+         one of the following values:
+
+         \begin{description}
+          \item["none"]   Give  the slave its requested dimensions
+                  plus  any  internal   padding
+                 requested  with  {\tt :ipadx}  or  {\tt :ipady}.
+                 This is the default.
+
+          \item["x"]  Stretch the  slave  horizontally  to
+                 fill  the entire width of its parcel
+                 (except leave  external  padding  as
+                 specified by {\tt :padx}).
+
+          \item["y"]      Stretch the slave vertically to fill
+                 the  entire  height  of  its  parcel
+                 (except  leave  external  padding as
+                 specified by {\tt :pady}).
+
+          \item["both"]   Stretch the slave both  horizontally
+                 and vertically.
+         \end{description}
+         \end{quote}
+\par
+{\tt :in other} 
+        \begin{quote} 
+        Insert the slave(s) at the end of the packing
+        order for the master window given by other.  
+        \end{quote}
+
+\par
+{\tt :ipadx amount}\\
+{\tt :ipady amount}
+        \begin{quote}
+         {\tt Amount} specifies how much horizontal (or vertical) 
+         internal padding to leave on each side of the slave(s).  
+         {\tt Amount} must be a valid screen  distance, such as 2 or
+         ``.5c''. It defaults to 0.
+        \end{quote}
+
+\par
+{\tt :padx amount}\\
+{\tt :pady amount}  
+        \begin{quote}
+        {\tt Amount} specifies how much horizontal external
+        padding to leave on each side of the slave(s).  {\tt Amount}
+        defaults to 0.
+        \end{quote}
+
+\par
+{\tt :side side}
+        \begin{quote}
+        Specifies which side of the master the slave(s) will be packed against.
+        Must be ``{\tt left}'', ``{\tt right}'', ``{\tt top}'', or ``{\tt
+        bottom}''.  Defaults to ``{\tt top}''.
+        \end{quote}
+\end{quote}
+If no {\tt :in}, {\tt :after} or {\tt :before} option is specified then
+each of the slaves will be inserted at the end of the packing list for its
+parent unless it is already managed by the packer (in which case it will be
+left where it is).  If one of these options is specified then all the
+slaves will be inserted at the specified point.  If any of the slaves are
+already managed by the geometry manager then any unspecified options for
+them retain their previous values rather than receiving default values.
+\end{quote}
+
+\paragraph{\tt (pack 'newinfo slave)}
+\begin{quote}
+Returns a list whose elements are the current configuration state of the
+slave given by slave in the same option-value form that might be specified
+to {\tt pack 'configure}.  The first two elements of the list are ``{\tt
+-in master}'' where master is the slave's {\tt master}.  Starting with Tk
+4.0 this option will be renamed ``{\tt (pack 'info ...)}''.
+\end{quote}
+
+\paragraph{\tt (pack 'propagate master [boolean])}
+\begin{quote}
+If {\tt boolean} is {\tt \#t} then propagation is enabled for {\tt master},
+which must be a window name (see ``GEOMETRY PROPAGATION'' below).  If {\tt
+boolean} has a false boolean value then propagation is disabled for {\tt
+master}.  In either of these cases an empty string is returned.  If {\tt boolean}
+is omitted then the command returns 0 or 1 to indicate whether propagation
+is currently enabled for {\tt master}.  Propagation is enabled by default.
+\end{quote}
+
+\paragraph{\tt (pack 'slaves master)}
+\begin{quote}
+Returns a list of all of the slaves in the packing order for {\tt master}.
+The order of the slaves in the list is the same as their order in the
+packing order.  If {\tt master} has no slaves then an empty string is
+returned.
+\end{quote}
+\end{schemedoc}
+
+\begin{schemedoc}{Description}
+
+{\bf THE PACKER ALGORITHM} For each master the packer maintains an ordered
+list of slaves called the {\em packing list}.  The {\tt :in}, {\tt
+:after}, and {\tt :before} configuration options are used to specify the
+master for each slave and the slave's position in the packing list.  If
+none of these options is given for a slave then the slave is added to the
+end of the packing list for its parent.
+
+The packer arranges the slaves for a master by scanning the packing list in
+order.  At the time it processes each slave, a rectangular area within the
+master is still unallocated.  This area is called the {\em cavity}; for the
+first slave it is the entire area of the master.
+
+For each slave the packer carries out the following steps:
+
+\begin{enumerate}
+\item
+The packer allocates a rectangular {\em parcel} for the slave
+along the side of the cavity given by the slave's {\tt :side} option.
+If the side is top or bottom then the width of the parcel is
+the width of the cavity and its height is the requested height
+of the slave plus the {\tt :ipady} and {\tt :pady} options.
+For the left or right side the height of the parcel is
+the height of the cavity and the width is the requested width
+of the slave plus the {\tt :ipadx} and {\tt :padx} options.
+The parcel may be enlarged further because of the {\tt :expand}
+option (see ``EXPANSION'' below)
+
+\item
+The packer chooses the dimensions of the slave.
+The width will normally be the slave's requested width plus
+twice its {\tt :ipadx} option and the height will normally be
+the slave's requested height plus twice its {\tt :ipady}
+option.
+However, if the {\tt :fill} option is ``{\tt x}'' or ``{\tt both}''
+then the width of the slave is expanded to fill the width of the parcel,
+minus twice the {\tt :padx} option.
+If the {\tt :fill} option is ``{\tt y}'' or ``{\tt both}''
+then the height of the slave is expanded to fill the width of the parcel,
+minus twice the {\tt :pady} option.
+
+\item
+The packer positions the slave over its parcel.
+If the slave is smaller than the parcel then the {\tt :anchor}
+option determines where in the parcel the slave will be placed.
+If {\tt :padx} or {\tt :pady} is non-zero, then the given
+amount of external padding will always be left between the
+slave and the edges of the parcel.
+\end{enumerate}
+
+Once a given slave has been packed, the area of its parcel is subtracted
+from the cavity, leaving a smaller rectangular cavity for the next slave.
+If a slave doesn't use all of its parcel, the unused space in the parcel
+will not be used by subsequent slaves.  If the cavity should become too
+small to meet the needs of a slave then the slave will be given whatever
+space is left in the cavity.  If the cavity shrinks to zero size, then all
+remaining slaves on the packing list will be unmapped from the screen until
+the master window becomes large enough to hold them again.
+
+{\bf EXPANSION} If a master window is so large that there will be extra
+space left over after all of its slaves have been packed, then the extra
+space is distributed uniformly among all of the slaves for which the {\tt
+:expand} option is set.  Extra horizontal space is distributed among the
+expandable slaves whose {\tt :side} is ``{\tt left}'' or ``{\tt right}'',
+and extra vertical space is distributed among the expandable slaves whose
+{\tt :side} is ``{\tt top}'' or ``{\tt bottom}''.
+
+{\bf GEOMETRY PROPAGATION} The packer normally computes how large a master
+must be to just exactly meet the needs of its slaves, and it sets the
+requested width and height of the master to these dimensions.  This causes
+geometry information to propagate up through a window hierarchy to a
+top-level window so that the entire sub-tree sizes itself to fit the needs
+of the leaf windows.  However, the {\tt pack 'propagate} command may be used
+to turn off propagation for one or more masters.  If propagation is
+disabled then the packer will not set the requested width and height of the
+packer.  This may be useful if, for example, you wish for a master window
+to have a fixed size that you specify.
+
+{\bf RESTRICTIONS ON MASTER WINDOWS} The master for each slave must either
+be the slave's parent (the default) or a descendant of the slave's parent.
+This restriction is necessary to guarantee that the slave can be placed
+over any part of its master that is visible without danger of the slave
+being clipped by its parent.
+
+{\bf PACKING ORDER} If the master for a slave is not its parent then you
+must make sure that the slave is higher in the stacking order than the
+master.  Otherwise the master will obscure the slave and it will appear as
+if the slave hasn't been packed correctly.  The easiest way to make sure
+the slave is higher than the master is to create the master window first:
+the most recently created window will be highest in the stacking order.
+Or, you can use the {\tt raise} and {\tt lower} commands to change the
+stacking order of either the master or the slave.
+\end{schemedoc}
+
+\begin{schemedoc}{Result}
+None
+\end{schemedoc}
+
+\begin{schemedoc}{Example}
+\begin{verbatim}
+(define b1 (make <Button> :text "a button"))
+(define b2 (make <Button> :text "a button with a long text"))
+(define b3 (make <Button> :text "expanded button"))
+(define b4 (make <Button> :text "LARGE BUTTON")) 
+(pack b1 b2)
+(pack b3 :expand #t :fill "x")
+(pack b4 :expand #t :fill "both" :side "right" :before b1)
+\end{verbatim}
+These calls to {\tt pack} will produce the output shown in
+Figure~\ref{pack-options}.
+\end{schemedoc}
+\begin{figure}
+\centerline{\epsfig{file={Packing-demo.ps}}}
+\caption{Using the pack options}
+\label{pack-options}
+\end{figure}
+
+\begin{schemedoc}{See also}
+{\tt place}, {\tt unpack}
+\end{schemedoc}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% PLACE
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\schemetitle{place}{procedure}
+
+\begin{schemedoc}{Syntax}
+\begin{verbatim}
+place           l
+\end{verbatim}
+\end{schemedoc}
+
+SEE TK MAN PAGE :-<
+
+% \begin{schemedoc}{Arguments}
+% \begin{description}
+% \item[]
+% \end{description}
+% \end{schemedoc}
+% 
+% \begin{schemedoc}{Description}
+% 
+% \end{schemedoc}
+% 
+% \begin{schemedoc}{Result}
+% 
+% \end{schemedoc}
+% 
+% \begin{schemedoc}{Example}
+% 
+% \end{schemedoc}
+% 
+% \begin{schemedoc}{Note}
+% 
+% \end{schemedoc}
+% 
+% 
+% \begin{schemedoc}{See also}
+% 
+% \end{schemedoc}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% UNPACK
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\schemetitle{unpack}{procedure}
+
+\begin{schemedoc}{Syntax}
+\begin{verbatim}
+unpack  l
+\end{verbatim}
+\end{schemedoc}
+
+\begin{schemedoc}{Arguments}
+\begin{description}
+\item[l] a list of widgets to unmap.
+\end{description}
+\end{schemedoc}
+
+\begin{schemedoc}{Description}
+{\tt Unpack} is a simple way to unmap the widgets of the {\tt l} list. 
+This procedure calls in fact {\tt pack 'forget} procedure. After the execution
+of this procedure the {\em pack} geometry manager will no longer manage
+the geometry of given widgets.
+\end{schemedoc}
+
+\begin{schemedoc}{Result}
+Undefined
+\end{schemedoc}
+
+\begin{schemedoc}{Example}
+(define l1 (make <Label> :text "lab1"))
+...
+(define l5 (make <Label> :text "lab5"))
+(destroy l1)             ;; Object is unmapped AND destroyed
+(unpack l2 l3 l4 l5)      ;; Objects are ONLY unmapped
+(class-name (class-of l1))
+        --> <destroyed-object>
+(class-name (class-of l2))
+        --> <label>
+\end{schemedoc}
+
+%\begin{schemedoc}{Note}
+%
+%\end{schemedoc}
+
+\begin{schemedoc}{See also}
+{\tt place}, {\tt pack}, {\tt destroy}
+\end{schemedoc}
+% LocalWords:  sb bogosity ptr spraycan leftbutton ll lr tcross middlebutton ul
+% LocalWords:  crosshair dotbox ur rightbutton xterm rtl logo tk slave's ipadx
+% LocalWords:  ipady padx pady newinfo unmap
+

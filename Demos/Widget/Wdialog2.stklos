@@ -1,0 +1,18 @@
+;;;;
+;;;; STk adaptation of the Tk widget demo.
+;;;;
+;;;;  This demonstration script creates a dialog box with a global grab.
+;;;;
+
+
+(define (demo-dialog2)
+  (STk:make-dialog :title "Dialog with global grab" 
+		   :text  "This dialog box uses a global grab, so it prevents you from interacting with anything on your display until you invoke one of the buttons below.  Global grabs are almost always a bad idea; don't use them unless you're truly desperate."
+		   :bitmap "info"
+		   :default 0
+		   :grab    'global
+		   :buttons 
+		      `(("OK"       ,(lambda () (display "You pressed OK\n")))
+			("Cancel"   ,(lambda () (display "You pressed Cancel\n")))
+			("See Code" ,(lambda () (show-code "dialog2"))))))
+

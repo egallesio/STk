@@ -1,0 +1,48 @@
+#!/bin/sh
+:;exec /usr/local/bin/stk -f "$0" "$@"
+;;;;
+;;;; A simple STk browser 
+;;;;
+;;;; This script generates a directory browser, which lists the working
+;;;; directory and allows you to open files or subdirectories by
+;;;; double-clicking.
+;;;;
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date:  3-Aug-1993 17:33
+;;;; Last file update: 18-Sep-1995 14:25
+
+(require "Tk-classes")
+(require "unix")
+
+;;;;
+;;;; Interface
+;;;;
+(define lb (make <Scroll-Listbox> :width 30 :height 20 :font 'fixed))
+(pack lb :fill "both" :side "top" :expand #t)
+
+(define quit (make <Button> :text "Quit" :command '(exit)))
+(pack quit :fill "x" :side "bottom" :expand #t)
+
+;;;
+;;; Callback
+;;;
+(define (fill-listbox lb dir)
+  (chdir dir)
+  (delete lb 0 'end)
+  (apply insert lb 0 (sort (glob "*" ".*") string<?)))
+
+(define (browse)
+  (catch 
+    (let ((file  (string-append (getcwd) "/" (selection 'get))))
+      (cond
+        ((file-is-directory? file) (fill-listbox lb file))
+	((file-is-readable? file)  (system (string-append "xedit " file "&")))
+	(else			   (error "Bad directory or file ~S" file))))))
+
+
+;; Fill the listbox with a list of all the files (in the given directory or ".")
+(fill-listbox lb (if (> *argc* 0) (car *argv*) (getcwd)))
+
+;; Set binding for "Double-click" on the listbox
+(bind (listbox-of lb) "<Double-Button-1>" browse)

@@ -1,0 +1,33 @@
+<HTML><HEAD><TITLE>Tk Built-In Commands - tkwait manual page</TITLE></HEAD>
+<BODY bgcolor = #c3c3ff>
+<H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageBlue.gif"> tkwait</H2>
+<I>Wait for variable to change or window to be destroyed</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<H3><A NAME="M2">SYNOPSIS</A></H3>
+(<B>tkwait 'variable </B><I>name</I>)<BR>
+(<B>tkwait 'visibility </B><I>name</I>)<BR>
+(<B>tkwait 'window </B><I>name</I>)<BR>
+<H3><A NAME="M3">DESCRIPTION</A></H3>
+The <B>tkwait</B> procedure waits for one of several things to happen,
+then it returns without taking any other actions.
+The return value is always an empty string.
+If the first argument is <B>variable</B> (or any abbreviation of
+it) then the second argument is the name of a global variable and the
+procedure waits for that variable to be modified.
+If the first argument is <B>visibility</B> (or any abbreviation
+of it) then the second argument is the name of a window and the
+<B>tkwait</B> procedure waits for a change in its
+visibility state (as indicated by the arrival of a VisibilityNotify
+event).  This form is typically used to wait for a newly-created
+window to appear on the screen before taking some action.
+If the first argument is <B>window</B> (or any abbreviation
+of it) then the second argument is the name of a window and the
+<B>tkwait</B> procedure waits for that window to be destroyed.
+This form is typically used to wait for a user to finish interacting
+with a dialog box before using the result of that interaction.
+<P>
+While the <B>tkwait</B> procedure is waiting it processes events in
+the normal fashion, so the application will continue to respond
+to user interactions.
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookBlue.gif"> Back to the <B>STk</B> main page</A>
+</BODY></HTML>

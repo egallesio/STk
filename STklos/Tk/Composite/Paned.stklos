@@ -1,0 +1,203 @@
+;;;;
+;;;; P a n e d . s t k 	  	      --  HPaned and VPaned composite widgets
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; Idea of this implementation was found in comp.lang.tcl. 
+;;;; Original author seems to be James Noble and the version from which this 
+;;;; stuff is derivated is Jay Schmidgall (shmdgljd@ghostwind.rchland.ibm.com).
+;;;;
+;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
+;;;;    Creation date: 22-Mar-1994 13:05
+;;;; Last file update: 13-Aug-1996 23:22
+
+(require "Frame")
+
+(define paned:drag-start 0)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <HPaned> class definition
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class <HPaned> (<Tk-composite-widget>)
+  ((top-frame    :accessor     top-frame-of)
+   (bottom-frame :accessor     bottom-frame-of)
+   (grip	 :accessor     grip-of)
+   (separator	 :accessor     separator-of)
+   (fraction     :init-keyword :fraction)
+   ;; Fictives slot
+   (background   :accessor     background
+		 :init-keyword :background
+		 :allocation   :propagated
+		 :propagate-to (frame top-frame bottom-frame grip separator))
+   (width	 :accessor     width
+		 :init-keyword :width
+		 :allocation   :propagated
+		 :propagate-to (frame))
+   (height	 :accessor     height
+		 :init-keyword :height
+		 :allocation   :propagated
+		 :propagate-to (frame))))
+
+
+(define-method initialize-composite-widget ((self <HPaned>) initargs frame)
+  (let ((grip  (make <Frame> :parent frame :width 10 :height 10 :border-width 2 
+		    	     :relief "raised"  :cursor "crosshair"))
+	(separ (make <Frame> :parent frame :width 1 :height 4
+		     	     :border-width 2 :relief "ridge"))
+	(top   (make <Frame> :parent frame :border-width 2 :relief "raised"))
+	(bot   (make <Frame> :parent frame :border-width 2 :relief "raised")))
+
+    
+    ;; Associate bindings to the grip
+    (bind grip "<Button-1>"  		(lambda (y) (start-grip  self y)))
+    (bind grip "<B1-Motion>" 		(lambda (y) (motion-grip self y)))
+    (bind grip "<B1-ButtonRelease-1>" 	(lambda (y) (stop-grip   self y)))
+
+    ;; initialize true slots
+    (slot-set! self 'Id           (Id frame))
+    (slot-set! self 'top-frame    top)
+    (slot-set! self 'bottom-frame bot)
+    (slot-set! self 'grip 	  grip)
+    (slot-set! self 'separator 	  separ)
+    (slot-set! self 'fraction 	  (get-keyword :fraction initargs 0.5))
+
+    ;; Place the grip
+    (place-grip self)))
+   
+
+;;;
+;;; <HPaned> methods 
+;;; 
+(define-method place-grip ((self <HPaned>))
+  (let ((fraction (slot-ref self 'fraction)))
+    (place (separator-of self)    :relx 0    :rely fraction :anch "w" :relwi 1)
+    (place (grip-of self)         :relx 0.95 :rely fraction :anchor "center")
+    (place (top-frame-of self)    :x 0 :y 0 :relwidth 1 :relheight fraction)
+    (place (bottom-frame-of self) :x 0 :rely fraction :relwidth 1 
+				  :relheight (- 1.0 fraction))
+    ;; Hide separator behind the bottom and top frames
+    (lower (separator-of self))
+    ;; Be sure to raise the grip 
+    (raise (grip-of self))))
+
+(define-method start-grip ((self <HPaned>) y)
+  ;; Raise separator and grip 
+  (raise (separator-of self))
+  (raise (grip-of self))
+  (set! paned:drag-start y))
+
+(define-method motion-grip ((self <HPaned>) y)
+  (let ((fraction (slot-ref self 'fraction)))
+    (set! fraction (max 0.0001 
+			(min 0.9999
+			     (+ fraction 
+				(/ (- y paned:drag-start) 
+				   (+ 1 (winfo 'height (frame-of self))))))))
+    (place (separator-of self) :relx 0 :relwidth 1 :rely fraction :anchor "w")
+    (place (grip-of self)      :relx 0.95 :rely fraction :anchor "center")
+    (slot-set! self 'fraction fraction)))
+
+(define-method stop-grip ((self <HPaned>) y)
+  (place-grip self))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <VPaned> class definition
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class <VPaned> (<Tk-composite-widget>)
+  ((left-frame   :accessor     left-frame-of)
+   (right-frame  :accessor     right-frame-of)
+   (grip	 :accessor     grip-of)
+   (separator	 :accessor     separator-of)
+   (fraction     :init-keyword :fraction)
+   ;; Fictives slots
+   (background   :accessor     background
+		 :init-keyword :background
+		 :allocation   :propagated
+		 :propagate-to    (frame left-frame right-frame grip separator))
+   (width	 :accessor     width
+		 :init-keyword :width
+		 :allocation   :propagated
+		 :propagate-to (frame))
+   (height	 :accessor     height
+		 :init-keyword :height
+		 :allocation   :propagated
+		 :propagate-to (frame))))
+
+
+(define-method initialize-composite-widget ((self <VPaned>) initargs frame)
+  (let ((grip  (make <Frame> :parent frame :width 10 :height 10 :border-width 2 
+		    	     :relief "raised"  :cursor "crosshair"))
+	(separ (make <Frame> :parent frame :width 4 :height 1
+		     	     :border-width 2 :relief "ridge"))
+	(left   (make <Frame> :parent frame :border-width 2 :relief "raised"))
+	(right  (make <Frame> :parent frame :border-width 2 :relief "raised")))
+
+    
+    ;; Associate bindings to the grip
+    (bind grip "<Button-1>"  		(lambda (x) (start-grip  self x)))
+    (bind grip "<B1-Motion>" 		(lambda (x) (motion-grip self x)))
+    (bind grip "<B1-ButtonRelease-1>" 	(lambda (x) (stop-grip   self x)))
+
+    ;; initialize true slots
+    (slot-set! self 'Id           (Id frame))
+    (slot-set! self 'left-frame   left)
+    (slot-set! self 'right-frame  right)
+    (slot-set! self 'grip 	  grip)
+    (slot-set! self 'separator 	  separ)
+    (slot-set! self 'fraction 	  (get-keyword :fraction initargs 0.5))
+
+    ;; Place the grip
+    (place-grip self)))
+   
+
+;;;
+;;; <VPaned> methods 
+;;; 
+(define-method place-grip ((self <VPaned>))
+  (let ((fraction (slot-ref self 'fraction)))
+    (place (separator-of self)    :rely 0    :relx fraction :anch "n" :relh 1)
+    (place (grip-of self)         :rely 0.95 :relx fraction :anchor "center")
+    (place (left-frame-of self)   :x 0 :y 0 :relheight 1 :relwidth fraction)
+    (place (right-frame-of self)  :y 0 :relx fraction :relheight 1 
+				  :relwidth (- 1.0 fraction))
+    ;; Hide separator behind the right and left frames
+    (lower (separator-of self))
+    ;; Be sure to raise the grip 
+    (raise (grip-of self))))
+
+(define-method start-grip ((self <VPaned>) x)
+  ;; Raise separator and grip 
+  (raise (separator-of self))
+  (raise (grip-of self))
+  (set! paned:drag-start x))
+
+(define-method motion-grip ((self <VPaned>) x)
+  (let ((fraction (slot-ref self 'fraction)))
+    (set! fraction (max 0.0001 
+			(min 0.9999
+			     (+ fraction 
+				(/ (- x paned:drag-start) 
+				   (+ 1 (winfo 'width (frame-of self))))))))
+    (place (separator-of self) :rely 0 :relheight 1 :relx fraction :anchor "n")
+    (place (grip-of self)      :rely 0.95 :relx fraction :anchor "center")
+    (slot-set! self 'fraction fraction)))
+
+(define-method stop-grip ((self <VPaned>) x)
+  (place-grip self))
+
+
+(provide "Paned")

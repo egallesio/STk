@@ -1,0 +1,14 @@
+#!/bin/sh
+#
+#  This is a start up script for the STk/Scheme widget tour.
+#
+#  Originally by: Andrew Payne payne@crl.dec.com
+#  Present one by: Suresh Srinivas ssriniva@cs.indiana.edu
+
+STK=/usr/local/bin/stk
+STK_LIBRARY=/usr/local/lib/stk
+
+export STK_LIBRARY
+export STK
+
+$STK -f ./lib/wtour.stk 

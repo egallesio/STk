@@ -1,0 +1,59 @@
+#!/usr/local/bin/stk -f
+;;;;
+;;;; s t k l o s - d e m o 2 . s t k 	  --  A demo which use some STklos classes
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 24-Aug-1993 19:55
+;;;; Last file update: 21-Jul-1996 11:44
+
+(require "Tk-classes")
+
+(format #t "
+This demo file illustrates the use of bind-for-dragging with various 
+parameters. 
+
+Left button to drag any kind of object
+Left button with Shift key pressed to drag an object and executes user hooks
+Right button to move red objects only.\n")
+
+
+(define c (make <Canvas> :border-width 0))
+(pack c)
+
+
+(define r1 (make <rectangle> :coords '(0 0 50 50) 
+		 	     :parent c 
+			     :fill "red"
+			     :tags "red"))
+(define r2 (make <rectangle> :coords '(100 100 150 150) 
+		 	     :parent c 
+			      :fill "blue"))
+(define t  (make <Text-Item> :coords '(80 80) 
+		 	     :parent c 
+			     :fill "red"
+			     :tags "red"
+			     :text "Hello world!"))
+
+;; Button 1 for dragging objects
+(bind-for-dragging c)
+
+;; Button 1 for dragging objects (with user hooks)
+(bind-for-dragging c :tag 'all
+		     :modifier "Shift"
+		     :start  (lambda (w x y) (format #t "Start to drag ~S\n" w))
+		     :motion (lambda (w x y) (format #t "Move ~A ~A\n" x y))
+		     :stop   (lambda (w x y) (format #t "Stop with ~S\n" w)))
+
+;; Button 3 for dragging red objects (i.e. r1 and t)
+(bind-for-dragging c :tag "red" :button 3)
+

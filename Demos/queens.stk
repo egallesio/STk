@@ -1,0 +1,318 @@
+#!/usr/local/bin/stk -f
+
+; -* Lisp -*-
+
+; Yet another "my first STk program" type thing.  This one is the "8
+; queens" puzzle.  You try to figure out how to place 8 queens on a
+; chessboard so that none of the queens can be taken in a single move.
+;
+; You can do it yourself (and it will make sure you follow the rules)
+; or you can ask it to solve the puzzle starting with a given board
+; configuration.
+;
+; It expects to fined the queen bitmap in the images directory 
+; in the STk library directory.
+
+; 27 Jan 96: ported to STk 3.0
+
+; Grant Edwards
+;
+; grante@winternet.com
+; grante@rosemount.com
+; grante@ep.frco.com
+; edwards@grad.cs.umn.edu
+
+
+
+(define queen-bitmap (string-append "@" *STk-library* "/images/queen"))
+
+; size of board (it's square)
+
+(define size 8)
+
+
+; Predicate that is true if the queens at p1 and p2 can't take each
+; other in 1 move.  p1 and p2 are pairs of the form ( x . y ) where
+; x is column and y is row (both from 0 to size-1).
+
+(define legal-position-pair? 
+  (lambda (p1 p2)
+    (let ([x1 (car p1)] [y1 (cdr p1)] [x2 (car p2)] [y2 (cdr p2)])
+      (not (or 
+	     (= x1 x2) 
+	     (= y1 y2) 
+	     (= (abs (- x1 x2)) (abs (- y1 y2))))))))
+
+
+; Predicate that is true if none of the queens in list history can
+; take queen at postion new in one move.  "history" is a list of
+; position pairs.  "new" is the position pair which we are testing.
+
+(define legal-move? 
+  (lambda (history new)
+    (cond 
+      [(null? history) #t]
+      [(not (legal-position-pair? (car history) new)) #f]
+      [else (legal-move? (cdr history) new)])))
+
+
+; This is the procedure that solves the puzzle given a list of
+; occupied squares and a list of empty rows.  It's also passed a
+; continuation so that it can abort when the user asks it to stop.
+
+; Add a legal move to history list and recurse to build up strings of
+; legal moves.  The chessboard is updated as pieces are placed. When
+; it reaches the required length, it waits for user to press the Next
+; or Stop button. "history" is a list of pairs that denotes where
+; there are already queens.  "ylist" is a list of rows that still need
+; to be filled. "break" is a continuation to be called when the
+; procedure is to be aborted.
+
+(define add-queen 
+  (lambda (history ylist break)
+    (cond
+      [stopPushed    (break #f)]
+      [(null? ylist) (begin (write history)(newline)(waitForNextButton)(if stopPushed (break #f)))]
+      [else          (let ([newy (car ylist)])
+		       (dotimes (newx size)
+			 (if (legal-move? history (cons newx newy))
+			   (begin
+			     (activate-button newx newy)
+			     (update)
+			     (add-queen (cons (cons newx newy) history) (cdr ylist) break)
+			     (deactivate-button newx newy)
+			     (update)))))])))
+
+; global boolean used to keep track of whether or not the user is
+; allowed to rearrange the board.
+
+(define userModsEnabled #t)
+
+
+; set up button states and solve the puzzle starting with the current
+; board configuration.
+
+(define do-solve 
+  (lambda ()
+    (set! stopPushed #f)
+    (.upper.solve 'configure :state 'disabled)
+    (.upper.stop  'configure :state 'normal)
+    (.upper.clear 'configure :state 'disabled)
+    (set! userModsEnabled #f)
+    (call/cc (lambda (break)(add-queen (current-positions)(empty-rows) break)))
+    (.upper.stop 'configure :state 'disabled)
+    (.upper.clear 'configure :state 'normal)
+    (set! userModsEnabled #t)
+    (.upper.solve 'configure :state 'normal)))
+
+
+; define some procedures to create and operate on matrixes
+
+(define make-matrix 
+  (lambda (i j v) 
+    (let ([m (make-vector i)])
+      (dotimes (c j m)
+	(vector-set! m c (make-vector j v))))))
+
+(define matrix-ref 
+  (lambda (m i j)
+    (vector-ref (vector-ref m i) j)))
+
+(define matrix-row 
+  (lambda (m i)
+    (vector-ref m i)))
+
+(define matrix-set! 
+  (lambda (m i j v)
+    (vector-set! (vector-ref m i) j v)))
+
+
+; Create two matrixes.  Each has an entry for each square on the
+; board.  One matrix is Tk button procedures, the other is booleans
+; that reflect whether or not the square is occupied.
+
+(define board-buttons (make-matrix size size #f))
+(define board-states  (make-matrix size size #f))
+  
+
+; redraw the button so that it is occupied and update the matrix of
+; booleans
+
+(define activate-button 
+  (lambda (x y)
+    ((matrix-ref board-buttons y x) 'configure :relief 'raised :foreground "#000")
+    (matrix-set! board-states y x #t)))
+
+
+; redraw the button so that it is empty and update the matrix of
+; booleans
+
+(define deactivate-button 
+  (lambda (x y)
+    (let* ([b (matrix-ref board-buttons y x)]
+	    [bg (cadr (cdddr (b 'configure :background)))])
+	  (b 'configure :relief 'flat :foreground bg)
+	  (matrix-set! board-states y x #f))))
+
+; flash a button
+
+(define flash-button 
+  (lambda (x y)
+    ((matrix-ref board-buttons y x) 'flash)))
+
+
+; Procedure called when the user clicks on a square in the chessboard.
+; If user modifications are not enabled, then do nothing.  Otherwise
+; toggle the sate of the square.  When placing a queen on a previously
+; empty square, remove existing queens that could be taken by the new
+; one.
+
+(define toggle-button 
+  (lambda (x y)
+    (cond
+      [ (not userModsEnabled) #f]
+      [ (matrix-ref board-states y x)  (deactivate-button x y)]
+      [else (begin
+	      (activate-button x y)
+	      (update)
+	      (dotimes (ox size) 
+		(dotimes (oy size)
+		  (if (and
+			(matrix-ref board-states  oy ox)
+			(not (and (= x ox) (= y oy)))
+			(not (legal-position-pair? (cons x y) (cons ox oy))))
+		      (begin
+			(flash-button ox oy)
+			(flash-button ox oy)
+			(flash-button ox oy)
+			(deactivate-button ox oy)
+			(update))))))])))
+
+
+; clear the board
+
+(define clear-board 
+  (lambda ()
+    (dotimes (x size) (dotimes (y size) (deactivate-button x y)))))
+
+
+; Procedures to return a list of consecutive integers from start to
+; end (inclusive).
+
+(define interval 
+  (lambda (start end)
+    (let loop ([s start] [e end] [l ()])
+      (if (> s e) l (loop s (- e 1) (cons e l))))))
+
+(define rinterval 
+  (lambda (start end)
+    (let loop ([s start] [e end] [l ()])
+      (if (> s e) l (loop (+ s 1) e (cons s l))))))
+   
+
+; Return a list of integers that identify the rows on the chessboard
+; that are empty
+
+(define empty-rows 
+  (lambda ()
+    (let loop ([rows (rinterval 0 (- size 1))] [empty ()])
+      (if (null? rows)
+	empty
+	(if (member #t (vector->list (matrix-row board-states (car rows))))
+	  (loop (cdr rows) empty)
+	  (loop (cdr rows) (cons (car rows) empty)))))))
+
+
+; Return a list of pairs ( x . y ) indicating which squares are
+; currently occupied.
+
+(define current-positions 
+  (lambda ()
+    (let ([p ()])
+      (dotimes (x size) 
+	(dotimes (y size) 
+	  (if (matrix-ref board-states y x) (set! p (cons (cons x y) p)))))
+      p)))
+
+
+; Booleans used to detect when user presses a button 
+
+(define nextOrStopPushed #f)
+(define stopPushed #f)
+
+
+; Procedure to wait for the user to press either the next or stop
+; buttons.
+
+(define waitForNextButton 
+  (lambda () 
+    (.upper.next 'configure :state 'normal)
+    (tkwait 'variable 'nextOrStopPushed)
+    (.upper.next 'configure :state 'disabled)))
+
+
+; Define two frames.  The upper will hold control buttons, the lower
+; the chessboard buttons
+
+(frame '.lower :relief 'raised :borderwidth 2)
+(frame '.upper)
+
+; procedure that does nothing other than return the break symbol
+
+(define noop-break (lambda () 'break))
+
+
+; add a frame to the lower frame for each row of sqaures on the
+; chessboard and fill that row with buttons (one per square).
+
+(dotimes (y size)
+  (let ([rowframe (format #f ".lower.row~a" y)])
+    (frame rowframe)
+    (dotimes (x size)
+      (let* ([bn (format #f "~a.b~a" rowframe x)]
+	      [bp (eval (button bn 
+			  :bitmap queen-bitmap
+			  :highlightthickness 0
+			  :relief 'flat))])
+	    (matrix-set! board-buttons y x bp)
+	    (let ([bg (if (odd? (+ x y)) "#bbb" "#eee")])
+	      (bp 'configure :background bg :activebackground "#fff" :foreground bg))
+	    (bind bn "<Button-1>" (lambda () (toggle-button x y) 'break))
+	    (bind bn "<Any-Enter>" noop-break)
+	    (bind bn "<Any-Leave>" noop-break)
+	    (bind bn "<ButtonRelease-1>"  noop-break)
+	    (pack bn :side 'left)
+	    )
+      )
+    (pack rowframe :side 'bottom)
+    )
+  )
+
+
+; add control buttons to upper frame
+
+(button '.upper.quit  :text "Quit" :command (lambda () (exit)))
+(button '.upper.solve :text "Solve" :command do-solve)
+(button '.upper.Clear :text "Clear" :command clear-board)
+(button '.upper.next 
+	:text "Next" 
+	:state 'disabled 
+	:command (lambda () (set! stopPushed #f)(set! nextOrStopPushed #t)))
+(button '.upper.stop 
+	:text "Stop" 
+	:state 'disabled 
+	:command (lambda () (set! stopPushed #t)(set! nextOrStopPushed #t)))
+(frame  '.upper.fill)
+(pack '.upper.solve :side 'left)
+(pack '.upper.next :side 'left)
+(pack '.upper.stop :side 'left)
+(pack '.upper.clear :side 'left)
+(pack '.upper.quit :side 'right)
+(pack '.upper.fill :side 'right)
+
+; arrange the two top level frames
+
+(pack '.upper :side 'top :fill 'x)
+(pack '.lower :side 'bottom) 
+
+

@@ -1,0 +1,123 @@
+;;;;
+;;;; c o m p a t i b i l i t y . s t k   --  This file contains function which
+;;;;					     which assume compatibility between
+;;;;					     versions. Loading of this file will 
+;;;;					     lead to print a message 
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
+;;;;    Creation date: 23-Aug-1994 16:53
+;;;; Last file update: 17-Oct-1994 18:26
+
+(format #t "
+*****
+***** WARNING: Loading compatibility mode 
+***** (You are using something which is obsolete. Avoid to use it 
+***** if you don't want to see this message again)
+*****\n")
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Compatibily macros. Don't use the define-simple-widget and
+;;;; define-composite-widget macros anymore
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-macro (define-simple-widget name super slots constructor)
+  `(begin
+     (say-define (symbol->string ',name))
+     (define-class ,name (<Tk-simple-widget> ,@super) 
+       ,slots)
+     (define-method tk-constructor ((self ,name))
+       ,constructor)))
+
+(define-macro (define-composite-widget name super slots)
+  `(begin
+     (say-define (symbol->string ',name))
+     (define-class ,name (<Tk-composite-widget> ,@super) 
+       ,slots)
+     ,name))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Reading of STF 0.1 files
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define (compatibility-set-STF-0.1! txt STF)
+  (define normal-font "*-Courier-Medium-R-Normal-*-120-*")
+  (define all-fonts `(
+       (normal		,normal-font)
+       (fixed		"fixed")
+       (big		"-*-times-*-r-*-*-*-240-*-*-*-*-*-*")
+       (roman-12	"-*-times-*-r-*-*-*-120-*-*-*-*-*-*")
+       (roman-14	"-*-times-*-r-*-*-*-140-*-*-*-*-*-*")
+       (roman-16	"-*-times-*-r-*-*-*-160-*-*-*-*-*-*")
+       (roman-18	"-*-times-*-r-*-*-*-180-*-*-*-*-*-*")
+       (italic-12	"-*-times-*-i-*-*-*-120-*-*-*-*-*-*")
+       (italic-14	"-*-times-*-i-*-*-*-140-*-*-*-*-*-*")
+       (italic-16	"-*-times-*-i-*-*-*-160-*-*-*-*-*-*")
+       (italic-18	"-*-times-*-i-*-*-*-180-*-*-*-*-*-*")
+       (bold-12		"-*-helvetica-bold-r-*-*-*-120-*-*-*-*-*-*")
+       (bold-14		"-*-helvetica-bold-r-*-*-*-140-*-*-*-*-*-*")
+       (bold-16		"-*-helvetica-bold-r-*-*-*-160-*-*-*-*-*-*")
+       (bold-18		"-*-helvetica-bold-r-*-*-*-180-*-*-*-*-*-*")
+       (bold-italic-12	"-*-helvetica-bold-o-*-*-*-120-*-*-*-*-*-*")
+       (bold-italic-14	"-*-helvetica-bold-o-*-*-*-140-*-*-*-*-*-*")
+       (bold-italic-16	"-*-helvetica-bold-o-*-*-*-160-*-*-*-*-*-*")
+       (bold-italic-18	"-*-helvetica-bold-o-*-*-*-180-*-*-*-*-*-*")
+       (tty-12		"-adobe-courier-medium-*-*-*-*-120-*-*-*-*-*-*")
+       (tty-14		"-adobe-courier-medium-*-*-*-*-140-*-*-*-*-*-*")
+       (tty-16		"-adobe-courier-medium-*-*-*-*-160-*-*-*-*-*-*")
+       (tty-18		"-adobe-courier-medium-*-*-*-*-180-*-*-*-*-*-*"))
+
+  (define (unset-tags editor-window start end)
+    (for-each (lambda (tag) 
+		(editor-window 'tag 'remove (car tag) start end))
+	      all-fonts))
+  
+  (define (set-font editor-window font start end)
+    ;; Be sure this tag exists
+    (editor-window 'tag 'conf font :font (cadr (assoc font all-fonts)))
+    ;; Set a new tag for this character range
+    (editor-window 'tag 'add font start end))
+  
+  (define (set-underline editor-window start end)
+    (editor-window 'tag 'conf 'underline :underline #t)
+    (editor-window 'tag 'add 'underline start end))
+  
+  (let ((text (cadr STF)) (fmts (caddr STF)) (editor-window (Id txt)))
+    ;; First insert new text
+    (editor-window 'delete "1.0" "end")
+    (editor-window 'insert "1.0" text)
+    (editor-window 'mark 'set 'insert "1.0")
+    ;; And now enhence it
+    (for-each (lambda (t) 
+		(format #t "On y est ~S\n" t)
+		(do ((l (cadr t) (cddr l)))
+		    ((null? l))
+		  (if (eqv? (car t) 'underline)
+		      (set-underline editor-window (car l) (cadr l))
+		      (set-font editor-window (car t) (car l) (cadr l)))))
+	      fmts)
+    
+    ;; Now create a STklos object for each tags used. So that next save will 
+    ;; be in the new STF format
+    (for-each (lambda (t)
+		(unless (null? (editor-window 'tag 'ranges (car t)))
+			(format #t "Creation du tag ~S\n" (car t))
+			(make <Text-tag> :parent txt :Tid (car t) :font (cadr t))))
+	      all-fonts)))
+
+
+
+(provide "compatibility")

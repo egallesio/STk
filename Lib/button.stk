@@ -1,0 +1,137 @@
+;;;;
+;;;; Buttons, Check button and radio buttons bindings and procs
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; This software is a derivative work of other copyrighted softwares; the
+;;;; copyright notices of these softwares are placed in the file COPYRIGHTS
+;;;;
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 17-May-1993 12:35
+;;;; Last file update:  2-Jul-1996 12:24
+;;;;
+
+
+;; This file is loaded for the first button, radio or check
+;; button. Avoid to load it several times
+(unless (or (tk-command? Tk:button) 
+	    (tk-command? Tk:checkbutton) 
+	    (tk-command? Tk:radiobutton))
+  (let ()
+
+;; The procedure below is invoked when the mouse pointer enters a
+;; button widget.  It records the button we're in and changes the
+;; state of the button to active unless the button is disabled.
+
+(define (Tk:button-enter |W|)
+  (unless (equal? (tk-get |W| :state) "disabled")
+     (tk-set! |W| :state "active")
+     (if (equal? tk::button-window |W|)
+	 (tk-set! |W| :state "active"
+		      :relief "sunken")))
+  (set! tk::window |W|))
+
+;; The procedure below is invoked when the mouse pointer leaves a
+;; button widget. It changes the state of the button back to
+;; inactive. If we're leaving the button window with a mouse button
+;; pressed (tk::button-window == |W|), restore the relief of the
+;; button too.
+
+(define (Tk:button-leave |W|)
+  (unless (equal? (tk-get |W| :state) "disabled")
+     (tk-set! |W| :state "normal"))
+  (if (equal? tk::button-window |W|)
+      (tk-set! |W| :relief tk::relief))
+  (set! tk::window #f))
+
+
+;; The procedure below is invoked when the mouse button is pressed in
+;; a button widget. It records the fact that the mouse is in the
+;; button, saves the button's relief so it can be restored later, and
+;; changes the relief to sunken.
+
+(define (Tk:button-down |W|)
+  (set! tk::relief 	  (tk-get |W| :relief))
+  (set! tk::button-window |W|)
+  (unless (equal? (tk-get |W| :state) "disabled")
+     (set! tk::button-window |W|)
+     (tk-set! |W| :relief "sunken")))
+
+;; The procedure below is invoked when the mouse button is released
+;; in a button widget.  It restores the button's relief and invokes
+;; the command as long as the mouse hasn't left the button.
+
+(define (Tk:button-up |W|)
+  (when (equal? tk::button-window |W|)
+     (set! tk::button-window "")
+     (tk-set! |W| :relief tk::relief)
+     (when (and (equal? |W| tk::window)
+		(not (equal? (tk-get |W| :state) "disabled")))
+       (|W| 'invoke))))
+
+;; The procedure below is called when a button is invoked through
+;; the keyboard.  It simulate a press of the button via the mouse.
+(define (Tk:button-invoke |W|)
+  (unless (equal? (tk-get |W| :state) "disabled")
+     (let ((old-relief (tk-get |W| :relief))
+	   (old-state  (tk-get |W| :state)))
+       (tk-set! |W| :state "active"
+		    :relief "sunken")
+       (update 'idletasks)
+       (after 100)
+       (tk-set! |W| :state  old-state 
+		  :relief old-relief)
+       (|W| 'invoke))))
+
+;; The procedure below is invoked when the mouse button is pressed in
+;; a checkbutton or radiobutton widget, or when the widget is invoked
+;; through the keyboard.  It invokes the widget if it isn't disabled.
+
+(define (Tk:R&C-button-invoke |W|)
+  (unless (equal? (tk-get |W| :state) "disabled")
+    (|W| 'invoke)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Class bindings for various flavors of button widgets. tk::window
+;; keeps track of the button containing the mouse, and tk::relief
+;; saves the original relief of the button so it can be restored when
+;; the mouse button is released.
+
+
+(bind "Button" "<FocusIn>" 		"")
+(bind "Button" "<Enter>"		Tk:button-enter)
+(bind "Button" "<Leave>"		Tk:button-leave)
+(bind "Button" "<1>"			Tk:button-down)
+(bind "Button" "<ButtonRelease-1>" 	Tk:button-up)
+(bind "Button" "<space>"		Tk:button-invoke)
+
+(bind "Checkbutton" "<FocusIn>" 	"")
+(bind "Checkbutton" "<Enter>" 		Tk:button-enter)
+(bind "Checkbutton" "<Leave>" 		Tk:button-leave)
+(bind "Checkbutton" "<1>" 		Tk:R&C-button-invoke)
+(bind "Checkbutton" "<space>" 		Tk:R&C-button-invoke)
+(bind "Checkbutton" "<Return>" 		(lambda (|W|)
+					  (unless *tk-strict-motif*
+					    (Tk:R&C-button-invoke |W|))))
+
+(bind "Radiobutton" "<FocusIn>" 	"")
+(bind "Radiobutton" "<Enter>" 		Tk:button-enter)
+(bind "Radiobutton" "<Leave>" 		Tk:button-leave)
+(bind "Radiobutton" "<1>" 		Tk:R&C-button-invoke)
+(bind "Radiobutton" "<space>" 		Tk:R&C-button-invoke)
+(bind "Radiobutton" "<Return>" 		(lambda (|W|)
+					  (unless *tk-strict-motif*
+					    (Tk:R&C-button-invoke |W|))))
+))
+

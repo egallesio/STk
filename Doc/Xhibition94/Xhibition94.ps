@@ -1,0 +1,4247 @@
+%!PS-Adobe-3.0
+%%BoundingBox: (atend)
+%%Pages: (atend)
+%%PageOrder: (atend)
+%%DocumentFonts: (atend)
+%%Creator: Frame 4.0
+%%DocumentData: Clean7Bit
+%%EndComments
+%%BeginProlog
+%
+% Frame ps_prolog 4.0, for use with Frame 4.0 products
+% This ps_prolog file is Copyright (c) 1986-1993 Frame Technology
+% Corporation.  All rights reserved.  This ps_prolog file may be
+% freely copied and distributed in conjunction with documents created
+% using FrameMaker, FrameBuilder and FrameViewer as long as this 
+% copyright notice is preserved.
+%
+% Frame products normally print colors as their true color on a color printer
+% or as shades of gray, based on luminance, on a black-and white printer. The
+% following flag, if set to True, forces all non-white colors to print as pure
+% black. This has no effect on bitmap images.
+/FMPrintAllColorsAsBlack             false def
+%
+% Frame products can either set their own line screens or use a printer's 
+% default settings. Three flags below control this separately for no 
+% separations, spot separations and process separations. If a flag
+% is true, then the default printer settings will not be changed. If it is
+% false, Frame products will use their own settings from a table based on
+% the printer's resolution.
+/FMUseDefaultNoSeparationScreen      true  def
+/FMUseDefaultSpotSeparationScreen    true  def
+/FMUseDefaultProcessSeparationScreen false def
+%
+% For any given PostScript printer resolution, Frame products have two sets of 
+% screen angles and frequencies for printing process separations, which are 
+% recomended by Adobe. The following variable chooses the higher frequencies
+% when set to true or the lower frequencies when set to false. This is only
+% effective if the appropriate FMUseDefault...SeparationScreen flag is false.
+/FMUseHighFrequencyScreens true def
+%
+% PostScript Level 2 printers contain an "Accurate Screens" feature which can
+% improve process separation rendering at the expense of compute time. This 
+% flag is ignored by PostScript Level 1 printers.
+/FMUseAcccurateScreens true def
+%
+% The following PostScript procedure defines the spot function that Frame
+% products will use for process separations. You may un-comment-out one of
+% the alternative functions below, or use your own.
+%
+% Dot function
+/FMSpotFunction {abs exch abs 2 copy add 1 gt 
+		{1 sub dup mul exch 1 sub dup mul add 1 sub }
+		{dup mul exch dup mul add 1 exch sub }ifelse } def
+%
+% Line function
+% /FMSpotFunction { pop } def
+%
+% Elipse function
+% /FMSpotFunction { dup 5 mul 8 div mul exch dup mul exch add 
+%		sqrt 1 exch sub } def
+%
+%
+/FMversion (4.0) def 
+/FMLevel1 /languagelevel where {pop languagelevel} {1} ifelse 2 lt def
+/FMPColor
+	FMLevel1 {
+		false
+		/colorimage where {pop pop true} if
+	} {
+		true
+	} ifelse
+def
+/FrameDict 400 dict def 
+systemdict /errordict known not {/errordict 10 dict def
+		errordict /rangecheck {stop} put} if
+% The readline in PS 23.0 doesn't recognize cr's as nl's on AppleTalk
+FrameDict /tmprangecheck errordict /rangecheck get put 
+errordict /rangecheck {FrameDict /bug true put} put 
+FrameDict /bug false put 
+mark 
+% Some PS machines read past the CR, so keep the following 3 lines together!
+currentfile 5 string readline
+00
+0000000000
+cleartomark 
+errordict /rangecheck FrameDict /tmprangecheck get put 
+FrameDict /bug get { 
+	/readline {
+		/gstring exch def
+		/gfile exch def
+		/gindex 0 def
+		{
+			gfile read pop 
+			dup 10 eq {exit} if 
+			dup 13 eq {exit} if 
+			gstring exch gindex exch put 
+			/gindex gindex 1 add def 
+		} loop
+		pop 
+		gstring 0 gindex getinterval true 
+		} bind def
+	} if
+/FMshowpage /showpage load def
+/FMquit /quit load def
+/FMFAILURE { 
+	dup = flush 
+	FMshowpage 
+	/Helvetica findfont 12 scalefont setfont
+	72 200 moveto
+	show FMshowpage 
+	FMquit 
+	} def 
+/FMVERSION {
+	FMversion ne {
+		(Frame product version does not match ps_prolog!) FMFAILURE
+		} if
+	} def 
+/FMBADEPSF { 
+	(PostScript Lang. Ref. Man., 2nd Ed., H.2.4 says EPS must not call X              )
+	dup dup (X) search pop exch pop exch pop length 
+	4 -1 roll 
+	putinterval 
+	FMFAILURE
+	} def
+/FMLOCAL {
+	FrameDict begin
+	0 def 
+	end 
+	} def 
+/concatprocs
+	{
+	/proc2 exch cvlit def/proc1 exch cvlit def/newproc proc1 length proc2 length add array def
+	newproc 0 proc1 putinterval newproc proc1 length proc2 putinterval newproc cvx
+}def
+FrameDict begin 
+/FMnone 0 def
+/FMcyan 1 def
+/FMmagenta 2 def
+/FMyellow 3 def
+/FMblack 4 def
+/FMcustom 5 def
+/FrameNegative false def 
+/FrameSepIs FMnone def 
+/FrameSepBlack 0 def
+/FrameSepYellow 0 def
+/FrameSepMagenta 0 def
+/FrameSepCyan 0 def
+/FrameSepRed 1 def
+/FrameSepGreen 1 def
+/FrameSepBlue 1 def
+/FrameCurGray 1 def
+/FrameCurPat null def
+/FrameCurColors [ 0 0 0 1 0 0 0 ] def 
+/FrameColorEpsilon .001 def	
+/eqepsilon {		
+	sub dup 0 lt {neg} if
+	FrameColorEpsilon le
+} bind def
+/FrameCmpColorsCMYK { 
+	2 copy 0 get exch 0 get eqepsilon {
+		2 copy 1 get exch 1 get eqepsilon {
+			2 copy 2 get exch 2 get eqepsilon {
+				3 get exch 3 get eqepsilon
+			} {pop pop false} ifelse
+		}{pop pop false} ifelse
+	} {pop pop false} ifelse
+} bind def
+/FrameCmpColorsRGB { 
+	2 copy 4 get exch 0 get eqepsilon {
+		2 copy 5 get exch 1 get eqepsilon {
+			6 get exch 2 get eqepsilon
+		}{pop pop false} ifelse
+	} {pop pop false} ifelse
+} bind def
+/RGBtoCMYK { 
+	1 exch sub 
+	3 1 roll 
+	1 exch sub 
+	3 1 roll 
+	1 exch sub 
+	3 1 roll 
+	3 copy 
+	2 copy 
+	le { pop } { exch pop } ifelse 
+	2 copy 
+	le { pop } { exch pop } ifelse 
+	dup dup dup 
+	6 1 roll 
+	4 1 roll 
+	7 1 roll 
+	sub 
+	6 1 roll 
+	sub 
+	5 1 roll 
+	sub 
+	4 1 roll 
+} bind def
+/CMYKtoRGB { 
+	dup dup 4 -1 roll add 						  
+	5 1 roll 3 -1 roll add 						  
+	4 1 roll add 								  
+	1 exch sub dup 0 lt {pop 0} if 3 1 roll 	  
+	1 exch sub dup 0 lt {pop 0} if exch 	      
+	1 exch sub dup 0 lt {pop 0} if exch	  		  
+} bind def
+/FrameSepInit {
+	1.0 RealSetgray
+} bind def
+/FrameSetSepColor { 
+	/FrameSepBlue exch def
+	/FrameSepGreen exch def
+	/FrameSepRed exch def
+	/FrameSepBlack exch def
+	/FrameSepYellow exch def
+	/FrameSepMagenta exch def
+	/FrameSepCyan exch def
+	/FrameSepIs FMcustom def
+	setCurrentScreen	
+} bind def
+/FrameSetCyan {
+	/FrameSepBlue 1.0 def
+	/FrameSepGreen 1.0 def
+	/FrameSepRed 0.0 def
+	/FrameSepBlack 0.0 def
+	/FrameSepYellow 0.0 def
+	/FrameSepMagenta 0.0 def
+	/FrameSepCyan 1.0 def
+	/FrameSepIs FMcyan def
+	setCurrentScreen	
+} bind def
+ 
+/FrameSetMagenta {
+	/FrameSepBlue 1.0 def
+	/FrameSepGreen 0.0 def
+	/FrameSepRed 1.0 def
+	/FrameSepBlack 0.0 def
+	/FrameSepYellow 0.0 def
+	/FrameSepMagenta 1.0 def
+	/FrameSepCyan 0.0 def
+	/FrameSepIs FMmagenta def
+	setCurrentScreen
+} bind def
+ 
+/FrameSetYellow {
+	/FrameSepBlue 0.0 def
+	/FrameSepGreen 1.0 def
+	/FrameSepRed 1.0 def
+	/FrameSepBlack 0.0 def
+	/FrameSepYellow 1.0 def
+	/FrameSepMagenta 0.0 def
+	/FrameSepCyan 0.0 def
+	/FrameSepIs FMyellow def
+	setCurrentScreen
+} bind def
+ 
+/FrameSetBlack {
+	/FrameSepBlue 0.0 def
+	/FrameSepGreen 0.0 def
+	/FrameSepRed 0.0 def
+	/FrameSepBlack 1.0 def
+	/FrameSepYellow 0.0 def
+	/FrameSepMagenta 0.0 def
+	/FrameSepCyan 0.0 def
+	/FrameSepIs FMblack def
+	setCurrentScreen
+} bind def
+ 
+/FrameNoSep { 
+	/FrameSepIs FMnone def
+	setCurrentScreen
+} bind def
+/FrameSetSepColors { 
+	FrameDict begin
+	[ exch 1 add 1 roll ]
+	/FrameSepColors  
+	exch def end
+	} bind def
+/FrameColorInSepListCMYK { 
+	FrameSepColors {  
+       		exch dup 3 -1 roll 
+       		FrameCmpColorsCMYK 
+       		{ pop true exit } if
+    	} forall 
+	dup true ne {pop false} if
+	} bind def
+/FrameColorInSepListRGB { 
+	FrameSepColors {  
+       		exch dup 3 -1 roll 
+       		FrameCmpColorsRGB 
+       		{ pop true exit } if
+    	} forall 
+	dup true ne {pop false} if
+	} bind def
+/RealSetgray /setgray load def
+/RealSetrgbcolor /setrgbcolor load def
+/RealSethsbcolor /sethsbcolor load def
+end 
+/setgray { 
+	FrameDict begin
+	FrameSepIs FMnone eq
+		{ RealSetgray } 
+		{ 
+		FrameSepIs FMblack eq 
+			{ RealSetgray } 
+			{ FrameSepIs FMcustom eq 
+			  FrameSepRed 0 eq and
+			  FrameSepGreen 0 eq and
+			  FrameSepBlue 0 eq and {
+			  	RealSetgray
+			  } {
+				1 RealSetgray pop 
+			  } ifelse
+			} ifelse
+		} ifelse
+	end
+} bind def
+/setrgbcolor { 
+	FrameDict begin
+	FrameSepIs FMnone eq
+	{  RealSetrgbcolor }
+	{
+		3 copy [ 4 1 roll ] 
+		FrameColorInSepListRGB
+		{
+				FrameSepBlue eq exch 
+			 	FrameSepGreen eq and exch 
+			 	FrameSepRed eq and
+			 	{ 0 } { 1 } ifelse
+		}
+		{
+			FMPColor {
+				RealSetrgbcolor
+				currentcmykcolor
+			} {
+				RGBtoCMYK
+			} ifelse
+			FrameSepIs FMblack eq
+			{1.0 exch sub 4 1 roll pop pop pop} {
+			FrameSepIs FMyellow eq
+			{pop 1.0 exch sub 3 1 roll pop pop} {
+			FrameSepIs FMmagenta eq
+			{pop pop 1.0 exch sub exch pop } {
+			FrameSepIs FMcyan eq
+			{pop pop pop 1.0 exch sub } 
+			{pop pop pop pop 1} ifelse } ifelse } ifelse } ifelse 
+		} ifelse
+		RealSetgray
+	} 
+	ifelse
+	end
+} bind def
+/sethsbcolor {
+	FrameDict begin
+	FrameSepIs FMnone eq 
+	{ RealSethsbcolor } 
+	{
+		RealSethsbcolor 
+		currentrgbcolor  
+		setrgbcolor 
+	} 
+	ifelse
+	end
+} bind def
+FrameDict begin
+/setcmykcolor where {
+	pop /RealSetcmykcolor /setcmykcolor load def
+} {
+	/RealSetcmykcolor {
+		4 1 roll
+		3 { 3 index add 0 max 1 min 1 exch sub 3 1 roll} repeat 
+		setrgbcolor pop
+	} bind def
+} ifelse
+userdict /setcmykcolor { 
+		FrameDict begin
+		FrameSepIs FMnone eq
+		{ RealSetcmykcolor } 
+		{
+			4 copy [ 5 1 roll ]
+			FrameColorInSepListCMYK
+			{
+				FrameSepBlack eq exch 
+				FrameSepYellow eq and exch 
+				FrameSepMagenta eq and exch 
+				FrameSepCyan eq and 
+				{ 0 } { 1 } ifelse
+			}
+			{
+				FrameSepIs FMblack eq
+				{1.0 exch sub 4 1 roll pop pop pop} {
+				FrameSepIs FMyellow eq
+				{pop 1.0 exch sub 3 1 roll pop pop} {
+				FrameSepIs FMmagenta eq
+				{pop pop 1.0 exch sub exch pop } {
+				FrameSepIs FMcyan eq
+				{pop pop pop 1.0 exch sub } 
+				{pop pop pop pop 1} ifelse } ifelse } ifelse } ifelse 
+			} ifelse
+			RealSetgray
+		}
+		ifelse
+		end
+	} bind put
+FMLevel1 not { 
+	
+	/patProcDict 5 dict dup begin
+		<0f1e3c78f0e1c387> { 3 setlinewidth -1 -1 moveto 9 9 lineto stroke 
+											4 -4 moveto 12 4 lineto stroke
+											-4 4 moveto 4 12 lineto stroke} bind def
+		<0f87c3e1f0783c1e> { 3 setlinewidth -1 9 moveto 9 -1 lineto stroke 
+											-4 4 moveto 4 -4 lineto stroke
+											4 12 moveto 12 4 lineto stroke} bind def
+		<8142241818244281> { 1 setlinewidth -1 9 moveto 9 -1 lineto stroke
+											-1 -1 moveto 9 9 lineto stroke } bind def
+		<03060c183060c081> { 1 setlinewidth -1 -1 moveto 9 9 lineto stroke 
+											4 -4 moveto 12 4 lineto stroke
+											-4 4 moveto 4 12 lineto stroke} bind def
+		<8040201008040201> { 1 setlinewidth -1 9 moveto 9 -1 lineto stroke 
+											-4 4 moveto 4 -4 lineto stroke
+											4 12 moveto 12 4 lineto stroke} bind def
+	end def
+	/patDict 15 dict dup begin
+		/PatternType 1 def		
+		/PaintType 2 def		
+		/TilingType 3 def		
+		/BBox [ 0 0 8 8 ] def 	
+		/XStep 8 def			
+		/YStep 8 def			
+		/PaintProc {
+			begin
+			patProcDict bstring known {
+				patProcDict bstring get exec
+			} {
+				8 8 true [1 0 0 -1 0 8] bstring imagemask
+			} ifelse
+			end
+		} bind def
+	end def
+} if
+/combineColor {
+    FrameSepIs FMnone eq
+	{
+		graymode FMLevel1 or not {
+			
+			[/Pattern [/DeviceCMYK]] setcolorspace
+			FrameCurColors 0 4 getinterval aload pop FrameCurPat setcolor
+		} {
+			FrameCurColors 3 get 1.0 ge {
+				FrameCurGray RealSetgray
+			} {
+				FMPColor graymode and {
+					0 1 3 { 
+						FrameCurColors exch get
+						1 FrameCurGray sub mul
+					} for
+					RealSetcmykcolor
+				} {
+					4 1 6 {
+						FrameCurColors exch get
+						graymode {
+							1 exch sub 1 FrameCurGray sub mul 1 exch sub
+						} {
+							1.0 lt {FrameCurGray} {1} ifelse
+						} ifelse
+					} for
+					RealSetrgbcolor
+				} ifelse
+			} ifelse
+		} ifelse
+	} { 
+		FrameCurColors 0 4 getinterval aload
+		FrameColorInSepListCMYK {
+			FrameSepBlack eq exch 
+			FrameSepYellow eq and exch 
+			FrameSepMagenta eq and exch 
+			FrameSepCyan eq and
+			FrameSepIs FMcustom eq and
+			{ FrameCurGray } { 1 } ifelse
+		} {
+			FrameSepIs FMblack eq
+			{FrameCurGray 1.0 exch sub mul 1.0 exch sub 4 1 roll pop pop pop} {
+			FrameSepIs FMyellow eq
+			{pop FrameCurGray 1.0 exch sub mul 1.0 exch sub 3 1 roll pop pop} {
+			FrameSepIs FMmagenta eq
+			{pop pop FrameCurGray 1.0 exch sub mul 1.0 exch sub exch pop } {
+			FrameSepIs FMcyan eq
+			{pop pop pop FrameCurGray 1.0 exch sub mul 1.0 exch sub } 
+			{pop pop pop pop 1} ifelse } ifelse } ifelse } ifelse 
+		} ifelse
+		graymode FMLevel1 or not {
+			
+			[/Pattern [/DeviceGray]] setcolorspace
+			FrameCurPat setcolor
+		} { 
+			graymode not FMLevel1 and {
+				
+				dup 1 lt {pop FrameCurGray} if
+			} if
+			RealSetgray
+		} ifelse
+	} ifelse
+} bind def
+/savematrix {
+	orgmatrix currentmatrix pop
+	} bind def
+/restorematrix {
+	orgmatrix setmatrix
+	} bind def
+/dmatrix matrix def
+/dpi    72 0 dmatrix defaultmatrix dtransform
+    dup mul exch   dup mul add   sqrt def
+	
+/freq dpi dup 72 div round dup 0 eq {pop 1} if 8 mul div def
+/sangle 1 0 dmatrix defaultmatrix dtransform exch atan def
+/dpiranges   [  2540    2400    1693     1270    1200     635      600      0      ] def
+/CMLowFreqs  [ 100.402  94.8683 89.2289 100.402  94.8683  66.9349  63.2456 47.4342 ] def
+/YLowFreqs   [  95.25   90.0    84.65    95.25   90.0     70.5556  66.6667 50.0    ] def
+/KLowFreqs   [  89.8026 84.8528 79.8088  89.8026 84.8528  74.8355  70.7107 53.033  ] def
+/CLowAngles  [  71.5651 71.5651 71.5651 71.5651  71.5651  71.5651  71.5651 71.5651 ] def
+/MLowAngles  [  18.4349 18.4349 18.4349 18.4349  18.4349  18.4349  18.4349 18.4349 ] def
+/YLowTDot    [  true    true    false    true    true     false    false   false   ] def
+/CMHighFreqs [ 133.87  126.491 133.843  108.503 102.523  100.402   94.8683 63.2456 ] def
+/YHighFreqs  [ 127.0   120.0   126.975  115.455 109.091   95.25    90.0    60.0    ] def
+/KHighFreqs  [ 119.737 113.137 119.713  128.289 121.218   89.8026  84.8528 63.6395 ] def
+/CHighAngles [  71.5651 71.5651 71.5651  70.0169 70.0169  71.5651  71.5651 71.5651 ] def
+/MHighAngles [  18.4349 18.4349 18.4349  19.9831 19.9831  18.4349  18.4349 18.4349 ] def
+/YHighTDot   [  false   false   true     false   false    true     true    false   ] def
+/PatFreq     [	10.5833 10.0     9.4055  10.5833 10.0	  10.5833  10.0	   9.375   ] def
+/screenIndex {
+	0 1 dpiranges length 1 sub { dup dpiranges exch get 1 sub dpi le {exit} {pop} ifelse } for
+} bind def
+/getCyanScreen {
+	FMUseHighFrequencyScreens { CHighAngles CMHighFreqs} {CLowAngles CMLowFreqs} ifelse
+		screenIndex dup 3 1 roll get 3 1 roll get /FMSpotFunction load
+} bind def
+/getMagentaScreen {
+	FMUseHighFrequencyScreens { MHighAngles CMHighFreqs } {MLowAngles CMLowFreqs} ifelse
+		screenIndex dup 3 1 roll get 3 1 roll get /FMSpotFunction load
+} bind def
+/getYellowScreen {
+	FMUseHighFrequencyScreens { YHighTDot YHighFreqs} { YLowTDot YLowFreqs } ifelse
+		screenIndex dup 3 1 roll get 3 1 roll get { 3 div
+			{2 { 1 add 2 div 3 mul dup floor sub 2 mul 1 sub exch} repeat
+			FMSpotFunction } } {/FMSpotFunction load } ifelse
+			0.0 exch
+} bind def
+/getBlackScreen  {
+	FMUseHighFrequencyScreens { KHighFreqs } { KLowFreqs } ifelse
+		screenIndex get 45.0 /FMSpotFunction load 
+} bind def
+/getSpotScreen {
+	getBlackScreen
+} bind def
+/getCompositeScreen {
+	getBlackScreen
+} bind def
+/FMSetScreen 
+	FMLevel1 { /setscreen load 
+	}{ {
+		8 dict begin
+		/HalftoneType 1 def
+		/SpotFunction exch def
+		/Angle exch def
+		/Frequency exch def
+		/AccurateScreens FMUseAcccurateScreens def
+		currentdict end sethalftone
+	} bind } ifelse
+def
+/setDefaultScreen {
+	FMPColor {
+		orgrxfer cvx orggxfer cvx orgbxfer cvx orgxfer cvx setcolortransfer
+	}
+	{
+		orgxfer cvx settransfer
+	} ifelse
+	orgfreq organgle orgproc cvx setscreen
+} bind def
+/setCurrentScreen {
+	FrameSepIs FMnone eq {
+		FMUseDefaultNoSeparationScreen {
+			setDefaultScreen
+		} {
+			getCompositeScreen FMSetScreen
+		} ifelse
+	} {
+		FrameSepIs FMcustom eq {
+			FMUseDefaultSpotSeparationScreen {
+				setDefaultScreen
+			} {
+				getSpotScreen FMSetScreen
+			} ifelse
+		} {
+			FMUseDefaultProcessSeparationScreen {
+				setDefaultScreen
+			} {
+				FrameSepIs FMcyan eq {
+					getCyanScreen FMSetScreen
+				} {
+					FrameSepIs FMmagenta eq {
+						getMagentaScreen FMSetScreen
+					} {
+						FrameSepIs FMyellow eq {
+							getYellowScreen FMSetScreen
+						} {
+							getBlackScreen FMSetScreen
+						} ifelse
+					} ifelse
+				} ifelse
+			} ifelse
+		} ifelse
+	} ifelse 
+} bind def
+end
+	/gstring FMLOCAL
+	/gfile FMLOCAL
+	/gindex FMLOCAL
+	/orgrxfer FMLOCAL
+	/orggxfer FMLOCAL
+	/orgbxfer FMLOCAL
+	/orgxfer FMLOCAL
+	/orgproc FMLOCAL
+	/orgrproc FMLOCAL
+	/orggproc FMLOCAL
+	/orgbproc FMLOCAL
+	/organgle FMLOCAL
+	/orgrangle FMLOCAL
+	/orggangle FMLOCAL
+	/orgbangle FMLOCAL
+	/orgfreq FMLOCAL
+	/orgrfreq FMLOCAL
+	/orggfreq FMLOCAL
+	/orgbfreq FMLOCAL
+	/yscale FMLOCAL
+	/xscale FMLOCAL
+	/edown FMLOCAL
+	/manualfeed FMLOCAL
+	/paperheight FMLOCAL
+	/paperwidth FMLOCAL
+/FMDOCUMENT { 
+	array /FMfonts exch def 
+	/#copies exch def
+	FrameDict begin
+	0 ne /manualfeed exch def
+	/paperheight exch def
+	/paperwidth exch def
+	0 ne /FrameNegative exch def 
+	0 ne /edown exch def 
+	/yscale exch def
+	/xscale exch def
+	FMLevel1 {
+		manualfeed {setmanualfeed} if
+		/FMdicttop countdictstack 1 add def 
+		/FMoptop count def 
+		setpapername 
+		manualfeed {true} {papersize} ifelse 
+		{manualpapersize} {false} ifelse 
+		{desperatepapersize} {false} ifelse 
+		{ (Can't select requested paper size for Frame print job!) FMFAILURE } if
+		count -1 FMoptop {pop pop} for
+		countdictstack -1 FMdicttop {pop end} for 
+		}
+		{{1 dict dup /PageSize [paperwidth paperheight]put setpagedevice}stopped
+		{ (Can't select requested paper size for Frame print job!) FMFAILURE } if
+		 {1 dict dup /ManualFeed manualfeed put setpagedevice } stopped pop }
+	ifelse 
+	
+	FMPColor {
+		currentcolorscreen
+			cvlit /orgproc exch def
+				  /organgle exch def 
+				  /orgfreq exch def
+			cvlit /orgbproc exch def
+				  /orgbangle exch def 
+				  /orgbfreq exch def
+			cvlit /orggproc exch def
+				  /orggangle exch def 
+				  /orggfreq exch def
+			cvlit /orgrproc exch def
+				  /orgrangle exch def 
+				  /orgrfreq exch def
+			currentcolortransfer 
+			FrameNegative {
+				1 1 4 { 
+					pop { 1 exch sub } concatprocs 4 1 roll
+				} for
+				4 copy
+				setcolortransfer
+			} if
+			cvlit /orgxfer exch def
+			cvlit /orgbxfer exch def
+			cvlit /orggxfer exch def
+			cvlit /orgrxfer exch def
+	} {
+		currentscreen 
+			cvlit /orgproc exch def
+				  /organgle exch def 
+				  /orgfreq exch def
+				  
+		currenttransfer 
+		FrameNegative {
+			{ 1 exch sub } concatprocs
+			dup settransfer
+		} if 
+		cvlit /orgxfer exch def
+	} ifelse
+	end 
+} def 
+/pagesave FMLOCAL
+/orgmatrix FMLOCAL
+/landscape FMLOCAL
+/pwid FMLOCAL
+/FMBEGINPAGE { 
+	FrameDict begin 
+	/pagesave save def
+	3.86 setmiterlimit
+	/landscape exch 0 ne def
+	landscape { 
+		90 rotate 0 exch dup /pwid exch def neg translate pop 
+	}{
+		pop /pwid exch def
+	} ifelse
+	edown { [-1 0 0 1 pwid 0] concat } if
+	0 0 moveto paperwidth 0 lineto paperwidth paperheight lineto 
+	0 paperheight lineto 0 0 lineto 1 setgray fill
+	xscale yscale scale
+	/orgmatrix matrix def
+	gsave 
+} def 
+/FMENDPAGE {
+	grestore 
+	pagesave restore
+	end 
+	showpage
+	} def 
+/FMFONTDEFINE { 
+	FrameDict begin
+	findfont 
+	ReEncode 
+	1 index exch 
+	definefont 
+	FMfonts 3 1 roll 
+	put
+	end 
+	} def 
+/FMFILLS {
+	FrameDict begin dup
+	array /fillvals exch def
+	dict /patCache exch def
+	end 
+	} def 
+/FMFILL {
+	FrameDict begin
+	 fillvals 3 1 roll put
+	end 
+	} def 
+/FMNORMALIZEGRAPHICS { 
+	newpath
+	0.0 0.0 moveto
+	1 setlinewidth
+	0 setlinecap
+	0 0 0 sethsbcolor
+	0 setgray 
+	} bind def
+	/fx FMLOCAL
+	/fy FMLOCAL
+	/fh FMLOCAL
+	/fw FMLOCAL
+	/llx FMLOCAL
+	/lly FMLOCAL
+	/urx FMLOCAL
+	/ury FMLOCAL
+/FMBEGINEPSF { 
+	end 
+	/FMEPSF save def 
+	/showpage {} def 
+% See Adobe's "PostScript Language Reference Manual, 2nd Edition", page 714.
+% "...the following operators MUST NOT be used in an EPS file:" (emphasis ours)
+	/banddevice {(banddevice) FMBADEPSF} def
+	/clear {(clear) FMBADEPSF} def
+	/cleardictstack {(cleardictstack) FMBADEPSF} def 
+	/copypage {(copypage) FMBADEPSF} def
+	/erasepage {(erasepage) FMBADEPSF} def
+	/exitserver {(exitserver) FMBADEPSF} def
+	/framedevice {(framedevice) FMBADEPSF} def
+	/grestoreall {(grestoreall) FMBADEPSF} def
+	/initclip {(initclip) FMBADEPSF} def
+	/initgraphics {(initgraphics) FMBADEPSF} def
+	/initmatrix {(initmatrix) FMBADEPSF} def
+	/quit {(quit) FMBADEPSF} def
+	/renderbands {(renderbands) FMBADEPSF} def
+	/setglobal {(setglobal) FMBADEPSF} def
+	/setpagedevice {(setpagedevice) FMBADEPSF} def
+	/setshared {(setshared) FMBADEPSF} def
+	/startjob {(startjob) FMBADEPSF} def
+	/lettertray {(lettertray) FMBADEPSF} def
+	/letter {(letter) FMBADEPSF} def
+	/lettersmall {(lettersmall) FMBADEPSF} def
+	/11x17tray {(11x17tray) FMBADEPSF} def
+	/11x17 {(11x17) FMBADEPSF} def
+	/ledgertray {(ledgertray) FMBADEPSF} def
+	/ledger {(ledger) FMBADEPSF} def
+	/legaltray {(legaltray) FMBADEPSF} def
+	/legal {(legal) FMBADEPSF} def
+	/statementtray {(statementtray) FMBADEPSF} def
+	/statement {(statement) FMBADEPSF} def
+	/executivetray {(executivetray) FMBADEPSF} def
+	/executive {(executive) FMBADEPSF} def
+	/a3tray {(a3tray) FMBADEPSF} def
+	/a3 {(a3) FMBADEPSF} def
+	/a4tray {(a4tray) FMBADEPSF} def
+	/a4 {(a4) FMBADEPSF} def
+	/a4small {(a4small) FMBADEPSF} def
+	/b4tray {(b4tray) FMBADEPSF} def
+	/b4 {(b4) FMBADEPSF} def
+	/b5tray {(b5tray) FMBADEPSF} def
+	/b5 {(b5) FMBADEPSF} def
+	FMNORMALIZEGRAPHICS 
+	[/fy /fx /fh /fw /ury /urx /lly /llx] {exch def} forall 
+	fx fw 2 div add fy fh 2 div add  translate
+	rotate
+	fw 2 div neg fh 2 div neg translate
+	fw urx llx sub div fh ury lly sub div scale 
+	llx neg lly neg translate 
+	/FMdicttop countdictstack 1 add def 
+	/FMoptop count def 
+	} bind def
+/FMENDEPSF {
+	count -1 FMoptop {pop pop} for 
+	countdictstack -1 FMdicttop {pop end} for 
+	FMEPSF restore
+	FrameDict begin 
+	} bind def
+FrameDict begin 
+/setmanualfeed {
+%%BeginFeature *ManualFeed True
+	 statusdict /manualfeed true put
+%%EndFeature
+	} bind def
+/max {2 copy lt {exch} if pop} bind def
+/min {2 copy gt {exch} if pop} bind def
+/inch {72 mul} def
+/pagedimen { 
+	paperheight sub abs 16 lt exch 
+	paperwidth sub abs 16 lt and
+	{/papername exch def} {pop} ifelse
+	} bind def
+	/papersizedict FMLOCAL
+/setpapername { 
+	/papersizedict 14 dict def 
+	papersizedict begin
+	/papername /unknown def 
+		/Letter 8.5 inch 11.0 inch pagedimen
+		/LetterSmall 7.68 inch 10.16 inch pagedimen
+		/Tabloid 11.0 inch 17.0 inch pagedimen
+		/Ledger 17.0 inch 11.0 inch pagedimen
+		/Legal 8.5 inch 14.0 inch pagedimen
+		/Statement 5.5 inch 8.5 inch pagedimen
+		/Executive 7.5 inch 10.0 inch pagedimen
+		/A3 11.69 inch 16.5 inch pagedimen
+		/A4 8.26 inch 11.69 inch pagedimen
+		/A4Small 7.47 inch 10.85 inch pagedimen
+		/B4 10.125 inch 14.33 inch pagedimen
+		/B5 7.16 inch 10.125 inch pagedimen
+	end
+	} bind def
+/papersize {
+	papersizedict begin
+		/Letter {lettertray letter} def
+		/LetterSmall {lettertray lettersmall} def
+		/Tabloid {11x17tray 11x17} def
+		/Ledger {ledgertray ledger} def
+		/Legal {legaltray legal} def
+		/Statement {statementtray statement} def
+		/Executive {executivetray executive} def
+		/A3 {a3tray a3} def
+		/A4 {a4tray a4} def
+		/A4Small {a4tray a4small} def
+		/B4 {b4tray b4} def
+		/B5 {b5tray b5} def
+		/unknown {unknown} def
+	papersizedict dup papername known {papername} {/unknown} ifelse get
+	end
+	statusdict begin stopped end 
+	} bind def
+/manualpapersize {
+	papersizedict begin
+		/Letter {letter} def
+		/LetterSmall {lettersmall} def
+		/Tabloid {11x17} def
+		/Ledger {ledger} def
+		/Legal {legal} def
+		/Statement {statement} def
+		/Executive {executive} def
+		/A3 {a3} def
+		/A4 {a4} def
+		/A4Small {a4small} def
+		/B4 {b4} def
+		/B5 {b5} def
+		/unknown {unknown} def
+	papersizedict dup papername known {papername} {/unknown} ifelse get
+	end
+	stopped 
+	} bind def
+/desperatepapersize {
+	statusdict /setpageparams known
+		{
+		paperwidth paperheight 0 1 
+		statusdict begin
+		{setpageparams} stopped 
+		end
+		} {true} ifelse 
+	} bind def
+/DiacriticEncoding [
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef
+/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef
+/.notdef /.notdef /.notdef /.notdef /space /exclam /quotedbl
+/numbersign /dollar /percent /ampersand /quotesingle /parenleft
+/parenright /asterisk /plus /comma /hyphen /period /slash /zero /one
+/two /three /four /five /six /seven /eight /nine /colon /semicolon
+/less /equal /greater /question /at /A /B /C /D /E /F /G /H /I /J /K
+/L /M /N /O /P /Q /R /S /T /U /V /W /X /Y /Z /bracketleft /backslash
+/bracketright /asciicircum /underscore /grave /a /b /c /d /e /f /g /h
+/i /j /k /l /m /n /o /p /q /r /s /t /u /v /w /x /y /z /braceleft /bar
+/braceright /asciitilde /.notdef /Adieresis /Aring /Ccedilla /Eacute
+/Ntilde /Odieresis /Udieresis /aacute /agrave /acircumflex /adieresis
+/atilde /aring /ccedilla /eacute /egrave /ecircumflex /edieresis
+/iacute /igrave /icircumflex /idieresis /ntilde /oacute /ograve
+/ocircumflex /odieresis /otilde /uacute /ugrave /ucircumflex
+/udieresis /dagger /.notdef /cent /sterling /section /bullet
+/paragraph /germandbls /registered /copyright /trademark /acute
+/dieresis /.notdef /AE /Oslash /.notdef /.notdef /.notdef /.notdef
+/yen /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef
+/ordfeminine /ordmasculine /.notdef /ae /oslash /questiondown
+/exclamdown /logicalnot /.notdef /florin /.notdef /.notdef
+/guillemotleft /guillemotright /ellipsis /.notdef /Agrave /Atilde
+/Otilde /OE /oe /endash /emdash /quotedblleft /quotedblright
+/quoteleft /quoteright /.notdef /.notdef /ydieresis /Ydieresis
+/fraction /currency /guilsinglleft /guilsinglright /fi /fl /daggerdbl
+/periodcentered /quotesinglbase /quotedblbase /perthousand
+/Acircumflex /Ecircumflex /Aacute /Edieresis /Egrave /Iacute
+/Icircumflex /Idieresis /Igrave /Oacute /Ocircumflex /.notdef /Ograve
+/Uacute /Ucircumflex /Ugrave /dotlessi /circumflex /tilde /macron
+/breve /dotaccent /ring /cedilla /hungarumlaut /ogonek /caron
+] def
+/ReEncode { 
+	dup 
+	length 
+	dict begin 
+	{
+	1 index /FID ne 
+		{def} 
+		{pop pop} ifelse 
+	} forall 
+	0 eq {/Encoding DiacriticEncoding def} if 
+	currentdict 
+	end 
+	} bind def
+FMPColor 
+	
+	{
+	/BEGINBITMAPCOLOR { 
+		BITMAPCOLOR} def
+	/BEGINBITMAPCOLORc { 
+		BITMAPCOLORc} def
+	/BEGINBITMAPTRUECOLOR { 
+		BITMAPTRUECOLOR } def
+	/BEGINBITMAPTRUECOLORc { 
+		BITMAPTRUECOLORc } def
+	}
+	
+	{
+	/BEGINBITMAPCOLOR { 
+		BITMAPGRAY} def
+	/BEGINBITMAPCOLORc { 
+		BITMAPGRAYc} def
+	/BEGINBITMAPTRUECOLOR { 
+		BITMAPTRUEGRAY } def
+	/BEGINBITMAPTRUECOLORc { 
+		BITMAPTRUEGRAYc } def
+	}
+ifelse
+/K { 
+	FMPrintAllColorsAsBlack {
+		dup 1 eq 2 index 1 eq and 3 index 1 eq and not
+			{7 {pop} repeat 0 0 0 1 0 0 0} if
+	} if 
+	FrameCurColors astore 
+	pop combineColor
+} bind def
+/graymode true def
+	/bwidth FMLOCAL
+	/bpside FMLOCAL
+	/bstring FMLOCAL
+	/onbits FMLOCAL
+	/offbits FMLOCAL
+	/xindex FMLOCAL
+	/yindex FMLOCAL
+	/x FMLOCAL
+	/y FMLOCAL
+/setPatternMode {
+	FMLevel1 {
+		/bwidth  exch def
+		/bpside  exch def
+		/bstring exch def
+		/onbits 0 def  /offbits 0 def
+		freq sangle landscape {90 add} if 
+			{/y exch def
+			 /x exch def
+			 /xindex x 1 add 2 div bpside mul cvi def
+			 /yindex y 1 add 2 div bpside mul cvi def
+			 bstring yindex bwidth mul xindex 8 idiv add get
+			 1 7 xindex 8 mod sub bitshift and 0 ne FrameNegative {not} if
+			 {/onbits  onbits  1 add def 1}
+			 {/offbits offbits 1 add def 0}
+			 ifelse
+			}
+			setscreen
+		offbits offbits onbits add div FrameNegative {1.0 exch sub} if
+		/FrameCurGray exch def
+	} { 
+		pop pop
+		dup patCache exch known {
+			patCache exch get
+		} { 
+			dup
+			patDict /bstring 3 -1 roll put
+			patDict 
+			9 PatFreq screenIndex get div dup matrix scale
+			makepattern
+			dup 
+			patCache 4 -1 roll 3 -1 roll put
+		} ifelse
+		/FrameCurGray 0 def
+		/FrameCurPat exch def
+	} ifelse
+	/graymode false def
+	combineColor
+} bind def
+/setGrayScaleMode {
+	graymode not {
+		/graymode true def
+		FMLevel1 {
+			setCurrentScreen
+		} if
+	} if
+	/FrameCurGray exch def
+	combineColor
+} bind def
+/normalize {
+	transform round exch round exch itransform
+	} bind def
+/dnormalize {
+	dtransform round exch round exch idtransform
+	} bind def
+/lnormalize { 
+	0 dtransform exch cvi 2 idiv 2 mul 1 add exch idtransform pop
+	} bind def
+/H { 
+	lnormalize setlinewidth
+	} bind def
+/Z {
+	setlinecap
+	} bind def
+	
+/PFill {
+	graymode FMLevel1 or not {
+		gsave 1 setgray eofill grestore
+	} if
+} bind def
+/PStroke {
+	graymode FMLevel1 or not {
+		gsave 1 setgray stroke grestore
+	} if
+	stroke
+} bind def
+	/fillvals FMLOCAL
+/X { 
+	fillvals exch get
+	dup type /stringtype eq
+	{8 1 setPatternMode} 
+	{setGrayScaleMode}
+	ifelse
+	} bind def
+/V { 
+	PFill gsave eofill grestore
+	} bind def
+/Vclip {
+	clip
+	} bind def
+/Vstrk {
+	currentlinewidth exch setlinewidth PStroke setlinewidth
+	} bind def
+/N { 
+	PStroke
+	} bind def
+/Nclip {
+	strokepath clip newpath
+	} bind def
+/Nstrk {
+	currentlinewidth exch setlinewidth PStroke setlinewidth
+	} bind def
+/M {newpath moveto} bind def
+/E {lineto} bind def
+/D {curveto} bind def
+/O {closepath} bind def
+	/n FMLOCAL
+/L { 
+ 	/n exch def
+	newpath
+	normalize
+	moveto 
+	2 1 n {pop normalize lineto} for
+	} bind def
+/Y { 
+	L 
+	closepath
+	} bind def
+	/x1 FMLOCAL
+	/x2 FMLOCAL
+	/y1 FMLOCAL
+	/y2 FMLOCAL
+/R { 
+	/y2 exch def
+	/x2 exch def
+	/y1 exch def
+	/x1 exch def
+	x1 y1
+	x2 y1
+	x2 y2
+	x1 y2
+	4 Y 
+	} bind def
+	/rad FMLOCAL
+/rarc 
+	{rad 
+	 arcto
+	} bind def
+/RR { 
+	/rad exch def
+	normalize
+	/y2 exch def
+	/x2 exch def
+	normalize
+	/y1 exch def
+	/x1 exch def
+	mark
+	newpath
+	{
+	x1 y1 rad add moveto
+	x1 y2 x2 y2 rarc
+	x2 y2 x2 y1 rarc
+	x2 y1 x1 y1 rarc
+	x1 y1 x1 y2 rarc
+	closepath
+	} stopped {x1 y1 x2 y2 R} if 
+	cleartomark
+	} bind def
+/RRR { 
+	/rad exch def
+	normalize /y4 exch def /x4 exch def
+	normalize /y3 exch def /x3 exch def
+	normalize /y2 exch def /x2 exch def
+	normalize /y1 exch def /x1 exch def
+	newpath
+	normalize moveto 
+	mark
+	{
+	x2 y2 x3 y3 rarc
+	x3 y3 x4 y4 rarc
+	x4 y4 x1 y1 rarc
+	x1 y1 x2 y2 rarc
+	closepath
+	} stopped
+	 {x1 y1 x2 y2 x3 y3 x4 y4 newpath moveto lineto lineto lineto closepath} if
+	cleartomark
+	} bind def
+/C { 
+	grestore
+	gsave
+	R 
+	clip
+	setCurrentScreen
+} bind def
+/CP { 
+	grestore
+	gsave
+	Y 
+	clip
+	setCurrentScreen
+} bind def
+	/FMpointsize FMLOCAL
+/F { 
+	FMfonts exch get
+	FMpointsize scalefont
+	setfont
+	} bind def
+/Q { 
+	/FMpointsize exch def
+	F 
+	} bind def
+/T { 
+	moveto show
+	} bind def
+/RF { 
+	rotate
+	0 ne {-1 1 scale} if
+	} bind def
+/TF { 
+	gsave
+	moveto 
+	RF
+	show
+	grestore
+	} bind def
+/P { 
+	moveto
+	0 32 3 2 roll widthshow
+	} bind def
+/PF { 
+	gsave
+	moveto 
+	RF
+	0 32 3 2 roll widthshow
+	grestore
+	} bind def
+/S { 
+	moveto
+	0 exch ashow
+	} bind def
+/SF { 
+	gsave
+	moveto
+	RF
+	0 exch ashow
+	grestore
+	} bind def
+/B { 
+	moveto
+	0 32 4 2 roll 0 exch awidthshow
+	} bind def
+/BF { 
+	gsave
+	moveto
+	RF
+	0 32 4 2 roll 0 exch awidthshow
+	grestore
+	} bind def
+/G { 
+	gsave
+	newpath
+	normalize translate 0.0 0.0 moveto 
+	dnormalize scale 
+	0.0 0.0 1.0 5 3 roll arc 
+	closepath 
+	PFill fill
+	grestore
+	} bind def
+/Gstrk {
+	savematrix
+    newpath
+    2 index 2 div add exch 3 index 2 div sub exch 
+    normalize 2 index 2 div sub exch 3 index 2 div add exch 
+    translate
+    scale 
+    0.0 0.0 1.0 5 3 roll arc 
+    restorematrix
+    currentlinewidth exch setlinewidth PStroke setlinewidth
+    } bind def
+/Gclip { 
+	newpath
+	savematrix
+	normalize translate 0.0 0.0 moveto 
+	dnormalize scale 
+	0.0 0.0 1.0 5 3 roll arc 
+	closepath 
+	clip newpath
+	restorematrix
+	} bind def
+/GG { 
+	gsave
+	newpath
+	normalize translate 0.0 0.0 moveto 
+	rotate 
+	dnormalize scale 
+	0.0 0.0 1.0 5 3 roll arc 
+	closepath
+	PFill
+	fill
+	grestore
+	} bind def
+/GGclip { 
+	savematrix
+	newpath
+    normalize translate 0.0 0.0 moveto 
+    rotate 
+    dnormalize scale 
+    0.0 0.0 1.0 5 3 roll arc 
+    closepath
+	clip newpath
+	restorematrix
+	} bind def
+/GGstrk { 
+	savematrix
+    newpath
+    normalize translate 0.0 0.0 moveto 
+    rotate 
+    dnormalize scale 
+    0.0 0.0 1.0 5 3 roll arc 
+    closepath 
+	restorematrix
+    currentlinewidth exch setlinewidth PStroke setlinewidth
+	} bind def
+/A { 
+	gsave
+	savematrix
+	newpath
+	2 index 2 div add exch 3 index 2 div sub exch 
+	normalize 2 index 2 div sub exch 3 index 2 div add exch 
+	translate 
+	scale 
+	0.0 0.0 1.0 5 3 roll arc 
+	restorematrix
+	PStroke
+	grestore
+	} bind def
+/Aclip {
+	newpath
+	savematrix
+	normalize translate 0.0 0.0 moveto 
+	dnormalize scale 
+	0.0 0.0 1.0 5 3 roll arc 
+	closepath 
+	strokepath clip newpath
+	restorematrix
+} bind def
+/Astrk {
+	Gstrk
+} bind def
+/AA { 
+	gsave
+	savematrix
+	newpath
+	
+	3 index 2 div add exch 4 index 2 div sub exch 
+	
+	normalize 3 index 2 div sub exch 4 index 2 div add exch
+	translate 
+	rotate 
+	scale 
+	0.0 0.0 1.0 5 3 roll arc 
+	restorematrix
+	PStroke
+	grestore
+	} bind def
+/AAclip {
+	savematrix
+	newpath
+    normalize translate 0.0 0.0 moveto 
+    rotate 
+    dnormalize scale 
+    0.0 0.0 1.0 5 3 roll arc 
+    closepath
+	strokepath clip newpath
+	restorematrix
+} bind def
+/AAstrk {
+	GGstrk
+} bind def
+	/x FMLOCAL
+	/y FMLOCAL
+	/w FMLOCAL
+	/h FMLOCAL
+	/xx FMLOCAL
+	/yy FMLOCAL
+	/ww FMLOCAL
+	/hh FMLOCAL
+	/FMsaveobject FMLOCAL
+	/FMoptop FMLOCAL
+	/FMdicttop FMLOCAL
+/BEGINPRINTCODE { 
+	/FMdicttop countdictstack 1 add def 
+	/FMoptop count 7 sub def 
+	/FMsaveobject save def
+	userdict begin 
+	/showpage {} def 
+	FMNORMALIZEGRAPHICS 
+	3 index neg 3 index neg translate
+	} bind def
+/ENDPRINTCODE {
+	count -1 FMoptop {pop pop} for 
+	countdictstack -1 FMdicttop {pop end} for 
+	FMsaveobject restore 
+	} bind def
+/gn { 
+	0 
+	{	46 mul 
+		cf read pop 
+		32 sub 
+		dup 46 lt {exit} if 
+		46 sub add 
+		} loop
+	add 
+	} bind def
+	/str FMLOCAL
+/cfs { 
+	/str sl string def 
+	0 1 sl 1 sub {str exch val put} for 
+	str def 
+	} bind def
+/ic [ 
+	0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0223
+	0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0223
+	0
+	{0 hx} {1 hx} {2 hx} {3 hx} {4 hx} {5 hx} {6 hx} {7 hx} {8 hx} {9 hx}
+	{10 hx} {11 hx} {12 hx} {13 hx} {14 hx} {15 hx} {16 hx} {17 hx} {18 hx}
+	{19 hx} {gn hx} {0} {1} {2} {3} {4} {5} {6} {7} {8} {9} {10} {11} {12}
+	{13} {14} {15} {16} {17} {18} {19} {gn} {0 wh} {1 wh} {2 wh} {3 wh}
+	{4 wh} {5 wh} {6 wh} {7 wh} {8 wh} {9 wh} {10 wh} {11 wh} {12 wh}
+	{13 wh} {14 wh} {gn wh} {0 bl} {1 bl} {2 bl} {3 bl} {4 bl} {5 bl} {6 bl}
+	{7 bl} {8 bl} {9 bl} {10 bl} {11 bl} {12 bl} {13 bl} {14 bl} {gn bl}
+	{0 fl} {1 fl} {2 fl} {3 fl} {4 fl} {5 fl} {6 fl} {7 fl} {8 fl} {9 fl}
+	{10 fl} {11 fl} {12 fl} {13 fl} {14 fl} {gn fl}
+	] def
+	/sl FMLOCAL
+	/val FMLOCAL
+	/ws FMLOCAL
+	/im FMLOCAL
+	/bs FMLOCAL
+	/cs FMLOCAL
+	/len FMLOCAL
+	/pos FMLOCAL
+/ms { 
+	/sl exch def 
+	/val 255 def 
+	/ws cfs 
+	/im cfs 
+	/val 0 def 
+	/bs cfs 
+	/cs cfs 
+	} bind def
+400 ms 
+/ip { 
+	is 
+	0 
+	cf cs readline pop 
+	{	ic exch get exec 
+		add 
+		} forall 
+	pop 
+	
+	} bind def
+/rip { 
+	   
+	  
+	  bis ris copy pop 
+      is
+      0
+      cf cs readline pop 
+      {       ic exch get exec 
+              add 
+              } forall 
+	  pop pop 
+	  ris gis copy pop 
+	  dup is exch 
+	  
+      cf cs readline pop 
+      {       ic exch get exec 
+              add 
+              } forall 
+	  pop pop
+	  gis bis copy pop 
+	  dup add is exch 
+	  
+      cf cs readline pop 
+      {       ic exch get exec 
+              add 
+              } forall 
+      pop 
+      
+      } bind def
+/wh { 
+	/len exch def 
+	/pos exch def 
+	ws 0 len getinterval im pos len getinterval copy pop
+	pos len 
+	} bind def
+/bl { 
+	/len exch def 
+	/pos exch def 
+	bs 0 len getinterval im pos len getinterval copy pop
+	pos len 
+	} bind def
+/s1 1 string def
+/fl { 
+	/len exch def 
+	/pos exch def 
+	/val cf s1 readhexstring pop 0 get def
+	pos 1 pos len add 1 sub {im exch val put} for
+	pos len 
+	} bind def
+/hx { 
+	3 copy getinterval 
+	cf exch readhexstring pop pop 
+	} bind def
+	/h FMLOCAL
+	/w FMLOCAL
+	/d FMLOCAL
+	/lb FMLOCAL
+	/bitmapsave FMLOCAL
+	/is FMLOCAL
+	/cf FMLOCAL
+/wbytes { 
+      dup dup
+      24 eq { pop pop 3 mul }
+      { 8 eq {pop} {1 eq {7 add 8 idiv} {3 add 4 idiv} ifelse} ifelse } ifelse
+	} bind def
+/BEGINBITMAPBWc { 
+	1 {} COMMONBITMAPc
+	} bind def
+/BEGINBITMAPGRAYc { 
+	8 {} COMMONBITMAPc
+	} bind def
+/BEGINBITMAP2BITc { 
+	2 {} COMMONBITMAPc
+	} bind def
+/COMMONBITMAPc { 
+		 
+	/r exch def
+	/d exch def
+	gsave
+	
+	3 index 2 div add exch	
+	4 index 2 div add exch	
+	translate		
+	rotate			
+	1 index 2 div neg	
+	1 index 2 div neg	
+	translate		
+	scale			
+	/h exch def /w exch def
+	/lb w d wbytes def 
+	sl lb lt {lb ms} if 
+	/bitmapsave save def 
+	r                    
+	/is im 0 lb getinterval def 
+	ws 0 lb getinterval is copy pop 
+	/cf currentfile def 
+	w h d [w 0 0 h neg 0 h] 
+	{ip} image 
+	bitmapsave restore 
+	grestore
+	} bind def
+/BEGINBITMAPBW { 
+	1 {} COMMONBITMAP
+	} bind def
+/BEGINBITMAPGRAY { 
+	8 {} COMMONBITMAP
+	} bind def
+/BEGINBITMAP2BIT { 
+	2 {} COMMONBITMAP
+	} bind def
+/COMMONBITMAP { 
+	/r exch def
+	/d exch def
+	gsave
+	
+	3 index 2 div add exch	
+	4 index 2 div add exch	
+	translate		
+	rotate			
+	1 index 2 div neg	
+	1 index 2 div neg	
+	translate		
+	scale			
+	/h exch def /w exch def
+	/bitmapsave save def 
+	r                    
+	/is w d wbytes string def
+	/cf currentfile def 
+	w h d [w 0 0 h neg 0 h] 
+	{cf is readhexstring pop} image
+	bitmapsave restore 
+	grestore
+	} bind def
+/ngrayt 256 array def
+/nredt 256 array def
+/nbluet 256 array def
+/ngreent 256 array def
+	/gryt FMLOCAL
+	/blut FMLOCAL
+	/grnt FMLOCAL
+	/redt FMLOCAL
+	/indx FMLOCAL
+	/cynu FMLOCAL
+	/magu FMLOCAL
+	/yelu FMLOCAL
+	/k FMLOCAL
+	/u FMLOCAL
+FMLevel1 {
+/colorsetup {
+	currentcolortransfer
+	/gryt exch def
+	/blut exch def
+	/grnt exch def
+	/redt exch def
+	0 1 255 {
+		/indx exch def
+		/cynu 1 red indx get 255 div sub def
+		/magu 1 green indx get 255 div sub def
+		/yelu 1 blue indx get 255 div sub def
+		/k cynu magu min yelu min def
+		/u k currentundercolorremoval exec def
+%		/u 0 def
+		nredt indx 1 0 cynu u sub max sub redt exec put
+		ngreent indx 1 0 magu u sub max sub grnt exec put
+		nbluet indx 1 0 yelu u sub max sub blut exec put
+		ngrayt indx 1 k currentblackgeneration exec sub gryt exec put
+	} for
+	{255 mul cvi nredt exch get}
+	{255 mul cvi ngreent exch get}
+	{255 mul cvi nbluet exch get}
+	{255 mul cvi ngrayt exch get}
+	setcolortransfer
+	{pop 0} setundercolorremoval
+	{} setblackgeneration
+	} bind def
+}
+{
+/colorSetup2 {
+	[ /Indexed /DeviceRGB 255 
+		{dup red exch get 255 div 
+		 exch dup green exch get 255 div 
+		 exch blue exch get 255 div}
+	] setcolorspace
+} bind def
+} ifelse
+	/tran FMLOCAL
+/fakecolorsetup {
+	/tran 256 string def
+	0 1 255 {/indx exch def 
+		tran indx
+		red indx get 77 mul
+		green indx get 151 mul
+		blue indx get 28 mul
+		add add 256 idiv put} for
+	currenttransfer
+	{255 mul cvi tran exch get 255.0 div}
+	exch concatprocs settransfer
+} bind def
+/BITMAPCOLOR { 
+	/d 8 def
+	gsave
+	
+	3 index 2 div add exch	
+	4 index 2 div add exch	
+	translate		
+	rotate			
+	1 index 2 div neg	
+	1 index 2 div neg	
+	translate		
+	scale			
+	/h exch def /w exch def
+	/bitmapsave save def
+	FMLevel1 {	
+		colorsetup
+		/is w d wbytes string def
+		/cf currentfile def 
+		w h d [w 0 0 h neg 0 h] 
+		{cf is readhexstring pop} {is} {is} true 3 colorimage 
+	} {
+		colorSetup2
+		/is w d wbytes string def
+		/cf currentfile def 
+		7 dict dup begin
+			/ImageType 1 def
+			/Width w def
+			/Height h def
+			/ImageMatrix [w 0 0 h neg 0 h] def
+			/DataSource {cf is readhexstring pop} bind def
+			/BitsPerComponent d def
+			/Decode [0 255] def
+		end image	
+	} ifelse
+	bitmapsave restore 
+	grestore
+	} bind def
+/BITMAPCOLORc { 
+	/d 8 def
+	gsave
+	
+	3 index 2 div add exch	
+	4 index 2 div add exch	
+	translate		
+	rotate			
+	1 index 2 div neg	
+	1 index 2 div neg	
+	translate		
+	scale			
+	/h exch def /w exch def
+	/lb w d wbytes def 
+	sl lb lt {lb ms} if 
+	/bitmapsave save def 
+	FMLevel1 {	
+		colorsetup
+		/is im 0 lb getinterval def 
+		ws 0 lb getinterval is copy pop 
+		/cf currentfile def 
+		w h d [w 0 0 h neg 0 h] 
+		{ip} {is} {is} true 3 colorimage
+	} {
+		colorSetup2
+		/is im 0 lb getinterval def 
+		ws 0 lb getinterval is copy pop 
+		/cf currentfile def 
+		7 dict dup begin
+			/ImageType 1 def
+			/Width w def
+			/Height h def
+			/ImageMatrix [w 0 0 h neg 0 h] def
+			/DataSource {ip} bind def
+			/BitsPerComponent d def
+			/Decode [0 255] def
+		end image	
+	} ifelse
+	bitmapsave restore 
+	grestore
+	} bind def
+/BITMAPTRUECOLORc { 
+	/d 24 def
+        gsave
+ 	
+	3 index 2 div add exch	
+	4 index 2 div add exch	
+	translate		
+	rotate			
+	1 index 2 div neg	
+	1 index 2 div neg	
+	translate		
+	scale			
+	/h exch def /w exch def
+	/lb w d wbytes def 
+	sl lb lt {lb ms} if 
+        /bitmapsave save def 
+        
+	/is im 0 lb getinterval def	
+	/ris im 0 w getinterval def	
+	/gis im w w getinterval def	
+	/bis im w 2 mul w getinterval def 
+        
+        ws 0 lb getinterval is copy pop 
+        /cf currentfile def 
+        w h 8 [w 0 0 h neg 0 h] 
+        {w rip pop ris} {gis} {bis} true 3 colorimage
+        bitmapsave restore 
+        grestore
+        } bind def
+/BITMAPTRUECOLOR { 
+        gsave
+		
+		3 index 2 div add exch	
+		4 index 2 div add exch	
+		translate		
+		rotate			
+		1 index 2 div neg	
+		1 index 2 div neg	
+		translate		
+		scale			
+		/h exch def /w exch def
+        /bitmapsave save def 
+        /is w string def
+        /gis w string def
+        /bis w string def
+        /cf currentfile def 
+        w h 8 [w 0 0 h neg 0 h] 
+        { cf is readhexstring pop } 
+        { cf gis readhexstring pop } 
+        { cf bis readhexstring pop } 
+        true 3 colorimage 
+        bitmapsave restore 
+        grestore
+        } bind def
+/BITMAPTRUEGRAYc { 
+	/d 24 def
+        gsave
+	
+	3 index 2 div add exch	
+	4 index 2 div add exch	
+	translate		
+	rotate			
+	1 index 2 div neg	
+	1 index 2 div neg	
+	translate		
+	scale			
+	/h exch def /w exch def
+	/lb w d wbytes def 
+	sl lb lt {lb ms} if 
+        /bitmapsave save def 
+        
+	/is im 0 lb getinterval def	
+	/ris im 0 w getinterval def	
+	/gis im w w getinterval def	
+	/bis im w 2 mul w getinterval def 
+        ws 0 lb getinterval is copy pop 
+        /cf currentfile def 
+        w h 8 [w 0 0 h neg 0 h] 
+        {w rip pop ris gis bis w gray} image
+        bitmapsave restore 
+        grestore
+        } bind def
+/ww FMLOCAL
+/r FMLOCAL
+/g FMLOCAL
+/b FMLOCAL
+/i FMLOCAL
+/gray { 
+        /ww exch def
+        /b exch def
+        /g exch def
+        /r exch def
+        0 1 ww 1 sub { /i exch def r i get .299 mul g i get .587 mul
+			b i get .114 mul add add r i 3 -1 roll floor cvi put } for
+        r
+        } bind def
+/BITMAPTRUEGRAY { 
+        gsave
+		
+		3 index 2 div add exch	
+		4 index 2 div add exch	
+		translate		
+		rotate			
+		1 index 2 div neg	
+		1 index 2 div neg	
+		translate		
+		scale			
+		/h exch def /w exch def
+        /bitmapsave save def 
+        /is w string def
+        /gis w string def
+        /bis w string def
+        /cf currentfile def 
+        w h 8 [w 0 0 h neg 0 h] 
+        { cf is readhexstring pop 
+          cf gis readhexstring pop 
+          cf bis readhexstring pop w gray}  image
+        bitmapsave restore 
+        grestore
+        } bind def
+/BITMAPGRAY { 
+	8 {fakecolorsetup} COMMONBITMAP
+	} bind def
+/BITMAPGRAYc { 
+	8 {fakecolorsetup} COMMONBITMAPc
+	} bind def
+/ENDBITMAP {
+	} bind def
+end 
+	/ALDsave FMLOCAL
+	/ALDmatrix matrix def ALDmatrix currentmatrix pop
+/StartALD {
+	/ALDsave save def
+	 savematrix
+	 ALDmatrix setmatrix
+	} bind def
+/InALD {
+	 restorematrix
+	} bind def
+/DoneALD {
+	 ALDsave restore
+	} bind def
+/I { setdash } bind def
+/J { [] 0 setdash } bind def
+%%EndProlog
+%%BeginSetup
+(4.0) FMVERSION
+1 1 0 0 595.28 841.89 0 1 19 FMDOCUMENT
+0 0 /Times-Roman FMFONTDEFINE
+1 0 /Palatino-Italic FMFONTDEFINE
+2 0 /Palatino-Roman FMFONTDEFINE
+3 0 /Courier-Oblique FMFONTDEFINE
+4 0 /Courier FMFONTDEFINE
+5 0 /Times-Italic FMFONTDEFINE
+6 0 /Palatino-Bold FMFONTDEFINE
+32 FMFILLS
+0 0 FMFILL
+1 0.1 FMFILL
+2 0.3 FMFILL
+3 0.5 FMFILL
+4 0.7 FMFILL
+5 0.9 FMFILL
+6 0.97 FMFILL
+7 1 FMFILL
+8 <0f1e3c78f0e1c387> FMFILL
+9 <0f87c3e1f0783c1e> FMFILL
+10 <cccccccccccccccc> FMFILL
+11 <ffff0000ffff0000> FMFILL
+12 <8142241818244281> FMFILL
+13 <03060c183060c081> FMFILL
+14 <8040201008040201> FMFILL
+16 1 FMFILL
+17 0.9 FMFILL
+18 0.7 FMFILL
+19 0.5 FMFILL
+20 0.3 FMFILL
+21 0.1 FMFILL
+22 0.03 FMFILL
+23 0 FMFILL
+24 <f0e1c3870f1e3c78> FMFILL
+25 <f0783c1e0f87c3e1> FMFILL
+26 <3333333333333333> FMFILL
+27 <0000ffff0000ffff> FMFILL
+28 <7ebddbe7e7dbbd7e> FMFILL
+29 <fcf9f3e7cf9f3f7e> FMFILL
+30 <7fbfdfeff7fbfdfe> FMFILL
+%%EndSetup
+%%Page: "9" 1
+%%BeginPaperSize: A4
+%%EndPaperSize
+595.28 841.89 0 FMBEGINPAGE
+[0 0 0 1 0 0 0]
+[ 0 0 0 0 1 1 1]
+[ 0 1 1 0 1 0 0]
+[ 1 0 1 0 0 1 0]
+[ 1 1 0 0 0 0 1]
+[ 1 0 0 0 0 1 1]
+[ 0 1 0 0 1 0 1]
+[ 0 0 1 0 1 1 0]
+ 8 FrameSetSepColors
+FrameNoSep
+0 0 0 1 0 0 0 K
+J
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 10 Q
+0 X
+0 0 0 1 0 0 0 K
+(- 9 -) 289.3 61.71 T
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+1 9 Q
+1.71 (nuals: Support for Highly Interactive, Graphical) 105.02 740.08 P
+0.06 (User Interfaces in Lisp) 105.02 729.08 P
+2 F
+0.06 (, Technical Report, CMU-) 187.64 729.08 P
+(CS-89-196, Pittsburg, PA, 1989.) 105.02 718.08 T
+-0.46 ([Ousterout 90] John K. Ousterhout,) 62.5 696.08 P
+1 F
+-0.46 (Tcl: an embeddable com-) 201.87 696.08 P
+-0.46 (mand language) 105.02 685.08 P
+2 F
+-0.46 (, USENIX Winter Conference, Ja-) 160.32 685.08 P
+(nuary 1990, pages 183-192.) 105.02 674.08 T
+0.56 ([Ousterout 94] John K. Ousterhout,) 62.5 652.08 P
+1 F
+0.56 (Tcl and the Tk toolkit) 207 652.08 P
+2 F
+0.56 (,) 286.88 652.08 P
+(Addison-Wesley, 1994, ISBN: 0-201-63337-X.) 105.02 641.08 T
+59.67 85.61 524.55 624.19 R
+7 X
+V
+2 14 Q
+0 X
+(Annex) 62.17 614.86 T
+2 10 Q
+(Complete code of the <Labeled-entry> class.) 59.67 588.52 T
+3 9 Q
+(;;;; Define class "<Labeled-entry>") 76.68 566.19 T
+4 F
+(\050define-class <Labeled-entry> \050<Tk-composite-widget> <Entry>\051) 76.68 544.19 T
+(  \050\050entry) 76.68 533.19 T
+( :accessor   entry-of\051) 130.68 533.19 T
+(   \050label) 76.68 522.19 T
+( :accessor   label-of\051) 125.28 522.19 T
+(   ;; Special slot) 76.68 511.19 T
+(\050text       :accessor) 92.88 500.19 T
+(text) 233.28 500.19 T
+(       :init-keyword :text) 119.88 489.19 T
+(       :allocation   :special) 119.88 478.19 T
+(       :propagate    \050label\051\051) 119.88 467.19 T
+(   \050value      :accessor     value) 76.68 456.19 T
+(      :init-keyword :value) 125.28 445.19 T
+(      :allocation   :special) 125.28 434.19 T
+(      :propagate    \050entry\051\051) 125.28 423.19 T
+(   \050background  :accessor     background) 76.68 412.19 T
+(               :init-keyword :background) 76.68 401.19 T
+( :allocation   :special) 152.28 390.19 T
+( :propagate    \050frame entry label\051\051\051) 152.28 379.19 T
+(  :metaclass <Tk-composite>\051) 76.68 368.19 T
+3 F
+(;;;; Define method "initialize-composite-widget". This method will be called when) 76.68 346.19 T
+(;;;; a new labeled entry will be created.) 76.68 335.19 T
+4 F
+(\050define-method initialize-composite-widget) 76.68 313.19 T
+(                    \050\050self <Labeled-entry>\051 initargs frame\051) 76.68 302.19 T
+(  \050let* \050\050e \050make <Entry> :parent frame :relief "ridge"\051\051) 76.68 280.19 T
+( \050l \050make <Label> :parent frame\051\051) 119.88 269.19 T
+(    ;; pack sub widgets) 76.68 247.19 T
+(    \050pack l :side "left"  :padx 5 :pady 5\051) 76.68 236.19 T
+(    \050pack e :side "right" :padx 5 :pady 5 :expand #t :fill "x"\051) 76.68 225.19 T
+(    ;; Set proper slots) 76.68 203.19 T
+(    \050slot-set! self 'Id     \050Id e\051\051) 76.68 192.19 T
+(    \050slot-set! self 'entry  e\051) 76.68 181.19 T
+(    \050slot-set! self 'label  l\051\051\051) 76.68 170.19 T
+3 F
+(;;;; To create the labeled entry of Figure 2:) 76.68 148.19 T
+4 F
+(\050define le \050make <Labeled-entry> :text "Enter a value" :value 100\051\051) 76.68 137.19 T
+3 F
+(;;;; To map it on the screen:) 76.68 115.19 T
+4 F
+(\050pack le\051) 76.68 104.19 T
+2 F
+0.79 ([Steele 90] Guy. L. Steele Jr.,) 297.78 741.21 P
+1 F
+0.79 ( Common Lisp: the Language) 412.74 741.21 P
+2 F
+0.79 (,) 522.16 741.21 P
+-0.49 (2nd Edition, Digital Press \050Bedford, MA\051, 1990.) 340.3 730.21 P
+59.67 629.86 524.55 629.86 2 L
+3 H
+2 Z
+N
+0 0 0 1 0 0 0 K
+FMENDPAGE
+%%EndPage: "9" 1
+%%Page: "8" 2
+595.28 841.89 0 FMBEGINPAGE
+[0 0 0 1 0 0 0]
+[ 0 0 0 0 1 1 1]
+[ 0 1 1 0 1 0 0]
+[ 1 0 1 0 0 1 0]
+[ 1 1 0 0 0 0 1]
+[ 1 0 0 0 0 1 1]
+[ 0 1 0 0 1 0 1]
+[ 0 0 1 0 1 1 0]
+ 8 FrameSetSepColors
+FrameNoSep
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 10 Q
+0 X
+0 0 0 1 0 0 0 K
+(- 8 -) 289.3 61.71 T
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+2 F
+2.88 (This call will activate the setter function of the) 62.5 739.41 P
+4 F
+2.67 (background) 62.5 727.41 P
+2 F
+1.11 ( slot. This setter function will do the) 122.5 727.41 P
+0.16 (three slot assignments needed to change totally the) 62.5 715.41 P
+-0.44 (background. Note that this setter function is created) 62.5 703.41 P
+1.61 (only once in the program \050i.e. at the) 62.5 691.41 P
+4 F
+3.86 (<Labeled-) 235.13 691.41 P
+9.31 (entry>) 62.5 679.41 P
+2 F
+3.88 ( creation time\051. Consequently, the only) 98.5 679.41 P
+-0.16 (overhead we have to access such a special slot \050) 62.5 667.41 P
+1 F
+-0.16 (vs.) 270.4 667.41 P
+2 F
+-0.16 ( a) 281.8 667.41 P
+2.23 (true-widget pseudo slot\051 is the call to the initial) 62.5 655.41 P
+4 F
+(slot-value) 62.5 643.41 T
+2 F
+(.) 122.5 643.41 T
+-0.29 (In the object oriented programming spirit, our com-) 62.5 619.41 P
+0.63 (position mechanism must be applicable more than) 62.5 607.41 P
+1.08 (once. It means that we must be able to build new) 62.5 595.41 P
+-0.25 (composite widgets which are built upon previously) 62.5 583.41 P
+0.3 (created composite widgets. Consider for instance a) 62.5 571.41 P
+1 F
+-0.18 (choice box) 62.5 559.41 P
+2 F
+-0.18 (widget. This new kind of widget could be) 105.93 559.41 P
+1.5 (implemented with a labeled entry, as the one we) 62.5 547.41 P
+-0.05 (have used until now, to which is associated a menu) 62.5 535.41 P
+5.56 (button giving a list of possible choices \050see) 62.5 523.41 P
+-0.08 (Figure) 62.5 511.41 P
+-0.08 (3\051. Here, the) 93.8 511.41 P
+4 F
+-0.19 (<Choice-box>) 150.12 511.41 P
+2 F
+-0.08 (inherits of the) 227.93 511.41 P
+1.25 (previous) 62.5 499.41 P
+4 F
+2.99 (<Labeled-Entry>) 105.29 499.41 P
+2 F
+1.25 ( class and a possible) 195.29 499.41 P
+(definition for this class could be:) 62.5 487.41 T
+4 8 Q
+(\050define-class <Choice-Entry>) 79.51 466.75 T
+(\050<Labeled-Entry>\051) 146.71 456.75 T
+(\050\050frame      :accessor frame-of\051) 89.11 446.75 T
+(\050lab-entry  :accessor lentry-of\051) 93.91 436.75 T
+(\050menu       :accessor menu-of\051) 93.91 426.75 T
+(\050menubutton :accessor menubutton-of\051) 93.91 416.75 T
+(\050value      :accessor     value) 93.91 406.75 T
+(:init-keyword :value) 151.51 396.75 T
+(:allocation   :special) 151.51 386.75 T
+(:propagate    \050lentry\051\051) 151.51 376.75 T
+(:metaclass <Tk-composite>\051) 89.11 356.75 T
+2 10 Q
+-0.09 (This simple class definition and its associated) 62.5 333.41 P
+4 F
+-0.21 (ini-) 265.13 333.41 P
+-0.44 (tialize) 62.5 321.41 P
+2 F
+-0.19 ( method suffice to define a choice box. We) 104.5 321.41 P
+-0.4 (can see that access to the) 62.5 309.41 P
+4 F
+-0.96 (value) 171.26 309.41 P
+2 F
+-0.4 ( special slot will still) 201.26 309.41 P
+1.07 (give a correct value. For instance, getting this slot) 62.5 297.41 P
+2.48 (will redirect the reading to the) 62.5 285.41 P
+4 F
+5.96 (lab-entry) 214.28 285.41 P
+2 F
+2.48 ( slot) 268.28 285.41 P
+0.97 (which in turn will redirect it to the reading of the) 62.5 273.41 P
+(slot) 62.5 261.41 T
+4 F
+(value) 80.87 261.41 T
+2 F
+( of the entry, as seen before.) 110.87 261.41 T
+0 18 Q
+(5) 62.5 222.08 T
+(  Conclusion) 71.5 222.08 T
+2 10 Q
+-0.12 (In this paper we have presented the STk interpreter) 62.5 193.41 P
+-0.12 (and its object oriented extension. Both packages are) 62.5 181.41 P
+0.51 (well integrated with the Tk graphical toolkit. Even) 62.5 169.41 P
+0.8 (if using an applicative or object oriented language) 62.5 157.41 P
+7.33 (for GUI programming is not a new idea) 62.5 145.41 P
+-0.57 (\050[Calder) 62.5 133.41 P
+-0.57 (87],  or [Garnet] for instance\051, rare are those) 101.51 133.41 P
+-0.36 (which use extensively a meta object protocol. Inves-) 62.5 121.41 P
+0.75 (tigating in this direction seems interesting and the) 62.5 109.41 P
+0.66 (results already obtained are promising. In particu-) 306.14 739.41 P
+0.82 (lar, the original mechanism of composition shown) 306.14 727.41 P
+1.84 (in this paper is a good illustration of adapting a) 306.14 715.41 P
+2.16 (meta protocol to a particular need. It permits to) 306.14 703.41 P
+1.23 (build and test new widgets without having to re-) 306.14 691.41 P
+0.95 (compile the toolkit. Furthermore, daily experience) 306.14 679.41 P
+0.96 (of STk and STklos show that an applicative object) 306.14 667.41 P
+0.65 (oriented languages can be comparable, in terms of) 306.14 655.41 P
+(performances, to a more classical language.) 306.14 643.41 T
+2 14 Q
+(Availability) 306.14 616.75 T
+2 10 Q
+-0.46 (STk and its object system STklos are distributed free) 306.14 590.41 P
+-0.56 (of charge by anonymous ftp at) 306.14 578.41 P
+4 F
+-1.36 (kaolin.unice.fr) 440.27 578.41 P
+2 F
+-0.56 (.) 530.27 578.41 P
+(Current version runs on) 306.14 566.41 T
+(\245Sun Solaris \0501 & 2\051,) 320.32 542.41 T
+(\245Ultrix \0504.2\051,) 320.32 518.41 T
+(\245Dec OSF1,) 320.32 494.41 T
+(\245SGI \050Irix4.05 & 5.1.1\051) 320.32 470.41 T
+(\245Linux\0500.99\051.) 320.32 446.41 T
+2 14 Q
+(References) 306.14 414.75 T
+2 9 Q
+-0.23 ([Apple 92] Apple,) 306.14 390.08 P
+1 F
+-0.23 (Dylan: an object oriented dynamic langua-) 378.94 390.08 P
+(ge) 348.66 379.08 T
+2 F
+(, Apple Computer, 1992.) 356.66 379.08 T
+-0.25 ([Calder 87] Mark A. Linton, Paul R. Calder and John Vlis-) 306.14 357.08 P
+1.72 (sides,) 348.66 346.08 P
+1 F
+1.72 (The Design and Implementation of Inter-) 374.94 346.08 P
+5.6 (Views,) 348.66 335.08 P
+2 F
+5.6 (Proceedings of the USENIX C++) 381.26 335.08 P
+1.67 (Workshop, Santa Fe, New Mexico,november) 348.66 324.08 P
+(1987.) 348.66 313.08 T
+0.19 ([Clinger 91] W. Clinger and J. Rees \050editors\051,) 306.14 291.08 P
+1 F
+0.19 (Revised) 486.22 291.08 P
+1 7.2 Q
+0.16 (4) 514.23 294.68 P
+1 9 Q
+0.19 ( Re-) 517.83 291.08 P
+0.77 (port on the Algorithmic Language Scheme) 348.66 280.08 P
+2 F
+0.77 (, ACM) 505.6 280.08 P
+(Lisp Pointers, 4 \0503\051, 1991.) 348.66 269.08 T
+0.77 ([Kickzales 91] Gregor Kickzales, Jim de Rivi\217res, Daniel) 306.14 247.08 P
+-0.25 (G. Bobrow,) 348.66 236.08 P
+1 F
+-0.25 (The Art of Meta Object Protoco) 395.39 236.08 P
+2 F
+-0.25 (l, MIT) 508.84 236.08 P
+(Press, 1991.) 348.66 225.08 T
+1.06 ([Lieberman 86] Henry Lieberman,) 306.14 203.08 P
+1 F
+1.06 (Delegation and Inheri-) 448.14 203.08 P
+0.17 (tance: Two Mechanisms for Sharing Knowledge in) 348.66 192.08 P
+0.08 (Object Oriented Systems) 348.66 181.08 P
+2 F
+0.08 (, Actes des 3) 439.67 181.08 P
+2 7.2 Q
+0.07 (e) 489.11 184.68 P
+2 9 Q
+0.08 (JLOO, Bi-) 494.43 181.08 P
+(gre+Globule, 48, pages 79-89, Paris, 1986.) 348.66 170.08 T
+-0.38 ([Meyer 89] Bertrand Meyer,) 306.14 148.08 P
+1 F
+-0.38 (Object Oriented Software Cons-) 417.33 148.08 P
+-0.1 (truction) 348.66 137.08 P
+2 F
+-0.1 (, Prentice Hall International \050UK\051, Ltd.,) 378.33 137.08 P
+(Hemel Hemstead, 1989.) 348.66 126.08 T
+0.91 ([Myers 89] Brad Myers,) 306.14 104.08 P
+1 F
+0.91 (The Garnet Toolkit Reference Ma-) 405.48 104.08 P
+0 0 0 1 0 0 0 K
+FMENDPAGE
+%%EndPage: "8" 2
+%%Page: "7" 3
+595.28 841.89 0 FMBEGINPAGE
+[0 0 0 1 0 0 0]
+[ 0 0 0 0 1 1 1]
+[ 0 1 1 0 1 0 0]
+[ 1 0 1 0 0 1 0]
+[ 1 1 0 0 0 0 1]
+[ 1 0 0 0 0 1 1]
+[ 0 1 0 0 1 0 1]
+[ 0 0 1 0 1 1 0]
+ 8 FrameSetSepColors
+FrameNoSep
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 10 Q
+0 X
+0 0 0 1 0 0 0 K
+(- 7 -) 289.3 61.71 T
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+2 F
+1.78 (frame\325s) 62.5 628.86 P
+4 F
+4.26 (Id) 99.7 628.86 P
+2 F
+1.78 ( which embodies the components of a) 111.7 628.86 P
+(composite widget.) 62.5 616.86 T
+0.44 (This implementation of the labeled entry is not yet) 62.5 592.86 P
+0.87 (completely satisfactory. With the previous inherit-) 62.5 580.86 P
+1.72 (ance scheme, the entry sub-widget plays a major) 62.5 568.86 P
+-0.18 (role in the labeled entry. In some occasions, howev-) 62.5 556.86 P
+0.87 (er, we could want that the accesses to a particular) 62.5 544.86 P
+0.05 (slot will be \322redirected\323 to another sub-widget. For) 62.5 532.86 P
+0.03 (instance, we could want that readings and writings) 62.5 520.86 P
+-0.47 (to the slot) 62.5 508.86 P
+4 F
+-1.13 (relief) 107.05 508.86 P
+2 F
+-0.47 ( of a labeled entry access in fact to) 143.05 508.86 P
+1.1 (the relief of the frame rather than the entry relief.) 62.5 496.86 P
+-0.32 (Eventually, we could also want that a slot modifica-) 62.5 484.86 P
+1.42 (tion will be propagated to several sub-widgets of) 62.5 472.86 P
+0.14 (the labeled entry. For instance, it would be suitable) 62.5 460.86 P
+0.82 (to propagate the modification of the) 62.5 448.86 P
+4 F
+1.96 (background) 229.13 448.86 P
+2 F
+0.12 (slot of a labeled entry not only to the entry but also) 62.5 436.86 P
+0.76 (to the label and the frame. What is wanted here is) 62.5 424.86 P
+1.12 (close to the delegation mechanism[Libermann) 62.5 412.86 P
+1.12 (86].) 273.3 412.86 P
+-0.08 (As we will see, the solution provided in STklos will) 62.5 400.86 P
+0.91 (permit to choose to which sub-widget\050s\051 a slot ac-) 62.5 388.86 P
+(cess must be redirected.) 62.5 376.86 T
+0 14 Q
+(4.3) 62.5 350.2 T
+(  The <Tk-composite> class) 80 350.2 T
+2 10 Q
+0.76 (STklos provides a special meta-class, named) 62.5 323.86 P
+4 F
+1.83 (<Tk-) 265.13 323.86 P
+1.15 (composite>) 62.5 311.86 P
+2 F
+0.48 ( for handling the creation of compos-) 122.5 311.86 P
+-0.57 (ites widgets. The main job of this meta-class consists) 62.5 299.86 P
+0.53 (to manage a special kind of slots whose access can) 62.5 287.86 P
+1.9 (be redirected to slots of other objects. Using this) 62.5 275.86 P
+0.52 (meta-class, a simple implementation of the labeled) 62.5 263.86 P
+(entry discussed before could be written as:) 62.5 251.86 T
+4 8 Q
+(\050define-class <Labeled-entry>) 79.51 231.2 T
+(\050<Tk-composite-widget> <Entry>) 117.91 221.2 T
+(\050\050entry        :accessor     entry-of\051) 89.11 211.2 T
+(\050label        :accessor     label-of\051) 93.91 201.2 T
+(\050background) 93.91 191.2 T
+(:accessor     background) 161.11 191.2 T
+(:init-keyword :background) 156.31 181.2 T
+(:allocation   :special) 156.31 171.2 T
+(:propagate    \050frame entry) 156.31 161.2 T
+(label\051\051) 223.51 151.2 T
+(\050value        :accessor     value-of) 93.91 141.2 T
+(:init-keyword :value) 161.11 131.2 T
+(:allocation   :special) 161.11 121.2 T
+(:propagate    \050entry\051\051\051) 161.11 111.2 T
+(:metaclass <Tk-composite>\051) 79.51 101.2 T
+2 10 Q
+0.22 (As we can see, a label entry inherits from the) 306.14 739.41 P
+4 F
+0.54 (<En-) 508.77 739.41 P
+2.05 (try>) 306.14 727.41 P
+2 F
+0.85 (class. This class defines all the slots \050i.e. Tk) 338.19 727.41 P
+1.75 (options\051 available for an entry. It is important to) 306.14 715.41 P
+0.82 (note here that even if the slots for such a class are) 306.14 703.41 P
+-0.6 (numerous, only three of them are effectively allocat-) 306.14 691.41 P
+1.64 (ed in a standard Tk widget \050namely) 306.14 679.41 P
+4 F
+3.93 (parent) 478.13 679.41 P
+2 F
+1.64 (,) 514.13 679.41 P
+4 F
+3.93 (Id) 520.77 679.41 P
+2 F
+-0.27 (and) 306.14 667.41 P
+4 F
+-0.64 (Eid) 325.3 667.41 P
+2 F
+-0.27 (\051. All the other slots are pseudo-slots which) 343.3 667.41 P
+(are allocated elsewhere) 306.14 655.41 T
+2 8 Q
+(6) 409.18 659.41 T
+2 10 Q
+(.) 413.18 655.41 T
+2.3 (Previous class definition augments the) 306.14 631.41 P
+4 F
+5.53 (<Entry>) 490.77 631.41 P
+2 F
+-0.22 (class with three new slots called) 306.14 619.41 P
+4 F
+-0.54 (frame) 448.79 619.41 P
+2 F
+-0.22 (,) 478.79 619.41 P
+4 F
+-0.54 (entry) 483.57 619.41 P
+2 F
+-0.22 ( and) 513.57 619.41 P
+4 F
+6.1 (label) 306.14 607.41 P
+2 F
+2.54 (. These slots will contain the sub-widgets) 336.14 607.41 P
+-0.38 (composing the labeled entry. Next, two slots are de-) 306.14 595.41 P
+1.91 (clared with a) 306.14 583.41 P
+1 F
+1.91 (special) 371.9 583.41 P
+2 F
+1.91 ( allocation protocol \050signaled) 398.75 583.41 P
+-0.56 (with the) 306.14 571.41 P
+4 F
+-1.35 (:special) 344.22 571.41 P
+2 F
+-0.56 ( keyword\051. Special slots are slots) 392.22 571.41 P
+-0.34 (for which reading and writing are redirected to oth-) 306.14 559.41 P
+1.39 (er sub-widgets. Here again, such slots are not di-) 306.14 547.41 P
+-0.03 (rectly implemented in an instance; they don\325t make) 306.14 535.41 P
+0.08 (the instance size growing. The) 306.14 523.41 P
+4 F
+0.19 (background) 442.96 523.41 P
+2 F
+0.08 ( slot of) 502.96 523.41 P
+0.39 (this class definition, for instance, states that setting) 306.14 511.41 P
+-0.11 (its value must be propagated to the entry, label and) 306.14 499.41 P
+-0.15 (frame slots \050reading of this slot will find its value in) 306.14 487.41 P
+1.74 (the first element of the) 306.14 475.41 P
+4 F
+4.17 (:propagate) 416.74 475.41 P
+2 F
+1.74 ( list: frame\051.) 476.74 475.41 P
+2.01 (Note that) 306.14 463.41 P
+4 F
+4.81 (background) 354.31 463.41 P
+2 F
+2.01 ( is already present in the) 414.31 463.41 P
+1.39 (<) 306.14 451.41 P
+4 F
+3.34 (Entry>) 312.2 451.41 P
+2 F
+1.39 ( as a pseudo-slot; current definition will) 348.2 451.41 P
+0.66 (overload the inherited one. Concerning the) 306.14 439.41 P
+4 F
+1.59 (value) 502.77 439.41 P
+2 F
+1.38 (slot, it is said that it is redirected only to the slot) 306.14 427.41 P
+4 F
+(value) 306.14 415.41 T
+2 F
+( of the) 336.14 415.41 T
+4 F
+(entry) 366.3 415.41 T
+2 F
+( component.) 396.3 415.41 T
+2.97 (We can now define the) 306.14 391.41 P
+4 F
+7.12 (initialize-compos-) 424.77 391.41 P
+3.09 (ite-widget) 306.14 379.41 P
+2 F
+1.29 ( method which will be called by the) 366.14 379.41 P
+2.5 (system  just after a composite widget allocation) 306.14 367.41 P
+1.14 (\050complete code is given in annex\051. The only thing) 306.14 355.41 P
+0.94 (we have to do in this method consists to initialize) 306.14 343.41 P
+2.9 (the two true slots defined directly in the) 306.14 331.41 P
+4 F
+6.95 (<La-) 508.77 331.41 P
+(beled-entry>) 306.14 319.41 T
+2 F
+( class \050) 378.14 319.41 T
+4 F
+(entry) 407.3 319.41 T
+2 F
+( and) 437.3 319.41 T
+4 F
+(label) 459.23 319.41 T
+2 F
+(\051.) 489.23 319.41 T
+0.27 (Previous definitions permits to hide to the user the) 306.14 295.41 P
+-0.39 (fact that a labeled entry is a composite widget by of-) 306.14 283.41 P
+1.27 (fering the same kind of access. For example, sup-) 306.14 271.41 P
+1.07 (pose now that) 306.14 259.41 P
+4 F
+2.56 (le) 374.3 259.41 P
+2 F
+1.07 ( denotes an instance of the class) 386.3 259.41 P
+4 F
+3.7 (<Labeled-entry>) 306.14 247.41 P
+2 F
+1.54 (; setting all its components to) 396.14 247.41 P
+4 F
+(\254grey\254) 306.14 235.41 T
+2 F
+( can be simply done by) 342.14 235.41 T
+4 8 Q
+(\050set! \050slot-value le \324background\051) 323.15 214.75 T
+(\254grey\254\051) 351.95 204.75 T
+2 10 Q
+(or) 306.14 183.41 T
+4 8 Q
+(\050set! \050background le\051 \254grey\254\051) 323.15 162.75 T
+306.14 132.95 532.77 147.12 C
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+314.65 145.14 456.38 145.14 2 L
+0.5 H
+2 Z
+0 X
+0 0 0 1 0 0 0 K
+N
+0 -158.11 1000 841.89 C
+0 0 0 1 0 0 0 K
+0 10 Q
+0 X
+0 0 0 1 0 0 0 K
+2.32 (6.) 324.14 126.28 P
+0 0 0 1 0 0 0 K
+4 F
+5.57 (<Tk-composite-widget>) 334.14 126.28 P
+0 0 0 1 0 0 0 K
+0 F
+2.32 ( defines also) 460.14 126.28 P
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0.61 (a slot named) 324.14 114.28 P
+0 0 0 1 0 0 0 K
+4 F
+1.46 (frame) 379.02 114.28 P
+0 0 0 1 0 0 0 K
+0 F
+0.61 ( which contains the exter-) 409.02 114.28 P
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+(nal frame of the composite widget.) 324.14 102.28 T
+0 0 0 1 0 0 0 K
+%%BeginBinary:  4573     
+325 130 226.77 85.04 0 59.67 663.88
+/red <
+59631A477060B4375CD77040DC4399E164E51EF292005CD7998BC67A55D3848C
+D98CCCFFFFB219FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFBFBFBF
+BFBFBFBFBFBFBFBFBFBFBFBFBFBFBFBFBFBFBFBFBF7F7F7F7F7F7F7F7F7F7F7F
+7F7F7F7F7F7F7F7F7F7F7F7F7F3F3F3F3F3F3F3F3F3F3F3F3F3F3F3F3F3F3F3F
+3F3F3F3F3F0000000000000000000000000000000000008B87007F00BF00FFFF
+9855229833CD6640FF808000669400000000803F6BFAB299FF7BFFCDFF99FFFF
+FFFFB0B0FFD9F466B7CC5598CCFFFF8FF500DC0000B20099D200EE00FF77FF32
+ABCBFFFFB0DA5C863066CD60CDFF7F40B3FFFF724DFFFF99FF8B2FFF80C000FF
+> store
+/green <
+1E631A4732606E375CD77040DC0A999695E590F250005CD79999D57A6BD3708C
+C27DB70000221914FFFFFFBFBFBFBFBF7F7F7F7F7F3F3F3F3F3F000000FFFFFF
+FFFFBFBFBFBF7F7F7F7F7F3F3F3F3F3F0000000000FFFFFFFFFFBFBFBFBFBF7F
+7F7F7F3F3F3F3F3F0000000000FFFFFFFFFFBFBFBFBFBF7F7F7F7F7F3F3F3F3F
+0000000000FFFFFFBFBFBFBFBF7F7F7F7F7F3F3F3F3F3F77CE005700BF000000
+32000065FE3300A000008080999400FF0080003F86FFDF89E466EEAA0068F400
+AE0030B000D9F466B7CC550099003380DE9A005577C0ABCCB4FFD53200000065
+00FF0000E27054FF606233C0C5FF7F40B3FF00774D6AFA89FF7E4FE480C000FF
+> store
+/blue <
+71C36CA189BFD08E5CD7D299DC5999FFEDE5FFF2AC4D5CD799B5E27A2FD3FF8C
+9A6391FFFF227093BF7F3FFFBF7F3F00FFBF7F3F00FFBF7F3F00BF7F3FFFBF7F
+3F00FF7F3F00FFBF7F3F00FFBF7F3F00FFBF7F3F00FFBF7F3F00FFBF7F3F00FF
+BF3F00FFBF7F3F00FFBF7F3F00FFBF7F3F00FFBF7F3F00FFBF7F3F00FFBF7F00
+FFBF7F3F00BF7F3FFFBF7F3F00FFBF7F3F00FFBF7F3F0065FABF5C7FBF3FFFFF
+00000000000000C0FF800000CC94FFFF8080003F8FFFEE76C44BAF7DFF6FFFFF
+B9FF60B0FFD9F466B7CC556566FF336EB3CD000000DC00CC8C00B798FF00FF65
+00FFFFFFFFD6C0E0505F33A0BFE07F40B30000854D6ACD6DFE664FB580C000FF
+> store
+ BEGINBITMAPCOLORc
+
+
+
+9z
+T:E9:Z"Z"Z
+7E9S6E97J"J"J"
+:E9S6E97E9<z:z:z
+4ECS3EC4EC
+>z9z9z"
+2E9S4E92E9FFJ"J"G"
+<E9S6E9FF@Z"Z"Z"Z"Z
+1E9R@E91E91E91J"J"G"G"G"
+:E9R@E9E9E9E9By:z:y:y:y
+ECR=ECECECECJ(B#J'
+P.FEFEFEFEECFEFEFEFE4FEFEFEFEFEFEJ'D#J&JT"
+P-FEFEECECFEFEECEC6ECECECFEFEPGE9J$8#9#9%8#8%9%F%8#8#Js
+P,FEFEECECECFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEP:ECJ,:.D'
+P5FEECFEFEECFEFEECECFEFEFEFEECECFEFEECFEFEECECFEFEFEFEECECFEFEDT"J"H#E&>'J%
+E9OKECECECFEFEFEFEECECFEFEFEFEECP*FFFFFFE9EsJ#@&?"8"J#F#
+ECP6FEFEECECECFEFEECECOHFFE9ECECJ%J"8"J"
+PMECECECEC6FEFEOHE9DtJ$8#J#;#J'J#E$
+E9OCECFEFEFEFE5FEFEFEFE5FEFEECECFEFEOGECECE9E9E9DuJ'=':.>-J%
+ECOCECFEFEFEFEECECFEFEFEFEECECFEFEFEFEECECECFEFEFEFEECFEFEFEFEECECECFEFEFEFEECP1ECECECECJr8#8%8#8%9%='9%8#8#
+P.ECECECECECECECECECECECECECECECECECECECECECECECECECECECECECECECJt
+T)E9Ju
+T)EC
+;$9z9z9z9z9z9$
+E9E9E9/E9R>E9/E9/E9/E9E9E9E9:";"G"J"G"G"G"
+E9E9E9R@E9E9E9E9:P"z"P
+E9T,C9E9>"J"
+E9T2E9<#J#
+ECECT1ECEC
+
+
+JZ
+P=Q(Jz
+P>Q'1BJz"AZ
+P?Q$C9FF0J"
+T01BJw"
+T#C91BJ(J#J'
+5FEFEFEFEC9FEFEO1FEFE@FEFEFEFEFEFE;$B'J&JsA$
+E9E9E9FEFEC9C9FEFEP(C9C9C9C9C9Q,FEE9E9E9:"D$8#9#9%9%9%9%=%<#9#8%;#8#8%J$9"9"8$J"
+E9FEFEC9C9C9FEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFE<FEFEFEFEFEFEC9FEQ+E9:PI5;'C'A'J&@#J"<"@P
+@FEC9FEFEC9FEFEC9C9FEFEC9FEFEC9C9FEFEC9FEFEC9C9FEFEC9FEFEC9C9FEFEFEFEC9C9FEFEFEFEC9C9FEFEFEFEC9C9FEFE:FEC9C9C9FEFEC9PGC9C9>"I"J%B#?+J%H"J"
+E9C94FEC9C9C9C9C9C9FEFEC9FEFEC9C9C9C9HFEFEFEFEC9Q0E9<#J&:#>$F$E#J%J":"C#
+ECECGC9C9FEFEFEFEFEFEFEFEFEFEFEFEFE5C9C9C9C9Q.C9C9ECECJ"8"9%;%>&8%E%
+O#C9FEC9C9C9C9FEFEC9C9C9FEFEFEC9FEFEC9C9C9C9C9C9I$8#J%=#J"=#J"J"8"
+C9FEFEFEFE5FEFEC9C9FEFEEFEFEFEDFEQ!C9C9J'=5;(<$9(9%9'J&8%
+4C9FEFEFEFEC9;C9FEFEFEFEC9C9C9FEFEFEFEC9C9C9FEFEFEFEC9C9C9FEFEFEFEC9C9FEFEFEC9FEFEC9FEC9C9FEFEFEC9FEFEC9FEFEC9C9FEFEFEFEC9:C9FEFEFEC9C9FEFEC9Jr8#8%9%9%9%='=";s8&8%I">$:%8"J#
+5C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9PLC9C9
+Jw
+T#1BJ"
+T"1BJZCZ8%
+P?Q$5FFFFFFFFJzJ"
+P?Q%1BO(1BJzBz"
+P=Q(C9HC91B
+
+
+J%
+T(FEFEFEFEJ'
+T'FEFEC9C9FEFE@z;$8*9%
+SEE9FEFEC9C9FEFEC9FEFEC9FEFEFEFEFEFE?Z"ZF,
+2E9S3FEC9FEFEC9FEFEC9C9FEFE>"G"J"
+FFE9SDC9>z:zJ#
+2ECS1EC7FEFEJ%
+T8C9C9C9C9;z9z;$8$B#
+5E9S2E9C9FEFEFEFEC9FEFE:"J"J'?'
+E97E9S8C9FEFEFEFEC9C9FEFEFEFEC99Z=%9#8#8%
+SLC9C9C9C9C9C9C9C9C9C9C9C9
+
+
+
+
+
+
+
+Js
+T%FEJ$8$
+T%C9C9C9C9C9C9J#8#8#8%
+T-FEFEFEFEFEFEFEFEFEFEJ'
+T8FEFEC9C9FEFEJ$:$
+T-C9FEFEFEFEC9
+
+J)
+T.C9FEFEC9C9FEFEC9J'
+T8C9FEFEFEFEC9J#;#8#:%
+T(C9C9C9C9C9C9C9C9C9C9
+
+
+
+
+
+
+
+Ju
+T%FEJ$8$
+T%C9C9C9C9C9C9J#8+9%
+T0FEFEFEFEC9FEFEC9FEFEFEFEFEFEFEFEJ%9"8.
+T/FEC9FEFEFEFEFEC9C9FEFEC9FEFEC9C9FEFEJ"=#
+T/C9C9C9J":#;#
+T6C9FEFEFEFEJ%9%
+T;C9C9C9C9C9C9C9C9J#;#
+T=FEFEFEFEJ.
+T9C9FEFEFEFEC9C9C9FEFEFEFEC9J#9#8&:%9%
+T(C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9
+
+
+
+
+
+
+
+J'
+T&FEFEFEFEFEFEJ%
+T(C9C9C9C9J%8#8)
+T-FEFEFEFEFEFEFEFEC9FEFEC9FEFEJ'@"
+T,FEFEC9C9FEFEFEJ$H#
+T(FEFEFEC9C9J$G"
+T(C9C9C9C9
+J"
+T6FEJ,
+T,C9FEFEFEFEC9C9C9FEFEC9J#;%9s
+T&C9C9C9C9C9C9C9
+
+
+
+Jz
+T#H1BJ"
+T"1BJZ
+T"K
+
+ENDBITMAP
+%%EndBinary
+59.67 641.2 286.44 658.21 R
+7 X
+V
+1 F
+0 X
+(Figure 3: A Choice Box) 126.15 651.54 T
+0 0 0 1 0 0 0 K
+FMENDPAGE
+%%EndPage: "7" 3
+%%Page: "6" 4
+595.28 841.89 0 FMBEGINPAGE
+[0 0 0 1 0 0 0]
+[ 0 0 0 0 1 1 1]
+[ 0 1 1 0 1 0 0]
+[ 1 0 1 0 0 1 0]
+[ 1 1 0 0 0 0 1]
+[ 1 0 0 0 0 1 1]
+[ 0 1 0 0 1 0 1]
+[ 0 0 1 0 1 1 0]
+ 8 FrameSetSepColors
+FrameNoSep
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 10 Q
+0 X
+0 0 0 1 0 0 0 K
+(- 6 -) 289.3 61.71 T
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+4 F
+-1.35 (ue-of) 62.5 657.21 P
+2 F
+-0.56 ( notion directly as a slot, rather than a generic) 92.5 657.21 P
+(function. Virtual slots will be not described here.) 62.5 645.21 T
+0.12 (As we have seen, programming with STklos brings) 62.5 621.21 P
+-0.08 (the power of a full object language to the process of) 62.5 609.21 P
+0.49 (graphical user interface building. Next section will) 62.5 597.21 P
+0.41 (show that it also permits to easily implement com-) 62.5 585.21 P
+(posite widgets.) 62.5 573.21 T
+0 18 Q
+(4) 62.5 533.88 T
+(  De\336ning composite widgets) 71.5 533.88 T
+2 10 Q
+4.04 (Today, object oriented programming languages) 62.5 505.21 P
+0.51 (have proven their usefulness in program construc-) 62.5 493.21 P
+-0.17 (tion. In particular, it is a clich\216 to say that they facil-) 62.5 481.21 P
+4.9 (itate program maintainability and code reuse.) 62.5 469.21 P
+0.78 (However, there is one point where object oriented) 62.5 457.21 P
+2.46 (paradigm is not so well suited: creation of new) 62.5 445.21 P
+0.01 (classes of objects which are the composition of sim-) 62.5 433.21 P
+(pler ones.) 62.5 421.21 T
+0 14 Q
+(4.1) 62.5 394.54 T
+(  The problem) 80 394.54 T
+2 10 Q
+-0.05 (To illustrate our purpose, let us have a look to a) 62.5 368.21 P
+4 F
+-0.11 (l) 275.36 368.21 P
+1 F
+-0.05 (a-) 281.36 368.21 P
+-0.52 (beled entry) 62.5 356.21 P
+2 F
+-0.52 (. A labeled entry is a small line editor with) 106.34 356.21 P
+-0.15 (a label on its left informing the user about the value) 62.5 344.21 P
+(he/she is supposed to provide \050see Figure) 62.5 332.21 T
+(2\051.) 251.11 332.21 T
+-0.24 (Since this kind of graphical object does not exist per) 62.5 308.21 P
+0.56 (se in pure Tk, we could want to create a new class) 62.5 296.21 P
+0.44 (for labeled entries. In Tk, this kind of object can be) 62.5 284.21 P
+-0.37 (implemented by composing three basic objects: a) 62.5 272.21 P
+1 F
+-0.37 (la-) 278.58 272.21 P
+1.84 (bel) 62.5 260.21 P
+2 F
+1.84 (, an) 73.8 260.21 P
+1 F
+1.84 (entry) 95.79 260.21 P
+2 F
+1.84 ( and a) 117.46 260.21 P
+1 F
+1.84 (frame) 152.4 260.21 P
+2 F
+1.84 ( which will group them.) 175.18 260.21 P
+0.08 (Once this composition is done, the frame will serve) 62.5 248.21 P
+-0.28 (to manipulate the labeled entry from the outside \050to) 62.5 236.21 P
+1.27 (place it on the screen for instance\051. Of course, ac-) 62.5 224.21 P
+-0.23 (cessing to the text entered by the user or to the label) 62.5 212.21 P
+(of this object will necessitate to \322open\323 the frame.) 62.5 200.21 T
+0 14 Q
+(4.2) 62.5 173.54 T
+(  Classical solutions) 80 173.54 T
+2 10 Q
+0.51 (Let us look how we could implement a class) 62.5 147.21 P
+4 F
+1.24 (<La-) 265.13 147.21 P
+-1.12 (beled-entry>) 62.5 135.21 P
+2 F
+-0.47 ( for the kind of labeled entries spec-) 134.5 135.21 P
+0.63 (ified above. The first approach consists to uses the) 62.5 123.21 P
+0.59 (multiple-inheritance mechanism to implement this) 62.5 111.21 P
+0.16 (new class. In this case, we can inherit from the pre-) 306.14 739.41 P
+0.5 (defined classes) 306.14 727.41 P
+4 F
+1.19 (<Frame>) 375.85 727.41 P
+2 F
+0.5 (,) 417.85 727.41 P
+4 F
+1.19 (<Label>) 423.35 727.41 P
+2 F
+0.5 ( and) 465.35 727.41 P
+4 F
+1.19 (<Entry>) 488.27 727.41 P
+2 F
+0.5 (.) 530.27 727.41 P
+0.55 (Unfortunately, this will not work since inheritance) 306.14 715.41 P
+1.61 (will share all the common slots. It means, for in-) 306.14 703.41 P
+-0.37 (stance, that the slot) 306.14 691.41 P
+4 F
+-0.88 (parent) 391.8 691.41 P
+2 F
+-0.37 ( which contains the par-) 427.8 691.41 P
+3.33 (ent widget of a graphical object, and which is) 306.14 679.41 P
+1.74 (present in all the components of this new object,) 306.14 667.41 P
+0.4 (will not be duplicated. Having a sole exemplary of) 306.14 655.41 P
+0.2 (this slot is a problem since those components don\325t) 306.14 643.41 P
+0.02 (share the same parent \050label and entry parent is the) 306.14 631.41 P
+0.12 (frame itself\051. It could be argued that a different slot) 306.14 619.41 P
+-0.33 (inheritance scheme should resolve the problem. For) 306.14 607.41 P
+-0.01 (instance, it would be possible to duplicate common) 306.14 595.41 P
+1.91 (slots instead of sharing them, as it is possible in) 306.14 583.41 P
+1.22 (Eiffel for instance) 306.14 571.41 P
+1.22 ([Meyer) 388.48 571.41 P
+1.22 (??]. This solution would) 422.86 571.41 P
+4.88 (probably simplify our problem. However, the) 306.14 559.41 P
+1.87 (methods already written for a component of our) 306.14 547.41 P
+-0.2 (new kind of entry will be in front of three slots with) 306.14 535.41 P
+0.88 (the same name. In this case, we can decide whose) 306.14 523.41 P
+1.72 (slot is the more appropriate but it would be less) 306.14 511.41 P
+(clear if two components were of the same type.) 306.14 499.41 T
+0.81 (Since multiple inheritance is helpless here, we can) 306.14 475.41 P
+-0.3 (try to use single inheritance to resolve this problem.) 306.14 463.41 P
+0.77 (In this case, we have to choose the more adequate) 306.14 451.41 P
+0.04 (class from which inherit, and other component will) 306.14 439.41 P
+0.59 (be stored in new defined slots. Inheriting from the) 306.14 427.41 P
+4 F
+-0.77 (<Entry>) 306.14 415.41 P
+2 F
+-0.32 ( class is clearly more accurate since the be-) 348.14 415.41 P
+-0.17 (havior expected from a labeled entry is close from a) 306.14 403.41 P
+1 (single entry behavior. In some other situation this) 306.14 391.41 P
+0.14 (choice could be less obvious. Here, getting the con-) 306.14 379.41 P
+0.16 (tent of the entry part can be done by calling the ge-) 306.14 367.41 P
+3.3 (neric function) 306.14 355.41 P
+4 F
+7.93 (value-of) 376.73 355.41 P
+2 F
+3.3 ( described in previous) 424.73 355.41 P
+1.73 (section. With the proposed inheritance scheme, a) 306.14 343.41 P
+-0.13 (call to) 306.14 331.41 P
+4 F
+-0.31 (value-of) 334.87 331.41 P
+2 F
+-0.13 ( whose argument is a) 382.87 331.41 P
+4 F
+-0.31 (<Labeled-) 478.77 331.41 P
+1.02 (entry>) 306.14 319.41 P
+2 F
+0.42 ( will call the method defined for single en-) 342.14 319.41 P
+-0.18 (tries \050i.e. which are instances of the) 306.14 307.41 P
+4 F
+-0.44 (<Entry>) 461.79 307.41 P
+2 F
+-0.18 ( class\051.) 503.79 307.41 P
+0.77 (Provided that the slot) 306.14 295.41 P
+4 F
+1.84 (Id) 407.31 295.41 P
+2 F
+0.77 ( of the labeled entry con-) 419.31 295.41 P
+0.47 (tains the) 306.14 283.41 P
+1 F
+0.47 (Tk-command) 347.18 283.41 P
+2 F
+0.47 ( used to implement the entry,) 400.13 283.41 P
+(this call will yield the correct value.) 306.14 271.41 T
+0.59 (However, keeping in a slot the entry identification) 306.14 247.41 P
+0.49 (does not permit to manipulate the labeled entry as) 306.14 235.41 P
+0.44 (an autonomous entity) 306.14 223.41 P
+2 8 Q
+0.35 (5) 404.02 227.41 P
+2 10 Q
+0.44 (. This problem can be easily) 408.02 223.41 P
+-0.34 (solved: it suffices to introduce a slot in the root class) 306.14 211.41 P
+1.7 (for global widget manipulations. This slot, called) 306.14 199.41 P
+4 F
+-1.47 (Eid) 306.14 187.41 P
+2 F
+-0.61 (, will always contain a reference to the most \322ex-) 324.14 187.41 P
+1.08 (ternal\323 graphical object of our widget. This slot is) 306.14 175.41 P
+0.59 (set to the value contained in the) 306.14 163.41 P
+4 F
+1.41 (Id) 453.21 163.41 P
+2 F
+0.59 ( slot for simple) 465.21 163.41 P
+2.87 (widget as said before; it is set generally to the) 306.14 151.41 P
+306.14 132.95 532.77 147.12 C
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+314.65 145.14 456.38 145.14 2 L
+0.5 H
+2 Z
+0 X
+0 0 0 1 0 0 0 K
+N
+-8.36 24.95 603.64 816.95 C
+0 0 0 1 0 0 0 K
+0 10 Q
+0 X
+0 0 0 1 0 0 0 K
+1.08 (5.) 324.14 126.28 P
+1.08 (For instance, this is the) 334.14 126.28 P
+5 F
+1.08 (frame) 434.53 126.28 P
+0 F
+1.08 ( identification) 457.86 126.28 P
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+-0.61 (which is needed to destroy all the components of) 324.14 114.28 P
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+(a labeled entry rather than the entry one.) 324.14 102.28 T
+0 0 0 1 0 0 0 K
+71.01 675.21 280.77 692.22 R
+7 X
+V
+1 F
+0 X
+(Figure 2: A labeled entry) 125.65 685.55 T
+%%BeginBinary:  3542     
+274 73 209.76 51.02 0 71.01 697.89
+/red <
+59631A477060B4375CD77040DC4399E164E51EF292005CD7995CD77A55D3848C
+D98CCCFFFFB219FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFBFBFBF
+BFBFBFBFBFBFBFBFBFBFBFBFBFBFBFBFBFBFBFBFBF7F7F7F7F7F7F7F7F7F7F7F
+7F7F7F7F7F7F7F7F7F7F7F7F7F3F3F3F3F3F3F3F3F3F3F3F3F3F3F3F3F3F3F3F
+3F3F3F3F3F0000000000000000000000000000000000008B87007F00BF00FFFF
+9855229833CD6640FF808000669400000000803F6BFAB299FF7BFFCDFF99FFFF
+FFFFB0B0FFD9F466B7CC5598CCFFFF8FF500DC0000990099D200EE00FF77FF32
+ABCBFFFFB0DA5C863066CD60CDFF7F40B3FFFF724DFFFF99FF8B2FFF80C000FF
+> store
+/green <
+1E631A4732606E375CD77040DC0A999695E590F250005CD7995CD77A6BD3708C
+C27DB70000221914FFFFFFBFBFBFBFBF7F7F7F7F7F3F3F3F3F3F000000FFFFFF
+FFFFBFBFBFBF7F7F7F7F7F3F3F3F3F3F0000000000FFFFFFFFFFBFBFBFBFBF7F
+7F7F7F3F3F3F3F3F0000000000FFFFFFFFFFBFBFBFBFBF7F7F7F7F7F3F3F3F3F
+0000000000FFFFFFBFBFBFBFBF7F7F7F7F7F3F3F3F3F3F77CE005700BF000000
+32000065FE3300A000008080999400FF0080003F86FFDF89E466EEAA0068F400
+AE0030B000D9F466B7CC550099003380DE9A00557799ABCCB4FFD53200000065
+00FF0000E27054FF606233C0C5FF7F40B3FF00774D6AFA89FF7E4FE480C000FF
+> store
+/blue <
+71C36CA189BFD08E5CD7D299DC5999FFEDE5FFF2AC4D5CD7995CD77A2FD3FF8C
+9A6391FFFF227093BF7F3FFFBF7F3F00FFBF7F3F00FFBF7F3F00BF7F3FFFBF7F
+3F00FF7F3F00FFBF7F3F00FFBF7F3F00FFBF7F3F00FFBF7F3F00FFBF7F3F00FF
+BF3F00FFBF7F3F00FFBF7F3F00FFBF7F3F00FFBF7F3F00FFBF7F3F00FFBF7F00
+FFBF7F3F00BF7F3FFFBF7F3F00FFBF7F3F00FFBF7F3F0065FABF5C7FBF3FFFFF
+00000000000000C0FF800000CC94FFFF8080003F8FFFEE76C44BAF7DFF6FFFFF
+B9FF60B0FFD9F466B7CC556566FF336EB3CD0000009900CC8C00B798FF00FF65
+00FFFFFFFFD6C0E0505F33A0BFE07F40B30000854D6ACD6DFE664FB580C000FF
+> store
+ BEGINBITMAPCOLORc
+
+
+
+
+;z
+SCE9<Z"Z"Z
+7E9R?E97J"J"J"
+<E9R?E97E9>z:z:z
+4ECR<EC4EC
+@z9z9z"
+2E9R=E92E9FFJ"J"G"
+>E9R?E9FFBZ"Z"Z"Z"Z
+1E9QIE91E91E91J"J"G"G"G"
+<E9QIE9E9E9E9Dy:z:y:y:y
+ECQFECECECECJ#A#B#B#<'?#
+OBFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEJ%JT"
+PGECECECECP7E9J%;#9%<%9#F&8"8*9#Js
+OIFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEECFEFEFEFEECFEFEECFEFEFEFEFEFEOMECJ'9,:,G'8"9"
+OHFEFEECECFEFEFEECFEFEECFEFEECECFEFEFEFEECECFEFEECFEFEECFEFEECFEFEECECECFEFT"J#="J"@%9"B*J%
+E9O.ECECEC8ECFEFEFEFEECECECECFEFEECFEFEECO=FFFFFFE9GsJ$B#>#G%E"J#F#
+ECO0FEFEFEFEFEFEFEECECECECECO5FFE9ECECJ%B%<%J&J"
+OHFEFEECECECECECECECECECECFECFEFEFEECO-E9FtJ">#>#:"J"J#E$
+E9O8FEFEFEFEFEFE:FEO8ECECE9E9E9FuJ,8,:,@%?%="J%
+ECO*FEFEFEFEECFEFEFEECFEFEECFEFEECECECFEFEFEFEECECFEFEFEFEECECECFEFEECFEFEFEFEECFEFEECECOAECECECECJz9%8#8%9&<t8#9&="
+OB2ECECECECECECECECECECECECECECECECECECECECECECECECECJ"Jt
+Q1FEP"E9J$Ju
+Q0FEFEECP!ECJ#
+Q0ECEC=$9z9z9z9z9z9$
+E9E9E9/E9QGE9/E9/E9/E9E9E9E9<";"G"J"G"G"G"
+E9E9E9QIE9E9E9E9<P"z"P
+E9S5C9E9@"J"
+E9S;E9>#J#
+ECECS:ECEC
+
+
+JZ
+P4Q(Jz
+P5Q'1BJz"
+P6Q$C9FF
+
+J'?#J#J";$:$
+5FEFEFEFEFEFEFEFELFEFEBFEFEFEFEFEFEFE=$C%J#;&8&J$
+E9E9E9C9C9C9C9OKFEFEFEC9C9C9FEFEC9C9C9FEPFE9E9E9<"J&8"8"8%8&;%<#9#8%;#8#8%I#J"
+E95FEFEC9FEFEFEFEFEFEFEFEFEFEC9FEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFEC9C9Q(E9<PI'8)9"<'C'A'JP
+FEC9FEFEC9C9C9C9FEFEC9C9FEFEFEFEFEC9C9FEFEFEFEC9C9FEFEFEFEC9C9FEFEQ<@"B%9"I#:#?+J"
+E9FEFEFEFEC9C9C9C9C9C9FEFEC9FEFEC9C9C9C9R'E9>#C%E#;"=$F$E#J#
+ECECC9C9C9C9FEFEC9FEFEFEFEFEFEFEFEQ@ECECJ%@%>&8%E%
+JC9C9C9C9FEFEC9C9C9FEFEFEC9FEFEC9C9C9C9C9C9J":#J"=#
+GFEFEFEJFEFEFEJ%?+@(<$9(9%9'J&8&
+7FEFEFEFEC9FEFEC9C9FEFEFEFEC9C9FEFEFEC9FEFEC9FEC9C9FEFEFEC9FEFEC9FEFEC9C9FEFEFEFEC99C9FEFEFEC9C9FEFEFEC9Jt8#9#8%8#>'=";s8&8%J";$:$
+5C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C95C9C9C9C9C9C9C9
+
+
+JZ
+P6Q$Jz
+P6Q%1BJz
+P4Q(C9
+
+
+
+
+Bz
+S5E9AZ"Z"Z
+2E9R?E92@"G"J"
+FFE9R?E9@z:z:z
+2ECR<EC2EC
+=z9z9z
+5E9R=E95E9<"J"J"
+E97E9R?E9;Z
+SC
+
+
+
+
+ENDBITMAP
+%%EndBinary
+0 0 0 1 0 0 0 K
+FMENDPAGE
+%%EndPage: "6" 4
+%%Page: "5" 5
+595.28 841.89 0 FMBEGINPAGE
+[0 0 0 1 0 0 0]
+[ 0 0 0 0 1 1 1]
+[ 0 1 1 0 1 0 0]
+[ 1 0 1 0 0 1 0]
+[ 1 1 0 0 0 0 1]
+[ 1 0 0 0 0 1 1]
+[ 0 1 0 0 1 0 1]
+[ 0 0 1 0 1 1 0]
+ 8 FrameSetSepColors
+FrameNoSep
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 10 Q
+0 X
+0 0 0 1 0 0 0 K
+(- 5 -) 289.3 61.71 T
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+2 F
+2.13 (Scheme space\051. Saying that the meta-class of the) 62.5 739.41 P
+4 F
+6.56 (<Button>) 62.5 727.41 P
+2 F
+2.73 ( class is) 110.5 727.41 P
+4 F
+6.56 (<Tk>) 154.18 727.41 P
+2 F
+2.73 ( \050the one which knows) 178.18 727.41 P
+2.39 (what to do with pseudo slots\051 is done with the) 62.5 715.41 P
+4 F
+1.97 (:metaclass) 62.5 703.41 P
+2 F
+0.82 ( option. With this definition, the sys-) 122.5 703.41 P
+0.58 (tem is able to build slot readers and writers which) 62.5 691.41 P
+1.73 (take into account pseudo slots. It is important to) 62.5 679.41 P
+0.22 (note that the accessors construction is done at class) 62.5 667.41 P
+-0.61 (creation. Consequently, no test is done when access-) 62.5 655.41 P
+(ing a slot to know what kind of allocation it uses.) 62.5 643.41 T
+-0.1 (Embodying Tk widgets in STklos objects permits to) 62.5 619.41 P
+2.39 (hide some Tk idiosyncrasies which, in turn, im-) 62.5 607.41 P
+3.36 (proves greatly the level of programming when) 62.5 595.41 P
+2.17 (building an interface. In particular, it avoids the) 62.5 583.41 P
+0.41 (knowledge of pure Tk widgets naming convention) 62.5 571.41 P
+-0.51 (which is a pain when developing large applications.) 62.5 559.41 P
+0.21 (The only thing the user has to know when creating) 62.5 547.41 P
+0.84 (a new object is it\325s parent. An example of widgets) 62.5 535.41 P
+(creation is shown below:) 62.5 523.41 T
+4 8 Q
+(\050define f \050make <Frame>\051\051) 79.51 502.75 T
+(\050define b1 \050make <Button>) 79.51 482.75 T
+(:text \254B1\254) 161.11 472.75 T
+(:parent f\051\051) 161.11 462.75 T
+(\050define b2 \050make <Button>) 79.51 442.75 T
+(:text \254B2\254) 161.11 432.75 T
+(:parent f\051) 161.11 422.75 T
+2 10 Q
+0.94 (Buttons) 62.5 399.41 P
+4 F
+2.24 (b1) 100.12 399.41 P
+2 F
+0.94 ( and) 112.12 399.41 P
+4 F
+2.24 (b2) 135.92 399.41 P
+2 F
+0.94 ( which are created here specify) 147.92 399.41 P
+1.83 (that their parent is the frame) 62.5 387.41 P
+4 F
+4.39 (f) 202.3 387.41 P
+2 F
+1.83 (. Since this frame) 208.3 387.41 P
+0.53 (does not specify a particular parent, it is supposed) 62.5 375.41 P
+3.62 (to be a direct descendant of the root window) 62.5 363.41 P
+4 F
+-1.31 (*root*) 62.5 351.41 P
+2 F
+-0.55 (. This parent\325s notion is also used for canvas) 98.5 351.41 P
+0.6 (items: a canvas item is considered as a descendant) 62.5 339.41 P
+(of the canvas which contains it. For instance,) 62.5 327.41 T
+4 8 Q
+(\050define c \050make <Canvas>\051\051) 79.51 306.75 T
+(\050define r \050make <Rectangle>) 79.51 286.75 T
+(:parent c) 156.31 276.75 T
+(:coords \253\0500 0 50 50\051\051\051) 156.31 266.75 T
+2 10 Q
+-0.53 (defines a rectangle called) 62.5 243.41 P
+4 F
+-1.27 (r) 174.05 243.41 P
+2 F
+-0.53 ( in the) 180.05 243.41 P
+4 F
+-1.27 (c) 208.56 243.41 P
+2 F
+-0.53 ( canvas. User can) 214.56 243.41 P
+-0.57 (now forget that) 62.5 231.41 P
+4 F
+-1.38 (r) 131.59 231.41 P
+2 F
+-0.57 ( is included in) 137.59 231.41 P
+4 F
+-1.38 (c) 200.3 231.41 P
+2 F
+-0.57 ( since this informa-) 206.3 231.41 P
+-0.19 (tion is embedded in the Scheme object which repre-) 62.5 219.41 P
+4.53 (sent it. For instance, the following expression) 62.5 207.41 P
+0.53 (permits to move the) 62.5 195.41 P
+4 F
+1.27 (r) 155.93 195.41 P
+2 F
+0.53 ( rectangle without having to) 161.93 195.41 P
+(cite the) 62.5 183.41 T
+4 F
+(c) 96.77 183.41 T
+2 F
+( canvas.) 102.77 183.41 T
+4 8 Q
+(\050move r 10 10\051) 79.51 162.75 T
+2 10 Q
+(Similarly, the expression) 62.5 139.41 T
+4 8 Q
+(\050bind r \254<Enter>\254 \253\050display \254Hello\134n\254\051\051) 79.51 118.75 T
+2 10 Q
+0.71 (permits to display a message each time the mouse) 306.14 739.41 P
+-0.25 (enters in the) 306.14 727.41 P
+4 F
+-0.61 (r) 362.34 727.41 P
+2 F
+-0.25 ( rectangle. It is important to note here) 368.34 727.41 P
+-0.46 (that we would use) 306.14 715.41 P
+1 F
+-0.46 (exactly) 388.68 715.41 P
+2 F
+-0.46 ( the same expression to as-) 417.19 715.41 P
+0.22 (sociate such a binding to a simple widget such as a) 306.14 703.41 P
+-0.39 (button or a label, whereas it takes two different syn-) 306.14 691.41 P
+(tactic forms using standard Tk.) 306.14 679.41 T
+0.73 (Usage of generic functions is also a significant im-) 306.14 655.41 P
+-0.44 (provement over the basic level since it allows an ho-) 306.14 643.41 P
+1.7 (mogeneous access to the Tk commands. Suppose) 306.14 631.41 P
+-0.03 (for instance that we want giving access to the value) 306.14 619.41 P
+1.41 (of a) 306.14 607.41 P
+4 F
+3.38 (scale) 327.75 607.41 P
+2 F
+1.41 ( or an) 357.75 607.41 P
+4 F
+3.38 (entry) 389.71 607.41 P
+2 F
+1.41 ( widget with the generic) 419.71 607.41 P
+-0.36 (function) 306.14 595.41 P
+4 F
+-0.86 (value-of) 345.35 595.41 P
+2 F
+-0.36 (. This can easily done by the fol-) 393.35 595.41 P
+(lowing methods in STklos:) 306.14 583.41 T
+4 8 Q
+(\050define-method value-of \050obj\051) 323.15 562.75 T
+(\050\050slot-ref obj \253Id\051 \253get\051\051) 337.55 552.75 T
+2 10 Q
+0.6 (In this case, one method is sufficient to implement) 306.14 529.41 P
+2.34 (our function since the sub-options for reading a) 306.14 517.41 P
+0.56 (scale or entry value is the same in Tk. Writing this) 306.14 505.41 P
+1.1 (value is a little bit more complicated and is given) 306.14 493.41 P
+(below:) 306.14 481.41 T
+4 8 Q
+(\050define-method) 323.15 460.75 T
+(\050setter value-of\051\050\050obj <Scale>\051 v\051) 347.15 450.75 T
+(\050\050slot-ref obj \253Id\051 \253set v\051\051) 337.55 440.75 T
+(\050define-method) 323.15 420.75 T
+(\050setter value-of\051\050\050obj <Entry>\051 v\051) 347.15 410.75 T
+(\050\050slot-ref obj \253Id\051 \253delete 0 \253end\051) 332.75 400.75 T
+(\050\050slot-ref obj \253Id\051 \253insert 0 v\051\051) 332.75 390.75 T
+2 10 Q
+-0.32 (Using the same generic function \050with two different) 306.14 367.41 P
+0.64 (methods\051 permit to hide these low level details. In) 306.14 355.41 P
+(the call,) 306.14 343.41 T
+4 8 Q
+(\050set! \050value-of x\051 100\051) 323.15 322.75 T
+2 10 Q
+0.69 (the system will choose the method to call depend-) 306.14 299.41 P
+-0.54 (ing of the actual type of the variable) 306.14 287.41 P
+4 F
+-1.3 (x) 463.42 287.41 P
+2 F
+-0.54 (. Furthermore,) 469.42 287.41 P
+0.94 (an error) 306.14 275.41 P
+2 8 Q
+0.75 (4) 342.5 279.41 P
+2 10 Q
+0.94 ( will be signalled if) 346.5 275.41 P
+4 F
+2.25 (x) 437.56 275.41 P
+2 F
+0.94 ( is not an) 443.56 275.41 P
+1 F
+0.94 (entry) 489.82 275.41 P
+2 F
+0.94 ( or a) 511.49 275.41 P
+1 F
+(scale) 306.14 263.41 T
+2 F
+(.) 325.21 263.41 T
+-0.44 (STklos also proposes the notion of) 306.14 239.41 P
+1 F
+-0.44 (virtual slot) 457.23 239.41 P
+2 F
+-0.44 (. Virtu-) 501.51 239.41 P
+0.09 (al slots requires no storage as the pseudo slots seen) 306.14 227.41 P
+-0.29 (before. It is to the programmer to define methods to) 306.14 215.41 P
+1.02 (retrieve and store the value of such a slot. Virtual) 306.14 203.41 P
+0.01 (slots permit to easily implement the previous) 306.14 191.41 P
+4 F
+0.03 (val-) 508.77 191.41 P
+306.14 167.81 532.77 181.98 C
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+314.65 180 456.38 180 2 L
+0.5 H
+2 Z
+0 X
+0 0 0 1 0 0 0 K
+N
+-8.36 24.95 603.64 816.95 C
+0 0 0 1 0 0 0 K
+0 10 Q
+0 X
+0 0 0 1 0 0 0 K
+1.19 (4.) 324.14 161.15 P
+1.19 (more exactly, the system calls the) 334.14 161.15 P
+0 0 0 1 0 0 0 K
+4 F
+2.86 (no-ap-) 478.77 161.15 P
+2.74 (plicable-method) 324.14 149.15 P
+0 0 0 1 0 0 0 K
+0 F
+1.14 ( generic function which,) 414.14 149.15 P
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0.22 (by default, signals an error. User can specialize) 324.14 137.15 P
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+-0.18 (this function to provide another handler if need-) 324.14 125.15 P
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+(ed) 324.14 113.15 T
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+FMENDPAGE
+%%EndPage: "5" 5
+%%Page: "4" 6
+595.28 841.89 0 FMBEGINPAGE
+[0 0 0 1 0 0 0]
+[ 0 0 0 0 1 1 1]
+[ 0 1 1 0 1 0 0]
+[ 1 0 1 0 0 1 0]
+[ 1 1 0 0 0 0 1]
+[ 1 0 0 0 0 1 1]
+[ 0 1 0 0 1 0 1]
+[ 0 0 1 0 1 1 0]
+ 8 FrameSetSepColors
+FrameNoSep
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 10 Q
+0 X
+0 0 0 1 0 0 0 K
+(- 4 -) 289.3 61.71 T
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+2 F
+0.49 (vas \050e.g. a rectangle\051 and interface widgets \050e.g.) 76.68 413.43 P
+0.06 (a label\051. This is an important difference with the) 76.68 401.43 P
+0.19 (Tk view of canvas items. In Tk, manipulation of) 76.68 389.43 P
+0.36 (a canvas item requires a reference to the canvas) 76.68 377.43 P
+3.16 (which contains it. In STklos the object itself) 76.68 365.43 P
+0.18 (knows the canvas to which it belongs and it can) 76.68 353.43 P
+(be forgotten when manipulated.) 76.68 341.43 T
+0.44 (\245) 76.68 317.43 P
+0.44 (Some simple widgets are already obtained by) 85.24 317.43 P
+0.05 (inheritance. For instance, a) 76.68 305.43 P
+1 F
+0.05 (button) 197.63 305.43 P
+2 F
+0.05 ( can be seen as) 224.48 305.43 P
+2.27 (a reactive) 76.68 293.43 P
+1 F
+2.27 (label) 126 293.43 P
+2 F
+2.27 (. This permits to group all the) 144.52 293.43 P
+-0.3 (methods to manage the appearance of the text of) 76.68 281.43 P
+1.23 (a label in the) 76.68 269.43 P
+4 F
+2.94 (<Label>) 140.32 269.43 P
+2 F
+1.23 ( class. Thus, the) 182.32 269.43 P
+4 F
+2.94 (<But-) 259.13 269.43 P
+3.71 (ton>) 76.68 257.43 P
+2 F
+1.55 ( class has only to manage the operations) 100.68 257.43 P
+(which are specific to reactive texts.) 76.68 245.43 T
+0.93 (\245) 76.68 221.43 P
+0.93 (Simple and composites widgets share a com-) 85.24 221.43 P
+0.36 (mon ancestor \050) 76.68 209.43 P
+4 F
+0.87 (<Tk-widget>) 142.8 209.43 P
+2 F
+0.36 (\051. This will permit) 208.8 209.43 P
+0.71 (us to define composite widgets which could be) 76.68 197.43 P
+-0.19 (controlled exactly as the toolkit built-in widgets.) 76.68 185.43 P
+0 14 Q
+(3.2) 62.5 158.76 T
+(  Accessing widgets options) 80 158.76 T
+2 10 Q
+0.51 (In STklos, each option of a Tk widget is seen as an) 62.5 132.43 P
+0.2 (object slot. For instance, a simplified definition of a) 62.5 120.43 P
+(Tk button could be:) 62.5 108.43 T
+4 8 Q
+(\050define-class <Button>) 323.15 414.76 T
+(\050<Label>\051) 385.55 404.76 T
+(\050\050command :accessor) 337.55 394.76 T
+(command) 452.75 394.76 T
+(:init-keyword :command) 385.55 384.76 T
+(:allocation   :pseudo\051\051) 385.55 374.76 T
+(:metaclass <Tk>\051) 337.55 364.76 T
+2 10 Q
+0.75 (This declaration permits to define the class) 306.14 341.43 P
+4 F
+1.79 (<But-) 502.77 341.43 P
+1.59 (ton>) 306.14 329.43 P
+2 F
+0.66 (. This class inherits from) 330.14 329.43 P
+4 F
+1.59 (<Label>) 443.66 329.43 P
+2 F
+0.66 ( and owns) 485.66 329.43 P
+0.04 (an extra slot called) 306.14 317.43 P
+4 F
+0.08 (command) 391.29 317.43 P
+2 F
+0.04 (. Allocation of this slot) 433.29 317.43 P
+-0.22 (is said to be) 306.14 305.43 P
+4 F
+-0.54 (:pseudo) 359.7 305.43 P
+2 F
+-0.22 (. Pseudo-slots are special pur-) 401.7 305.43 P
+-0.32 (pose slots: they can be used as normal slots but they) 306.14 293.43 P
+-0.11 (are not allocated in the Scheme world \050i.e. their val-) 306.14 281.43 P
+-0.12 (ue is stored in one of the structures manipulated by) 306.14 269.43 P
+-0.24 (the Tk library instead of in a Scheme object\051. Conse-) 306.14 257.43 P
+0.11 (quently, reading or writing this slot will be done in) 306.14 245.43 P
+-0.2 (a particular way) 306.14 233.43 P
+2 8 Q
+-0.16 (3) 378.1 237.43 P
+2 10 Q
+-0.2 (. Pseudo slots are implemented by) 382.1 233.43 P
+2.46 (the meta-class) 306.14 221.43 P
+4 F
+5.9 (<Tk>) 375.97 221.43 P
+2 F
+2.46 (. Defining a class using this) 399.97 221.43 P
+0.21 (meta-class permits to modify the protocol to access) 306.14 209.43 P
+-0.34 (a slot at its lowest level. Consequently, it is impossi-) 306.14 197.43 P
+-0.54 (ble to have a slot value which does not reflect the ac-) 306.14 185.43 P
+-0.29 (tual value of the Tk option \050remember that no space) 306.14 173.43 P
+2.61 (is reserved to save the value of this slot in the) 306.14 161.43 P
+306.14 138.62 532.77 152.79 C
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+314.65 150.8 456.38 150.8 2 L
+0.5 H
+2 Z
+0 X
+0 0 0 1 0 0 0 K
+N
+-8.36 24.95 603.64 816.95 C
+0 0 0 1 0 0 0 K
+0 10 Q
+0 X
+0 0 0 1 0 0 0 K
+-0.39 (3.) 324.14 131.95 P
+-0.39 (Access to a pseudo slot will be done using the) 334.14 131.95 P
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+5 F
+0.85 (configure) 324.14 119.95 P
+0 F
+0.85 ( sub-command which is available for) 362.47 119.95 P
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+(each Tk widget.) 324.14 107.95 T
+0 0 0 1 0 0 0 K
+59.67 431.43 530.22 442.77 R
+7 X
+V
+1 F
+0 X
+(Figure 1: A partial vue of STk hierarchy) 214.29 436.11 T
+76.68 454.11 501.87 754.58 R
+7 X
+V
+0 X
+0 76.68 454.11 -76.68 -454.11 425.2 300.47 BEGINPRINTCODE
+%%BeginDocument: hierarchy.eps
+%!PS-Adobe-2.0 EPSF
+%%Title: /tmp/xfig-fig002934
+%%Creator: fig2dev
+%%CreationDate: Tue Apr 12 19:18:46 1994
+%%For: eg@kaolin (Erick Gallesio)
+%%BoundingBox: 0 0 436 268
+%%Pages: 0
+%%EndComments
+/$F2psDict 200 dict def 
+$F2psDict begin
+$F2psDict /mtrx matrix put
+/l {lineto} bind def
+/m {moveto} bind def
+/s {stroke} bind def
+/n {newpath} bind def
+/gs {gsave} bind def
+/gr {grestore} bind def
+/clp {closepath} bind def
+/graycol {dup dup currentrgbcolor 4 -2 roll mul 4 -2 roll mul
+4 -2 roll mul setrgbcolor} bind def
+/col-1 {} def
+/col0 {0 0 0 setrgbcolor} bind def
+/col1 {0 0 1 setrgbcolor} bind def
+/col2 {0 1 0 setrgbcolor} bind def
+/col3 {0 1 1 setrgbcolor} bind def
+/col4 {1 0 0 setrgbcolor} bind def
+/col5 {1 0 1 setrgbcolor} bind def
+/col6 {1 1 0 setrgbcolor} bind def
+/col7 {1 1 1 setrgbcolor} bind def
+	end
+/$F2psBegin {$F2psDict begin /$F2psEnteredState save def} def
+/$F2psEnd {$F2psEnteredState restore end} def
+%%EndProlog
+
+$F2psBegin
+0 setlinecap 0 setlinejoin
+-9.0 279.0 translate 0.540 -0.540 scale
+0.500 setlinewidth
+% Polyline
+n 399 19 m 392 19 392 42 7 arcto 4 {pop} repeat 392 49 538 49 7 arcto 4 {pop} repeat 545 49 545 26 7 arcto 4 {pop} repeat 545 19 399 19 7 arcto 4 {pop} repeat clp gs col-1 s gr
+/Times-Italic findfont 12.00 scalefont setfont
+435 40 m 
+gs 1 -1 scale (<Tk-object>) col-1 show gr
+% Polyline
+n 238 89 m 231 89 231 112 7 arcto 4 {pop} repeat 231 119 374 119 7 arcto 4 {pop} repeat 381 119 381 96 7 arcto 4 {pop} repeat 381 89 238 89 7 arcto 4 {pop} repeat clp gs col-1 s gr
+/Times-Italic findfont 12.00 scalefont setfont
+271 110 m 
+gs 1 -1 scale (<Tk-widget>) col-1 show gr
+% Polyline
+n 93 164 m 86 164 86 187 7 arcto 4 {pop} repeat 86 194 229 194 7 arcto 4 {pop} repeat 236 194 236 171 7 arcto 4 {pop} repeat 236 164 93 164 7 arcto 4 {pop} repeat clp gs col-1 s gr
+/Times-Italic findfont 12.00 scalefont setfont
+105 185 m 
+gs 1 -1 scale (<Tk-simple-widget>) col-1 show gr
+% Polyline
+n 361 166 m 354 166 354 189 7 arcto 4 {pop} repeat 354 196 497 196 7 arcto 4 {pop} repeat 504 196 504 173 7 arcto 4 {pop} repeat 504 166 361 166 7 arcto 4 {pop} repeat clp gs col-1 s gr
+/Times-Italic findfont 12.00 scalefont setfont
+364 187 m 
+gs 1 -1 scale (<Tk-composite-widget>) col-1 show gr
+/Times-Bold findfont 12.00 scalefont setfont
+394 267 m 
+gs 1 -1 scale (<Labeled-Entry>) col-1 show gr
+/Times-Bold findfont 12.00 scalefont setfont
+394 285 m 
+gs 1 -1 scale (<Choice-box>) col-1 show gr
+/Times-Bold findfont 18.00 scalefont setfont
+394 303 m 
+gs 1 -1 scale (...) col-1 show gr
+% Polyline
+n 518 256 m 511 256 511 279 7 arcto 4 {pop} repeat 511 286 654 286 7 arcto 4 {pop} repeat 661 286 661 263 7 arcto 4 {pop} repeat 661 256 518 256 7 arcto 4 {pop} repeat clp gs col-1 s gr
+/Times-Bold findfont 12.00 scalefont setfont
+551 277 m 
+gs 1 -1 scale (<Rectangle>) col-1 show gr
+% Polyline
+n 681 254 m 674 254 674 282 7 arcto 4 {pop} repeat 674 289 817 289 7 arcto 4 {pop} repeat 824 289 824 261 7 arcto 4 {pop} repeat 824 254 681 254 7 arcto 4 {pop} repeat clp gs col-1 s gr
+/Times-Bold findfont 12.00 scalefont setfont
+729 276 m 
+gs 1 -1 scale (<Line>) col-1 show gr
+% Polyline
+n 173 258 m 166 258 166 281 7 arcto 4 {pop} repeat 166 288 309 288 7 arcto 4 {pop} repeat 316 288 316 265 7 arcto 4 {pop} repeat 316 258 173 258 7 arcto 4 {pop} repeat clp gs col-1 s gr
+/Times-Bold findfont 12.00 scalefont setfont
+218 277 m 
+gs 1 -1 scale (<Label>) col-1 show gr
+% Polyline
+n 173 331 m 166 331 166 354 7 arcto 4 {pop} repeat 166 361 309 361 7 arcto 4 {pop} repeat 316 361 316 338 7 arcto 4 {pop} repeat 316 331 173 331 7 arcto 4 {pop} repeat clp gs col-1 s gr
+/Times-Bold findfont 12.00 scalefont setfont
+215 350 m 
+gs 1 -1 scale (<Button>) col-1 show gr
+% Polyline
+n 173 404 m 166 404 166 427 7 arcto 4 {pop} repeat 166 434 309 434 7 arcto 4 {pop} repeat 316 434 316 411 7 arcto 4 {pop} repeat 316 404 173 404 7 arcto 4 {pop} repeat clp gs col-1 s gr
+/Times-Italic findfont 12.00 scalefont setfont
+182 425 m 
+gs 1 -1 scale (<Tk-complex-button>) col-1 show gr
+% Polyline
+n 63 485 m 56 485 56 508 7 arcto 4 {pop} repeat 56 515 199 515 7 arcto 4 {pop} repeat 206 515 206 492 7 arcto 4 {pop} repeat 206 485 63 485 7 arcto 4 {pop} repeat clp gs col-1 s gr
+/Times-Bold findfont 12.00 scalefont setfont
+86 504 m 
+gs 1 -1 scale (<Check-button>) col-1 show gr
+% Polyline
+n 285 483 m 278 483 278 506 7 arcto 4 {pop} repeat 278 513 421 513 7 arcto 4 {pop} repeat 428 513 428 490 7 arcto 4 {pop} repeat 428 483 285 483 7 arcto 4 {pop} repeat clp gs col-1 s gr
+/Times-Bold findfont 12.00 scalefont setfont
+309 502 m 
+gs 1 -1 scale (<Radio-button>) col-1 show gr
+% Polyline
+n 563 94 m 556 94 556 117 7 arcto 4 {pop} repeat 556 124 699 124 7 arcto 4 {pop} repeat 706 124 706 101 7 arcto 4 {pop} repeat 706 94 563 94 7 arcto 4 {pop} repeat clp gs col-1 s gr
+/Times-Italic findfont 12.00 scalefont setfont
+580 113 m 
+gs 1 -1 scale (<Tk-canvas-item>) col-1 show gr
+% Polyline
+n 467 49 m 639 94 l gs col-1 s gr
+n 631.767 90.040 m 639.000 94.000 l 630.754 93.910 l gs 2 setlinejoin col-1 s gr
+% Polyline
+n 472 49 m 299 89 l gs col-1 s gr
+n 307.245 89.146 m 299.000 89.000 l 306.344 85.249 l gs 2 setlinejoin col-1 s gr
+% Polyline
+n 238 288 m 238 331 l gs col-1 s gr
+n 240.000 323.000 m 238.000 331.000 l 236.000 323.000 l gs 2 setlinejoin col-1 s gr
+% Polyline
+n 239 361 m 239 404 l gs col-1 s gr
+n 241.000 396.000 m 239.000 404.000 l 237.000 396.000 l gs 2 setlinejoin col-1 s gr
+% Polyline
+n 238 435 m 125 485 l gs col-1 s gr
+n 133.125 483.592 m 125.000 485.000 l 131.507 479.934 l gs 2 setlinejoin col-1 s gr
+% Polyline
+n 239 434 m 365 483 l gs col-1 s gr
+n 358.269 478.236 m 365.000 483.000 l 356.819 481.964 l gs 2 setlinejoin col-1 s gr
+% Polyline
+n 629 124 m 574 254 l gs col-1 s gr
+n 578.959 247.412 m 574.000 254.000 l 575.275 245.853 l gs 2 setlinejoin col-1 s gr
+% Polyline
+n 294 119 m 432 166 l gs col-1 s gr
+n 425.072 161.528 m 432.000 166.000 l 423.782 165.314 l gs 2 setlinejoin col-1 s gr
+% Polyline
+n 299 119 m 154 164 l gs col-1 s gr
+n 162.233 163.539 m 154.000 164.000 l 161.048 159.719 l gs 2 setlinejoin col-1 s gr
+% Polyline
+n 154 194 m 244 256 l gs col-1 s gr
+n 238.547 249.815 m 244.000 256.000 l 236.277 253.109 l gs 2 setlinejoin col-1 s gr
+% Polyline
+n 154 194 m 154 194 l  69 254 l gs col-1 s gr
+n 76.689 251.020 m 69.000 254.000 l 74.382 247.753 l gs 2 setlinejoin col-1 s gr
+% Polyline
+n 423 196 m 423 251 l gs col-1 s gr
+n 425.000 243.000 m 423.000 251.000 l 421.000 243.000 l gs 2 setlinejoin col-1 s gr
+% Polyline
+n 631 125 m 752 255 l gs col-1 s gr
+n 748.013 247.781 m 752.000 255.000 l 745.086 250.507 l gs 2 setlinejoin col-1 s gr
+/Times-Bold findfont 12.00 scalefont setfont
+58 268 m 
+gs 1 -1 scale (<Frame>) col-1 show gr
+/Times-Bold findfont 12.00 scalefont setfont
+58 286 m 
+gs 1 -1 scale (<Label>) col-1 show gr
+/Times-Bold findfont 12.00 scalefont setfont
+59 320 m 
+gs 1 -1 scale (...) col-1 show gr
+/Times-Bold findfont 12.00 scalefont setfont
+58 304 m 
+gs 1 -1 scale (<Menu>) col-1 show gr
+/Times-Bold findfont 12.00 scalefont setfont
+16 167 m 
+gs 1 -1 scale ( ) col-1 show gr
+$F2psEnd
+%%EndDocument
+
+ENDPRINTCODE
+0 0 0 1 0 0 0 K
+FMENDPAGE
+%%EndPage: "4" 6
+%%Page: "3" 7
+595.28 841.89 0 FMBEGINPAGE
+[0 0 0 1 0 0 0]
+[ 0 0 0 0 1 1 1]
+[ 0 1 1 0 1 0 0]
+[ 1 0 1 0 0 1 0]
+[ 1 1 0 0 0 0 1]
+[ 1 0 0 0 0 1 1]
+[ 0 1 0 0 1 0 1]
+[ 0 0 1 0 1 1 0]
+ 8 FrameSetSepColors
+FrameNoSep
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 10 Q
+0 X
+0 0 0 1 0 0 0 K
+(- 3 -) 289.3 61.71 T
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+2 F
+1.81 (defines a point characteristics. Two slots are de-) 65.34 739.41 P
+-0.48 (clared:) 65.34 727.41 P
+4 F
+-1.14 (x) 97.06 727.41 P
+2 F
+-0.48 ( and) 103.06 727.41 P
+4 F
+-1.14 (y) 124.04 727.41 P
+2 F
+-0.48 (. A set of options can be expressed in) 130.04 727.41 P
+1.09 (a slot definition. Here, for instance, it is said that) 65.34 715.41 P
+0.11 (both slots can be initialized upon instance creation) 65.34 703.41 P
+1.24 (with the keywords) 65.34 691.41 P
+4 F
+2.98 (:x) 154.78 691.41 P
+2 F
+1.24 ( and) 166.78 691.41 P
+4 F
+2.98 (:y) 191.19 691.41 P
+2 F
+1.24 (. Furthermore, it is) 203.19 691.41 P
+-0.32 (asked to the system to generate an) 65.34 679.41 P
+1 F
+-0.32 (accessor) 217.3 679.41 P
+2 F
+-0.32 ( function) 249.88 679.41 P
+(for each slot.) 65.34 667.41 T
+0.72 (Creation of a new instance is done with the) 65.34 643.41 P
+4 F
+1.72 (make) 265.13 643.41 P
+2 F
+(constructor:) 65.34 631.41 T
+4 8 Q
+(\050define p \050make Point :x 10 :y 20\051\051) 82.35 610.75 T
+2 10 Q
+1.74 (Evaluation of preceding form permits to build a) 65.34 587.41 P
+1.06 (new point and to initialize its slots) 65.34 575.41 P
+4 F
+2.54 (x) 227.25 575.41 P
+2 F
+1.06 ( and) 233.25 575.41 P
+4 F
+2.54 (y) 257.3 575.41 P
+2 F
+1.06 ( to 10) 263.3 575.41 P
+(and 20.) 65.34 563.41 T
+1.21 (Reading the value of a slot can be done with the) 65.34 539.41 P
+(function) 65.34 527.41 T
+4 F
+(slot-ref) 104.91 527.41 T
+2 F
+(. For instance,) 152.91 527.41 T
+4 8 Q
+(\050slot-ref p \253x\051) 82.35 506.75 T
+2 10 Q
+-0.22 (permits to get the value of slot) 65.34 483.41 P
+4 F
+-0.52 (x) 200.54 483.41 P
+2 F
+-0.22 ( in the) 206.54 483.41 P
+4 F
+-0.52 (p) 235.98 483.41 P
+2 F
+-0.22 ( point. Set-) 241.98 483.41 P
+-0.4 (ting a slot can be done by using the function) 65.34 471.41 P
+4 F
+-0.95 (slot-) 259.13 471.41 P
+3.02 (set!) 65.34 459.41 P
+2 F
+1.26 (. For instance, setting the) 89.34 459.41 P
+4 F
+3.02 (y) 208.1 459.41 P
+2 F
+1.26 ( slot of) 214.1 459.41 P
+4 F
+3.02 (p) 250.03 459.41 P
+2 F
+1.26 ( can be) 256.03 459.41 P
+(written:) 65.34 447.41 T
+4 8 Q
+(\050slot-set! p \253y 0\051) 82.35 426.75 T
+2 10 Q
+1.32 (Since the accessor) 65.34 403.41 P
+4 F
+3.17 (y-of) 150.45 403.41 P
+2 F
+1.32 ( has \050automatically\051 been) 174.45 403.41 P
+0.38 (defined on this slot, its value can also be retrieved) 65.34 391.41 P
+(with the following expression:) 65.34 379.41 T
+4 8 Q
+(\050y-of p\051) 82.35 358.75 T
+2 10 Q
+-0.06 (Slot setting can be done with the generalized) 65.34 335.41 P
+4 F
+-0.15 (set!) 265.13 335.41 P
+2 F
+(defined in STklos:) 65.34 323.41 T
+4 8 Q
+(\050set! \050y-of p\051 1\051) 82.35 302.75 T
+2 10 Q
+-0.61 (In STklos, execution of a method doesn\325t rely on the) 65.34 279.41 P
+-0.23 (classical message sending mechanism as in numer-) 65.34 267.41 P
+1.06 (ous object languages but on) 65.34 255.41 P
+1 F
+1.06 (generic functions) 195.72 255.41 P
+2 F
+1.06 (. The) 266.33 255.41 P
+0.69 (mechanism implemented in STk is a subset of the) 65.34 243.41 P
+2.44 (CLOS generic functions. As in CLOS, a generic) 65.34 231.41 P
+-0.07 (function can have several methods associated with) 65.34 219.41 P
+-0.04 (it. These methods describe the generic function be-) 65.34 207.41 P
+0.33 (havior according to the type of its parameters. For) 65.34 195.41 P
+1.31 (instance, the) 65.34 183.41 P
+4 F
+3.14 (x-of) 125.6 183.41 P
+2 F
+1.31 ( accessor defined before is im-) 149.6 183.41 P
+0.04 (plemented via a generic function. It means that we) 65.34 171.41 P
+1.88 (can have several methods whose name is) 65.34 159.41 P
+4 F
+4.52 (x-of) 262.63 159.41 P
+2 F
+1.88 (.) 286.63 159.41 P
+0.51 (However, calling) 65.34 147.41 P
+4 F
+1.22 (x-of) 144.7 147.41 P
+2 F
+0.51 ( with a parameter which is) 168.7 147.41 P
+-0.38 (an instance of a) 65.34 135.41 P
+4 F
+-0.91 (Point) 134.71 135.41 P
+2 F
+-0.38 ( will always call the accessor) 164.71 135.41 P
+(defined before.) 65.34 123.41 T
+0 18 Q
+(3) 306.14 734.08 T
+(  Integration of Tk widgets) 315.14 734.08 T
+0 14 Q
+(3.1) 306.14 702.75 T
+(  The class hierarchy) 323.64 702.75 T
+2 10 Q
+0.3 (This section presents how the standard Tk widgets) 306.14 676.41 P
+-0.06 (have been embodied in STklos classes. In this pack-) 306.14 664.41 P
+-0.53 (age, every type of graphical object defined by the Tk) 306.14 652.41 P
+-0.31 (toolkit such as menu, label or button widgets is rep-) 306.14 640.41 P
+0.19 (resented as a STklos class. All these classes defined) 306.14 628.41 P
+1.79 (for the Tk toolkit constitute a hierarchy which is) 306.14 616.41 P
+-0.16 (briefly described here. Firstly, all the classes share a) 306.14 604.41 P
+-0.36 (unique ancestor: the) 306.14 592.41 P
+4 F
+-0.86 (<Tk-object>) 397.08 592.41 P
+2 F
+-0.36 ( class. This class) 463.08 592.41 P
+-0.13 (defines a set of informations which are necessary to) 306.14 580.41 P
+-0.55 (establish a communication between the Scheme and) 306.14 568.41 P
+0.9 (Tk worlds. In particular, three slots are defined in) 306.14 556.41 P
+(this class:) 306.14 544.41 T
+-0.22 (\245The) 320.32 520.41 P
+4 F
+-0.52 (parent) 345.4 520.41 P
+2 F
+-0.22 ( slot contains a reference to the ob-) 381.4 520.41 P
+0.15 (ject which \050graphically\051 includes the current ob-) 320.32 508.41 P
+(ject.) 320.32 496.41 T
+-0.32 (\245The) 320.32 472.41 P
+4 F
+-0.77 (Id) 345.29 472.41 P
+2 F
+-0.32 ( slot contains, the low level) 357.29 472.41 P
+1 F
+-0.32 ( Tk-command) 475.14 472.41 P
+2 F
+-0.32 (,) 530.27 472.41 P
+0.51 (generated by the system to implement the wid-) 320.32 460.41 P
+0.48 (get. The type of this) 320.32 448.41 P
+1 F
+0.48 (Tk-command) 412.7 448.41 P
+2 F
+0.48 (is different for) 468.63 448.41 P
+-0.04 (each class. This slot is heavily used by the meth-) 320.32 436.41 P
+-0.35 (ods which implement the behavior of the object.) 320.32 424.41 P
+1.2 (\245The) 320.32 400.41 P
+4 F
+2.88 (Eid) 346.81 400.41 P
+2 F
+1.2 ( slot contains the) 364.81 400.41 P
+1 F
+1.2 (Tk-command) 446.29 400.41 P
+2 F
+1.2 ( which) 501.74 400.41 P
+-0.29 (permit to manipulate the object from the outside) 320.32 388.41 P
+-0.41 (\050e.g. to map the object on the screen or to destroy) 320.32 376.41 P
+1.05 (it\051. For simple Tk widgets,) 320.32 364.41 P
+4 F
+2.53 (Id) 444.14 364.41 P
+2 F
+1.05 ( and) 456.14 364.41 P
+4 F
+2.53 (Eid) 480.17 364.41 P
+2 F
+1.05 ( always) 498.17 364.41 P
+(contain the same) 320.32 352.41 T
+1 F
+(Tk-command) 397.26 352.41 T
+2 F
+(.) 450.2 352.41 T
+0.51 (Normally, end users will not have to use direct in-) 306.14 328.41 P
+(stances of the) 306.14 316.41 T
+4 F
+(<Tk-object>) 368.09 316.41 T
+2 F
+( class) 434.09 316.41 T
+2 8 Q
+(2) 457.42 320.41 T
+2 10 Q
+(.) 461.42 316.41 T
+0.53 (The next level in our class hierarchy defines a fork) 306.14 292.41 P
+2.42 (with two branches: the) 306.14 280.41 P
+4 F
+5.81 (<Tk-widget>) 419.17 280.41 P
+2 F
+2.42 ( class and) 485.17 280.41 P
+4 F
+0.41 (<Tk-canvas-item>) 306.14 268.41 P
+2 F
+0.17 ( class. Instances of the former) 402.14 268.41 P
+0.52 (class are classical widgets such as) 306.14 256.41 P
+1 F
+0.52 (buttons) 459.9 256.41 P
+2 F
+0.52 ( or) 490.64 256.41 P
+1 F
+0.52 (menus) 506.09 256.41 P
+2 F
+0.24 (since instances of the latter are objects contained in) 306.14 244.41 P
+-0.52 (a canvas such as) 306.14 232.41 P
+1 F
+-0.52 (lines) 378.96 232.41 P
+2 F
+-0.52 ( or) 397.86 232.41 P
+1 F
+-0.52 (rectangles) 411.23 232.41 P
+2 F
+-0.52 (. All those widgets) 451.96 232.41 P
+-0.26 (are directly implemented as STklos objects in a one-) 306.14 220.41 P
+0.02 (to-one relationship. A partial view of the STklos hi-) 306.14 208.41 P
+(erarchy is shown in Figure) 306.14 196.41 T
+(1.) 426.51 196.41 T
+(Some points are important to note here:) 306.14 172.41 T
+0.25 (\245) 320.32 148.41 P
+0.25 (There is no difference between items of a can-) 328.88 148.41 P
+306.14 119.81 532.77 133.98 C
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+314.65 132 456.38 132 2 L
+0.5 H
+2 Z
+0 X
+0 0 0 1 0 0 0 K
+N
+-8.36 24.95 603.64 816.95 C
+0 0 0 1 0 0 0 K
+0 10 Q
+0 X
+0 0 0 1 0 0 0 K
+0.05 (2.) 324.14 113.15 P
+0.05 (All classes whose name begins with the \322Tk-) 334.14 113.15 P
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+(\323 prefix are not intended for the final user.) 324.14 101.15 T
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+FMENDPAGE
+%%EndPage: "3" 7
+%%Page: "2" 8
+595.28 841.89 0 FMBEGINPAGE
+[0 0 0 1 0 0 0]
+[ 0 0 0 0 1 1 1]
+[ 0 1 1 0 1 0 0]
+[ 1 0 1 0 0 1 0]
+[ 1 1 0 0 0 0 1]
+[ 1 0 0 0 0 1 1]
+[ 0 1 0 0 1 0 1]
+[ 0 0 1 0 1 1 0]
+ 8 FrameSetSepColors
+FrameNoSep
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 10 Q
+0 X
+0 0 0 1 0 0 0 K
+(- 2 -) 289.3 61.71 T
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+2 F
+-0.18 (This paper is divided in three sections. Next section) 62.5 739.41 P
+0.41 (presents the STk package and its object system. In-) 62.5 727.41 P
+-0.61 (tegration of the standard Tk widgets in STklos class-) 62.5 715.41 P
+-0.08 (es is described in the following section. Last section) 62.5 703.41 P
+(is devoted to the definition of composites widgets.) 62.5 691.41 T
+0 18 Q
+(2) 62.5 650.08 T
+(  Presentation of STklos) 71.5 650.08 T
+2 10 Q
+0.18 (Programming with STk can be done at two distinct) 62.5 621.41 P
+2.01 (levels. First level uses only the standard Scheme) 62.5 609.41 P
+-0.27 (constructs and is classical. Second level gives access) 62.5 597.41 P
+1.12 (to the object oriented extensions of STk and is far) 62.5 585.41 P
+-0.12 (more interesting. Of course, both levels can be used) 62.5 573.41 P
+(at the same time in a program if needed.) 62.5 561.41 T
+0 14 Q
+(2.1) 62.5 534.75 T
+(  STk: the basic layer) 80 534.75 T
+2 10 Q
+1.54 (Starting a session with the STk interpreter brings) 62.5 508.41 P
+0.32 (the user in the basic layer which gives him/her ac-) 62.5 496.41 P
+0.89 (cess to a complete Scheme interpreter extended to) 62.5 484.41 P
+-0.4 (deal with the Tk toolkit. With a little set of rewriting) 62.5 472.41 P
+1.43 (rules from the original Tcl-Tk library, and the Tk) 62.5 460.41 P
+0.48 (manual pages close at hand, one can easily build a) 62.5 448.41 P
+(STk program using the Tk toolkit.) 62.5 436.41 T
+0.33 (Creation of a new widget \050button, label, canvas,) 62.5 412.41 P
+0.33 (...\051) 278.3 412.41 P
+-0.07 (is done with special STk primitives procedures. For) 62.5 400.41 P
+(instance, creating a new button can be done with) 62.5 388.41 T
+4 8 Q
+(\050button '.b\051) 79.51 367.75 T
+2 10 Q
+-0.59 (Note that the name of the widget must be) 62.5 344.41 P
+1 F
+-0.59 (quoted) 243.45 344.41 P
+2 F
+-0.59 ( due) 270.3 344.41 P
+0.54 (to the Scheme evaluation mechanism. The call of a) 62.5 332.41 P
+1.1 (widget creation primitive, such as) 62.5 320.41 P
+4 F
+2.64 (button) 220.6 320.41 P
+2 F
+1.1 ( above,) 256.6 320.41 P
+0.99 (defines a new Scheme object which is called a) 62.5 308.41 P
+1 F
+0.99 (Tk-) 275.25 308.41 P
+0.17 (command) 62.5 296.41 P
+2 F
+0.17 (. This object, which is considered as a new) 101.57 296.41 P
+1.11 (basic type by the STk interpreter, is automatically) 62.5 284.41 P
+-0.48 (stored in a variable whose name is equal to the sym-) 62.5 272.41 P
+0.51 (bol passed to the creation function. So, the preced-) 62.5 260.41 P
+-0.3 (ing button creation would define an object stored in) 62.5 248.41 P
+-0.22 (the) 62.5 236.41 P
+4 F
+-0.53 (.b) 78.87 236.41 P
+2 F
+-0.22 ( variable. This object is a special kind of func-) 90.87 236.41 P
+0.5 (tion which is generally used, as in pure Tk, to cus-) 62.5 224.41 P
+4.07 (tomize its associated widget. For instance, the) 62.5 212.41 P
+(expression) 62.5 200.41 T
+4 8 Q
+(\050.b 'configure) 79.51 179.75 T
+('-text "Hello, world") 98.71 169.75 T
+('-border 3\051) 98.71 159.75 T
+2 10 Q
+1.12 (permits to set the text and background options of) 62.5 136.41 P
+0.78 (the) 62.5 124.41 P
+4 F
+1.88 (.b) 79.66 124.41 P
+2 F
+0.78 ( button. As we can see on this example, pa-) 91.66 124.41 P
+1.58 (rameters must be well quoted in regard with the) 62.5 112.41 P
+-0.32 (Scheme evaluation rules. Since this notation is bare-) 62.5 100.41 P
+1.71 (ly crude, the Common Lisp keyword mechanism) 306.14 739.41 P
+1.97 (has been introduced in the Scheme interpreter) 306.14 727.41 P
+2 8 Q
+1.57 (1) 526.27 731.41 P
+2 10 Q
+1.97 (.) 530.27 727.41 P
+-0.31 (Consequently, the preceding expression could have) 306.14 715.41 P
+(been written as) 306.14 703.41 T
+4 8 Q
+(\050button '.b) 323.15 682.75 T
+(:text "Hello, world") 361.55 672.75 T
+(:border 3\051) 361.55 662.75 T
+2 10 Q
+0.42 (The Tk binding mechanism, which serves to create) 306.14 639.41 P
+2.98 (widget event handlers follow the same kind of) 306.14 627.41 P
+0.16 (rules. The body of a Tk handler must be written, of) 306.14 615.41 P
+-0.5 (course, in Scheme. Following example shows such a) 306.14 603.41 P
+2.38 (script; here, the label) 306.14 591.41 P
+4 F
+5.71 (.lab) 409.83 591.41 P
+2 F
+2.38 ( indicates how many) 433.83 591.41 P
+1.17 (times mouse button 3 has been depressed over it.) 306.14 579.41 P
+0.28 (Increment of button press counter is achieved with) 306.14 567.41 P
+(the simple script given in the) 306.14 555.41 T
+4 F
+(bind) 436.84 555.41 T
+2 F
+( call.) 460.84 555.41 T
+4 8 Q
+(\050define count 0\051) 323.15 534.75 T
+(\050label \253.lab :textvariable 'count\051) 323.15 524.75 T
+(\050bind .lab "<ButtonPress-3>") 323.15 514.75 T
+('\050set! count \050+ count 1\051\051\051) 351.95 504.75 T
+2 10 Q
+-0.62 (Programming with this kind of constructions is a lit-) 306.14 481.41 P
+1.34 (tle bit tedious and more complicated than coding) 306.14 469.41 P
+-0.23 (with Tcl since we have to add parenthesis pairs and) 306.14 457.41 P
+-0.27 (quote options values. Its only interest is to bring the) 306.14 445.41 P
+0.02 (power and flexibility of the Tk world to an applica-) 306.14 433.41 P
+(tive language.) 306.14 421.41 T
+0 14 Q
+(2.2) 306.14 370.75 T
+(  STk: the object layer) 323.64 370.75 T
+2 10 Q
+2.66 (STk provides an object extension, called STklos,) 306.14 344.41 P
+-0.01 (which can be loaded dynamically. Using this object) 306.14 332.41 P
+0.27 (layer permits to gain the benefits inherent to object) 306.14 320.41 P
+1.13 (oriented programming. Furthermore, since STklos) 306.14 308.41 P
+0.18 (implementation rely on a meta-object protocol, it is) 306.14 296.41 P
+-0.06 (easy to adapt it to particular needs as we will see in) 306.14 284.41 P
+-0.56 (next section. Before that, we\325ll present here the main) 306.14 272.41 P
+2.37 (constructs available in this object layer indepen-) 306.14 260.41 P
+(dently of the Tk toolkit.) 306.14 248.41 T
+0.01 (Definition of a new class is done with the) 306.14 224.41 P
+4 F
+0.02 (define-) 490.77 224.41 P
+(class) 306.14 212.41 T
+2 F
+( macro. For instance,) 336.14 212.41 T
+4 8 Q
+(\050define-class Point) 323.15 191.75 T
+(\050\050x :init-keyword :x) 332.75 181.75 T
+(:accessor) 351.95 171.75 T
+(x-of\051) 419.15 171.75 T
+(\050y :init-keyword :y) 337.55 161.75 T
+(:accessor) 351.95 151.75 T
+(y-of\051\051) 419.15 151.75 T
+306.14 129.81 532.77 143.98 C
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+314.65 142 456.38 142 2 L
+0.5 H
+2 Z
+0 X
+0 0 0 1 0 0 0 K
+N
+-8.36 24.95 603.64 816.95 C
+2 9 Q
+0 X
+0 0 0 1 0 0 0 K
+0.55 (1.) 306.14 123.81 P
+0.55 (A keyword is a symbol beginning with a colon. It can) 315.14 123.81 P
+(been seen as a symbolic constant \050i.e. its value is itself\051.) 306.14 112.81 T
+0 0 0 1 0 0 0 K
+FMENDPAGE
+%%EndPage: "2" 8
+%%Page: "1" 9
+595.28 841.89 0 FMBEGINPAGE
+[0 0 0 1 0 0 0]
+[ 0 0 0 0 1 1 1]
+[ 0 1 1 0 1 0 0]
+[ 1 0 1 0 0 1 0]
+[ 1 1 0 0 0 0 1]
+[ 1 0 0 0 0 1 1]
+[ 0 1 0 0 1 0 1]
+[ 0 0 1 0 1 1 0]
+ 8 FrameSetSepColors
+FrameNoSep
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+6 12 Q
+0 X
+0 0 0 1 0 0 0 K
+(Abstract) 62.5 514.14 T
+1 10 Q
+-0.06 (STk is a graphical package which rely on the Tk toolkit) 62.5 489.48 P
+-0.17 (and the Scheme programming language. Concretely, it) 62.5 477.48 P
+0.53 (can be seen as the Tk package where the Tcl language) 62.5 465.48 P
+0.28 (as been replaced by a Scheme interpreter. STklos is an) 62.5 453.48 P
+0.98 (object oriented extension of STk. Usage of this object) 62.5 441.48 P
+1.72 (extension facilitates code reuse and the definition of) 62.5 429.48 P
+(new widgets classes.) 62.5 417.48 T
+0 18 Q
+(1) 62.5 378.14 T
+(  Introduction) 71.5 378.14 T
+2 10 Q
+0.3 (Today available graphical toolkits for applicative) 62.5 349.48 P
+1.98 (languages are often unsatisfactory. Most of the) 62.5 337.48 P
+0.2 (time, they ask to the user to be a GUI expert who) 62.5 325.48 P
+-0.21 (must cope with details such as server connections) 62.5 313.48 P
+-0.12 (or queue events which are far lower than the con-) 62.5 301.48 P
+(cepts such languages vehicle.) 62.5 289.48 T
+-0.44 (Among all the graphical toolkits available in the X) 62.5 265.48 P
+2.65 (world, the Berkeley Tk package developed by) 62.5 253.48 P
+7.9 (John Ousterhout merits a great attention) 62.5 241.48 P
+0.38 ([Ousterhout) 62.5 229.48 P
+0.38 (94]. This toolkit provides to the user) 119.03 229.48 P
+0.05 (high level widgets such as buttons, menus or text) 62.5 217.48 P
+-0.03 (editors which permit to build complex GUIs with) 62.5 205.48 P
+0.83 (little effort. In particular, a little knowledge of X) 62.5 193.48 P
+0.46 (fundamentals is needed to build a complete run-) 62.5 181.48 P
+1.44 (ning application with it. Tk package relies on a) 62.5 169.48 P
+8.38 (simple interpretative language named Tcl) 62.5 157.48 P
+1.26 ([Ousterhout) 62.5 145.48 P
+1.26 (90]. This language is a string based) 119.03 145.48 P
+1.18 (language with a shell-like syntax. If the Tcl lan-) 62.5 133.48 P
+0.94 (guage is convenient for small scripts writing, its) 62.5 121.48 P
+0.16 (usage in bigger projects is not suitable, because it) 62.5 109.48 P
+0.9 (lacks important features such as data structures,) 297.78 515.48 P
+-0.27 (types and objects. Furthermore, its imperative na-) 297.78 503.48 P
+2.41 (ture complicates the study of some interesting) 297.78 491.48 P
+1.6 (paradigms such as prototypes, actors or objects) 297.78 479.48 P
+(for GUI programming.) 297.78 467.48 T
+-0.41 (All these reasons have conducted to the definition) 297.78 443.48 P
+-0.01 (of the STk graphical package, a package based on) 297.78 431.48 P
+0.46 (Tk where the Tcl language as been replaced by a) 297.78 419.48 P
+0.98 (Scheme [Clinger) 297.78 407.48 P
+0.98 (91] interpreter. Usage of an ap-) 374.04 407.48 P
+0.15 (plicative language will permit to simplify the im-) 297.78 395.48 P
+2.42 (plementation of new programming paradigms.) 297.78 383.48 P
+0.91 (For now, only the object paradigm has been im-) 297.78 371.48 P
+-0.62 (plemented on the STk platform. This object orient-) 297.78 359.48 P
+2.63 (ed extension, which is called STklos, provides) 297.78 347.48 P
+0.74 (objects) 297.78 335.48 P
+1 F
+0.74 (\210 la) 331.08 335.48 P
+2 F
+0.74 ( CLOS \050Common Lisp Object System\051) 345.98 335.48 P
+0.41 ([Steele) 297.78 323.48 P
+0.41 (90]. More precisely, STklos is much closer) 329.4 323.48 P
+-0.21 (from the objects one can find in Dylan [Apple) 297.78 311.48 P
+-0.21 (92],) 500.22 311.48 P
+-0.21 (since this language is already a tentative to merge) 297.78 299.48 P
+(CLOS objects notions in a Scheme like language.) 297.78 287.48 T
+-0.39 (The STklos extension gives to the user a full object) 297.78 263.48 P
+0.57 (oriented system with meta-classes, multi-inherit-) 297.78 251.48 P
+1.11 (ance, generic functions and multi-methods. Fur-) 297.78 239.48 P
+1.51 (thermore, all the implementation rely on a true) 297.78 227.48 P
+1.09 (meta object protocol, in the spirit of the one de-) 297.78 215.48 P
+2.54 (fined for CLOS) 297.78 203.48 P
+2.54 ([Kickzales 91]. This model has) 372.36 203.48 P
+0.61 (been used to embody the predefined Tk widgets) 297.78 191.48 P
+-0.1 (in a hierarchy of STklos classes. This set of classes) 297.78 179.48 P
+0.57 (permits to simplify the core Tk usage by provid-) 297.78 167.48 P
+0.13 (ing homogeneous accesses to widget options and) 297.78 155.48 P
+-0.03 (by hiding the Tk widget low level details, such as) 297.78 143.48 P
+2.04 (naming conventions. Furthermore, as expected,) 297.78 131.48 P
+-0.15 (usage of objects facilitates code reuse and the def-) 297.78 119.48 P
+(inition of new widgets classes.) 297.78 107.48 T
+65.34 544.82 518.88 782.93 R
+7 X
+V
+0 0 0 1 0 0 0 K
+6 18 Q
+0 X
+(STklos : A Scheme Object Oriented System) 113.89 729.93 T
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+(Dealing with the Tk toolkit) 179.13 707.93 T
+0 0 0 1 0 0 0 K
+2 12 Q
+(Erick Gallesio) 255.32 677.93 T
+(Universit\216 de Nice - Sophia-Antipolis) 192.59 663.93 T
+(Laboratoire I3S - CNRS URA 1376 - ESSI.) 183.36 649.93 T
+(Route des Colles) 247.85 635.93 T
+(B.P. 145) 271.32 621.93 T
+(06903 Sophia-Antipolis Cedex - FRANCE) 182.38 607.93 T
+(email: eg@unice.fr) 243.49 579.93 T
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+0 0 0 1 0 0 0 K
+FMENDPAGE
+%%EndPage: "1" 9
+%%Trailer
+%%BoundingBox: 0 0 595.28 841.89
+%%PageOrder: Descend
+%%Pages: 9
+%%DocumentFonts: Times-Roman
+%%+ Palatino-Italic
+%%+ Palatino-Roman
+%%+ Courier-Oblique
+%%+ Courier
+%%+ Times-Italic
+%%+ Palatino-Bold
+%%EOF

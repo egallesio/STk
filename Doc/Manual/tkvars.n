@@ -1,0 +1,47 @@
+'\"
+'\" Copyright (c) 1990-1994 The Regents of the University of California.
+'\" Copyright (c) 1994 Sun Microsystems, Inc.
+'\"
+'\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" @(#) tkvars.n 1.18 95/08/12 17:35:22
+'\" 
+.so STk-man.macros
+.TH tkvars n 3.1 STk "Tk Built-In Commands"
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+tkvars \- Variables used or set by Tk
+.BE
+
+.SH DESCRIPTION
+.PP
+The following STk variables are either set or used by Tk at various times
+in its execution:
+.TP
+\fB*tk-patch-level*\fR
+Contains a string which represent the current patch level for Tk.
+The patch level is incremented for each new release or patch, and
+it uniquely identifies an official version of Tk.
+.TP
+\fB*tk-strict-motif*\fR
+This variable is set to \fB#f\fR by default.
+If an application sets it to a true value, then Tk attempts to adhere as
+closely as possible to Motif look-and-feel standards.
+For example, active elements such as buttons and scrollbar
+sliders will not change color when the pointer passes over them.
+.TP 15
+\fB*tk-version*\fR 
+Tk sets this variable in the interpreter for each
+application.  The value of this variable is a string which holds the
+current version number of the Tk library in the form
+\fImajor\fR.\fIminor\fR.  \fIMajor\fR and \fIminor\fR are integers.
+The major version number increases in any Tk release that includes
+changes that are not backward compatible (i.e. whenever existing Tk
+applications and scripts may have to change to work with the new
+release).  The minor version number increases with each new release of
+Tk, except that it resets to zero whenever the major version number
+changes.
+
+

@@ -1,0 +1,36 @@
+'\" Color=Green
+'\"
+'\" Copyright (c) 1994 Sun Microsystems, Inc.
+'\"
+'\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" @(#) popup.n 1.3 95/06/07 21:15:43
+'\" 
+.so STk-man.macros
+.TH Tk:popup n 3.1 STk "Tk Built-In Commands"
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+popup \- Post a popup menu
+.SH SYNOPSIS
+\fB(Tk:popup \fImenu x y \fR)
+.sp
+\fB(Tk:popup \fImenu x y \fR \fIentry\fR)
+.BE
+
+.SH DESCRIPTION
+.PP
+This procedure posts a menu at a given position on the screen and
+configures Tk so that the menu and its cascaded children can be
+traversed with the mouse or the keyboard.
+\fIMenu\fR is the name of a menu widget and \fIx\fR and \fIy\fR
+are the root coordinates at which to display the menu.
+If \fIentry\fR is omitted or an empty string, the
+menu's upper left corner is positioned at the given point.
+Otherwise \fIentry\fR gives the index of an entry in \fImenu\fR and
+the menu will be positioned so that the entry is positioned over
+the given point.
+
+.SH SEE ALSO
+menu, option-menu

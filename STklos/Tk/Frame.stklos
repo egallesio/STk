@@ -1,0 +1,41 @@
+;;;;
+;;;; F r a m e . s t k 	  --  Frame class definition
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
+;;;;    Creation date: 30-Mar-1993 15:39
+;;;; Last file update: 28-Sep-1995 22:48
+
+(require "Basics")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Frame> class
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class <Frame> (<Tk-simple-widget> <Tk-sizeable>)
+  ((class	:accessor	class
+		:init-keyword 	:class
+		:allocation	:tk-virtual)
+   (color-map	:accessor	color-map
+		:init-keyword	:color-map
+		:allocation	:tk-virtual
+		:tk-name	colormap)
+   (visual	:accessor	visual
+		:init-keyword	:visual
+		:allocation	:tk-virtual)))
+
+(define-method tk-constructor ((self <Frame>))
+  Tk:frame)
+
+(provide "Frame")

@@ -1,0 +1,73 @@
+<HTML><HEAD><TITLE>Tk Built-In Commands - clipboard manual page</TITLE></HEAD>
+<BODY bgcolor = #c3c3ff>
+<H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageBlue.gif"> clipboard</H2>
+<I>Manipulate Tk clipboard</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<H3><A NAME="M2">SYNOPSIS</A></H3>
+(<B>clipboard </B><I>option</I> ?<I>arg arg ...</I>?)<BR>
+<H3><A NAME="M3">DESCRIPTION</A></H3>
+This procedure provides a STk interface to the Tk clipboard,
+which stores data for later retrieval using the selection mechanism.
+In order to copy data into the clipboard, <B>clipboard clear</B> must
+be called, followed by a sequence of one or more calls to <B>clipboard
+append</B>.  To ensure that the clipboard is updated atomically, all
+appends should be completed before returning to the event loop.
+<P>
+The first argument to <B>clipboard</B> determines the format of the
+rest of the arguments and the behavior of the procedure.  The following
+forms are currently supported:
+<P>
+<P>
+<DL>
+<DT><A NAME="M4">(<B>clipboard 'clear</B>)</A><DD>
+<DT><A NAME="M5">(<B>clipboard 'clear</B> ?<B>:display-of</B> <I>window</I>?)</A><DD>
+Claims ownership of the clipboard on <I>window</I>'s display and removes
+any previous contents.  <I>Window</I> defaults to <B>*root*</B>.  Returns an
+empty list.
+<P>
+<DT><A NAME="M6">(<B>clipboard 'append</B> ?<B>:display-of</B> <I>window</I>? ?<B>:format</B> <I>format</I>? ?<B>:type</B> <I>type</I>? ?\fB:\|-\fR? \fIdata\fR)</A><DD>
+Appends <I>data</I> to the clipboard on <I>window</I>'s
+display in the form given by <I>type</I> with the representation given
+by <I>format</I> and claims ownership of the clipboard on <I>window</I>'s
+display.
+<P>
+<UL>
+<P>
+<I>Type</I> specifies the form in which the selection is to be returned
+(the desired ``target'' for conversion, in ICCCM terminology), and
+should be an atom name such as STRING or FILE_NAME; see the
+Inter-Client Communication Conventions Manual for complete details.
+<I>Type</I> defaults to STRING.
+<P>
+The <I>format</I> argument specifies the representation that should be
+used to transmit the selection to the requester (the second column of
+Table 2 of the ICCCM), and defaults to STRING.  If <I>format</I> is
+STRING, the selection is transmitted as 8-bit ASCII characters.  If
+<I>format</I> is ATOM, then the <I>data</I> is
+divided into fields separated by white space; each field is converted
+to its atom value, and the 32-bit atom value is transmitted instead of
+the atom name.  For any other <I>format</I>,  <I>data</I> is divided
+into fields separated by white space and each 
+field is converted to a 32-bit integer; an array of integers is
+transmitted to the selection requester.  Note that strings passed to
+<B>clipboard append</B> are concatenated before conversion, so the
+caller must take care to ensure appropriate spacing across string
+boundaries.  All items appended to the clipboard with the same
+<I>type</I> must have the same <I>format</I>.
+<P>
+The <I>format</I> argument is needed only for compatibility with
+clipboard requesters that don't use Tk.  If the Tk toolkit is being
+used to retrieve the CLIPBOARD selection then the value is converted back to
+a string at the requesting end, so <I>format</I> is
+irrelevant.
+<P>
+A \fB:\|-\fR argument may be specified to mark the end of options:  the
+next argument will always be used as \fIdata\fR.
+This feature may be convenient if, for example, \fIdata\fR starts
+with a \fB:\fR.
+</UL>
+</DL>
+<H3><A NAME="M7">SEE ALSO</A></H3>
+<B><A HREF="./selection.n.html">selection</A></B>
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookBlue.gif"> Back to the <B>STk</B> main page</A>
+</BODY></HTML>

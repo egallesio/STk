@@ -1,0 +1,35 @@
+Extensions directory
+--------------------
+
+This file contains extensions of the core interpreter which can be dynamically
+loaded. See the file README in the release main directory to see the systems
+for which dynamic loading support exists.
+
+Two extensions are provided as exemples:
+
+	- stack.c: a (very simple) package providing the stack type to the 
+	  interpreter. This package is presented in the documentation
+	  about STk interpreter extension.
+	- when.c: an implementation of when and unless
+
+Other extensions ar more "useful":
+
+	- stklos.c + gf.c: all that is necessary for STklos
+	- hash.c: a package for hash-table in Scheme (the one used by STklos)
+	- pixmap.c: an extension for adding the XPM (pixmap) format to Tk4.0
+	  This extension is due to:
+		Harald Albrecht
+		albrecht@igpm.rwth-aachen.de
+		Institut fuer Geometrie und Praktische Mathematik, RWTH Aachen
+		Aachen, Germany
+	- html.c: a little extensions useful for (fast) html management
+	- process.c: an extension which provide process access to STk
+	- posix.c: a set of POSIX.1 fucntions for STk. Must be completed
+	- socket.c: simple support (and hence limited) for sockets. It allows you
+	  to make simple clients and servers program using TCP/IP
+	- sregexp.c Regular expressions
+
+
+For more informations on extension building, read the document "Extending the
+STk Interpreter" provided with the package.
+

@@ -1,0 +1,125 @@
+;;;;
+;;;; T k - m e t h o d s . s t k	-- redefine Tk commands as methods
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date:  9-Feb-1995 22:49
+;;;; Last file update: 13-Sep-1996 15:33
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;;;;  C O M M E N T S   A R E   O U T   O F  D A T E
+
+;;;;	This file is loaded at the first make on a Tk object. Its purpose
+;;;;    consists to define new widgets manipulation methods or functions
+;;;;	functions which will do the same job that the equivalent Tk function
+;;;;	(except that they know how manage STklos instances).
+;;;;	This file is loaded as later as possible to allow image creation of
+;;;; 	code containing Tk classes
+
+;;;; Loading of this file is done as soon as Tk::make-tk-name is
+;;;; called (i.e. as soon as a Tk object is created since this function is
+;;;; called for making the Id of a widget). Tk::make-tk-name is defined as
+;;;; an autoload in the Basics.stk file
+
+;;;;	Consequently, this file is loaded only when Tk is completly initialized
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Utilities
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;
+;; Stuff for generating Tcl variable names
+;;
+(define (Tk::make-tk-name parent subname)
+  (format #f "~A.~A"
+	  [if (or (eq? parent *root*) (eq? parent *top-root*))
+	      "" 
+	      (widget->string (slot-ref parent 'Id))]
+	  [or subname (gensym "v")]))
+
+
+;;; Tk-write-object is called when a STklos object is passed to a Tk-command.
+;;; By default, we do the same job as write; but if an object is a <Tk-widget>
+;;; we will pass it its Eid. This method does this job.
+(define-method Tk-write-object((self <Tk-widget>) port)
+  (write (widget-name (slot-ref self 'Eid)) port))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Tk-commands rewriting as methods or functions
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;;;; A kind of predicate to determine if an object is a Tk-widget descendant
+(define-method tk-widget? ((self <Tk-widget>))  #t)
+(define-method tk-widget? ((self <top>))        #f)
+
+
+;;;; A general destroy
+(define-method destroy ((self <Tk-widget>))
+  (let ((Eid (slot-ref self 'Eid)))
+    ;; Destroy all the sons of this widget
+    (apply destroy (map (lambda (x) (or (Id->instance x) x))
+			(winfo 'children Eid)))	   
+    ;; Suicide
+    (Tk:destroy Eid)
+    (change-class self <Destroyed-object>)))
+
+(define-method destroy (obj)
+  ;; Method called when not using objects (e.g. [destroy .b] )
+  ;; Destroy all the sons of this widget  
+  (for-each destroy (winfo 'children obj))
+  ;; Suicide
+  (let ((inst (Id->instance obj)))
+    (when inst (change-class inst <Destroyed-object>))
+    (Tk:destroy obj)))
+
+(define-method destroy l		  ;; Destroy a list of widgets
+  (for-each destroy l))
+
+;;;; A general focus
+(define-method focus ()
+  (let ((w (Tk:focus)))
+    (and w (Id->instance w))))
+
+(define-method focus l (apply Tk:focus l))
+
+;;;; A general unpack (to avoid [pack 'forget ...] which is ugly
+(define (unpack . l)
+  (apply pack 'forget l))
+
+
+(define-method get-Tk-default-value ((self <Tk-widget>) slot)
+  (list-ref ((slot-ref self 'Id) 'configure (make-keyword slot)) 3))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; define *top-root* (a <toplevel> accessing the root window)
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(require "Toplevel")
+
+(define *top-root* (if Tk:initialized?
+		       (let ((top (allocate-instance <Toplevel> '())))
+			 (slot-set! top 'Id     *root*)
+			 (slot-set! top 'Eid    *root*)
+			 (slot-set! top 'parent *root*)
+			 (set-widget-data! *root* `(:instance ,top))
+			 top)
+		       #f))
+(provide "Tk-methods")

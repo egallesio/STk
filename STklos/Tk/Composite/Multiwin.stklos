@@ -1,0 +1,390 @@
+;;;;
+;;;; <Multiple-window> and <Inner-Window> classes 
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;
+;;;; Idea of multiples windows comes from a Tcl package called mdw_lib.tk
+;;;; (a classlib for [m]ulti-[d]ocument-[w]indow applications).
+;;;; The mdw-lib is a number of Tcl/Tk procedures to create and manipulate 
+;;;; multiple childwindows in one Tk application window 
+;;;; The  mdw_lib author is Thomas Schwarze <swz@rtws18.ee.tu-berlin.de>
+;;;; Original package is GPL'ed. However, code and way to implement
+;;;; multiple windows and mdw_lib are completely different.
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date:  5-Apr-1996 18:04
+;;;; Last file update: 13-Aug-1996 23:22
+
+(require "Frame")
+(require "Button")
+
+
+(image 'create 'bitmap '*bitmap-cross* :data
+"#define cross_width 10
+#define cross_height 10
+static unsigned char cross_bits[] = {
+0,0,0,0,0xc,3,0x9c,3,0xf8,1,0xf0,0,0xf0,0,0xf8,1,0x9c,3,0x0c,3};")
+
+
+(image 'create 'bitmap '*bitmap-icon* :data
+"#define icon_width 10
+#define icon_height 10
+static unsigned char icon_bits[] = {
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0xfc,3,0xfc,3,0,0};")
+
+(image 'create 'bitmap '*bitmap-max* :data 
+"#define max_width 10
+#define max_height 10
+static unsigned char max_bits[] = {
+0,0,0,0,0xfc,3,0xfc,3,0xfc,3,0xfc,3,0xfc,3,0xfc,3,0xfc,3,0xfc,3};")
+
+(image 'create 'bitmap '*bitmap-min* :data
+"#define min_width 10
+#define min_height 10
+static unsigned char min_bits[] = {
+0,0,0,0,0,0,0,0,0xf0,0,0xf0,0,0xf0,0,0xf0,0,0,0,0,0};")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Multiple-window> class
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define-class <Multiple-window> (<Frame>)
+  (bottom-bar bottom-bar-title
+   (current		 :initform #f)
+   (children		 :initform '())
+   (child-selected-col	 :initform '("white"    . "RoyalBlue1"))
+   (child-unselected-col :initform '("gray80" .  "gray50"))))
+
+(define-method initialize ((self <Multiple-window>) initargs)
+  (next-method)
+  (if (zero? (width self))  (set! (width  self) 640))
+  (if (zero? (height self)) (set! (height self) 480))
+  (pack 'propagate self #f)
+
+  ;; Create the bottom bar
+  (let* ((bb (make <Frame> :parent self :border-width 3 :relief "groove"))
+	 (l  (make <Label> :parent bb :width 20 :border-width 3 :relief "ridge"
+		   	   :anchor "w")))
+    (pack l :side "left" :expand #f :padx 3 :pady 3)
+    (pack bb :side "bottom" :expand #f :fill "x")
+    (slot-set! self 'bottom-bar bb)
+    (slot-set! self 'bottom-bar-title l)))
+
+(define-method pack ((self <Multiple-window>))   ;; Pack without parameter 
+  (pack self :fill "both" :expand #t))
+
+(define-method find-current-window ((self <Multiple-window>) avoid)
+;; Find a plausible current window (i.e one which is different than
+;; avoid and which is not iconified).
+;; If no window is available return avoid.
+  (letrec ((plausible (lambda (l)
+			(cond ((null? l) avoid)
+			      ((or (equal? (car l) avoid)
+				   (slot-ref (car l) 'iconified?))
+			       (plausible (cdr l)))
+			      (ELSE (car l))))))
+    (plausible (slot-ref self 'children))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Inner-window> class
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define-class <Inner-window> (<Tk-composite-widget> <Frame>)
+  (title-label  icon-button maximize-button destroy-button icon internal-frame
+   (width	:init-keyword :width 	:accessor width
+		:allocation :propagated :propagate-to (frame))
+   (height	:init-keyword :height 	:accessor height
+		:allocation :propagated :propagate-to (frame))
+   (title	:init-keyword :title 	:accessor title
+		:allocation :propagated :propagate-to ((title-label text)))
+   (x		:initform 0)
+   (y		:initform 0)
+   (maximized?	:initform #f)
+   (iconified?	:initform #f)))
+
+(define-method initialize-composite-widget ((self <Inner-Window>) initargs parent)
+  (let* ((int   (make <Frame> :parent parent :border-width 0 :cursor "left_ptr"))
+	 (title (make <Frame>  :parent int   :relief "ridge" :border-width 1))
+	 (label (make <Label>  :parent title :text "No title" :cursor "hand2"))
+	 (b1	(make <Button> :parent title :image *bitmap-cross* :cursor "arrow"))
+	 (b2	(make <Button> :parent title :image *bitmap-max*   :cursor "arrow"))
+	 (b3    (make <Button> :parent title :image *bitmap-icon* :cursor "arrow")))
+   
+    ;; Make internal sub windows
+    (slot-set! self 'Id 	     (Id int))
+    (slot-set! self 'title-label     label)
+    (slot-set! self 'destroy-button  b1)
+    (slot-set! self 'icon-button     b3)
+    (slot-set! self 'maximize-button b2)
+    (slot-set! self 'internal-frame  int)
+
+    ;; Initialze slots
+    (if (zero? (width parent))  (set! (width  parent) 500))
+    (if (zero? (height parent)) (set! (height parent) 300))
+    (slot-set! parent 'border-width  3)
+    (slot-set! parent 'relief        "flat")
+    (slot-set! parent 'background    "gray80")
+
+    ;; Pack everything
+    (pack label    :side "left" :expand #t :fill "x")
+    (pack b1 b2 b3 :side "right")
+    (pack 'propagate self #f)
+    (pack title :side "top" :fill "x" :expand #f)
+    (pack int :fill "both" :expand #t)
+    
+    ;; Associate buttons callbacks
+    (set! (command b2) 
+	  (lambda () 
+	    ((if (slot-ref self 'maximized?) minimize-window maximize-window) 
+	     self)))
+    (set! (command b3) (lambda () (iconify-window self)))
+
+    ;; Associate bindings
+    (make-inner-window-bindings self label b1)
+
+    ;; Add the new window to the multiple-window children list
+    (let ((mult (slot-ref parent 'parent)))
+      (slot-set! mult 'children (cons self (slot-ref mult 'children))))))
+
+;;;;
+;;;; make-inner-window-bindings 
+;;;;  
+;;;; The hard part: associate bindings to the window corners and to
+;;;; the title bar. This is very long and very ugly; but can it be done
+;;;; in another way?
+;;;;
+(define (make-inner-window-bindings w title button)
+  (let ((bd	  15)	;; # of pixels for detecting a border
+	(pos-x    0)
+	(pos-y    0)
+	(index    0)
+	(resizing #f)
+	(cursors '#("top_left_corner"    "top_side"    "top_right_corner"
+		    "left_side"          "crosshair"   "right_side"
+		    "bottom_left_corner" "bottom_side" "bottom_right_corner")))
+    
+    (define (in-inner-window window x y)
+      (let* ((w      (winfo 'width  window))
+	     (h      (winfo 'height window))
+	     (choose (lambda (start)
+		       ;; Retain in index the cursor index
+		       (set! index (cond ((< x bd)       start)
+					 ((< x (- w bd)) (+ start 1))
+					 (ELSE		 (+ start 2))))
+		       ;; Return the name of the cursor to use
+		       (vector-ref cursors index))))
+
+	(slot-set! (slot-ref window 'frame) 'cursor
+		   (cond 
+		      ((< y bd) 	(choose 0))       ;; 0, 1 or 2
+		      ((< y (- h bd)) 	(choose 3))       ;; 3, 4 or 5
+		      (ELSE		(choose 6))))))   ;; 6, 7 or 8
+    
+    (define (resize-inner-window  window x y)
+      (unless (or resizing (slot-ref window 'maximized?))
+	(set! resizing #t)
+	(let* ((width  (winfo 'width  window))
+	       (height (winfo 'height window))
+	       (parent (parent window))
+	       (off-x  (winfo 'rootx parent))
+	       (off-y  (winfo 'rooty parent))
+	       (x1     (- (winfo 'rootx window) off-x))
+	       (y1     (- (winfo 'rooty window) off-y))
+	       (x2     (+ x1 width))
+	       (y2     (+ y1 height)))
+	  (case index
+	    ((0) 	   (set! x1 (- x off-x)) (set! y1 (- y off-y)))
+	    ((1) 		       		 (set! y1 (- y off-y)))
+	    ((2)     (set! x2 (- x off-x)) (set! y1 (- y off-y)))
+	    ((3)	   (set! x1 (- x off-x))                      )
+	    ((4))    ;;should not occurr
+	    ((5) 	   (set! x2 (- x off-x))                      )
+	    ((6) 	   (set! x1 (- x off-x)) (set! y2 (- y off-y)))
+	    ((7) 		       		 (set! y2 (- y off-y)))
+	    ((8) 	   (set! x2 (- x off-x)) (set! y2 (- y off-y))))
+	  (place window :in parent :x x1 :y y1 :width (- x2 x1) :height (- y2 y1)))
+	(set! resizing #f)))
+
+    ;;;;
+    ;;;; MAKE-INNER-WINDOW-BINDINGS starts here
+    ;;;; 
+    
+    ;; The frame
+    (let ((f (slot-ref w 'frame)))
+      (bind f "<1>"         (lambda ()        (raise w)))
+      (bind f "<Enter>"     (lambda (x y)     (in-inner-window w x y)))
+      (bind f "<Motion>"    (lambda (x y)     (in-inner-window w x y)))
+      (bind f "<B1-Motion>" (lambda (|X| |Y|) (resize-inner-window w |X| |Y|))))
+
+    ;; Title label
+    (bind title "<1>" 
+	  (lambda (|X| |Y|) (raise w) (set! pos-x |X|) (set! pos-y |Y|)))
+    (bind title "<B1-Motion>" 
+	  (lambda (|X| |Y|)
+	    (unless (slot-ref w 'maximized?)
+	      (place w :x (+ (winfo 'x w) (- |X| pos-x)) 
+		       :y (+ (winfo 'y w) (- |Y| pos-y)))
+	      (set! pos-x |X|)
+	      (set! pos-y |Y|)
+	      (update 'idle))))
+    (bind title "<2>" (lambda ()
+			(if (equal? w (slot-ref (parent w) 'current)) 
+			    (lower w))))
+
+    ;; The Destroy button
+    (bind button "<Double-1>" 
+	  (lambda () 
+	    ;; Delay instruction to prvent problem with button releasing
+	    (after 'idle (lambda () (destroy w)))))))
+
+
+(define-method place ((self <Inner-window>) . args) 
+  (raise self)
+  (next-method))
+
+
+(define-method unselect-window ((self <Inner-Window>))
+  (let* ((parent   (parent self))
+	 (t        (slot-ref self 'title-label))
+	 (color    (slot-ref (slot-ref self 'parent) 'child-unselected-col)))
+    (slot-set! parent 'current #f)
+    (raise (find-current-window parent self))
+    ;; Change title color
+    (set! (foreground t) (car color))
+    (set! (background t) (cdr color))))
+
+
+(define-method select-window ((self <Inner-Window>))
+  (let* ((parent      (parent self))
+	 (current     (slot-ref parent 'current)))
+    (unless (equal? self current)
+      (let ((t     (slot-ref self 'title-label))
+	    (color (slot-ref (slot-ref self 'parent) 'child-selected-col))
+	    (title (slot-ref parent 'bottom-bar-title)))
+	;; Change old title color
+	(when current
+	  (let ((t      (slot-ref current 'title-label))
+		(color  (slot-ref parent 'child-unselected-col)))
+	    (set! (foreground t) (car color))
+	    (set! (background t) (cdr color))))
+      
+	;; Change new title color
+	(set! (foreground t) (car color))
+	(set! (background t) (cdr color))
+	;; Change the title bar text
+	(set! (text-of title) (slot-ref self 'title))
+	;; New current window is self
+	(slot-set! parent 'current self)))))
+
+
+(define-method raise ((self <Inner-Window>))
+  (let* ((parent  (parent self))
+	 (current (slot-ref parent 'current)))
+    (unless (equal? self current)
+      (select-window self)
+      ;; Raise this window (but just under the bottom bar)
+      (if current 
+	  (raise self current)
+	  (lower self (slot-ref parent 'bottom-bar))))))
+
+(define-method lower ((self <Inner-Window>))
+  (unselect-window self)
+  (next-method))
+
+(define-method destroy ((self <Inner-window>))
+  (define (delete l) 
+    (cond ((null? l) 		   '())
+	  ((equal? (car l) self)   (cdr l))
+	  (else			   (cons (car l) (delete (cdr l))))))
+  
+  (let ((parent (slot-ref self 'parent)))
+    ;; Delete self from list of children
+    (slot-set! parent 'children (delete (slot-ref parent 'children)))
+    (unselect-window self)    
+    (when (equal? self (slot-ref parent 'current))
+      (set! (text-of (slot-ref parent 'bottom-bar-title)) "")
+      (slot-set! parent 'current #f)))
+  (next-method))
+
+
+(define-method maximize-window ((self <Inner-Window>))
+  (unless (slot-ref self 'maximized?)
+    (raise self)
+    (slot-set! self 'maximized? #t)
+    (slot-set! self 'x      (winfo 'x      self))
+    (slot-set! self 'y      (winfo 'y      self))
+    (slot-set! self 'width  (winfo 'width  self))
+    (slot-set! self 'height (winfo 'height self))
+    ; Use pack to fill the cavity
+    (pack self :fill "both" :expand #t)
+     ;; Change maximize button
+    (let ((but (slot-ref self 'maximize-button)))
+      (set! (image-of but) *bitmap-min*))))
+
+
+(define-method minimize-window ((self <Inner-Window>))
+  (when (slot-ref self 'maximized?)
+    (slot-set! self 'maximized? #f)
+    ;; Forget previous pack
+    (pack 'forget self)
+    (place self :x      (slot-ref self 'x)     
+	        :y      (slot-ref self 'y)
+	        :width  (slot-ref self 'width)
+		:height (slot-ref self 'height))
+    ;; Change maximize button
+    (let ((but (slot-ref self 'maximize-button)))
+      (set! (image-of but) *bitmap-max*))))
+
+(define-method iconify-window ((self <Inner-Window>))
+  (unless (slot-ref self 'iconified?)
+    (let ((parent (slot-ref self 'parent)))
+      (slot-set! self 'iconified? #t)
+      (minimize-window self)
+      (unselect-window self)
+      ; Retain window position before deleting it
+      (slot-set! self 'x      (winfo 'x      self))
+      (slot-set! self 'y      (winfo 'y      self))
+      (slot-set! self 'width  (winfo 'width  self))
+      (slot-set! self 'height (winfo 'height self))
+      (place 'forget self)
+
+      ;; Create Icon button
+      (let* ((bar    (slot-ref parent 'bottom-bar))
+	     (title  (slot-ref self 'title))
+	     (b      (make <Button> :parent bar :text title
+			   :font "-adobe-helvetica-*-r-*-*-*-100-*-*-*-*-*-*"
+			   :width  (min (string-length title) 15) :anchor "w"
+			   :command (lambda () (show-window self)))))
+	(slot-set! self 'icon b)
+	(pack b :side "left" :expand #f :fill "none"))
+
+      ;; If this window is alone; purge the bottom bar title
+      (when (equal? self (slot-ref parent 'current))
+	(set! (text-of (slot-ref parent 'bottom-bar-title)) "")
+	(slot-set! parent 'current #f)))))
+
+
+(define-method show-window ((self <Inner-Window>))
+  (when (slot-ref self 'iconified?)
+    (slot-set! self 'iconified? #f)
+    (place self :x      (slot-ref self 'x)     
+	        :y      (slot-ref self 'y)
+		:width  (slot-ref self 'width)
+		:height (slot-ref self 'height))
+    ;; Destroy icon
+    (destroy (slot-ref self 'icon))
+    ; And raise the window
+    (raise self)))
+
+

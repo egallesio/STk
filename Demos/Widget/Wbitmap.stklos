@@ -1,0 +1,27 @@
+;;;;
+;;;; STk adaptation of the Tk widget demo.
+;;;;
+;;;; This demonstration script creates a toplevel window that displays
+;;;; all of Tk's built-in bitmaps.
+;;;;
+(require "Tk-classes")
+
+(define (demo-bitmap)
+  (define w (make-demo-toplevel "bitmap"
+				"Bitmap Demonstration"
+				"This window displays all of Tk's built-in bitmaps, along with the names you can use for them in Tcl scripts."))
+
+  (define (bitmap-row l)
+    (let ((f (make <Frame> :parent w)))
+      (pack f :side "top" :fill "both")
+      (for-each (lambda (bitmap)
+		  (let ((f2 (make <Frame> :parent f)))
+		    (pack f2 :side "left" :fill "both" :padx '.25c :pady '.25c)
+		    (pack (make <Label> :parent f2 :bitmap bitmap)
+			  (make <Label> :parent f2 :text bitmap :width 9)
+			  :side "bottom")))
+		l)))
+  
+  ;; Display two rows of bitmaps
+  (bitmap-row '(error gray25 gray50 hourglass))
+  (bitmap-row '(info question questhead warning)))

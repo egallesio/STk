@@ -1,0 +1,1210 @@
+#
+# Borland C++ IDE generated makefile
+#
+.AUTODEPEND
+
+
+#
+# Borland C++ tools
+#
+IMPLIB  = Implib
+BCC32   = Bcc32 +BccW32.cfg 
+TLINK32 = TLink32
+TLIB    = TLib
+BRC32   = Brc32
+TASM32  = Tasm32
+#
+# IDE macros
+#
+
+
+#
+# Options
+#
+IDE_LFLAGS32 =  -LF:\BC45\LIB
+IDE_RFLAGS32 = 
+LLATW32_stkdexe =  -S:200000 -Tpe -aa -c -wdup -LH:\BC45\LIB
+RLATW32_stkdexe =  -w32
+BLATW32_stkdexe = 
+CNIEAT_stkdexe = -I..\SRC;..\TCL;..\TK\GENERIC;..\TK\WIN;..\TK\XLIB;..\TK\BITMAPS;..\MP\FGMP-1.0B5;H:\BC45\INCLUDE -DSTk_CODE=1;WIN32;STK_VERSION="3.1.1";MACHINE="MS_Win32";USE_TK;USE_HASH;USE_STKLOS;USE_HTML;USE_REGEXP;USE_SOCKET;REDO_KEYSYM_LOOKUP;NEED_MATHERR
+LNIEAT_stkdexe = -x
+LEAT_stkdexe = $(LLATW32_stkdexe)
+REAT_stkdexe = $(RLATW32_stkdexe)
+BEAT_stkdexe = $(BLATW32_stkdexe)
+CLATC32_stkdlib = 
+LLATC32_stkdlib =  -Tpd -aa -c
+RLATC32_stkdlib =  -w32
+BLATC32_stkdlib =  /P32
+CEAT_stkdlib = $(CEAT_stkdexe) $(CLATC32_stkdlib)
+CNIEAT_stkdlib = -I..\SRC;..\TCL;..\TK\GENERIC;..\TK\WIN;..\TK\XLIB;..\TK\BITMAPS;..\MP\FGMP-1.0B5;H:\BC45\INCLUDE -DSTk_CODE=1;WIN32;STK_VERSION="3.1.1";MACHINE="MS_Win32";USE_TK;USE_HASH;USE_STKLOS;USE_HTML;USE_REGEXP;USE_SOCKET;REDO_KEYSYM_LOOKUP;NEED_MATHERR
+LNIEAT_stkdlib = -x
+LEAT_stkdlib = $(LEAT_stkdexe) $(LLATC32_stkdlib)
+REAT_stkdlib = $(REAT_stkdexe) $(RLATC32_stkdlib)
+BEAT_stkdlib = $(BEAT_stkdexe) $(BLATC32_stkdlib)
+CLATC32_gmpdlib = 
+LLATC32_gmpdlib =  -Tpd -aa -c
+RLATC32_gmpdlib =  -w32
+BLATC32_gmpdlib = 
+CEAT_gmpdlib = $(CEAT_stkdexe) $(CLATC32_gmpdlib)
+CNIEAT_gmpdlib = -I..\SRC;..\TCL;..\TK\GENERIC;..\TK\WIN;..\TK\XLIB;..\TK\BITMAPS;..\MP\FGMP-1.0B5;H:\BC45\INCLUDE -DSTk_CODE=1;WIN32;STK_VERSION="3.1.1";MACHINE="MS_Win32";USE_TK;USE_HASH;USE_STKLOS;USE_HTML;USE_REGEXP;USE_SOCKET;REDO_KEYSYM_LOOKUP;NEED_MATHERR
+LNIEAT_gmpdlib = -x
+LEAT_gmpdlib = $(LEAT_stkdexe) $(LLATC32_gmpdlib)
+REAT_gmpdlib = $(REAT_stkdexe) $(RLATC32_gmpdlib)
+BEAT_gmpdlib = $(BEAT_stkdexe) $(BLATC32_gmpdlib)
+CLATC32_tkxlibdlib =  -WC
+LLATC32_tkxlibdlib =  -Tpe -ap -c
+RLATC32_tkxlibdlib =  -w32
+BLATC32_tkxlibdlib = 
+CEAT_tkxlibdlib = $(CEAT_stkdexe) $(CLATC32_tkxlibdlib)
+CNIEAT_tkxlibdlib = -I..\SRC;..\TCL;..\TK\GENERIC;..\TK\WIN;..\TK\XLIB;..\TK\BITMAPS;..\MP\FGMP-1.0B5;H:\BC45\INCLUDE -DSTk_CODE=1;WIN32;STK_VERSION="3.1.1";MACHINE="MS_Win32";USE_TK;USE_HASH;USE_STKLOS;USE_HTML;USE_REGEXP;USE_SOCKET;REDO_KEYSYM_LOOKUP;NEED_MATHERR
+LNIEAT_tkxlibdlib = -x
+LEAT_tkxlibdlib = $(LEAT_stkdexe) $(LLATC32_tkxlibdlib)
+REAT_tkxlibdlib = $(REAT_stkdexe) $(RLATC32_tkxlibdlib)
+BEAT_tkxlibdlib = $(BEAT_stkdexe) $(BLATC32_tkxlibdlib)
+CLATC32_tkwindlib =  -WC
+LLATC32_tkwindlib =  -Tpe -ap -c
+RLATC32_tkwindlib =  -w32
+BLATC32_tkwindlib = 
+CEAT_tkwindlib = $(CEAT_stkdexe) $(CLATC32_tkwindlib)
+CNIEAT_tkwindlib = -I..\SRC;..\TCL;..\TK\GENERIC;..\TK\WIN;..\TK\XLIB;..\TK\BITMAPS;..\MP\FGMP-1.0B5;H:\BC45\INCLUDE -DSTk_CODE=1;WIN32;STK_VERSION="3.1.1";MACHINE="MS_Win32";USE_TK;USE_HASH;USE_STKLOS;USE_HTML;USE_REGEXP;USE_SOCKET;REDO_KEYSYM_LOOKUP;NEED_MATHERR
+LNIEAT_tkwindlib = -x
+LEAT_tkwindlib = $(LEAT_stkdexe) $(LLATC32_tkwindlib)
+REAT_tkwindlib = $(REAT_stkdexe) $(RLATC32_tkwindlib)
+BEAT_tkwindlib = $(BEAT_stkdexe) $(BLATC32_tkwindlib)
+CLATC32_tkgendlib =  -WC
+LLATC32_tkgendlib =  -Tpe -ap -c
+RLATC32_tkgendlib =  -w32
+BLATC32_tkgendlib =  /P128
+CEAT_tkgendlib = $(CEAT_stkdexe) $(CLATC32_tkgendlib)
+CNIEAT_tkgendlib = -I..\SRC;..\TCL;..\TK\GENERIC;..\TK\WIN;..\TK\XLIB;..\TK\BITMAPS;..\MP\FGMP-1.0B5;H:\BC45\INCLUDE -DSTk_CODE=1;WIN32;STK_VERSION="3.1.1";MACHINE="MS_Win32";USE_TK;USE_HASH;USE_STKLOS;USE_HTML;USE_REGEXP;USE_SOCKET;REDO_KEYSYM_LOOKUP;NEED_MATHERR
+LNIEAT_tkgendlib = -x
+LEAT_tkgendlib = $(LEAT_stkdexe) $(LLATC32_tkgendlib)
+REAT_tkgendlib = $(REAT_stkdexe) $(RLATC32_tkgendlib)
+BEAT_tkgendlib = $(BEAT_stkdexe) $(BLATC32_tkgendlib)
+CLATC32_tcldlib =  -WC
+LLATC32_tcldlib =  -Tpe -ap -c
+RLATC32_tcldlib =  -w32
+BLATC32_tcldlib = 
+CEAT_tcldlib = $(CEAT_stkdexe) $(CLATC32_tcldlib)
+CNIEAT_tcldlib = -I..\SRC;..\TCL;..\TK\GENERIC;..\TK\WIN;..\TK\XLIB;..\TK\BITMAPS;..\MP\FGMP-1.0B5;H:\BC45\INCLUDE -DSTk_CODE=1;WIN32;STK_VERSION="3.1.1";MACHINE="MS_Win32";USE_TK;USE_HASH;USE_STKLOS;USE_HTML;USE_REGEXP;USE_SOCKET;REDO_KEYSYM_LOOKUP;NEED_MATHERR
+LNIEAT_tcldlib = -x
+LEAT_tcldlib = $(LEAT_stkdexe) $(LLATC32_tcldlib)
+REAT_tcldlib = $(REAT_stkdexe) $(RLATC32_tcldlib)
+BEAT_tcldlib = $(BEAT_stkdexe) $(BLATC32_tcldlib)
+
+#
+# Dependency List
+#
+Dep_stk = \
+   stk.exe
+
+stk : BccW32.cfg $(Dep_stk)
+  echo MakeNode 
+
+Dep_stkdexe = \
+   stk.res\
+   wstk.obj\
+   tcl-lib.obj\
+   tcl-util.obj\
+   tk-glue.obj\
+   tk-main.obj\
+   tk-util.obj\
+   stk.lib\
+   gmp.lib\
+   tkxlib.lib\
+   tkwin.lib\
+   tkgen.lib\
+   tcl.lib
+
+stk.exe : $(Dep_stkdexe)
+  $(TLINK32) @&&|
+ /v $(IDE_LFLAGS32) $(LEAT_stkdexe) $(LNIEAT_stkdexe) +
+H:\BC45\LIB\c0w32.obj+
+wstk.obj+
+tcl-lib.obj+
+tcl-util.obj+
+tk-glue.obj+
+tk-main.obj+
+tk-util.obj
+$<,$*
+stk.lib+
+gmp.lib+
+tkxlib.lib+
+tkwin.lib+
+tkgen.lib+
+tcl.lib+
+H:\BC45\LIB\import32.lib+
+H:\BC45\LIB\cw32.lib
+
+|
+   $(BRC32) stk.res $<
+
+stk.res :  stk.rc
+  $(BRC32) $(IDE_RFLAGS32) $(REAT_stkdexe) $(CNIEAT_stkdexe) -R -FO$@ stk.rc
+
+wstk.obj :  ..\src\wstk.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdexe) $(CNIEAT_stkdexe) -o$@ ..\src\wstk.c
+|
+
+tcl-lib.obj :  ..\src\tcl-lib.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdexe) $(CNIEAT_stkdexe) -o$@ ..\src\tcl-lib.c
+|
+
+tcl-util.obj :  ..\src\tcl-util.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdexe) $(CNIEAT_stkdexe) -o$@ ..\src\tcl-util.c
+|
+
+tk-glue.obj :  ..\src\tk-glue.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdexe) $(CNIEAT_stkdexe) -o$@ ..\src\tk-glue.c
+|
+
+tk-main.obj :  ..\src\tk-main.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdexe) $(CNIEAT_stkdexe) -o$@ ..\src\tk-main.c
+|
+
+tk-util.obj :  ..\src\tk-util.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdexe) $(CNIEAT_stkdexe) -o$@ ..\src\tk-util.c
+|
+
+Dep_stkdlib = \
+   socket.obj\
+   address.obj\
+   argv.obj\
+   boolean.obj\
+   char.obj\
+   cont.obj\
+   dummy.obj\
+   dump.obj\
+   dynload.obj\
+   env.obj\
+   error.obj\
+   eval.obj\
+   extend.obj\
+   gc.obj\
+   hash.obj\
+   html.obj\
+   io.obj\
+   keyword.obj\
+   list.obj\
+   macros.obj\
+   number.obj\
+   pixmap.obj\
+   port.obj\
+   primit~1.obj\
+   print.obj\
+   proc.obj\
+   promise.obj\
+   read.obj\
+   signal.obj\
+   slib.obj\
+   sport.obj\
+   sregexp.obj\
+   stklos.obj\
+   str.obj\
+   symbol.obj\
+   syntax.obj\
+   toplevel.obj\
+   trace.obj\
+   unix.obj\
+   userinit.obj\
+   vector.obj
+
+stk.lib : $(Dep_stkdlib)
+  $(TLIB) $< $(IDE_BFLAGS) $(BEAT_stkdlib) @&&|
+ -+socket.obj &
+-+address.obj &
+-+argv.obj &
+-+boolean.obj &
+-+char.obj &
+-+cont.obj &
+-+dummy.obj &
+-+dump.obj &
+-+dynload.obj &
+-+env.obj &
+-+error.obj &
+-+eval.obj &
+-+extend.obj &
+-+gc.obj &
+-+hash.obj &
+-+html.obj &
+-+io.obj &
+-+keyword.obj &
+-+list.obj &
+-+macros.obj &
+-+number.obj &
+-+pixmap.obj &
+-+port.obj &
+-+primit~1.obj &
+-+print.obj &
+-+proc.obj &
+-+promise.obj &
+-+read.obj &
+-+signal.obj &
+-+slib.obj &
+-+sport.obj &
+-+sregexp.obj &
+-+stklos.obj &
+-+str.obj &
+-+symbol.obj &
+-+syntax.obj &
+-+toplevel.obj &
+-+trace.obj &
+-+unix.obj &
+-+userinit.obj &
+-+vector.obj
+|
+
+socket.obj :  ..\Extensions\socket.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\Extensions\socket.c
+|
+
+address.obj :  ..\src\address.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\src\address.c
+|
+
+argv.obj :  ..\src\argv.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\src\argv.c
+|
+
+boolean.obj :  ..\src\boolean.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\src\boolean.c
+|
+
+char.obj :  ..\src\char.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\src\char.c
+|
+
+cont.obj :  ..\src\cont.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\src\cont.c
+|
+
+dummy.obj :  ..\src\dummy.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\src\dummy.c
+|
+
+dump.obj :  ..\src\dump.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\src\dump.c
+|
+
+dynload.obj :  ..\src\dynload.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\src\dynload.c
+|
+
+env.obj :  ..\src\env.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\src\env.c
+|
+
+error.obj :  ..\src\error.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\src\error.c
+|
+
+eval.obj :  ..\src\eval.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\src\eval.c
+|
+
+extend.obj :  ..\src\extend.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\src\extend.c
+|
+
+gc.obj :  ..\src\gc.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\src\gc.c
+|
+
+hash.obj :  ..\Extensions\hash.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\Extensions\hash.c
+|
+
+html.obj :  ..\Extensions\html.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\Extensions\html.c
+|
+
+io.obj :  ..\src\io.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\src\io.c
+|
+
+keyword.obj :  ..\src\keyword.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\src\keyword.c
+|
+
+list.obj :  ..\src\list.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\src\list.c
+|
+
+macros.obj :  ..\src\macros.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\src\macros.c
+|
+
+number.obj :  ..\src\number.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\src\number.c
+|
+
+pixmap.obj :  ..\Extensions\pixmap.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\Extensions\pixmap.c
+|
+
+port.obj :  ..\src\port.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\src\port.c
+|
+
+primit~1.obj :  ..\src\primit~1.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\src\primit~1.c
+|
+
+print.obj :  ..\src\print.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\src\print.c
+|
+
+proc.obj :  ..\src\proc.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\src\proc.c
+|
+
+promise.obj :  ..\src\promise.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\src\promise.c
+|
+
+read.obj :  ..\src\read.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\src\read.c
+|
+
+signal.obj :  ..\src\signal.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\src\signal.c
+|
+
+slib.obj :  ..\src\slib.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\src\slib.c
+|
+
+sport.obj :  ..\src\sport.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\src\sport.c
+|
+
+sregexp.obj :  ..\Extensions\sregexp.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\Extensions\sregexp.c
+|
+
+stklos.obj :  ..\src\stklos.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\src\stklos.c
+|
+
+str.obj :  ..\src\str.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\src\str.c
+|
+
+symbol.obj :  ..\src\symbol.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\src\symbol.c
+|
+
+syntax.obj :  ..\src\syntax.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\src\syntax.c
+|
+
+toplevel.obj :  ..\src\toplevel.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\src\toplevel.c
+|
+
+trace.obj :  ..\src\trace.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\src\trace.c
+|
+
+unix.obj :  ..\src\unix.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\src\unix.c
+|
+
+userinit.obj :  ..\src\userinit.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\src\userinit.c
+|
+
+vector.obj :  ..\src\vector.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_stkdlib) $(CNIEAT_stkdlib) -o$@ ..\src\vector.c
+|
+
+Dep_gmpdlib = \
+   gmp.obj
+
+gmp.lib : $(Dep_gmpdlib)
+  $(TLIB) $< $(IDE_BFLAGS) $(BEAT_gmpdlib) @&&|
+ -+gmp.obj
+|
+
+gmp.obj :  ..\mp\fgmp-1.0b5\gmp.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_gmpdlib) $(CNIEAT_gmpdlib) -o$@ ..\mp\fgmp-1.0b5\gmp.c
+|
+
+Dep_tkxlibdlib = \
+   xdraw.obj\
+   xgc.obj\
+   ximage.obj\
+   xutil.obj
+
+tkxlib.lib : $(Dep_tkxlibdlib)
+  $(TLIB) $< $(IDE_BFLAGS) $(BEAT_tkxlibdlib) @&&|
+ -+xdraw.obj &
+-+xgc.obj &
+-+ximage.obj &
+-+xutil.obj
+|
+
+xdraw.obj :  ..\tk\xlib\xdraw.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkxlibdlib) $(CNIEAT_tkxlibdlib) -o$@ ..\tk\xlib\xdraw.c
+|
+
+xgc.obj :  ..\tk\xlib\xgc.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkxlibdlib) $(CNIEAT_tkxlibdlib) -o$@ ..\tk\xlib\xgc.c
+|
+
+ximage.obj :  ..\tk\xlib\ximage.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkxlibdlib) $(CNIEAT_tkxlibdlib) -o$@ ..\tk\xlib\ximage.c
+|
+
+xutil.obj :  ..\tk\xlib\xutil.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkxlibdlib) $(CNIEAT_tkxlibdlib) -o$@ ..\tk\xlib\xutil.c
+|
+
+Dep_tkwindlib = \
+   stubs.obj\
+   tkwin3~1.obj\
+   tkwinc~1.obj\
+   tkwinc~2.obj\
+   tkwinc~3.obj\
+   tkwind~1.obj\
+   tkwinf~1.obj\
+   tkwini~1.obj\
+   tkwini~2.obj\
+   tkwinkey.obj\
+   tkwinp~1.obj\
+   tkwinp~2.obj\
+   tkwinr~1.obj\
+   tkwinw~1.obj\
+   tkwinwm.obj\
+   tkwinx.obj
+
+tkwin.lib : $(Dep_tkwindlib)
+  $(TLIB) $< $(IDE_BFLAGS) $(BEAT_tkwindlib) @&&|
+ -+stubs.obj &
+-+tkwin3~1.obj &
+-+tkwinc~1.obj &
+-+tkwinc~2.obj &
+-+tkwinc~3.obj &
+-+tkwind~1.obj &
+-+tkwinf~1.obj &
+-+tkwini~1.obj &
+-+tkwini~2.obj &
+-+tkwinkey.obj &
+-+tkwinp~1.obj &
+-+tkwinp~2.obj &
+-+tkwinr~1.obj &
+-+tkwinw~1.obj &
+-+tkwinwm.obj &
+-+tkwinx.obj
+|
+
+stubs.obj :  ..\tk\win\stubs.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkwindlib) $(CNIEAT_tkwindlib) -o$@ ..\tk\win\stubs.c
+|
+
+tkwin3~1.obj :  ..\tk\win\tkwin3~1.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkwindlib) $(CNIEAT_tkwindlib) -o$@ ..\tk\win\tkwin3~1.c
+|
+
+tkwinc~1.obj :  ..\tk\win\tkwinc~1.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkwindlib) $(CNIEAT_tkwindlib) -o$@ ..\tk\win\tkwinc~1.c
+|
+
+tkwinc~2.obj :  ..\tk\win\tkwinc~2.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkwindlib) $(CNIEAT_tkwindlib) -o$@ ..\tk\win\tkwinc~2.c
+|
+
+tkwinc~3.obj :  ..\tk\win\tkwinc~3.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkwindlib) $(CNIEAT_tkwindlib) -o$@ ..\tk\win\tkwinc~3.c
+|
+
+tkwind~1.obj :  ..\tk\win\tkwind~1.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkwindlib) $(CNIEAT_tkwindlib) -o$@ ..\tk\win\tkwind~1.c
+|
+
+tkwinf~1.obj :  ..\tk\win\tkwinf~1.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkwindlib) $(CNIEAT_tkwindlib) -o$@ ..\tk\win\tkwinf~1.c
+|
+
+tkwini~1.obj :  ..\tk\win\tkwini~1.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkwindlib) $(CNIEAT_tkwindlib) -o$@ ..\tk\win\tkwini~1.c
+|
+
+tkwini~2.obj :  ..\tk\win\tkwini~2.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkwindlib) $(CNIEAT_tkwindlib) -o$@ ..\tk\win\tkwini~2.c
+|
+
+tkwinkey.obj :  ..\tk\win\tkwinkey.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkwindlib) $(CNIEAT_tkwindlib) -o$@ ..\tk\win\tkwinkey.c
+|
+
+tkwinp~1.obj :  ..\tk\win\tkwinp~1.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkwindlib) $(CNIEAT_tkwindlib) -o$@ ..\tk\win\tkwinp~1.c
+|
+
+tkwinp~2.obj :  ..\tk\win\tkwinp~2.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkwindlib) $(CNIEAT_tkwindlib) -o$@ ..\tk\win\tkwinp~2.c
+|
+
+tkwinr~1.obj :  ..\tk\win\tkwinr~1.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkwindlib) $(CNIEAT_tkwindlib) -o$@ ..\tk\win\tkwinr~1.c
+|
+
+tkwinw~1.obj :  ..\tk\win\tkwinw~1.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkwindlib) $(CNIEAT_tkwindlib) -o$@ ..\tk\win\tkwinw~1.c
+|
+
+tkwinwm.obj :  ..\tk\win\tkwinwm.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkwindlib) $(CNIEAT_tkwindlib) -o$@ ..\tk\win\tkwinwm.c
+|
+
+tkwinx.obj :  ..\tk\win\tkwinx.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkwindlib) $(CNIEAT_tkwindlib) -o$@ ..\tk\win\tkwinx.c
+|
+
+Dep_tkgendlib = \
+   tkimggif.obj\
+   tkimgppm.obj\
+   tkgrid.obj\
+   tk3d.obj\
+   tkargv.obj\
+   tkatom.obj\
+   tkbind.obj\
+   tkbitmap.obj\
+   tkbutton.obj\
+   tkcanv~1.obj\
+   tkcanv~2.obj\
+   tkcanv~3.obj\
+   tkcanv~4.obj\
+   tkcanv~5.obj\
+   tkcanv~6.obj\
+   tkcanv~7.obj\
+   tkcanv~8.obj\
+   tkcanvas.obj\
+   tkcanvps.obj\
+   tkclip~1.obj\
+   tkcmds.obj\
+   tkcolor.obj\
+   tkconfig.obj\
+   tkcursor.obj\
+   tkentry.obj\
+   tkerror.obj\
+   tkevent.obj\
+   tkfocus.obj\
+   tkfont.obj\
+   tkframe.obj\
+   tkgc.obj\
+   tkgeom~1.obj\
+   tkget.obj\
+   tkgrab.obj\
+   tkimage.obj\
+   tkimgb~1.obj\
+   tkimgp~1.obj\
+   tkimgu~1.obj\
+   tklist~1.obj\
+   tkmain.obj\
+   tkmenu.obj\
+   tkmenu~1.obj\
+   tkmess~1.obj\
+   tkoption.obj\
+   tkpack.obj\
+   tkplace.obj\
+   tkrect~1.obj\
+   tkscale.obj\
+   tkscro~1.obj\
+   tkselect.obj\
+   tksend.obj\
+   tksquare.obj\
+   tktest.obj\
+   tktext.obj\
+   tktext~1.obj\
+   tktext~2.obj\
+   tktext~3.obj\
+   tktext~4.obj\
+   tktext~5.obj\
+   tktext~6.obj\
+   tktrig.obj\
+   tkutil.obj\
+   tkvisual.obj\
+   tkwindow.obj
+
+tkgen.lib : $(Dep_tkgendlib)
+  $(TLIB) $< $(IDE_BFLAGS) $(BEAT_tkgendlib) @&&|
+ -+tkimggif.obj &
+-+tkimgppm.obj &
+-+tkgrid.obj &
+-+tk3d.obj &
+-+tkargv.obj &
+-+tkatom.obj &
+-+tkbind.obj &
+-+tkbitmap.obj &
+-+tkbutton.obj &
+-+tkcanv~1.obj &
+-+tkcanv~2.obj &
+-+tkcanv~3.obj &
+-+tkcanv~4.obj &
+-+tkcanv~5.obj &
+-+tkcanv~6.obj &
+-+tkcanv~7.obj &
+-+tkcanv~8.obj &
+-+tkcanvas.obj &
+-+tkcanvps.obj &
+-+tkclip~1.obj &
+-+tkcmds.obj &
+-+tkcolor.obj &
+-+tkconfig.obj &
+-+tkcursor.obj &
+-+tkentry.obj &
+-+tkerror.obj &
+-+tkevent.obj &
+-+tkfocus.obj &
+-+tkfont.obj &
+-+tkframe.obj &
+-+tkgc.obj &
+-+tkgeom~1.obj &
+-+tkget.obj &
+-+tkgrab.obj &
+-+tkimage.obj &
+-+tkimgb~1.obj &
+-+tkimgp~1.obj &
+-+tkimgu~1.obj &
+-+tklist~1.obj &
+-+tkmain.obj &
+-+tkmenu.obj &
+-+tkmenu~1.obj &
+-+tkmess~1.obj &
+-+tkoption.obj &
+-+tkpack.obj &
+-+tkplace.obj &
+-+tkrect~1.obj &
+-+tkscale.obj &
+-+tkscro~1.obj &
+-+tkselect.obj &
+-+tksend.obj &
+-+tksquare.obj &
+-+tktest.obj &
+-+tktext.obj &
+-+tktext~1.obj &
+-+tktext~2.obj &
+-+tktext~3.obj &
+-+tktext~4.obj &
+-+tktext~5.obj &
+-+tktext~6.obj &
+-+tktrig.obj &
+-+tkutil.obj &
+-+tkvisual.obj &
+-+tkwindow.obj
+|
+
+tkimggif.obj :  ..\tk\generic\tkimggif.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkimggif.c
+|
+
+tkimgppm.obj :  ..\tk\generic\tkimgppm.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkimgppm.c
+|
+
+tkgrid.obj :  ..\tk\generic\tkgrid.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkgrid.c
+|
+
+tk3d.obj :  ..\tk\generic\tk3d.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tk3d.c
+|
+
+tkargv.obj :  ..\tk\generic\tkargv.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkargv.c
+|
+
+tkatom.obj :  ..\tk\generic\tkatom.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkatom.c
+|
+
+tkbind.obj :  ..\tk\generic\tkbind.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkbind.c
+|
+
+tkbitmap.obj :  ..\tk\generic\tkbitmap.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkbitmap.c
+|
+
+tkbutton.obj :  ..\tk\generic\tkbutton.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkbutton.c
+|
+
+tkcanv~1.obj :  ..\tk\generic\tkcanv~1.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkcanv~1.c
+|
+
+tkcanv~2.obj :  ..\tk\generic\tkcanv~2.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkcanv~2.c
+|
+
+tkcanv~3.obj :  ..\tk\generic\tkcanv~3.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkcanv~3.c
+|
+
+tkcanv~4.obj :  ..\tk\generic\tkcanv~4.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkcanv~4.c
+|
+
+tkcanv~5.obj :  ..\tk\generic\tkcanv~5.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkcanv~5.c
+|
+
+tkcanv~6.obj :  ..\tk\generic\tkcanv~6.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkcanv~6.c
+|
+
+tkcanv~7.obj :  ..\tk\generic\tkcanv~7.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkcanv~7.c
+|
+
+tkcanv~8.obj :  ..\tk\generic\tkcanv~8.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkcanv~8.c
+|
+
+tkcanvas.obj :  ..\tk\generic\tkcanvas.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkcanvas.c
+|
+
+tkcanvps.obj :  ..\tk\generic\tkcanvps.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkcanvps.c
+|
+
+tkclip~1.obj :  ..\tk\generic\tkclip~1.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkclip~1.c
+|
+
+tkcmds.obj :  ..\tk\generic\tkcmds.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkcmds.c
+|
+
+tkcolor.obj :  ..\tk\generic\tkcolor.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkcolor.c
+|
+
+tkconfig.obj :  ..\tk\generic\tkconfig.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkconfig.c
+|
+
+tkcursor.obj :  ..\tk\generic\tkcursor.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkcursor.c
+|
+
+tkentry.obj :  ..\tk\generic\tkentry.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkentry.c
+|
+
+tkerror.obj :  ..\tk\generic\tkerror.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkerror.c
+|
+
+tkevent.obj :  ..\tk\generic\tkevent.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkevent.c
+|
+
+tkfocus.obj :  ..\tk\generic\tkfocus.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkfocus.c
+|
+
+tkfont.obj :  ..\tk\generic\tkfont.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkfont.c
+|
+
+tkframe.obj :  ..\tk\generic\tkframe.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkframe.c
+|
+
+tkgc.obj :  ..\tk\generic\tkgc.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkgc.c
+|
+
+tkgeom~1.obj :  ..\tk\generic\tkgeom~1.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkgeom~1.c
+|
+
+tkget.obj :  ..\tk\generic\tkget.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkget.c
+|
+
+tkgrab.obj :  ..\tk\generic\tkgrab.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkgrab.c
+|
+
+tkimage.obj :  ..\tk\generic\tkimage.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkimage.c
+|
+
+tkimgb~1.obj :  ..\tk\generic\tkimgb~1.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkimgb~1.c
+|
+
+tkimgp~1.obj :  ..\tk\generic\tkimgp~1.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkimgp~1.c
+|
+
+tkimgu~1.obj :  ..\tk\generic\tkimgu~1.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkimgu~1.c
+|
+
+tklist~1.obj :  ..\tk\generic\tklist~1.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tklist~1.c
+|
+
+tkmain.obj :  ..\tk\generic\tkmain.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkmain.c
+|
+
+tkmenu.obj :  ..\tk\generic\tkmenu.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkmenu.c
+|
+
+tkmenu~1.obj :  ..\tk\generic\tkmenu~1.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkmenu~1.c
+|
+
+tkmess~1.obj :  ..\tk\generic\tkmess~1.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkmess~1.c
+|
+
+tkoption.obj :  ..\tk\generic\tkoption.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkoption.c
+|
+
+tkpack.obj :  ..\tk\generic\tkpack.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkpack.c
+|
+
+tkplace.obj :  ..\tk\generic\tkplace.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkplace.c
+|
+
+tkrect~1.obj :  ..\tk\generic\tkrect~1.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkrect~1.c
+|
+
+tkscale.obj :  ..\tk\generic\tkscale.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkscale.c
+|
+
+tkscro~1.obj :  ..\tk\generic\tkscro~1.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkscro~1.c
+|
+
+tkselect.obj :  ..\tk\generic\tkselect.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkselect.c
+|
+
+tksend.obj :  ..\tk\generic\tksend.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tksend.c
+|
+
+tksquare.obj :  ..\tk\generic\tksquare.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tksquare.c
+|
+
+tktest.obj :  ..\tk\generic\tktest.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tktest.c
+|
+
+tktext.obj :  ..\tk\generic\tktext.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tktext.c
+|
+
+tktext~1.obj :  ..\tk\generic\tktext~1.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tktext~1.c
+|
+
+tktext~2.obj :  ..\tk\generic\tktext~2.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tktext~2.c
+|
+
+tktext~3.obj :  ..\tk\generic\tktext~3.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tktext~3.c
+|
+
+tktext~4.obj :  ..\tk\generic\tktext~4.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tktext~4.c
+|
+
+tktext~5.obj :  ..\tk\generic\tktext~5.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tktext~5.c
+|
+
+tktext~6.obj :  ..\tk\generic\tktext~6.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tktext~6.c
+|
+
+tktrig.obj :  ..\tk\generic\tktrig.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tktrig.c
+|
+
+tkutil.obj :  ..\tk\generic\tkutil.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkutil.c
+|
+
+tkvisual.obj :  ..\tk\generic\tkvisual.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkvisual.c
+|
+
+tkwindow.obj :  ..\tk\generic\tkwindow.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tkgendlib) $(CNIEAT_tkgendlib) -o$@ ..\tk\generic\tkwindow.c
+|
+
+Dep_tcldlib = \
+   tclpre~1.obj\
+   tclwin~2.obj\
+   tclevent.obj\
+   panic.obj\
+   regexp.obj\
+   tclasync.obj\
+   tclget.obj\
+   tclhash.obj\
+   tclmth~1.obj\
+   tclnot~1.obj\
+   tclutil.obj\
+   tclwin~1.obj
+
+tcl.lib : $(Dep_tcldlib)
+  $(TLIB) $< $(IDE_BFLAGS) $(BEAT_tcldlib) @&&|
+ -+tclpre~1.obj &
+-+tclwin~2.obj &
+-+tclevent.obj &
+-+panic.obj &
+-+regexp.obj &
+-+tclasync.obj &
+-+tclget.obj &
+-+tclhash.obj &
+-+tclmth~1.obj &
+-+tclnot~1.obj &
+-+tclutil.obj &
+-+tclwin~1.obj
+|
+
+tclpre~1.obj :  ..\tcl\tclpre~1.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tcldlib) $(CNIEAT_tcldlib) -o$@ ..\tcl\tclpre~1.c
+|
+
+tclwin~2.obj :  ..\tcl\tclwin~2.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tcldlib) $(CNIEAT_tcldlib) -o$@ ..\tcl\tclwin~2.c
+|
+
+tclevent.obj :  ..\tcl\tclevent.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tcldlib) $(CNIEAT_tcldlib) -o$@ ..\tcl\tclevent.c
+|
+
+panic.obj :  ..\tcl\panic.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tcldlib) $(CNIEAT_tcldlib) -o$@ ..\tcl\panic.c
+|
+
+
+regexp.obj :  ..\tcl\regexp.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tcldlib) $(CNIEAT_tcldlib) -o$@ ..\tcl\regexp.c
+|
+
+tclasync.obj :  ..\tcl\tclasync.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tcldlib) $(CNIEAT_tcldlib) -o$@ ..\tcl\tclasync.c
+|
+
+tclget.obj :  ..\tcl\tclget.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tcldlib) $(CNIEAT_tcldlib) -o$@ ..\tcl\tclget.c
+|
+
+tclhash.obj :  ..\tcl\tclhash.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tcldlib) $(CNIEAT_tcldlib) -o$@ ..\tcl\tclhash.c
+|
+
+tclmth~1.obj :  ..\tcl\tclmth~1.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tcldlib) $(CNIEAT_tcldlib) -o$@ ..\tcl\tclmth~1.c
+|
+
+tclnot~1.obj :  ..\tcl\tclnot~1.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tcldlib) $(CNIEAT_tcldlib) -o$@ ..\tcl\tclnot~1.c
+|
+
+tclutil.obj :  ..\tcl\tclutil.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tcldlib) $(CNIEAT_tcldlib) -o$@ ..\tcl\tclutil.c
+|
+
+tclwin~1.obj :  ..\tcl\tclwin~1.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_tcldlib) $(CNIEAT_tcldlib) -o$@ ..\tcl\tclwin~1.c
+|
+
+# Compiler configuration file
+BccW32.cfg : 
+   Copy &&|
+-R
+-v
+-vi
+-H
+-H=stk.csm
+-K
+-a
+-Oc
+-wcln
+-w-sig
+-wucp
+-wbbf
+-w-pin
+-wnak
+-wstv
+-wdef
+-w-pro
+-wamp
+-wobs
+-w-stu
+-W
+-w-par
+-w-rch
+-y
+-vi-
+-A-
+-4
+| $@
+
+

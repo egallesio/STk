@@ -1,0 +1,10 @@
+dnl	This file is an input file used by the GNU "autoconf" program to
+dnl	generate the file "configure", which is run during STk installation
+dnl	to configure the system for the local environment.
+
+AC_INIT(process.c)
+/bin/rm -f config.cache
+CC=${CC-gcc}
+AC_HAVE_HEADERS(unistd.h limits.h)
+AC_HAVE_FUNCS(sigaction)
+AC_OUTPUT(Makefile)

@@ -1,0 +1,75 @@
+;;;;
+;;;; l i s t e n e r . s t k 		-- A listener "widget"
+;;;;
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 11-Sep-1995 10:16
+;;;; Last file update: 19-Jul-1996 15:37
+
+;;;; Listener
+;;;; A new widget which is dedicated to interactive I/O. We have 4 new options:
+;;;;	 :prompt       (">")
+;;;;	 :prompt-color ("red")
+;;;;	 :output-color ("blue")
+;;;;	 :command      (a lambda which does nothing)
+;;;; The command is executed when a Return is typed in and a complete Sexpr
+;;;; has been entered between the last prompt and the return.
+
+(define (listener name . args)
+  (let* ((prompt-color (get-keyword :prompt-color args "red"))
+	 (output-color (get-keyword :output-color args "blue"))
+	 (prompt       (get-keyword :prompt       args "> "))
+	 (command      (get-keyword :command      args (lambda (x) x))))
+
+    (define (insert-prompt w)
+      (w 'insert "end" prompt "list-prompt" " ")
+      ;; Add a mark to the current position
+      (w 'mark 'set "start_expr" "end-1c")
+      (w 'mark 'gravity "start_expr" "left")
+      (w 'see "end"))
+
+    (define (enter-expression w action)	;; Called when user type <Return>
+      (let ((txt (w 'get "start_expr" "insert"))
+	    (exp '()))
+	(if (or (catch (set! exp (read-from-string txt))) (eof-object? exp))
+	    ;; Current expression is not complete
+	    'continue
+	    ;; We have found an expression which seems complete.
+	    (let ((user-result (apply action (list txt))))
+	      (w 'insert "insert"  "\n" "" user-result "list-output" "\n" "")
+	      (insert-prompt w)
+	      'break))))
+  
+    (unless (= (modulo (length args) 2) 0)
+      (error "listener: argument list size is not even ~S" args))
+    
+    ;; Build a list of valid Tk arguments  
+    (let ((tk-args '()))
+      (do ((args args (cddr args)))
+	  ((null? args))
+	(unless (member (car args) '(:prompt-color :output-color :prompt :command))
+	  (set! tk-args (append tk-args (list (car args) (cadr args))))))
+	  
+      ;; Create a text Tk-command with given arguments
+      (let ((w (apply Tk:text name tk-args)))
+	(bind w "<Return>" (lambda () (enter-expression w command)))
+	(w 'tag 'configure "list-prompt" :foreground prompt-color)
+	(w 'tag 'configure "list-output" :foreground output-color)
+	(insert-prompt w)
+	w))))
+  
+(define (listener-insert-string w str)
+  (w 'insert "start_expr linestart" str "list-output")
+  (w 'see "insert"))
+
+(provide "listener")

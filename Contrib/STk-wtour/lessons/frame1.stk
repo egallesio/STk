@@ -1,0 +1,8 @@
+;; Basic frames
+
+(pack [frame '.f1 :background "red"  :width 100 :height 100]
+      [frame '.f2 :background "blue" :width 100 :height 100]
+      :side "top" 
+      :expand #t
+      :fill "both")
+

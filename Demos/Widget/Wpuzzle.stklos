@@ -1,0 +1,60 @@
+;;;;
+;;;; STk adaptation of the Tk widget demo.
+;;;;
+;;;; This demonstration script creates a toplevel window containing
+;;;; buttons that display bitmaps instead of text.
+;;;;
+
+(require "Button")
+
+(define (demo-puzzle)
+  
+  (define (puzzle-switch w num xpos ypos space)
+    (let ((x     (vector-ref xpos num)) 
+	  (y     (vector-ref ypos num))
+	  (x_spc (vector-ref xpos space)) 
+	  (y_spc (vector-ref ypos space)))
+      (when (or (and (>= y (- y_spc 0.01)) (<= y (+ y_spc 0.01))
+		     (>= x (- x_spc 0.26)) (<= x (+ x_spc 0.26)))
+		(and (>= x (- x_spc 0.01)) (<= x (+ x_spc 0.01))
+		     (>= y (- y_spc 0.26)) (<= y (+ y_spc 0.26))))
+	    (vector-set! xpos space x)
+	    (vector-set! xpos num x_spc)
+	    (vector-set! ypos space y)
+	    (vector-set! ypos num y_spc)
+	    (place w :relx x_spc :rely y_spc))))
+
+
+  (let* ((w     (make-demo-toplevel "puzzle"
+				    "15-Puzzle Demonstration"
+				    "This window shows three ways of using bitmaps or images in radiobuttons and checkbuttons.  On the left are two radiobuttons, each of which displays a bitmap and an indicator.  In the middle is a checkbutton that displays a different image depending on whether it is selected or not.  On the right is a checkbutton that displays a single bitmap but changes its background color to indicate whether or not it is selected."))
+	 (frame	(make <Frame> :parent w :width 120 :height 120 :border-width 2
+		      	      :relief "sunken")))
+
+    (pack frame :side "top" :pady 20 :padx 20)
+
+    (let ((order '#(3 1 6 2 5 7 15 13 4 11 8 9 14 10 12))
+	  (xpos  (make-vector 16))
+	  (ypos  (make-vector 16))
+	  (space 0))
+	  
+      (do ((i   0 (+ i 1)))
+	  ((= i 15))
+	  (let* ((num (vector-ref order i))
+		 (b   (make <Button> :parent frame :text num
+			    :highlight-thickness 0)))
+	    ;; Set the command of the button (and grab current environment)
+	    (set! (command b)  (lambda ()
+				 (puzzle-switch b num xpos ypos space)))
+		 
+	    (vector-set! xpos num (* (modulo i 4) 0.25))
+	    (vector-set! ypos num (* (floor (/ i 4)) 0.25))
+	    
+	    (place b :relx (vector-ref xpos num)
+		     :rely (vector-ref ypos num)
+		     :relwidth 0.25
+		     :relheight 0.25)))
+      (vector-set! xpos space 0.75)
+      (vector-set! ypos space 0.75))))
+
+

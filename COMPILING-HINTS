@@ -1,0 +1,261 @@
+This File contains a set of hints for compiling STk and the things
+which have been reported about installation of STk. This file is very 
+incomplete and I hope to be able to make it growing.
+
+If you experience a new port or confirm/infirm/add informations which are 
+specified here please send a mail to 'eg@unice.fr' (there is a blank form 
+at the end of this file)
+
+If you succeed in compiling STk on an architecture for which there is no 
+binary release, please read the file BINARY_DISTRIB
+
+
+______________________________________________________________________________
+SunOs 4.1.x
+______________________________________________________________________________
+Compilation:
+	CC=gcc
+	CFLAGS=-O2
+
+X11:
+	R5 and R6 
+
+Dynamic loading:
+	I was not able to make a version using dynamic loading and the gnu 
+	loader. If your version of gcc use gld, you'll have probably to use the
+	--disable-dynload option during configuration. (Note: I said probably 
+	since a lot of things don't work on this system which has a gcc with
+	gld. Everything seems very poorly installed on this system)
+
+	No problem with gcc and Sun ld.
+Who:
+	Erick Gallesio (eg@unice.fr)
+Tested:
+	Yes :)
+
+Remarks:
+	The main system used for developping STk
+
+______________________________________________________________________________
+SunOs 5.3
+______________________________________________________________________________
+
+Compilation:
+	CC=gcc
+	CFLAGS=-O2
+X11:
+	OpenWindows
+
+Dynamic loading:
+	Should work. At least it seems to be conform to documentation :->
+	Must be 
+Who:
+	Erick Gallesio (eg@unice.fr)
+
+Tested:
+	just make widget-demo
+
+Remarks:
+	Some people have reported that they use dynamic loading but I can 
+	remember who (and it was on 2.1).
+
+______________________________________________________________________________
+Linux 1.0.9 -> 2.0.0
+______________________________________________________________________________
+
+Compilation:
+	CC=gcc
+	CFLAGS=-O2
+X11:
+	XFree3.1.2
+
+Dynamic loading:
+	Dynamic loading is supported for DLD and ELF. (however DLD hqs not 
+	been tested since a long time, I'm not sure it continues to work).
+	The configure script try to figure what type of dynamic loading
+	works for you and enable dynamic loading by default. With recent
+	kernels, it will probably be ELF.
+
+Who:
+	Erick Gallesio (eg@unice.fr)
+
+Tested:
+	yes
+
+Remarks:
+	The other system used for developping STk.
+
+______________________________________________________________________________
+DEC Alpha OSF1 V2.0
+______________________________________________________________________________
+
+Compilation:
+	CC=cc 		Dont't use gcc 2.6 !!!!!!
+	CFLAGS=-O2
+X11:
+	X11 R5
+
+Dynamic loading:
+	Erik Ostrom <eostrom@radon.ccs.neu.edu> told me to use ld for 
+	makeing the .so file. I quote him below:
+	"If SH_LOADER is "ld", you get a huge warning about all the 
+	 undefined symbols; but if it's "cc", ld just won't make the
+	 .so file.  I assume there's a way to get better results, but
+	 this at least produced a working system."
+
+Who:
+	Erick Gallesio (eg@unice.fr)
+
+Tested:
+	Not a lot. Only the widget demo and some bignum tests.
+	No more core dump on undefined variable
+
+Remarks:
+	Don't use gcc. STk worked with gcc prior 2.6. It doesn't work anymore
+with this version  of gcc. I have not investigated a lot with it but it seems
+that gcc 2.6 is unable to compile the bignum stuff (it yields warning during
+compilation whereas tthe code seems correct). Tests includes in the GMP
+packages dont pass anymore. Consequently, all computation
+which involve a bignum will be false (and could sometimes conduct to a core
+dump).
+
+	I don't use this system. 
+______________________________________________________________________________
+Dec 5xxx Ultix 4.2
+______________________________________________________________________________
+
+Compilation:
+	CC=gcc
+	CFLAGS=-O2
+X11:
+	X11 R5
+
+Dynamic loading:
+	Not supported
+
+Who:
+	Erick Gallesio (eg@unice.fr)	
+
+Tested:
+	Widget demo work.
+
+Remarks:
+	I don't use this sytem. 
+
+______________________________________________________________________________
+HP 9000/735 (HP-UX 9.01)
+______________________________________________________________________________
+
+Compilation:
+	CC=cc
+	CFLAGS='-Ae -O'
+
+X11:
+	????
+
+Dynamic loading:
+	Dynamic loading is supported (support is due to Dipankar Gupta 
+	<dg@hplb.hpl.hp.com>). This support has been sent to me as a patch 
+	file over 2.1. It must be extended for newer versions (the only file
+	to modify is Src/dynload.c). Furthermore, options needed for 
+	compilation dosen't seems clear for me. I have guessed some of them
+	but I may be wrong.
+Who:
+	ottl@informatik.uni-muenchen.de
+
+Tested:
+	Widget demo only (I think)
+
+Remarks:
+	Other people have reported that STk work on HP. I don't know if they 
+	have used it a lot. Every info is welcome.
+
+______________________________________________________________________________
+SCO
+______________________________________________________________________________
+
+Compilation:
+	???
+
+X11:
+	???
+
+Dynamic loading:
+	???
+
+Who:
+	markd@grizzly.com
+
+Tested:
+	???
+
+Remarks:
+
+Use ptar (pax tar) to untar the distribution rather than standard tar. It
+seems that the standard tar doesn't handle correctly symbolic links. 
+
+______________________________________________________________________________
+NetBSD 1.0
+______________________________________________________________________________
+
+Compilation:
+	???
+X11:
+	XFree ????
+
+Dynamic loading:
+	Yes. Contribution of Franke Ruediger (Ruediger.Franke@rz.tu-ilmenau.de) 
+
+Who:
+ 	Franke Ruediger 	
+
+Tested:
+	???
+	
+Remarks:
+	????
+
+______________________________________________________________________________
+SGI Irix 5.3
+______________________________________________________________________________
+
+Compilation:
+	CC=gcc CFLAGS=-O2
+X11:
+	X11R6
+
+Dynamic loading:
+	Dynamic loading is supported
+
+Who:
+	tiemann@cygnus.com
+
+Tested:
+	compiled, ran all demos (stk and stklos)
+
+Remarks:
+
+______________________________________________________________________________
+A new system (Mail this form to eg@unice.fr if you have made a new port)
+______________________________________________________________________________
+
+Compilation:
+	Indicate here the values of CC and CFLAGS you used
+X11:
+	Indicate here the X11 version you used
+
+Dynamic loading:
+	Indicate here if dynamic loading is supported and all info that seems
+	necessary for loading a file in a running interpreter.
+
+Who:
+	your email or "Anonymous" if you don't want to bother yourself
+	with that anymore.
+
+Tested:
+	How much you have tested STk (just compiled it, tested only the 
+	demos, ...)
+
+Remarks:
+	Everythink you think is relevant.
+

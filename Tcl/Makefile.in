@@ -1,0 +1,75 @@
+#
+# This Makefile permits to build a subset of libtcl.a. This subset contains
+# unmodified functions of the original Tcl distribution which are used in 
+# the STk interpreter. Thoses functions are principally utilities functions
+# such as hash tables, regexp, unix utilities
+#
+
+include ../config.make
+
+CFLAGS = $(STKCFLAGS) $(DFLGS) -I. -I.. @DEFS@
+OBJ    = panic.o tclHash.o tclGet.o regexp.o tclAsync.o tclUtil.o \
+	 tclNotify.o @LIBOBJS@
+EVOBJ  = tclEvent.o tclUnixNotfy.o tclUnixTime.o  tclPreserve.o
+
+all: libtcl.a libevtcl.a
+
+libtcl.a: $(OBJ) 
+	rm -f libtcl.a
+	ar q libtcl.a $(OBJ)
+	$(RANLIB) libtcl.a
+
+libevtcl.a: $(EVOBJ) 
+	rm -f libevtcl.a
+	ar q libevtcl.a $(EVOBJ)
+	$(RANLIB) libevtcl.a
+
+install: all
+
+install.libs: install
+	-if [ ! -d $(execdir) ] ; then mkdir -p $(execdir); fi 
+	$(CP) libtcl.a $(execdir)
+	$(RANLIB) $(execdir)/libtcl.a
+	$(CP) libevtcl.a $(execdir)
+	$(RANLIB) $(execdir)/libevtcl.a
+	-if [ ! -d $(incdir) ] ; then mkdir -p $(incdir); fi
+	$(CP) tcl.h tclInt.h tclRegexp.h $(incdir)
+
+clean: 
+	@rm -f *.a *.o core *~ Makefile config.*
+
+# Files which must be generated if system does not provide the function they
+# implement
+
+getcwd.o: ./compat/getcwd.c
+	$(CC) -c $(CFLAGS) ./compat/getcwd.c
+
+opendir.o: ./compat/opendir.c
+	$(CC) -c $(CFLAGS) ./compat/opendir.c
+
+strerror.o: ./compat/strerror.c
+	$(CC) -c $(CFLAGS) ./compat/strerror.c
+
+strstr.o: ./compat/strstr.c
+	$(CC) -c $(CFLAGS) ./compat/strstr.c
+
+strtod.o: ./compat/strtod.c
+	$(CC) -c $(CFLAGS) ./compat/strtod.c
+
+strtol.o: ./compat/strtol.c
+	$(CC) -c $(CFLAGS) ./compat/strtol.c
+
+strtoul.o: ./compat/strtoul.c
+	$(CC) -c $(CFLAGS) ./compat/strtoul.c
+
+tmpnam.o: ./compat/tmpnam.c
+	$(CC) -c $(CFLAGS) ./compat/tmpnam.c
+
+waitpid.o: ./compat/waitpid.c
+	$(CC) -c $(CFLAGS) ./compat/waitpid.c
+
+fixstrtod.o: ./compat/fixstrtod.c
+	$(CC) -c $(CFLAGS) ./compat/fixstrtod.c
+
+strncasecmp.o: ./compat/strncasecmp.c
+	$(CC) -c $(CFLAGS) ./compat/strncasecmp.c

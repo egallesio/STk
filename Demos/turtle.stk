@@ -1,0 +1,561 @@
+#!/bin/sh
+:; exec /usr/local/bin/stk -f "$0" "$@"
+;;;
+;;; STkTurtle v1.0
+;;; 
+;;; A (direct) rewritting of the TkTurtle demo found on the net in STk.
+;;; Original copyright:
+;;; 		Copyright 1993 James Noble, kjx@comp.vuw.ac.nz
+;;;
+
+;;; This file comports two distinct parts. 
+;;;	First part is the turtle package 
+;;;	Second parts contains a set of examples using the turtle package
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; T u r t l e   p a c k a g e 
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define turtle-canvas-name 	".c")
+(define turtle-canvas      	'())
+
+(define turtle-colours 		#("" "root_weave" "stipple" "gray1" "boxes" 
+				  "hlines2" "vlines2" "cross_weave" 
+				  "light_gray" "dimple1" "vlines3" "hlines3" 
+				  "grid4" "gray3" "dimple3" "grid8"))
+
+(define turtle-num_colours 16)
+
+(define turtle-d2r	(/ 180 3.14159))
+
+(define turtle-x		0)
+(define turtle-y		0)
+(define turtle-direction 	270)
+(define turtle-width 		0)
+(define turtle-colour 		0)
+(define turtle-pen 		#t)
+
+(define turtle-speed		#t)
+(define turtle-show		#t)
+
+
+;;;
+;;; initialise turtle
+;;;
+(define (turtle)
+  ;;  clear actually does this, plus draw-turtle
+  (set! turtle-x 	 0)
+  (set! turtle-y 	 0)
+  (set! turtle-direction 270)
+  (set! turtle-width 	 0)
+  (set! turtle-colour 	 0)
+  (set! turtle-pen 	 #t)
+
+  ;;  debugging
+  (set! turtle-speed	 #t)
+  (set! turtle-show	 #t)
+
+  (if (winfo 'exists turtle-canvas-name)
+      (new)
+      (begin
+	(scrollbar ".v" :relief "sunken" :borderwidth 3 
+		        :command (lambda l (apply turtle-canvas 'yview l)))
+	(scrollbar ".h" :relief "sunken" :borderwidth 3 
+		        :orient 'horiz :command (lambda l 
+						  (apply turtle-canvas 'xview l)))
+  
+	(canvas turtle-canvas-name :borderwidth     3 
+				   :scrollregion    '(-1000 -1000 1000 1000)
+				   :xscrollcommand  (lambda l (apply .h 'set l))
+				   :yscrollcommand  (lambda l (apply .v 'set l))
+				   :height          500 
+				   :width           500)
+	
+	(set! turtle-canvas (string->widget turtle-canvas-name))
+
+	(centre)
+  
+	(pack .h :side "bottom" :fill "x")
+	(pack .v :side "right"  :fill "y")
+	(pack turtle-canvas :expand #t :fill "both")
+
+
+	(bind turtle-canvas "<2>"         (lambda (x y)
+					    (turtle-canvas 'scan 'mark x y)))
+	(bind turtle-canvas "<B2-Motion>" (lambda (x y)
+					    (turtle-canvas 'scan 'dragto x y)))
+	(bind turtle-canvas "<c>" 	  centre)
+	(bind turtle-canvas "<Control-c>" (lambda () (destroy ".")))
+	(bind turtle-canvas "<Control-q>" (lambda () (destroy ".")))
+	(bind turtle-canvas "<f>"         toggle-speed)
+	(bind turtle-canvas "<s>"	  toggle-show)
+	
+	(focus turtle-canvas)
+
+	(wm 'minsize    "." 10 10)
+	(wm 'title      "." "Turtle")
+	(wm 'iconname   "." "Turtle")
+
+	(draw-turtle))))
+
+;;;
+;;;  drawing
+;;;
+
+(define (make-stipple n)
+  (let ((name (vector-ref turtle-colours n)))
+    (if (string=? name "")
+	""
+	(string-append "@" *STk-library* "/images/" name))))
+
+(define (go length)
+  (let ((newx (+ turtle-x (* (cos (/ turtle-direction turtle-d2r)) length)))
+	(newy (+ turtle-y (* (sin (/ turtle-direction turtle-d2r)) length))))
+
+    (goto newx newy)
+    length))
+
+(define (goto x y)
+  (when turtle-pen
+     (turtle-canvas 'create 'line turtle-x turtle-y x y 
+		    :width turtle-width 
+		    :stipple (make-stipple turtle-colour)
+		    :tags 'line))
+
+  (set! turtle-x x)
+  (set! turtle-y y)
+  (when turtle-show  (draw-turtle))
+  (when turtle-speed (update))
+  (list x y))
+
+
+;;;  writing text
+(define (Write text)
+  (turtle-canvas 'create 'text turtle-x turtle-y 
+		 :text text 
+		 :stipple (make-stipple turtle-colour)
+		 :tags 'text)
+  (when turtle-speed (update)))
+
+
+;;;  writing windows
+(define (window name)
+  (turtle-canvas 'create 'window turtle-x turtle-y 
+		 :window name
+		 :tags 'window)
+  (update))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; drawing parameters
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; change pen state
+(define (pen . p)
+  (if (null? p)
+      turtle-pen
+      (set! turtle-pen (car p))))
+
+(define (down) (pen #t))
+(define (up)   (pen #f))
+
+
+;;; change direction
+(define (turn n)
+  (turnto (+ turtle-direction n)))
+
+(define (turnto n)
+  (set! turtle-direction (modulo (floor n) 360))
+  (draw-turtle)
+  turtle-direction)
+
+(define (east)  (turnto 0))
+(define (south) (turnto 90))
+(define (west)  (turnto 180))
+(define (north) (turnto 270))
+
+(define (direction) 
+  turtle-direction)
+
+(define (location)
+  (list turtle-x turtle-y))
+
+(define (width . w)
+  (unless (null? w)
+     (set! turtle-width (car w))
+     (draw-turtle))
+  turtle-width)
+
+(define (colour . c)
+  (if (null? c) 
+      turtle-colour
+      (set! turtle-colour (modulo (floor (car c)) turtle-num_colours))))
+
+(define (status . c)
+  (if (null? c)
+      (list turtle-x turtle-y turtle-direction turtle-width turtle-colour 
+	    turtle-pen)
+      (if (not (= (length (car c)) 6))
+	  (error "Can't restore saved state")
+	  (let ((c (car c)))
+	    (set! turtle-x         (list-ref c 0))
+	    (set! turtle-y         (list-ref c 1))
+	    (set! turtle-direction (list-ref c 2))
+	    (set! turtle-width     (list-ref c 3))
+	    (set! turtle-colour    (list-ref c 4))
+	    (set! turtle-pen       (list-ref c 5))
+	    (draw-turtle)
+	    c))))
+
+(define (draw-turtle)
+  (when turtle-show
+     (turtle-canvas 'delete 'turtle)
+     (turtle-canvas 'create 'line 
+		    turtle-x 
+		    turtle-y 
+		    (+ turtle-x (* (cos (/ turtle-direction turtle-d2r)) 10))
+		    (+ turtle-y (* (sin (/ turtle-direction turtle-d2r)) 10))
+		    :arrow 'last 
+		    :fill  "red"
+		    :tags 'turtle 
+		    :width turtle-width))
+  0)
+
+(define (show)
+  (set! turtle-show #t)
+  (draw-turtle)
+  #t)
+
+(define (hide)
+   (set! turtle-show #f)
+   (turtle-canvas 'delete 'turtle)
+   #f)
+
+(define (toggle-show)
+  (if turtle-show (hide) (show)))
+
+
+;;; misc
+(define (home)
+  (set! turtle-x 0)
+  (set! turtle-y 0)
+  (set! turtle-direction 270)
+  (draw-turtle))
+
+(define (clear)
+  (home)
+  (down)
+  (width 0)
+  (colour 0)
+  (turtle-canvas 'delete 'line 'text)
+  (draw-turtle))
+
+(define (new)
+  (clear)
+  (turtle-canvas 'delete 'window))
+
+(define (screen-dump . file)
+  (turtle-canvas 'postscript 
+		 :file (if (null? file) "Screen-dump.ps" (car file))))
+
+(define (centre)
+  (turtle-canvas 'xview 'moveto 0.37)
+  (turtle-canvas 'yview 'moveto 0.37))
+
+
+;;;conversion
+(define (d2r degrees)
+  (/ degrees turtle-d2r))
+
+;;; speed
+(define (speed . s)
+  (if (null? s) 
+      turtle-speed
+      (set! turtle-speed (car s))))
+
+(define (slow) (speed #t))
+(define (fast) (speed #f))
+(define (toggle-speed) (if turtle-speed (fast) (slow)))
+
+;;; MACROS - move, moveto
+(define (move distance)
+  (let ((oldpen (pen)))
+    (go distance)
+    (pen oldpen)))
+
+(define (moveto x y)
+  (let ((oldpen (pen)))
+    (goto x y)
+    (pen oldpen)))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; E x a m p l e s
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;; polygon
+(define (polygon n length)
+  (do ((k 0 (+ k 1)))
+      ((= k n))
+    (turn (/ 360 n))
+    (go length)))
+
+;; polygon, with a functional parameter 
+(define (fungon n length F)
+  (do ((k 0 (+ k 1)))
+      ((= k n))
+    (turn (/ 360 n))
+    (F length)))
+
+;; Iterative Spiral
+(define (spiral angle length)
+  (while (>= length 1)
+	 (go length)
+	 (turn angle)
+	 (set! length (- length 5))))
+
+;; Recursive spiral
+(define (rspiral angle length)
+  (when (>= length 1)
+	(go length)
+	(turn angle)
+	(rspiral angle (- length 5))))
+
+;; "Koch's" a single line - used in snowflake
+(define (koch order length)
+  (if (or (<= order  1) (<= length 1))
+      (go length)
+      (begin
+	(koch (- order 1) (/ length 3))
+	(turn -60)
+	(koch (- order 1) (/ length 3))
+	(turn 120)
+	(koch (- order 1) (/ length 3))
+	(turn -60)
+	(koch (- order 1) (/ length 3)))))
+
+;; Koch's snowflake fractal
+(define (kochflake order length)
+  (do ((k 0 (+ k 1)))
+      ((= k 3))
+    (turn 120)
+    (koch order length)))
+
+;; tricky version of kochflake
+(define (tricky-kochflake order length)
+  (fungon 3 (lambda () (koch order length))))
+
+;; Four sided koch 
+(define (squarekoch order length)
+  (if (or (<= order 1) (<= length 1))
+      (go length)
+      (begin
+	(squarekoch (- order 1) (/ length 3))
+	(turn -90)
+	(squarekoch (- order 1) (/ length 3))
+	(turn 90)
+	(squarekoch (- order 1) (/ length 3))
+	(turn 90)
+	(squarekoch (- order 1) (/ length 3))
+	(turn -90)
+	(squarekoch (- order 1) (/ length 3)))))
+
+(define (squareflake order length)
+  (do ((k 0 (+ k 1)))
+      ((= k 4))
+    (turn 90)
+    (squarekoch order length)))
+
+;; Fractal line
+(define (fracline order angle length)
+  (if (< order 1)
+      (go length)
+      (let* ((ang  (- [random (* 2 angle)] angle))
+	     (len  (/ length (* 2 [cos (d2r ang)]))))
+	(turn ang)
+	(fracline (- order 1) angle len)
+	(turn (- (* ang 2)))
+	(fracline (- order 1) angle len)
+	(turn ang))))
+
+;; binary tree
+(define (bintree depth length angle)
+  (when (> depth 0)
+	(let ((saved (status)))
+	  (set! depth (- depth 1))
+	  (go length)
+	  (turn (- angle))
+	  (bintree depth length angle)
+	  (turn (+ angle 2))
+	  (bintree depth length angle)
+	  (status saved))))
+
+;; C curve fractal
+(define (ccurv order length)
+  (if (<= order 1) 
+      (go length)
+      (begin
+	(ccurv (- order 1) length)
+	(turn 90)
+	(ccurv (- order 1) length)
+	(turn -90))))
+
+;; Dragon curve fractal
+(define (dragon order length)
+  (letrec ((dragon-aux (lambda (order length dirn)
+			 (if (<= order 1) 
+			     (go length)
+			     (begin
+			       (dragon-aux (- order 1) length 90)
+			       (turn dirn)
+			       (dragon-aux (- order 1) length -90))))))
+    (dragon-aux order length 90)))
+
+;; Sierpinski's gasket
+(define (gasket order length)
+  (when (> order  0)
+	(do ((k 0 (+ k 1)))
+	    ((= k 3))
+	  (gasket (- order 1)  (/ length 2))
+	  (go length)
+	  (turn 120))))
+
+;; Sierpinski's carpet
+(define (carpet order length)
+  (if (< order 1)
+      (go length)
+      (begin
+	(carpet (- order 1) (/ length 3))
+	(turn -90)
+	(carpet (- order 1) (/ length 3))
+	(turn 90)
+	(carpet (- order 1) (/ length 3))
+	(turn 90)
+	(carpet (- order 1) (/ length 3))
+	(let ((saved (status)))
+	  (carpet (- order 1) (/ length 3))
+	  (turn 90)
+	  (carpet (- order 1) (/ length 3))
+	  (turn 90)
+	  (carpet (- order 1) (/ length 3))
+	  (status saved)
+	  (turn -90)
+	  (carpet (- order 1) (/ length 3))))))
+
+;; "Bendy" - simple fractal (C curve  variation)
+(define (bendy order length)
+  (if  (< order 1)
+       (go length)
+       (begin
+	 (turn 30)
+	 (bendy (- order 1) (/ length 2))
+	 (turn -60)
+	 (bendy (- order 1) (/ length 2))
+	 (turn 30))))
+
+;; "Squigly" - simple fractal (C curve variation)
+(define (squigly order length)
+  (if  (< order 1)
+       (go length)
+       (begin
+	 (turn 30)
+	 (squigly (- order 1) (/ length 4))
+	 (turn -60)
+	 (squigly (- order 1) (/ length 2))
+	 (turn 60)
+	 (squigly (- order 1) (/ length 4))
+	 (turn -30))))
+
+(define (randtree depth length angle branch)
+  (when (>= depth 1)
+	(let ((saved (status))
+	      (thisbranch (random branch)))
+	  (set! depth (- depth 1))
+	  (go (+ (random length) length))
+	  (turn (- (/ (* angle thisbranch) 4)))
+	  (do ((k 0 (+ k 1)))
+	      ((= k thisbranch))
+	    (turn (random angle))
+	    (randtree depth length angle branch))
+	  (status saved))))
+
+;;windows-demo
+(define (windows-demo)
+  (let ((S (scale (& turtle-canvas "scale"))))
+    (show)
+    (up)
+    (goto -200 -200)
+    (window S)
+    (goto -150 -200)
+    (window (button (& turtle-canvas ".spiral-button") :text "Spiral"
+		    :command (lambda () (spiral [S 'get] 100))))
+    (goto -100 -200)
+    (window [button (& turtle-canvas ".clear-button") :text "Clear" :command clear])
+    (goto -50 -200)
+    (window [button (& turtle-canvas ".home-button") :text "Home" :command home])
+    (goto 180 -200)
+    (window [button (& turtle-canvas ".quit-button") :text "Quit Demo" 
+		    :fg "CadetBlue" :command (lambda () (exit))])
+    (S 'set 45)
+    (down)
+    (home)))
+
+(define (item message demo)
+  (clear)
+  (up)
+  (goto 0 220)
+  (down)
+  (Write message)
+  (home)
+  (demo))
+
+(define (run-demo)
+  (item "Polygon" 
+	(lambda () 
+	  (do ((k 3 (+ k 1))) ((= k 12))
+	    (home) (polygon k 50))))
+  (item "Lines"   
+	(lambda ()
+	  (do ((k 0 (+ k 1))) ((= k 16))
+	    (moveto 0 0) (turn 22.5) (width k) (go 200))))
+
+  (item "Stipple"
+	(lambda () 
+	  (width 15)
+	  (do ((k 0 (+ k 1))) ((= k 16))
+	    (moveto 0 0) (turn 22.5) (colour k) (go 200))))
+
+  (item "Fractal lines"    
+	(lambda () 
+	  (do ((k 0 (+ k 1))) ((= k 7))
+	    (home) (fracline 6 40 200))))
+
+  (item "Spiral"           (lambda () (spiral 50 100)))
+  (item "Recursive spiral" (lambda () (rspiral 89 100)))
+  (item "Recursive spiral" (lambda () (rspiral -90 100)))
+  (item "Koch flake"	   (lambda () (kochflake 3 150)))
+  (item "Square flake"     (lambda () (squareflake 3 150)))
+  (item "Squigly"	   (lambda () (squigly 4 200)))
+  (item "C curve"          (lambda () (ccurv 6 20)))
+  (item "Dragon"	   (lambda () (dragon 6 20)))
+  (item "Gasket"	   (lambda () (gasket 6 200)))
+  (item "Carpet"	   (lambda () (carpet 3 250)))
+  (item "Binary tree"	   (lambda () (bintree 6 30 20)))
+  (item "Random tree"	   (lambda () (randtree 4 20 30 6)))
+  (item "Windows Demo"     windows-demo))
+
+
+
+;; Init part - Run the demo
+(expand-heap 50000)
+(set! *gc-verbose* #f)
+
+(turtle)
+(hide)
+
+(run-demo)

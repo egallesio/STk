@@ -1,0 +1,20 @@
+;; Menu options
+
+(pack (menubutton '.mbutton :text "Menu Button1" :menu '.mbutton.menu))
+
+(menu '.mbutton.menu)
+(.mbutton.menu 'add 'command :label "Open" :command (lambda () 
+						      (display "open\n")))
+(.mbutton.menu 'add 'command :label "Close" :state "disabled")
+(.mbutton.menu 'add 'cascade :label "More -->" :menu '.mbutton.menu.more)
+(.mbutton.menu 'add 'separator)
+(.mbutton.menu 'add 'command :label "Exit" :command (lambda () 
+						      (display "exit\n")))
+
+(menu '.mbutton.menu.more)
+(.mbutton.menu.more 'add 'command :label "Get"    :command (lambda ()
+							     (display "get\n")))
+(.mbutton.menu.more 'add 'command :label "Put"    :command (lambda ()
+							     (display "put\n")))
+(.mbutton.menu.more 'add 'command :label "Rename" :command (lambda ()
+							     (display "rename\n")))

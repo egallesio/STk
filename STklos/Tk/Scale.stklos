@@ -1,0 +1,139 @@
+;;;;
+;;;;  S c a l e . s t k			-- Scale Class definition 
+;;;; 
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;
+;;;; This software is a derivative work of other copyrighted softwares; the
+;;;; copyright notices of these softwares are placed in the file COPYRIGHTS
+;;;;;
+;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
+;;;;    Creation date: 30-Mar-1993 15:28
+;;;; Last file update: 24-Aug-1995 09:15
+
+
+(require "Basics")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Scale> class definition
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class <Scale> (<Tk-simple-widget>)
+  ((active-background	:init-keyword   :active-background 
+			:accessor 	active-background
+			:tk-name 	activebackground
+			:allocation 	:tk-virtual)
+   (big-increment	:init-keyword 	:big-increment
+			:accessor 	big-increment
+			:allocation 	:tk-virtual
+			:tk-name 	bigincrement)
+   (command		:init-keyword 	:command 
+			:accessor 	command 
+			:allocation 	:tk-virtual)
+   (digits		:init-keyword	:digits
+			:accessor	digits
+			:allocation	:tk-virtual)
+   (font 		:init-keyword 	:font 
+			:accessor 	font 
+			:allocation  	:tk-virtual)
+   (foreground 		:init-keyword 	:foreground 
+			:accessor 	foreground 
+			:allocation 	:tk-virtual)
+   (from 		:init-keyword 	:from 
+			:accessor 	from 
+			:allocation 	:tk-virtual)
+   (scale-length	:init-keyword	:scale-length 
+			:accessor 	scale-length
+			:tk-name 	length
+			:allocation 	:tk-virtual)
+   (orientation 	:init-keyword 	:orientation
+			:accessor 	orientation
+			:tk-name 	orient
+			:allocation 	:tk-virtual)
+   (repeat-delay 	:init-keyword 	:repeat-delay
+			:accessor 	repeat-delay
+			:tk-name 	repeatdelay
+			:allocation 	:tk-virtual)
+   (repeat-interval 	:init-keyword 	:repeat-interval
+			:accessor 	repeat-interval
+			:tk-name 	repeatinterval
+			:allocation 	:tk-virtual)
+   (resolution		:init-keyword	:resolution
+			:accessor	resolution
+			:allocation	:tk-virtual)
+   (show-value 		:init-keyword 	:show-value
+			:accessor 	show-value
+			:tk-name 	showvalue
+			:allocation 	:tk-virtual)
+   (slider-length 	:init-keyword	:slider-length 
+			:accessor	slider-length 
+			:tk-name	sliderlength
+			:allocation	:tk-virtual)
+   (state 		:init-keyword	:state 
+			:accessor	state 
+			:allocation	:tk-virtual)
+   (text 		:init-keyword 	:text 
+			:accessor	text-of
+			:tk-name	label
+			:allocation 	:tk-virtual)
+   (tick-interval	:init-keyword	:tick-interval
+			:accessor	tick-interval
+			:tk-name	tickinterval
+			:allocation	:tk-virtual)
+   (to 			:init-keyword 	:to 
+			:accessor 	to 
+			:allocation 	:tk-virtual)
+   (trough-color 	:init-keyword 	:trough-color
+			:accessor 	trough-color
+			:tk-name 	troughcolor
+			:allocation 	:tk-virtual)
+   (variable		:init-keyword 	:variable 
+			:accessor 	variable
+			:allocation 	:tk-virtual)
+   (width 		:init-keyword 	:width 
+			:accessor 	width 
+			:allocation 	:tk-virtual)
+   ;; Fictive slot 
+   (value		:accessor     	value
+			:init-keyword 	:value
+			:allocation   	:virtual
+			:slot-ref     	(lambda (o)  
+					  ((slot-ref o 'Id) 'get))
+			:slot-set!    	(lambda (o v) 
+					  ((slot-ref o 'Id) 'set v)))))
+
+(define-method tk-constructor ((self <Scale>))
+  Tk:scale)
+
+;;;
+;;;  <Scale> methods
+;;;
+
+(define-method initialize ((self <Scale>) initargs)
+  (next-method)
+  (let* ((val (get-keyword :value initargs #f)))
+    ;; If a value is specified upon init, set it.
+    (when val
+	  (slot-set! self 'value val))))
+
+(define-method coords ((self <Scale>) . value)
+  (apply (slot-ref self 'Id) 'coords value))
+
+(define-method get ((self <Scale>) x y)
+  ((slot-ref self 'Id) 'coords x y))
+
+(define-method identify ((self <Scale>) x y)
+  ((slot-ref self 'Id) 'identify x y))
+
+
+(provide "Scale")

@@ -1,0 +1,121 @@
+;;;;
+;;;; S T F . s t k      	--  Scheme Text Format managment
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
+;;;;    Creation date: 23-Aug-1994 10:49
+;;;; Last file update: 23-Aug-1994 17:13
+
+;;;;
+;;;; Font definition
+;;;;
+
+(define-generic text-save)
+(define-generic text-save-ASCII)
+(define-generic text-load)
+
+(let ((STF-signature "STF-0.2"))
+
+  ;;;;
+  ;;;; Utilities
+  ;;;;
+
+  ;; Get-STF  returns the STF form of the text contained in txt
+  (define (get-STF txt)
+    (let ((all-tags  (text-tags txt))
+	  (dump-tag (lambda (t)
+		      ;; Dump all slots which are not "" (except Id, Eid and parent)
+		      ;; which will be regenerated upon reading
+		      (let ((res '()))
+			(for-each 
+			     (lambda (s)
+			       (unless (memv s '(Id Eid parent))
+				 (let ((val (slot-ref t s)))
+				   (unless (equal? val "")
+				     (set! res 
+					   (append res `(,(make-keyword s) ',val))))
+				   )))
+			     (map car (class-slots <Text-tag>)))
+			res))))
+
+      (list STF-signature
+	    (value txt)
+	    (map list (map dump-tag all-tags)
+		      (map tag-ranges all-tags)))))
+  
+  ;; Set-STF-0.1! sets the editor to given STF (0.1 version)
+  ;; For Compatiblity only
+  (define (set-STF-0.1! txt STF)
+    (require "compatibility")
+    (compatibility-set-STF-0.1! txt STF))
+
+  ;; Set-STF-0.2! sets the editor to given STF (0.2 version)
+  (define (set-STF-0.2! txt STF)
+    (let ((text    (cadr STF)) 
+	  (formats (caddr STF)))
+      ;; First insert new text
+      (set! (value txt) text)
+      ;; And now enhence it
+      (for-each (lambda (t)
+		  (let* ((fmt   (car t))
+			 (where (cadr t))
+			 (Tid   (get-keyword :Tid fmt))
+			 (tag   (hash-table-get (slot-ref txt 'tags) Tid #f)))
+		    ;; If tag  doesn't already exists for this text, create it.
+		    (unless tag
+		      (set! tag  (eval `(make <Text-tag> :parent ,txt ,@fmt))))
+		    ;; Add the Tid tag to all the specified locations
+		    (unless (null? where)
+			  (do ((l where (cddr l)))
+			      ((null? l))
+			    (tag-add tag (car l) (cadr l))))))
+		  formats)))
+  
+  ;; Set-text! sets the editor to the text contained in the stdin withou formatting
+  (define (set-text! txt first-line)
+    (let ((editor (slot-ref txt 'Id)))
+      (editor 'delete "1.0" "end")
+      (do ((l first-line (read-line)))
+	  ((eof-object? l))
+	(editor 'insert "end" l)
+	(editor 'insert "end" "\n"))
+      (editor 'mark 'set 'insert "1.0")))
+
+  ;;;;
+  ;;;; Exported methods
+  ;;;;
+  (define-method text-save ((self <Text>) filename)
+    (with-output-to-file filename
+      (lambda ()
+	(format #t ";;;; ~S\n" STF-signature)
+	(format #t "~S\n" (get-STF self)))))
+ 
+  (define-method text-save-ASCII  ((self <Text>) filename)
+    (with-output-to-file filename
+      (lambda ()
+	(display (value self)))))
+ 
+  (define-method text-load ((self <Text>) filename)
+    (with-input-from-file filename
+      (lambda ()
+	(let ((first-line (read-line)))
+	  (cond 
+	   ((string=? first-line ";;;; \"STF-0.1\"") (set-STF-0.1! self (read)))
+	   ((string=? first-line ";;;; \"STF-0.2\"") (set-STF-0.2! self (read)))
+	   (else 	    			     (set-text! self first-line)))
+	  )))
+    (update))
+)
+
+(provide "STF")
+
+

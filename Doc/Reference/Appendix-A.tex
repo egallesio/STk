@@ -1,0 +1,186 @@
+%
+% STk Reference manual (Appendix: Using the Tk toolkit)
+%
+%           Author: Erick Gallesio [eg@unice.fr]
+%    Creation date: ??-Nov-1993 ??:??
+% Last file update: 21-Jan-1996 18:29
+%
+
+When {\stk} detects that a \var{tk-command} must be called, parameters are
+processed to be recognized by the corresponding toolkit function. Since the Tk
+toolkit is left (mostly) unmodified, all its primitives ``think'' there is a
+running Tcl interpreter behind the scene. Consequently, to work with the Tk
+toolkit, a little set of rewriting rules must be known. These rules are
+described hereafter.
+
+\begin{note}
+This appendix is placed here to permit an {\stk} user to make programs with
+the original Tcl/Tk documentation by hand. In no case will it substitute to
+the abundant Tcl/Tk manual pages nor to the excellent book by
+J.~Ousterhout\cite{Ouster-book}
+\end{note}
+
+\section{Calling a Tk-command}
+
+Since Tcl uses strings to communicate with the Tk toolkit, parameters to a
+\var{Tk-command} must be translated to strings before calling the C function
+which implement it. The following conversions are done, depending on the type
+of the parameter that {\stk} must give to the toolkit:
+\begin{quote}
+\begin{description}
+\item[symbol:] the print name of the symbol;
+\item[number:] the external representation of the number expressed in radix 10;
+\item[string:] no conversion;
+\item[keyword:] the print name of the keyword where the initial semicolon has
+been replaced by a dash (``-'');
+\item[boolean:] the string "0" if {\schfalse} and "1" if \schtrue
+\item[tk-command:] the name of the \var{tk-command}
+\item[closure:] the address of the closure using the representation
+  shown in \ref{addresses}.
+\item[otherwise:] the external ``slashified'' version of the object.
+\end{description}
+\end{quote}
+As an example, let us make a button with a label containing the
+string {\tt "Hello, word"}. According the original Tk/Tcl documentation,
+this can be done in Tcl with
+\begin{scheme}
+button .hello -text "Hello, world"
+\end{scheme}
+Following the rewriting rules expressed above, this can be done in {\stk} with
+\begin{scheme}
+(button '.hello '-text "Hello, world")
+\end{scheme}
+This call defines a new widget object which is stored in the {\stk} variable {\tt
+.hello}. This object can be used as a procedure to customize our button.
+For instance, setting the border of this button to 5 pixels wide and its
+background to gray would be done in Tcl with
+\begin{scheme}
+.hello configure -border 5 -background gray
+\end{scheme}
+In {\stk} this would be expressed as
+\begin{scheme}
+(.hello 'configure '-border 5 '-background "gray")
+\end{scheme}
+Since keyword colon is replaced by a dash when a \ide{Tk-command} is called, this
+expression could also have been written as:
+\begin{scheme}
+(.hello 'configure{\bf :border} 5{\bf :background} "gray")
+\end{scheme}
+
+\section{Associating Callbacks to Tk-commands}
+
+Starting with version 3.0, {\stk} callbacks are Scheme
+closures\footnote{Old syntax for callbacks (i.e. strings) is always
+  supported but its use is deprecated.}. Apart scroll commands, callbacks are 
+Schemes procedures without parameter. Suppose for example, that we want to
+associate a command with the previous {\tt .hello} button. In
+Tcl, such a command can be expressed as
+\begin{scheme}
+.hello configure -command \{puts stdout "Hello, world"; destroy .\}
+\end{scheme}
+In {\stk}, we can write
+\begin{scheme}
+(.hello 'configure{\bf :command} (lambda ()
+                                   (display "Hello, world\backwhack{}n")
+                                   (destroy *root*)))
+\end{scheme}
+
+When the user will press the mouse left button, the closure associated
+to the {\tt :command} option will be evaluated in the global
+environment.  Evaluation of the given closure will display the message
+and call the {\tt destroy} {\em Tk-command}.
+
+\begin{note}
+\label{root window}\mainindex{root window}
+The root widget is denoted ``.'' in Tcl. This convention is ambiguous with the
+dotted pair convention and the dot must be quoted to avoid problems. Since
+this problem arises so often, the variable \ide{*root*} has been introduced in
+{\stk} to denote the Tk main window.
+\end{note}
+
+\subsection*{Managing Widget Scrollbars}
+
+When using scrollbars, Tk library passes parameters to the widget
+associated to the scrollbar (and {\em vice versa}). Let us look at a
+text widget with an associated scrollbar. When the scrollbar is moved,
+the command of the associated widget is invoked to change its view.
+On the other side, when browsing the content of the text widget (with
+arrows for example), the scrollbar is updated by calling it's
+associated closure. Tk library passes position informations to
+scrolling closures. This informations are the parameters of the
+closure.  Hereafter is an example implementing a text widget with a
+scrollbar (see the help pages for details):
+\begin{scheme}
+(text '.txt :yscrollcommand  (lambda l (apply .scroll 'set l)))
+(scrollbar '.scroll :command (lambda l (apply .txt 'yview l)))
+
+(pack .txt :side "left")   
+(pack .scroll :fill "y" :expand \schtrue :side "left")
+\end{scheme}
+
+\section{Tk bindings}
+
+\subsection*{Bindings are Scheme closures}
+
+The Tk \ide{bind} command associates Scheme scripts with X events.
+Starting with version 3.0 those scripts must be Scheme
+closures\footnote{Old syntax for bindings (i.e. strings) is no more
+  supported. Old bindings scripts must hence be rewritten.}. Binding
+closures can have parameters. Those parameters are one char symbols
+(with the same conventions than the Tcl \% char, see the \texttt{bind}
+help page for details). For instance, the following Tcl script 
+\begin{scheme}
+bind .w <ButtonPress-3> \{puts "Press on widget \%W at position \%x \%y"\}
+\end{scheme}
+can be translated into
+\begin{scheme}
+(bind .w "<ButtonPress-3>" 
+         (lambda (|W| x y)
+            (format \schtrue "Press on widget \verb+~+A at position \verb+~+A \verb+~+A\verb+\+n" |W| x y)))
+\end{scheme}
+
+\begin{note}
+  Usage of verticals bars for the \texttt{W} symbol is necessary here
+  because the Tk toolkit is case sensitive ({\em e.g.}~\texttt{W}~in
+  bindings is the path name of the window to which the event was
+  reported, whereas \texttt{w} is the width field from the event. 
+\end{note}
+
+\subsection*{Bindings are chained}
+
+In Tk4.0 and later, bindings are chained since it is possible for
+several bindings to match a given X event.  If the bindings are
+associated with different tags, then each of the bindings will be
+executed, in order.  By default, a class binding will be executed
+first, followed by a binding for the widget, a binding for its
+toplevel, and an \texttt{all} binding.  The \ide{bindtags} command may
+be used to change this order for a particular window or to associate
+additional binding tags with the window (see corresponding help page
+for details). If the result of closure in the bindings chain is the symbol 
+\ide{break}, the next closures of the chain are not executed. The example below
+illustrates this:
+\begin{scheme}
+(pack (entry '.e))
+(bind .e "<KeyPress>" (lambda (|A|)
+                        (unless (string->number |A|) 'break)))
+\end{scheme}
+
+Bindings for the entry \texttt{.e} are executed before those for its
+class (i.e. \texttt{Entry}). This allows us to filter the characters
+which are effectively passed to the \texttt{.e} widget. The test in this
+binding closure breaks the chain of bindings if the typed character is
+not a digit. Otherwise, the following binding, the one for the
+\texttt{Entry} class, is executed and inserts the character typed (a
+digit).
+Consequently, the simple previous binding makes \texttt{.e} a
+controlled entry which only accepts integer numbers.
+
+
+
+% LocalWords:  tk Ousterhout slashified stdout
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "manual"
+%%% End: 
+

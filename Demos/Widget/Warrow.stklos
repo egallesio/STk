@@ -1,0 +1,183 @@
+;;;;
+;;;; STk adaptation of the Tk widget demo.
+;;;;
+;;;; This demonstration script creates a canvas widget that displays a
+;;;; large line with an arrowhead whose shape can be edited interactively.
+;;;;
+(require "Tk-classes")
+
+(define (demo-arrow)
+  (define w (make-demo-toplevel "arrow"
+				"Arrowhead Editor Demonstration"
+				"This widget allows you to experiment with different widths and arrowhead shapes for lines in canvases.  To change the line width or the shape of the arrowhead, drag any of the three boxes attached to the oversized arrow.  The arrows on the right give examples at normal scale.  The text at the bottom shows the configuration options as you'd enter them for a canvas line item."))
+  
+  (define a 		8)
+  (define b 		10)
+  (define c 		3)
+  (define width 	2)
+  (define motion-proc	#f)
+  (define x1 		40)
+  (define x2 		350)
+  (define y 		150)
+  (define small-tips	'(5 5 2))
+  (define cnv 		(make <Canvas> :parent w :width 500 :height 350 
+			      :relief "sunken" :border-width 2))
+  (define box1 		#f)
+  (define box2 		#f)
+  (define box3 		#f)
+  (define current-box	#f)
+
+  ;;; arrowSetup  regenerates all the text and graphics in the canvas
+  ;;; window.  It's called when the canvas is initially created, and also
+  ;;; whenever any of the parameters of the arrow head are changed
+  ;;; interactively.
+  (define (arrow-setup cnv)
+
+    ;; Create the arrow and outline.
+    (canvas-delete cnv "all")
+    
+    (apply make <Line> :parent cnv
+	   	       :coords (list x1 y x2 y) 
+		       :width (* 10 width)
+		       :arrow-shape (list (* 10 a) (* 10 b) (* 10 c))
+		       :arrow "last"
+		       (if (> (winfo 'depth cnv) 1)
+			    `(:fill "SkyBlue1")
+			    `(:fill black 
+			      :stipple ,(& "@" *stk-library* "/images/grey.25"))))
+
+    (let ((xtip    (- x2 (* 10 b)))
+	  (delta-y (+ (* 10 c) (* 5 width))))
+      (make <Line> :parent cnv 
+	    	   :coords (list x2 y xtip (+ y delta-y) (- x2 (* 10 a))
+				 y xtip (- y delta-y) x2 y)
+		   :width 2
+		   :cap-style "round")
+
+      ;;;Create the boxes for reshaping the line and arrowhead.
+      (set! box1 (make <Rectangle> :parent cnv 
+		       :coords (list (- x2 (* 10 a) +5) (- y 5)
+				     (- x2 (* 10 a) -5) (+ y 5))
+		       :fill "white" :tags '("box" "box1")))
+      (set! box2 (make <Rectangle> :parent cnv 
+		       :coords (list (- xtip 5) (- y delta-y +5)
+				     (+ xtip 5) (- y delta-y -5))
+		       :fill "white" :tags '("box" "box2")))
+      (set! box3 (make <Rectangle> :parent cnv 
+		       :coords (list (- x1 5) (- y (* 5 width) +5)
+				     (+ x1 5) (- y (* 5 width) -5))
+		       :fill "white" :tags '("box" "box3")))
+
+      ;; Create three arrows in actual size with the same parameters
+      (make <Line> :parent cnv :coords (list (+ x2 50) 0 (+ x2 50) 1000) :width 2)
+      (let ((tmp (+ x2 100)))
+	(make <Line> :parent cnv :coords (list tmp (- y 125) tmp (- y 75)) 
+	      :width width :arrow "both" :arrow-shape (list a b c))
+	(make <Line> :parent cnv :coords (list (- tmp 25) y (+ tmp 25) y)
+	      :width width :arrow "both" :arrow-shape (list a b c))
+	(make <Line> :parent cnv :coords (list (- tmp 25) (+ y 75) 
+					       (+ tmp 25) (+ y 125))
+	      :width width :arrow "both" :arrow-shape (list a b c)))
+      ;; Create a bunch of other arrows and text items showing the
+      ;; current dimensions.
+      (let ((tmp (+ x2 10)))
+	(make <Line> :parent cnv :coords (list tmp (- y (* 5 width)) 
+					       tmp (- y delta-y))
+	      :arrow "both" :arrow-shape small-tips)
+	(make <Text-item> :parent cnv :coords (list (+ x2 15) 
+						    (- y delta-y (* -5 c)))
+	      :text c :anchor "w"))
+
+      (let ((tmp (- x1  10)))
+	(make <Line> :parent cnv :coords (list tmp (- y (* 5 width)) 
+					       tmp (+ y (* 5 width)))
+	      :arrow "both" :arrow-shape small-tips)
+	(make <Text-item> :parent cnv :coords (list (- x1 15) y)
+	      :text width :anchor "e"))
+      
+      (let ((tmp (+ y (* 5 width) (* 10 c) 10)))
+	(make <Line> :parent cnv :coords (list (- x2 (* 10 a)) tmp x2 tmp)
+	      :arrow "both" :arrow-shape small-tips)
+	(make <Text-item> :parent cnv :coords (list (- x2 (* 5 a)) (+ tmp 5))
+	      :text a :anchor "n"))
+
+      (let ((tmp (+ y (* 5 width) (* 10 c) 35)))
+	(make <Line> :parent cnv :coords (list (- x2 (* 10 b)) tmp x2 tmp)
+	      :arrow "both" :arrow-shape small-tips)
+	(make <Text-item> :parent cnv :coords (list (- x2 (* 5 b)) (+ tmp 5))
+	      :text b :anchor "n"))
+
+      (make  <Text-item> :parent cnv :coords (list x1 310) 
+	     :text (format #f ":width ~A" width) :anchor "w"
+	     :font "-*-Helvetica-Medium-R-Normal--*-180-*-*-*-*-*-*")
+      (make  <Text-item> :parent cnv :coords (list x1 330) 
+	     :text (format #f ":arrow-shape '~A" (list a b c)) :anchor "w"
+	     :font "-*-Helvetica-Medium-R-Normal--*-180-*-*-*-*-*-*"))
+    (if current-box 
+	(set! (fill current-box) (if (> (winfo 'depth cnv) 1) "red" "black"))))
+
+  (define (activate-box)
+    (let ((box (find-items cnv 'withtag "current")))
+      (when (pair? box)
+	(set! current-box (car box))
+	(set! (fill current-box) (if (> (winfo 'depth cnv) 1) "red" "black")))))
+  
+  (define (deactivate-box)
+    (set! (fill current-box) "white")
+    (set! current-box #f))
+
+  ;; arrow-move-1  is called for each mouse motion event on box1 (the
+  ;; one at the vertex of the arrow).  It updates the controlling parameters
+  ;; for the line and arrowhead.
+  (define (arrow-move-1 cnv new-x new-y)
+    (let ((new-a (inexact->exact (floor (/ (- x2 -5 (canvas-x cnv new-x)) 10)))))
+      (if (< new-a 0)  (set! new-a 0))
+      (if (> new-a 25) (set! new-a 25))
+      (unless (= new-a a)
+	(move box1 (* 10 (- a new-a)) 0)
+	(set! a new-a))))
+
+  ;; arrow-move-2  is called for each mouse motion event on box2 (the
+  ;; one at the trailing tip of the arrowhead). It updates the controlling
+  ;; parameters for the line and arrowhead.
+  (define (arrow-move-2 cnv new-x new-y)
+    (let ((new-b (inexact->exact (floor (/ (- x2 -5 (canvas-x cnv new-x)) 10))))
+	  (new-c (inexact->exact (floor (/ (- y  -5 (round (canvas-y cnv new-y))
+					      (* 5 width)) 10)))))
+      (if (< new-b 0)  (set! new-b 0))
+      (if (> new-b 25) (set! new-b 25))
+      (if (< new-c 0)  (set! new-c 0))
+      (if (> new-c 20) (set! new-c 20))
+      (unless (and (= new-b b) (= new-c c))
+	(move box2 (* 10 (- b new-b)) (* 10 (- c new-c)))
+	(set! b new-b)
+	(set! c new-c))))
+
+  ;; arrow-move-3 is called for each mouse motion event on box3 (the
+  ;; one that controls the thickness of the line).  It updates the
+  ;; controlling parameters for the line and arrowhead.
+  (define (arrow-move-3 cnv new-x new-y)
+   (let ((new-w (inexact->exact (floor (/ (- y -2 (canvas-y cnv new-y)) 5)))))
+     (if (< new-w 0)  (set! new-w 0))
+     (if (> new-w 20) (set! new-w 20))
+     (unless (= new-w width)
+       (move box3 0 (* 5 (- width new-w)))
+       (set! width  new-w))))
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  
+  (arrow-setup cnv)
+  (pack cnv :expand #t :fill "both")
+
+  ;;; Bindings
+  (bind cnv "box"  "<Enter>"        activate-box)
+  (bind cnv "box"  "<Leave>"        deactivate-box)
+  (bind cnv "box"  "<B1-Enter>"     (lambda () 'nop))
+  (bind cnv "box"  "<B1-Leave>"     (lambda () 'nop))
+  (bind cnv "box"  "<B1-Motion>"    (lambda (x y) 
+				      (if motion-proc (motion-proc cnv x y))))
+  (bind cnv "box1" "<1>"    	    (lambda () (set! motion-proc arrow-move-1)))
+  (bind cnv "box2" "<1>"    	    (lambda () (set! motion-proc arrow-move-2)))
+  (bind cnv "box3" "<1>"    	    (lambda () (set! motion-proc arrow-move-3)))
+  (bind cnv "<Any-ButtonRelease-1>" (lambda () (arrow-setup cnv))))
+

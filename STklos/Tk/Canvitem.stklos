@@ -1,0 +1,458 @@
+;;;;
+;;;; C a n v i t e m . s t k 	  --  Canvas Items classes definition
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
+;;;;    Creation date: 24-Aug-1993 11:24
+;;;; Last file update: 17-Jan-1996 23:53
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Tk-canvas-item>
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class <Tk-canvas-item> (<Tk-object>)
+  ((Cid :getter  Cid))
+  :metaclass <Tk-item-metaclass>)
+
+(define-method initialize ((self <Tk-canvas-item>) initargs)
+  (let* ((parent  (get-keyword :parent initargs #f))
+	 (coords  (get-keyword :coords initargs '())))
+
+    ;; Verify that parent exists and that it is a canvas 
+    (unless parent
+       (error "**** You must specify the canvas which contain this object"))
+    (unless (is-a? parent <Canvas>)
+       (error "**** Specified canvas ~A is not valid" parent))
+
+    (let ((parent-Id (slot-ref parent 'Id)))
+      (slot-set! self 'parent parent)
+      (slot-set! self 'Id  parent-Id)
+      (slot-set! self 'Eid parent-Id)
+      ;; Initialize Cid last because composite item need it
+      (let ((Cid (initialize-item self parent-Id coords initargs)))
+	(slot-set! self 'Cid Cid)
+	(hash-table-put! (slot-ref parent 'items) Cid self)))
+    (next-method)))
+
+(define-method initialize-item ((self <Tk-canvas-item>) canv-Id coords args)
+  (error "initialize-item: no method for ~S subclass" self))
+
+(define-method Tk-write-object ((self <Tk-Canvas-item>) port)
+  (write (slot-ref self 'Cid) port))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Tk-canvas-figure> class definition
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class <Tk-canvas-figure> (<Tk-canvas-item>)
+  ((tags   :accessor tags   
+	   :init-keyword :tags 
+	   :allocation   :tk-virtual)
+   (coords :accessor     coords 
+	   :init-keyword :coords
+	   :allocation   :virtual 
+	   :slot-ref	 (lambda (o) 
+			   ((slot-ref o 'Id) 'coords (slot-ref o 'Cid)))
+	   :slot-set!	 (lambda (o v)
+			   (apply (slot-ref o 'Id) 'coords (slot-ref o 'Cid) v)))))
+
+(define-method initialize-item ((self <Tk-canvas-figure>) canv-Id coords args)
+  (apply canv-Id 'create (canvas-item-initializer self)
+         (append coords (get-keyword :tk-options args '()))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Tk-composite-item> class
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class <Tk-composite-item> (<Tk-canvas-item>)
+  ()
+  :metaclass <Tk-composite-item-metaclass>)
+
+(define-method add-to-group ((self <Tk-composite-item>) . items)
+  (let ((tag (Cid self)))
+    (for-each (lambda (i) (add-tag i tag)) items)))
+
+(define-method delete-from-group ((self <Tk-composite-item>) item)
+  (delete-tag item (Cid self)))
+
+(define-method items-of-group ((self <Tk-composite-item>))
+  (find-items (slot-ref self 'parent) 'withtag (Cid self)))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Canvas-group> class definition
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class <Canvas-group> (<Tk-composite-item>)
+  ()
+)
+
+(define-method initialize-item ((self <Canvas-group>) parent-Id coords initargs)
+  ;; Just return the tag which will be shared among items
+  (gensym "group"))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Utilities
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;; tag-value delivers the integer Id of an object
+(define-method tag-value ((object <Tk-canvas-item>))
+  (slot-ref object 'Cid))
+
+;;;
+;;; Utility: Cid->instance
+;;;
+(define (Cid->instance canvas id)
+  (hash-table-get (slot-ref canvas 'items) id #f))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Tk-canvas-item> methods
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;
+;;; Add-tag
+;;;
+(define-method add-tag ((self <Tk-canvas-item>) tag)
+  ((slot-ref self 'Id) 'addtag tag 'withtag (slot-ref self 'Cid)))
+
+;;;
+;;; Bounding-box
+;;;
+(define-method bounding-box ((self <Tk-canvas-item>))
+  ((slot-ref self 'Id) 'bbox (slot-ref self 'Cid)))
+
+;;;
+;;; Bind
+;;;
+(define-method bind ((self <Tk-canvas-item>) . args)
+  (apply (slot-ref self 'Id) 'bind (slot-ref self 'Cid) args))
+
+
+;;;
+;;; Delete-chars
+;;;
+(define-method delete-chars ((self <Tk-Canvas-item>) first . last)
+  (apply (slot-ref self 'Id) 'dchars (slot-ref self 'Cid) first last))
+
+
+;;;
+;;; Delete/Destroy
+;;;
+(define-method destroy ((self <Tk-canvas-item>))
+  (let ((parent   (slot-ref self 'parent))
+	(cid-item (slot-ref self 'Cid)))
+
+    ;; First delete item from canvas
+    ((slot-ref parent 'Id) 'delete cid-item)
+    ;; Now delete its reference in the hash table
+    (hash-table-remove! (slot-ref parent 'items) cid-item)
+    ;; Change class of the item to <Destroyed-object>
+    (change-class self <Destroyed-object>)))
+
+(define-method destroy ((self <Tk-composite-item>))
+  (let* ((parent (slot-ref self 'parent))
+	 (all    (find-items parent 'with (Cid self))))
+
+    ;; Destroy each components
+    (for-each destroy all)
+    ;; Delete reference of the group in hash table
+    (hash-table-remove! (slot-ref parent 'items) (Cid self)))
+    ;; Change class of the group to <Destroyed-object>
+    (change-class self <Destroyed-object>))
+
+(define-method delete ((self <Tk-canvas-item>))
+  ;; For compatibility with older versions
+  (destroy self))
+
+;;;
+;;; Delete-tag
+;;;
+(define-method delete-tag ((self <Tk-canvas-item>) tag-to-delete)
+  ((slot-ref self 'Id) 'dtag  (slot-ref self 'Cid) tag-to-delete))
+
+;;;;;;;;;; find is useless for Tk-canvas-item
+
+;;;
+;;; focus
+;;;
+(define-method focus ((self <Tk-canvas-item>))
+  ((slot-ref self 'Id) 'focus  (slot-ref self 'Cid)))
+
+;;;
+;;; get-tags
+;;;
+(define-method get-tags ((self <Tk-canvas-item>))
+  ((slot-ref self 'Id) 'gettags (slot-ref self 'Cid)))
+
+;;;
+;;; Icursor
+;;;
+(define-method icursor ((self <Tk-Canvas-item>) index)
+  ((slot-ref self 'Id) 'icursor (slot-ref self 'Cid) index))
+
+;;;
+;;; Index
+;;;
+(define-method text-index ((self <Tk-Canvas-item>) index)
+  ((slot-ref self 'Id) 'index (slot-ref self 'Cid) index))
+
+;;;
+;;; Insert
+;;;
+(define-method text-insert ((self <Tk-Canvas-item>) before string)
+  ((slot-ref self 'Id) 'insert  (slot-ref self 'Cid) before string))
+
+;;;
+;;; Lower
+;;;
+(define-method lower ((self <Tk-canvas-item>) . below)
+  (apply (slot-ref self 'Id) 'lower (slot-ref self 'Cid) (map tag-value below)))
+
+;;;
+;;; Move
+;;;
+(define-method move ((self <Tk-canvas-item>) x y)
+  ((slot-ref self 'Id) 'move (slot-ref self 'Cid) x y))
+
+;;;;;;;;;; postscript has no sense for Tk-canvas-item
+
+;;;
+;;; Raise
+;;;
+(define-method raise ((self <Tk-canvas-item>) . above)
+  (apply (slot-ref self 'Id) 'raise (slot-ref self 'Cid) (map tag-value above)))
+
+;;;
+;;; Rescale
+;;;
+(define-method rescale ((self <Tk-canvas-item>) x y xs ys)
+  ((slot-ref self 'Id) 'scale (slot-ref self 'Cid) x y xs ys))
+
+;;;
+;;; Text-selection  (not implemented. What is the prototype?)
+;;;
+
+;;;;;;;; item-type can (approximatively) be obtained by (class-name(class-of xxx))
+
+;;;
+;;; xview
+;;;
+(define-method xview ((self <Tk-canvas-item>) x)
+  ((slot-ref self 'Id) 'xview x))
+
+
+;;;
+;;; yview
+;;;
+(define-method yview ((self <Tk-canvas-item>) x)
+  ((slot-ref self 'Id) 'yview x))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Arc> class definition
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define-class <Arc> (<Tk-canvas-figure>)
+  ((extent  :accessor extent	:init-keyword :extent  :allocation :tk-virtual)
+   (fill    :accessor fill 	:init-keyword :fill    :allocation :tk-virtual)
+   (outline :accessor outline	:init-keyword :outline :allocation :tk-virtual)
+   (start   :accessor start	:init-keyword :start   :allocation :tk-virtual)
+   (stipple :accessor stipple	:init-keyword :stipple :allocation :tk-virtual)
+   (style   :accessor style	:init-keyword :style   :allocation :tk-virtual)
+   (width   :accessor width	:init-keyword :width   :allocation :tk-virtual)))
+
+(define-method canvas-item-initializer((self <Arc>))	"arc")
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Bitmap-item> class definition
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define-class <Bitmap-item> (<Tk-canvas-figure>)
+  ((anchor      :accessor 	anchor
+	        :init-keyword 	:anchor
+	        :allocation 	:tk-virtual)
+   (background  :accessor 	background
+	        :init-keyword 	:background
+	        :allocation 	:tk-virtual)
+   (bitmap-name :accessor 	bitmap-name
+	        :init-keyword 	:bitmap-name
+		:tk-name	bitmap
+	        :allocation 	:tk-virtual)
+   (foreground  :accessor 	foreground
+	        :init-keyword	:foreground
+	        :allocation	:tk-virtual)))
+
+(define-method canvas-item-initializer((self <Bitmap-Item>))	"bitmap")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Image-item> class definition
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define-class <Image-item> (<Tk-canvas-figure>)
+  ((anchor     :accessor 	anchor
+	       :init-keyword 	:anchor
+	       :allocation 	:tk-virtual)
+   (image-name :accessor	image-name
+	       :init-keyword	:image-name
+	       :tk-name		image
+	       :allocation	:tk-virtual)))
+
+(define-method canvas-item-initializer((self <Image-Item>))	"image")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Line> class definition
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define-class <Line> (<Tk-canvas-figure>)
+  ((arrow	 :accessor 	arrow	
+		 :init-keyword 	:arrow 
+		 :allocation 	:tk-virtual)
+   (arrow-shape	 :accessor 	arrow-shape
+		 :init-keyword 	:arrow-shape 
+		 :tk-name 	arrowshape 
+		 :allocation 	:tk-virtual)
+   (cap-style	 :accessor 	cap-style
+		 :init-keyword 	:cap-style
+		 :tk-name	capstyle
+		 :allocation 	:tk-virtual)
+   (fill	 :accessor 	fill
+		 :init-keyword 	:fill 
+		 :tk-name 	fill 
+		 :allocation 	:tk-virtual)
+   (join-style	 :accessor 	join-style
+		 :init-keyword 	:join-style 
+		 :tk-name 	joinstyle 
+		 :allocation 	:tk-virtual)
+   (smooth	 :accessor 	smooth
+		 :init-keyword 	:smooth 
+		 :allocation 	:tk-virtual)
+   (spline-steps :accessor 	spline-steps
+		 :init-keyword 	:spline-steps 
+		 :tk-name 	splinesteps 
+		 :allocation 	:tk-virtual)
+   (stipple	 :accessor 	stipple
+		 :init-keyword 	:stipple 
+		 :allocation 	:tk-virtual)
+   (width	 :accessor 	width
+		 :init-keyword 	:width 
+		 :allocation 	:tk-virtual)))
+
+(define-method canvas-item-initializer((self <Line>))		"line")
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Oval> class definition
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define-class <Oval> (<Tk-canvas-figure>)
+  ((fill    :accessor fill    :init-keyword :fill    :allocation :tk-virtual)
+   (outline :accessor outline :init-keyword :outline :allocation :tk-virtual)
+   (stipple :accessor stipple :init-keyword :stipple :allocation :tk-virtual)
+   (width   :accessor width   :init-keyword :width   :allocation :tk-virtual)))
+
+(define-method canvas-item-initializer((self <Oval>))		"oval")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Polygon> class definition
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define-class <Polygon> (<Tk-canvas-figure>)
+  ((fill    	 :accessor 	fill    
+		 :init-keyword 	:fill 
+		 :allocation 	:tk-virtual)
+   (outline 	 :accessor 	outline	
+		 :init-keyword  :outline 
+		 :allocation    :tk-virtual)
+   (smooth  	 :accessor 	smooth  
+		 :init-keyword 	:smooth
+		 :allocation 	:tk-virtual)
+   (spline-steps :accessor 	spline-steps
+		 :init-keyword 	:spline-steps
+		 :tk-name 	splinesteps
+		 :allocation 	:tk-virtual)
+   (stipple 	 :accessor 	stipple
+		 :init-keyword 	:stipple
+		 :allocation 	:tk-virtual)
+   (width   	 :accessor 	width   
+		 :init-keyword  :width
+		 :allocation 	:tk-virtual)))
+
+(define-method canvas-item-initializer((self <Polygon>))	"polygon")
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Rectangle> class definition
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define-class <Rectangle> (<Tk-canvas-figure>)
+  ((fill    :accessor fill    :init-keyword :fill    :allocation :tk-virtual)
+   (outline :accessor outline :init-keyword :outline :allocation :tk-virtual)
+   (stipple :accessor stipple :init-keyword :stipple :allocation :tk-virtual)
+   (width   :accessor width   :init-keyword :width   :allocation :tk-virtual)))
+
+(define-method canvas-item-initializer((self <Rectangle>))	"rectangle")
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Text-Item> class definition
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define-class <Text-item> (<Tk-canvas-figure>)
+  ((anchor  :accessor anchor  :init-keyword :anchor  :allocation :tk-virtual)
+   (fill    :accessor fill    :init-keyword :fill    :allocation :tk-virtual)
+   (font    :accessor font    :init-keyword :font    :allocation :tk-virtual)
+   (justify :accessor justify :init-keyword :justify :allocation :tk-virtual)
+   (stipple :accessor stipple :init-keyword :stipple :allocation :tk-virtual) 
+   (text    :accessor text-of :init-keyword :text    :allocation :tk-virtual)
+   (width   :accessor width   :init-keyword :width   :allocation :tk-virtual)))
+
+(define-method canvas-item-initializer((self <Text-item>))	"text")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Canvas-window> class definition
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define-class <Canvas-Window> (<Tk-canvas-figure>)
+  ((anchor  :accessor anchor  :init-keyword :anchor  :allocation :tk-virtual)
+   (height  :accessor height  :init-keyword :height  :allocation :tk-virtual)
+   (width   :accessor width   :init-keyword :width   :allocation :tk-virtual)
+   (window  :accessor window  :init-keyword :window  :allocation :tk-virtual)))
+
+(define-method canvas-item-initializer((self <Canvas-window>))	"window")
+
+
+(provide "Canvitem")

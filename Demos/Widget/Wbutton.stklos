@@ -1,0 +1,26 @@
+;;;;
+;;;; STk adaptation of the Tk widget demo.
+;;;;
+;;;; This demonstration script creates a toplevel window containing
+;;;; several button widgets.
+;;;;
+
+(define (demo-button)
+  (let ((w (make-demo-toplevel "button"
+			       "Button Demonstration" 
+			       "If you click on any of the four buttons below, the background of the button area will change to the color indicated in the button.  You can press Tab to move among the buttons, then press Space to invoke the current button.")))
+	
+    ;; Create the 4 buttons
+    (for-each (lambda (x)
+		(pack (make <Button> 
+			    :text (car x)
+			    :parent w
+			    :width 10
+			    :command (lambda() (set! (background w) (cadr x))))
+		      :side "top" 
+		      :expand #t 
+		      :pady 2))
+	      '(("Peach Puff" "PeachPuff1")
+		("Light Blue" "LightBlue1")
+		("Sea Green"  "SeaGreen2")
+		("Yellow"     "Yellow1")))))

@@ -1,0 +1,690 @@
+;;;;
+;;;; Texts bindings and procs (bindings a` la emacs)
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; This software is a derivative work of other copyrighted softwares; the
+;;;; copyright notices of these softwares are placed in the file COPYRIGHTS
+;;;;
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 17-May-1993 12:35
+;;;; Last file update: 24-Aug-1996 15:48
+;;;;
+
+
+;; Tk:text-clipboard-keysyms
+;; This procedure is invoked to identify the keys that correspond to
+;; the "copy", "cut", and "paste" functions for the clipboard.
+;;
+;; Arguments:
+;; copy -	Name of the key (keysym name plus modifiers, if any,
+;;		such as "Meta-y") used for the copy operation.
+;; cut -		Name of the key used for the cut operation.
+;; paste -	Name of the key used for the paste operation.
+
+(define (Tk:text-clipboard-keysyms copy cut paste)
+  (define-binding "Text" copy (|W|)
+    (when (equal? [selection 'own :displayof |W|] |W|)
+       (clipboard 'clear :displayof |W|)
+       (catch 
+	  (clipboard 'append :displayof |W| (selection 'get :displayof |W|)))))
+
+  (define-binding "Text" cut (|W|)
+    (when (equal? [selection 'own :displayof |W|] (widget->string |W|))
+       (clipboard 'clear :displayof |W|)
+       (catch
+	  (clipboard 'append :displayof |W| (selection 'get :displayof |W|))
+	  (|W| 'delete 'sel.first 'sel.last))))
+
+  (define-binding "Text" paste (|W|)
+    (catch
+       (|W| 'insert 'insert (selection 'get :displayof |W| 
+				            :selection "CLIPBOARD"))))
+)
+
+
+;; Tk:text-button-1 --
+;; This procedure is invoked to handle button-1 presses in "Text"
+;; widgets.  It moves the insertion cursor, sets the selection anchor,
+;; and claims the input focus.
+;;
+;; w -		The "Text" windselectow in which the button was pressed.
+;; x -		The x-coordinate of the button press.
+;; y -		The x-coordinate of the button press.
+
+(define (Tk:text-button-1 w x y)
+  (set! tk::select-mode "char")
+  (set! tk::mouse-moved #f)
+  (set! tk::press-x x)
+  (set! tk::press-y y)
+  (w 'mark 'set 'insert (Tk:text-closest-gap w x y))
+  (w 'mark 'set 'anchor "insert")
+  (if (equal? (tk-get w :state) "normal")
+      (focus w)))
+
+;; Tk:text-select-to --
+;; This procedure is invoked to extend the selection, typically when
+;; dragging it with the mouse.  Depending on the selection mode (character,
+;; word, line) it selects in different-sized units.  This procedure
+;; ignores mouse motions initially until the mouse has moved from
+;; one character to another or until there have been multiple clicks.
+;;
+;; w -		The text window in which the button was pressed.
+;; x -		Mouse x position.
+;; y - 		Mouse y position.
+
+(define (Tk:text-select-to w x y)
+  (let ((cur    (Tk:text-closest-gap w x y))
+	(first  #f)
+	(last   #f)
+	(anchor #f))
+
+    (if (catch (w 'index 'anchor))
+	(w 'mark 'set 'anchor cur))
+    (set! anchor (w 'index 'anchor))
+
+    (if (or (w 'compare cur "!=" anchor)
+	    (>= (abs (- tk::press-x x)) 3))
+	(set! tk::mouse-moved #t))
+
+    (cond
+      ((string=? tk::select-mode "char")
+               (if (w 'compare cur "<" "anchor")
+		   (begin
+		     (set! first cur)
+		     (set! last "anchor"))
+		   (begin
+		     (set! first "anchor")
+		     (set! last cur))))
+      ((string=? tk::select-mode "word")
+                (if (w 'compare cur "<" "anchor")
+		   (begin
+		     (set! first (w 'index (format #f "~A wordstart" cur)))
+		     (set! last  (w 'index "anchor - 1c wordend")))
+		   (begin
+		     (set! first (w 'index "anchor wordstart"))
+		     (set! last  (w 'index (format #f "~A -1c wordend" cur))))))
+      ((string=? tk::select-mode "line")
+	        (if (w 'compare cur "<" "anchor")
+		    (begin
+		      (set! first (w 'index (format #f "~A linestart" cur)))
+		      (set! last  (w 'index "anchor - 1c lineend + 1c")))
+		    (begin
+		      (set! first (w 'index "anchor linestart"))
+		      (set! last  (w 'index (format #f "~A lineend + 1c" cur)))))))
+     
+    (when (or tk::mouse-moved (not (equal? tk::select-mode "char")))
+	(w 'tag 'remove "sel" "0.0" first)
+	(w 'tag 'add "sel" first last)
+	(w 'tag 'remove "sel" last "end")
+	(update 'idletasks))))
+
+;; Tk:text-key-extend --
+;; This procedure handles extending the selection from the keyboard,
+;; where the point to extend to is really the boundary between two
+;; characters rather than a particular character.
+;;
+;; w -		The text window.
+;; index -	The point to which the selection is to be extended.
+
+(define (Tk:text-key-extend w index)
+  (let ((cur    (w 'index index))
+	(anchor #f))
+    
+    (if (catch (w 'index 'anchor))
+	(w 'mark 'set 'anchor cur))
+    (set! anchor (w 'index 'anchor))
+
+    (let ((first #f)
+	  (last #f))
+      (if (w 'compare cur "<" anchor)
+	  (begin
+	    (set! first cur)
+	    (set! last anchor))
+	  (begin
+	    (set! first anchor)
+	    (set! last cur)))
+      
+      (w 'tag 'remove "sel" "0.0" first)
+      (w 'tag 'add "sel" first last)
+      (w 'tag 'remove "sel" last "end"))))
+
+
+;; Tk:text-auto-scan --
+;; This procedure is invoked when the mouse leaves an "Text" window
+;; with button 1 down.  It scrolls the window left or right,
+;; depending on where the mouse is, and reschedules itself as an
+;; "after" command so that the window continues to scroll until the
+;; mouse moves back into the window or the mouse button is released.
+;;
+;; w -	The "Text" window.
+
+(define (Tk:text-auto-scan w)
+  (when (winfo 'exists w)
+    (let* ((x    tk::x)
+	   (y    tk::y)
+	   (cont (lambda () 
+		   (Tk:text-select-to w x y)
+		   (set! tk::after-id (after 50 (lambda () 
+						  (Tk:text-auto-scan w)))))))
+      (cond 
+       ((>= y (winfo 'height w))	(w 'yview 'scroll +2 'units) (cont))
+       ((< y 0)				(w 'yview 'scroll -2 'units) (cont))
+       ((>= x (winfo 'width w))		(w 'xview 'scroll +2 'units) (cont))
+       ((< x 0)				(w 'xview 'scroll -2 'units) (cont))))))
+
+
+;; Tk:text-set-cursor
+;; Move the insertion cursor to a given position in a text.  Also
+;; clears the selection, if there is one in the text, and makes sure
+;; that the insertion cursor is visible.  Also, don't let the insertion
+;; cursor appear on the dummy last line of the text.
+;;
+;; w -		The text window.
+;; pos -		The desired new position for the cursor in the window.
+
+(define (Tk:text-set-cursor w pos)
+  (if (w 'compare pos "==" "end")
+      (set! pos "end - 1 chars"))
+
+  (w 'mark 'set 'insert pos)
+  (w 'tag 'remove 'sel "1.0" "end")
+  (w 'see "insert"))
+
+
+;; Tk:text-key-select --
+;; This procedure is invoked when stroking out selections using the
+;; keyboard.  It moves the cursor to a new position, then extends
+;; the selection to that position.
+;;
+;; Arguments:
+;; w -		The "Text" window.
+;; new -	A new position for the insertion cursor (the cursor hasn't
+;;		actually been moved to this position yet).
+
+(define (Tk:text-key-select w new)
+  (if (equal? (w 'tag 'nextrange "sel" "1.0" "end") "")
+      (begin
+	(if (w 'compare new "<" "insert")
+	    (w 'tag 'add "sel" new "insert")
+	    (w 'tag 'add "sel" "insert" new))
+	(w 'mark 'set 'anchor "insert"))
+      (let ((first #f)
+	    (last  #f))
+	(if (w 'compare new "<" 'anchor)
+	    (begin
+	      (set! first new)
+	      (set! last "anchor"))
+	    (begin
+	      (set! first "anchor")
+	      (set! last new)))
+	(w 'tag 'remove "sel" "1.0" first)
+	(w 'tag 'add "sel" first last)
+	(w 'tag 'remove "sel" last "end")))
+
+  (w 'mark 'set "insert" new)
+  (w 'see "insert")
+  (update 'idletasks))
+
+
+;; Tk:text-reset-anchor --
+;; Set the selection anchor to whichever end is farthest from the
+;; index argument.  One special trick: if the selection has two or
+;; fewer characters, just leave the anchor where it is.  In this
+;; case it doesn't matter which point gets chosen for the anchor,
+;; and for the things like Shift-Left and Shift-Right this produces
+;; better behavior when the cursor moves back and forth across the
+;; anchor.
+;;
+;; w -		The text widget.
+;; index -	Position at which mouse button was pressed, which determines
+;;		which end of selection should be used as anchor point.
+
+(define (Tk:text-reset-anchor w index)
+  (if (null? (w 'tag 'ranges "sel"))
+      (w 'mark 'set 'anchor index)
+      (let ((a 	(w 'index index))
+	    (b 	(w 'index 'sel.first))
+	    (c 	(w 'index 'sel.last)))
+
+	(if (w 'compare a "<" b)
+	    (w 'mark 'set 'anchor 'sel.first)
+	    (if (w 'compare a ">" c)
+		(w 'mark 'set 'anchor 'sel.first)
+		(if (< (car b) (+ (car c) 2))
+		    (let ((total (string-length (w 'get b c))))
+		      (when (> total 2)
+			    (w 'mark 
+			       'set 
+			       'anchor 
+			       (if (< (string-length (w 'get b c)) (/ total 2))
+				   'sel.last
+				   'sel.first))))
+		    (w 'mark 
+		       'set 
+		       'anchor
+		       (if (< (- (car a) (car b))
+			      (- (car c) (car a)))
+			   'sel.last
+			   'sel.first))))))))
+
+;; Tk:text-insert --
+;; Insert a string into an "Text" at the point of the insertion cursor.
+;; If there is a selection in the "Text", and it covers the point of the
+;; insertion cursor, then delete the selection before inserting.
+;;
+;; w -		The "Text" window in which to insert the string
+;; s -		The string to insert (usually just a single character)
+
+(define (Tk:text-insert w s)
+  (unless (or (equal? s "") (equal? (tk-get w :state) "disabled"))
+     (catch
+        (if (and (w 'compare 'sel.first "<=" "insert")
+		 (w 'compare 'sel.last ">="  "insert"))
+	    (w 'delete 'sel.first 'sel.last)))
+     (w 'insert "insert" s)
+     (w 'see "insert")))
+
+;; Tk:text-up-down-line --
+;; Returns the index of the character one line above or below the
+;; insertion cursor.  There are two tricky things here.  First,
+;; we want to maintain the original column across repeated operations,
+;; even though some lines that will get passed through don't have
+;; enough characters to cover the original column.  Second, don't
+;; try to scroll past the beginning or end of the text.
+;;
+;; w -		The text window in which the cursor is to move.
+;; n -		The number of lines to move: -1 for up one line,
+;;		+1 for down one line.
+
+(define Tk:text-up-down-line 
+  (let ((column 0)
+	(prev-pos (cons -1 -1)))
+    (lambda (w n)
+      (let ((p (w 'index "insert")))
+	
+	(unless (equal? prev-pos p)
+		(set! column (cdr p)))
+
+	(let ((new (w 'index (cons (+ (car p) n) column))))
+	  (if (or (w 'compare new "==" "end")
+		  (w 'compare new "==" "insert linestart"))
+	      (set! new p))
+	  
+	  (set! prev-pos new)
+	  new)))))
+
+;; Tk:text-scroll-pages --
+;; This is a utility procedure used in bindings for moving up and down
+;; pages and possibly extending the selection along the way.  It scrolls
+;; the view in the widget by the number of pages, and it returns the
+;; index of the character that is at the same position in the new view
+;; as the insertion cursor used to be in the old view.
+;;
+;; w -		The text window in which the cursor is to move.
+;; count -	Number of pages forward to scroll;  may be negative
+;;		to scroll backwards.
+
+(define (Tk:text-scroll-pages w count)
+  (let ((bbox (w 'bbox "insert")))
+    (w 'yview 'scroll count 'pages)
+    (w 'index (if (null? bbox)
+		  (format #f "@~A,~A" (truncate (/ (winfo 'height w) 2)) 0)
+		  (format #f "@~A,~A" (car bbox) (cadr bbox))))))
+
+
+;; Tk:text-transpose --
+;; This procedure implements the "transpose" function for text widgets.
+;; It tranposes the characters on either side of the insertion cursor,
+;; unless the cursor is at the end of the line.  In this case it
+;; transposes the two characters to the left of the cursor.  In either
+;; case, the cursor ends up to the right of the transposed characters.
+;;
+;; Arguments:
+;; w -		Text window in which to transpose.
+
+(define (Tk:text-transpose w)
+  (let* ((pos (if (w 'compare "insert" "!=" "insert lineend")
+		  "insert + 1 char"
+		  "insert"))
+	 (new (string-append (w 'get (format #f "~A - 1 char" pos))
+			     (w 'get (format #f "~A - 2 char" pos)))))
+
+    (when (w 'compare (format #f "~A - 1 char" pos) "!=" "1.0")
+       (w 'delete (format #f "~A - 2 char" pos) pos)
+       (w 'insert "insert" new)
+       (w 'see "insert"))))
+
+
+;; Tk:text-closest-gap --
+;; Given x and y coordinates, this procedure finds the closest boundary
+;; between characters to the given coordinates and returns the index
+;; of the character just after the boundary.
+;;
+;; w -		The text window.
+;; x -		X-coordinate within the window.
+;; y -		Y-coordinate within the window.
+
+(define (Tk:text-closest-gap w x y)
+  (let* ((pos  (w 'index (format #f "@~A,~A" x y)))
+	 (bbox (w 'bbox  pos)))
+    (if (null? bbox)
+	(if (< [list-ref bbox 0] (/ [list-ref bbox 2] 2))
+	    pos
+	    (w 'index (format #f "~A + 1 char" pos)))
+	pos)))
+
+;; Tk:text-paste --
+;; This procedure sets the insertion cursor to the mouse position,
+;; inserts the selection, and sets the focus to the window.
+;;
+;; w -		The text window.
+;; x, y - 	Position of the mouse.
+
+(define (Tk:text-paste |W| x y)
+  (|W| 'mark 'set 'insert (Tk:text-closest-gap |W| x y))
+  (catch (|W| 'insert 'insert (selection 'get :displayof |W|)))
+  (if (string=? (tk-get |W| :state) "normal")
+      (focus |W|)))
+
+;;-------------------------------------------------------------------------
+;; The code below creates the default class bindings for entries.
+;;-------------------------------------------------------------------------
+
+;; Standard Motif bindings:
+
+(define-binding "Text" "<1>" (|W| x y)
+  (Tk:text-button-1 |W| x y)
+  (|W| 'tag 'remove "sel" "0.0" "end"))
+
+(define-binding "Text" "<B1-Motion>" (|W| x y)
+  (set! tk::x x)
+  (set! tk::y y)
+  (Tk:text-select-to |W| x y))
+
+(define-binding "Text" "<Double-1>" (|W| x y)
+  (set! tk::select-mode "word")
+  (Tk:text-select-to |W| x y)
+  (catch 
+     (|W| 'mark 'set "insert" 'sel.first)))
+
+(define-binding "Text" "<Triple-1>" (|W| x y)
+  (set! tk::select-mode "line")
+  (Tk:text-select-to |W| x y)
+  (catch 
+      (|W| 'mark 'set "insert" 'sel.first)))
+
+(define-binding "Text" "<Shift-1>" (|W| x y)
+  (Tk:text-reset-anchor |W| (format #f "@~A,~A" x y))
+  (set! tk::select-mode "char")
+  (Tk:text-select-to |W| x y))
+
+(define-binding "Text" "<Double-Shift-1>" (|W| x y)
+  (set! tk::select-mode "word")
+  (Tk:text-select-to |W| x y))
+
+(define-binding "Text" "<Triple-Shift-1>" (|W| x y)
+  (set! tk::select-mode "line")
+  (Tk:text-select-to |W| x y))
+
+(define-binding "Text" "<B1-Leave>" (|W| x y)
+  (set! tk::x x)
+  (set! tk::y y)
+  (Tk:text-auto-scan |W|))
+
+(define-binding "Text" "<B1-Enter>" ()
+  (Tk:cancel-repeat))
+
+(define-binding "Text" "<ButtonRelease-1>" ()
+  (Tk:cancel-repeat))
+
+(define-binding "Text" "<Control-1>" (|W| x y)
+  (|W| 'mark 'set "insert" (format #f "@~A,~A" x y)))
+
+(define-binding "Text" "<ButtonRelease-2>" (|W| x y)
+  (if (or (not tk::mouse-moved) *tk-strict-motif*)
+      (Tk:text-paste |W| x y)))
+
+(define-binding "Text" "<Left>" (|W|)
+  (Tk:text-set-cursor |W| "insert-1c"))
+
+(define-binding "Text" "<Right>" (|W|)
+  (Tk:text-set-cursor |W| "insert+1c"))
+
+(define-binding "Text" "<Up>" (|W|)
+  (Tk:text-set-cursor |W| (Tk:text-up-down-line |W| -1)))
+
+(define-binding "Text" "<Down>" (|W|)
+  (Tk:text-set-cursor |W| (Tk:text-up-down-line |W| +1)))
+
+(define-binding "Text" "<Shift-Left>" (|W|)
+  (Tk:text-key-select |W| (|W| 'index "insert-1c")))
+
+(define-binding "Text" "<Shift-Right>" (|W|)
+  (Tk:text-key-select |W| (|W| 'index "insert+1c")))
+
+(define-binding "Text" "<Shift-Up>" (|W|)
+  (Tk:text-key-select |W| (Tk:text-up-down-line |W| -1)))
+
+(define-binding "Text" "<Shift-Down>" (|W|)
+  (Tk:text-key-select |W| (Tk:text-up-down-line |W| +1)))
+
+(define-binding "Text" "<Control-Left>" (|W|)
+  (Tk:text-set-cursor |W| (|W| 'index "insert-1c wordstart")))
+
+(define-binding "Text" "<Control-Right>" (|W|)
+  (Tk:text-set-cursor |W| (|W| 'index "insert wordend")))
+
+(define-binding "Text" "<Shift-Control-Left>" (|W|)
+  (Tk:text-key-select |W|  (|W| 'index "insert-1c  wordstart")))
+
+(define-binding "Text" "<Shift-Control-Right>" (|W|)
+  (Tk:text-key-select |W| (|W| 'index "insert wordend")))
+
+(define-binding "Text" "<Prior>" (|W|)
+  (Tk:text-set-cursor |W| (Tk:text-scroll-pages |W| -1)))
+
+(define-binding "Text" "<Shift-Prior>" (|W|)
+  (Tk:text-key-select |W| (Tk:text-scroll-pages |W| -1)))
+
+(define-binding "Text" "<Next>" (|W|)
+  (Tk:text-set-cursor |W| (Tk:text-scroll-pages |W| +1)))
+
+(define-binding "Text" "<Shift-Next>" (|W|)
+  (Tk:text-key-select |W| (Tk:text-scroll-pages |W| +1)))
+
+(define-binding "Text" "<Control-Prior>" (|W|)
+  (|W| 'xview 'scroll -1 'page))
+
+(define-binding "Text" "<Control-Next>" (|W|)
+  (|W| 'xview 'scroll 1 'page))
+
+(define-binding "Text" "<Home>" (|W|)
+  (Tk:text-set-cursor |W| "insert linestart"))
+
+(define-binding "Text" "<Shift-Home>" (|W|)
+  (Tk:text-set-cursor |W| "insert linestart"))
+
+(define-binding "Text" "<End>" (|W|)
+  (Tk:text-set-cursor |W| "insert lineend"))
+
+(define-binding "Text" "<Shift-End>" (|W|)
+  (Tk:text-set-cursor |W| "insert lineend"))
+
+(define-binding "Text" "<Control-Home>" (|W|)
+  (Tk:text-set-cursor |W| "1.0"))
+
+(define-binding "Text" "<Control-Shift-Home>" (|W|)
+  (Tk:text-key-select |W| "1.0"))
+
+(define-binding "Text" "<Control-End>" (|W|)
+  (Tk:text-set-cursor |W| "end - 1 char"))
+
+(define-binding "Text" "<Control-Shift-End>" (|W|)
+  (Tk:text-key-select |W| "end - 1 char"))
+
+(define-binding "Text" "<Tab>" (|W|)
+  (Tk:text-insert |W| "\t")
+  (focus |W|)
+  'break)
+
+(define-binding "Text" "<Shift-Tab>" (|W|)
+  ;; Needed only to keep <Tab> binding from triggering;  doesn't
+  ;; have to actually do anything.
+  'nop)
+
+(define-binding "Text" "<Control-Tab>" (|W|)
+  (focus (Tk:focus-next |W|)))
+
+(define-binding "Text" "<Control-Shift-Tab>" (|W|)
+  (focus (Tk:focus-prev |W|)))
+
+(define-binding "Text" "<Control-i>" (|W|)
+  (Tk:text-insert |W| "\t"))
+
+(define-binding "Text" "<Return>" (|W|)
+  (Tk:text-insert |W| "\n"))
+
+(define-binding "Text" "<Delete>" (|W|)
+  (if (null? (|W| 'tag 'nextrange 'sel "1.0" "end"))
+      (begin 
+	 (|W| 'delete "insert")
+	 (|W| 'see "insert"))
+      (|W| 'delete 'sel.first 'sel.last)))
+
+(define-binding "Text" "<BackSpace>" (|W|)
+  (if (null? (|W| 'tag 'nextrange 'sel "1.0" "end"))
+      (begin 
+	 (|W| 'delete "insert-1c")
+	 (|W| 'see "insert"))
+      (|W| 'delete 'sel.first 'sel.last)))
+
+(define-binding "Text" "<Control-space>" (|W|)
+  (|W| 'mark 'set 'anchor "insert"))
+
+(define-binding "Text" "<Select>" (|W|)
+ (|W| 'mark 'set 'anchor "insert"))
+
+(define-binding "Text" "<Control-Shift-space>" (|W|)
+  (set! tk::select-mode "char")
+  (Tk:text-key-extend |W| "insert"))
+
+(define-binding "Text" "<Shift-Select>" (|W|)
+  (set! tk::select-mode "char")
+  (Tk:text-key-extend |W| "insert"))
+
+(define-binding "Text" "<Control-slash>" (|W|)
+  (|W| 'tag 'add 'sel "1.0" "end"))
+
+(define-binding "Text" "<Control-backslash>" (|W|)
+  (|W| 'tag 'remove 'sel "1.0" "end"))
+
+(Tk:text-clipboard-keysyms "<F16>" "<F20>" "<F18>")
+
+(define-binding "Text" "<Insert>" (|W|)
+  (catch 
+     (Tk:text-insert |W| (selection 'get :displayof |W|))))
+
+(define-binding "Text" "<KeyPress>" (|W| |A|)
+  (Tk:text-Insert |W| |A|))
+
+
+;; Ignore all Alt, Meta, and Control keypresses unless explicitly bound.
+;; Otherwise, if a widget binding for one of these is defined, the
+;; <KeyPress> class binding will also fire and insert the character,
+;; which is wrong.  Ditto for Escape.
+(let ((nop (lambda () '())))
+  (bind "Text" "<Alt-KeyPress>" 	nop)
+  (bind "Text" "<Meta-KeyPress>" 	nop)
+  (bind "Text" "<Control-KeyPress>" 	nop)
+  (bind "Text" "<Escape>" 		nop)
+  (bind "Text" "<KP_Enter>" 		nop))
+
+;; Additional emacs-like bindings:
+
+(define-binding "Text" "<Control-a>" (|W|)
+  (Tk:text-set-cursor |W| "insert linestart"))
+
+(define-binding "Text" "<Control-b>" (|W|)
+  (Tk:text-set-cursor |W| "insert-1c"))
+
+(define-binding "Text" "<Control-d>" (|W|)
+  (|W| 'delete "insert"))
+
+(define-binding "Text" "<Control-e>" (|W|)
+  (Tk:text-set-cursor |W| "insert lineend"))
+
+(define-binding "Text" "<Control-f>" (|W|)
+  (Tk:text-set-cursor |W| "insert+1c"))
+
+(define-binding "Text" "<Control-k>" (|W|)
+  (|W| 'delete "insert" (if (|W| 'compare "insert" "==" "insert lineend")
+			   "insert+1c"
+			   "insert lineend")))
+
+(define-binding "Text" "<Control-n>" (|W|)
+  (Tk:text-set-cursor |W| (Tk:text-up-down-line |W| +1)))
+
+(define-binding "Text" "<Control-o>" (|W|)
+  (|W| 'insert "insert" "\n")
+  (|W| 'mark 'set "insert" "insert-1c"))
+
+(define-binding "Text" "<Control-p>" (|W|)
+  (Tk:text-set-cursor |W| (Tk:text-up-down-line |W| -1)))
+
+(define-binding "Text" "<Control-t>" (|W|)
+  (Tk:text-transpose |W|))
+
+(define-binding "Text" "<Control-v>" (|W|)
+  (Tk:text-scroll-pages |W| +1))
+
+(define-binding "Text" "<Meta-b>" (|W|)
+  (Tk:text-set-cursor |W| "insert - 1c wordstart"))
+
+(define-binding "Text" "<Meta-d>" (|W|)
+  (|W| 'delete "insert" "insert wordend"))
+
+(define-binding "Text" "<Meta-f>" (|W|)
+  (Tk:text-set-cursor |W| "insert wordend"))
+
+(define-binding "Text" "<Meta-less>" (|W|)
+  (Tk:text-set-cursor |W| "1.0"))
+
+(define-binding "Text" "<Meta-greater>" (|W|)
+  (Tk:text-set-cursor |W| "end-1c"))
+
+(define-binding "Text" "<Meta-BackSpace>" (|W|)
+  (|W| 'delete "insert -1c wordstart" "insert"))
+
+(define-binding "Text" "<Meta-Delete>" (|W|)
+  (|W| 'delete "insert -1c wordstart" "insert"))
+
+(Tk:text-clipboard-keysyms "<Meta-w>" "<Control-w>" "<Control-y>")
+
+;; A few additional bindings of my own.
+
+(define-binding "Text" "<Control-h>" (|W|)
+  (when (|W| 'compare "insert" "!=" "1.0")
+    (|W| 'delete "insert-1c")
+    (|W| 'see "insert")))
+
+(define-binding "Text" "<Shift-2>" (|W| x y)
+  (|W| 'scan 'mark x y)
+  (set! tk::x x)
+  (set! tk::y y)
+  (set! tk::mouse-moved #f))
+
+(define-binding "Text" "<Shift-B2-Motion>" (|W| x y)
+  (unless (and  (= x tk::x) (= y tk::y))
+    (set! tk::mouse-moved #t))
+  (if tk::mouse-moved
+      (|W| 'scan 'dragto x y)))

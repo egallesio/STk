@@ -1,0 +1,32 @@
+<HTML><HEAD><TITLE>Tk Built-In Commands - option-menu manual page</TITLE></HEAD>
+<BODY bgcolor = #c3ffc3>
+<H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageGreen.gif"> option-menu</H2>
+<I>Create an option menubutton and its menu</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<H3><A NAME="M2">SYNOPSIS</A></H3>
+(<B>Tk:option-menu </B><I>w varname value </I>?<I>value value ...</I>?)<BR>
+<H3><A NAME="M3">DESCRIPTION</A></H3>
+This procedure creates an option menubutton whose name is <I>w</I>,
+plus an associated menu.
+Together they allow the user to select one of the values
+given by the <I>value</I> arguments.
+The current value will be stored in the global variable whose
+name is given by <I>varname</I> and it will also be displayed as the label
+in the option menubutton.
+The user can click on the menubutton to display a menu containing
+all of the <I>value</I>s and thereby select a new value.
+Once a new value is selected, it will be stored in the variable
+and appear in the option menubutton.
+The current value can also be changed by setting the variable.
+<P>
+The return value from <B>Tk:option-menu</B> is the menu
+associated with <I>w</I>, so that the caller can change its configuration
+options or manipulate it in other ways.
+
+<H3><A NAME="M4">EXAMPLE</A></H3>
+<PRE>(Tk:option-menu '.m 'foo &quot;One&quot; &quot;Two&quot; &quot;Three&quot;) 
+(pack .m)</PRE>
+<H3><A NAME="M5">SEE ALSO</A></H3>
+<B><A HREF="./menu.n.html">menu</A></B>, <B><A HREF="./popup.n.html">popup</A></B>
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookGreen.gif"> Back to the <B>STk</B> main page</A>
+</BODY></HTML>

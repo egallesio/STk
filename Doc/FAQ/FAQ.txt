@@ -1,0 +1,462 @@
+  Answers to the Frequently Asked Questions about STk
+  Erick Gallesio
+  July 1996
+
+  11..  IInnttrroodduuccttiioonn
+
+
+  The aim of this document is to answer to the frequently asked
+  questions about STk. First versions of this document were written by
+  Marc Furrer (furrer@di.epfl.ch)with the support of Erick Gallesio
+  (eg@unice.fr) Marc has not enough time to continue to maintain the FAQ
+  up to date and he asked me to continue. Since I too have not a lot of
+  time for keeping the FAQ alive, any help would be greatly apreciated.
+
+  The latest version of the FAQ is available at
+  http://kaolin.unice.fr/FAQ/FAQ.html Text and Postscript versions of
+  this document are also available at ftp://kaolin.unice.fr/pub/FAQ The
+  HTML version is the recommended version of this document since all the
+  links to other documents or softwares can be followed just by clicking
+  on them.
+
+  This version of the document is very incomplete and if you think of
+  questions that are appropriate for this FAQ, or would like to improve
+  an answer, please send me e-mail.
+
+  11..11..  SSuubbjjeecctt:: WWhhaatt iiss SSTTkk
+
+
+  STk is a R4RS Scheme interpreter which can access to the Tk graphical
+  package. It can be seen as the John Ousterhout's Tk package where the
+  Tcl language has been replaced by Scheme (for more information on
+  Scheme, Tcl and Tk, see the references below).
+
+  STk also provides an efficient object oriented system called STklos.
+  STklos is an OO system with multi-inheritance, generic functions,
+  multi-methods. It's implementation relies on a Meta Object Protocol
+  (MOP) inspired from the Tiny -CLOS model.
+
+  Other features of STk are:
+
+  +o  Interpreter can be easily extended by adding new C modules.
+
+  +o  All the commands defined by the Tk toolkit are available to the STk
+     interpreter (Tk commands are seen as a special type of objects by
+     the interpreter).
+
+  +o  Widgets callbacks are Scheme closures
+
+  +o  Based on Tk4.1 (the last stable release of Tk)
+
+  +o  STk does not use the Tcl interpreter for Tk programming
+
+  +o  Tk variables (such are -textvariable) are reflected back into
+     Scheme as Scheme variables.
+
+  +o  A set of STklos classes have been defined to manipulate Tk commands
+     (menu, buttons, scales, canvas, canvas items) as STklos objects.
+
+  +o  New widgets can easily be built in STklos by composition of
+     existing widgets.
+
+  11..22..  SSuubbjjeecctt:: WWhheerree ddoo II ggeett SSTTkk ffrroomm
+
+
+  STk distribution is available on various sites. The official
+  distribution site is http://kaolin.unice.fr/or
+  ftp://kaolin.unice.fr/pub Distribution file names have the form STk-
+  x.y.tar.gz, where x and y represent the version and the release of the
+  package. You can also find here interim releases of STk. Intermediate
+  releases are stored in file whose name have the form STk-x.y.z.tar.gz
+  where z is the intermediate release number. Last stable release can be
+  taken from http://kaolin.unice.fr/STk.tar.gzor
+  ftp://kaolin.unice.fr/pub/STk.tar.gz
+
+  11..33..  SSuubbjjeecctt:: AArree tthheerree ddiissttrriibbuuttiioonn mmiirrrroorr ssiitteess
+
+
+  Stable releases of STk are also placed in
+  ftp://sunsite.unc.edu/pub/Linux/devel/lang/lisp Since this site is
+  eavily mirrored around the planet, you should easily find a stable
+  release near you.
+
+  David Fox also maintain a mirror site of kaolin (daily updated) in the
+  USA at the following URL ftp://cs.nyu.edu/pub/local/fox/stk
+
+  11..44..  SSuubbjjeecctt:: WWhhiicchh aarree tthhee ssyysstteemmss SSTTkk ssuuppppoorrtt
+
+
+  STk runs on a large variety of Unixes. It is known to run on:
+
+  +o  Sparc (SunOs 4.1.x & Solaris 2.{34})
+
+  +o  Dec 5xxx (Ultrix 4.2)
+
+  +o  SGI (IRIX 4.05, 5.1.1, 5.2)
+
+  +o  DEC Alpha 3000/400 (OSF-1 V1.3)
+
+  +o  RS6000 AIX 3.2.5
+
+  +o  HP 9000/735 (HP-UX 9.01)
+
+  +o  PC (Linux 1.0 -> 2.0)
+
+  +o  PC (FreeBSD 1.1)
+
+  +o  PC (SCO) Thanks to markd@grizzly.com
+
+  +o  PC (NetBSD-1.0)
+
+  +o  Sony WS (Sony NEWS, NEWSOS 4.2R)
+
+  +o
+
+  11..55..  SSuubbjjeecctt:: SSTTkk aanndd WWiinnddoowwss
+
+
+  Starting with release 3.1, STk runs on 32 bits Microsoft Windows (only
+  tested on Windows 95, but it should run on Windows NT). This version
+  is based on the Tk 4.1 final release.
+
+  STk Win32 version is distributed in source and binary forms, since
+  binary release seems more convenient on Windows.
+
+  Development of STk on this platform is not easy for me since it is not
+  the system I use dayly. In particular, a lot of work need to be done
+  (loading of packages compiled in DLL, sockets, ...). Help of a Win32
+  hacker would be greatly appreciated to achieve those tasks.
+
+
+
+
+  11..66..  SSuubbjjeecctt:: SSTTkk aanndd MMaaccOOSS
+
+
+  It is not intended to port STk on MAcOS, by lack of resource (and
+  interest of myself :). However, port should be simple for a Mac
+  hacker. I can provide help if necessary for this job.
+
+  Another way to run STk on a Mac consists to run STk under Mach Ten. If
+  I have well understood, Mach Ten is a Unix (Mach-) like system running
+  on top of MacOS. STk compiles fine on this system.
+
+  11..77..  SSuubbjjeecctt:: GGeettttiinngg mmoorree iinnffoorrmmaattiioonn aabboouutt SScchheemmee
+
+
+  TThhee RR44RRSS ddooccuummeenntt
+
+  +o  R4RS is the document which fully describes the Scheme Programming
+     Language, it can be found in the Scheme repository at the following
+     URL ftp://ftp.cs.indiana.edu/pub/scheme-repository/doc
+
+  +o  Aubrey Jaffer has also translated this document in HTML. A version
+     of this document can be browsed at http://www-
+     swiss.ai.mit.edu/~jaffer/r4rs_toc.html
+
+  TThhee SScchheemmee RReeppoossiittoorryy
+
+  The main site where you can find (many) informations about Scheme is
+  located in the University of Indiana. The Scheme repository is
+  maintained by David Eby. The repository currently consists of the
+  following areas:
+
+  +o  Lots of scheme code meant for benchmarking, library/support,
+     research, education, and fun.
+
+  +o  On-line documents: Machine readable standards documents, standards
+     proposals, various Scheme-related tech reports, conference papers,
+     mail archives, etc.
+
+  +o  Most of the publicly available Scheme Implementations.
+
+  +o  Material designed primarily for instruction.
+
+  +o  Freely-distributable promotional or demonstration material for
+     Scheme-related products.
+
+  +o  Utilities (e.g., Schemeweb, SLaTeX).
+
+  +o  Extraneous stuff, extensions, etc.
+
+  You can access the Scheme repository at:
+
+  +o  ftp://ftp.cs.indiana.edu/pub/scheme-repository
+
+  +o  http://www.cs.indiana.edu/scheme-repository/SRhome.html
+
+  The Scheme Repository is mirrored in Europe at:
+
+  +o  ftp://ftp.inria.fr/lang/Scheme
+
+  +o  ftp://faui80.informatik.uni-erlangen.de/pub/scheme/yorku
+
+  +o  ftp://ftp.informatik.uni-muenchen.de/pub/comp/programming/
+     languages/scheme/scheme-repository
+
+  UUsseenneett nneewwssggrroouupp aanndd ootthheerr aaddddrreesssseess
+
+  There is a usenet newsgroup about the Scheme Programming language:
+  comp.lang.scheme
+
+  MMiisscceelllleeaannoouuss
+
+  Following addresses contains also interesting material about the
+  Scheme language
+
+  +o  The Scheme FAQ
+     http://www.cs.cmu.edu:8001/Web/Groups/AI/html/faqs/lang/scheme/top.htmlheme/scheme-
+     repository
+
+  +o  The Scheme Home Page at MIT http://www-swiss.ai.mit.edu/scheme-
+     home.html
+
+  +o  The Scheme Underground web page:
+     http://www.ai.mit.edu/projects/su/su.html
+
+  11..88..  SSuubbjjeecctt:: DDiiffffeerreenncceess wwiitthh RR44RRSS
+
+
+  SSyymmbboollss
+
+  STk symbol syntax has been augmented to allow case significant
+  symbols. Many global symbols have been added to the global
+  environment, see Appendix B of the SSTTkk Reference Manual.
+
+  TTyyppeess
+
+  STk implements all the types defined as mandatory in R4RS. However,
+  complex numbers and rational numbers (which are defined but not
+  required in R4RS) are not implemented. The lack of these types implies
+  that some functions of R4RS are not defined.
+
+  Some types which are not defined in R4RS are implemented in STk. Those
+  types are listed below:
+
+  +o  input string port type
+
+  +o  output string port type
+
+  +o  keyword type
+
+  +o  Tk command type (to use the Tk widgets)
+
+  +o  environment type (environments are first class in STk)
+
+  +o  macro type
+
+  +o  address type (obsolete now)
+
+  +o  hash table type
+
+  +o  process type (launch and communication with subprocess)
+
+  +o  socket type (TCP/UDP sockets)
+
+  +o  regexp type (access to tcl regexp)
+
+  PPrroocceedduurreess
+
+  The following procedures are required by R4RS and are not implemented
+  in the STk interpreter:
+
+  +o  transcript-off
+
+  +o  transcript-on
+
+  These procedure can be easily simulated with various Unix tools such
+  as _s_c_r_i_p_t or _f_e_p.
+
+  The following procedures are not implemented in the STk interpreter
+  whereas they are defined in R4RS (but not required). They are all
+  related to complex or rational numbers:
+
+  +o  numerator
+
+  +o  denominator
+
+  +o  rationalize
+
+  +o  make-rectangular
+
+  +o  make-polar
+
+  +o  real-part
+
+  +o  imag-part
+
+  +o  magnitude
+
+  +o  angle
+
+  This is more detailed in the Appendix B of the STk Reference Manual.
+
+  11..99..  SSuubbjjeecctt:: CCoommppaattiibbiilliittyy wwiitthh SSLLIIBB
+
+
+  Aubrey Jaffer maintains a package called SSLLIIBB which is a portable
+  Scheme library which provides compatibility and utility functions for
+  all standard Scheme implementations. To use this package, you have
+  just to type
+
+  (require "slib")
+
+  and follow the instructions given in the library to use a particular
+  package.
+
+  22..  CCoonnttrriibbuutteedd PPaacckkaaggeess
+
+
+  Small (in size) contributions are included in the release. Among them
+  we can cite:
+
+  +o  _S_T_k_-_w_t_o_u_r: A didactic demo to learn SSTTkk written by Suresh Srinivas
+     (ssriniva@cs.indiana.edu)
+
+  +o  _S_t_e_t_r_i_s _: A tetris game written by Harvey J. Stein
+     (hjstein@math.huji.ac.il)
+
+  +o  _Q_u_e_e_n_s: The famous 8 queens problem by Grant Edwards
+     (grante@winternet.com)
+
+  +o  _T_t_t: A 3-D Tic-Tac-Toe by Edin "Dino" Hodzic ehodzic@scu.edu
+
+  Complex contributions are kept in the
+  ftp://kaolin.unice.fr/pub/Contribdirectory. This directory contains
+  also old code which should probably be updated to work with current
+  STk release. Among the packages which can be found in this directory
+  are:
+
+
+  +o  _E_n_v_D_r_a_w: is a environment diagramming package which draws
+     environment diagrams as taught in Abelson and Sussman's _S_t_r_u_c_t_u_r_e
+     _a_n_d _I_n_t_e_r_p_r_e_t_a_t_i_o_n _o_f _C_o_m_p_u_t_e_r _L_a_n_g_u_a_g_e_s. It was written as an
+     instructional tool for the CS61A course at the University of
+     California at Berkeley. The environment diagrammer is a
+     metacircular evaluator which draws procedures, environments, and
+     box and pointer diagrams along with all the accompanying symbols
+     and mutation. It includes a box and pointer diagrammer which
+     handles circular list structures, cons cell mutation, and also will
+     watch for modification of any symbols known to be pointing to drawn
+     cells. The author of this very neat package is Josh MacDonald
+     jmacd@po.EECS.Berkeley.EDU
+
+  +o  _W_W_W is a HTML browser which greatly enhances the hbrowse demo which
+     is part of STk distribution. You should look at this package.
+     Author: Harvey J. Stein hjstein@math.huji.ac.il
+
+  +o  _N_a_n_o_c_a_d is chemistery CAD program which allows you to create small
+     molecules and to rotate them. The author of this package is Will
+     Ware wware@world.std.com
+
+  +o
+
+  Some packages are not in the kaolin Contrib directory:
+
+  +o  A preemptive thread package can be found at
+     ftp://ftp.cs.uoregon.edu/pub/lth/tasking-alpha2.tar.gz The uthor of
+     this package is Lars Thomas Hansen lth@cs.uoregon.edu
+
+  +o  A low level interface to the Postgres 95 Database can be found at
+     http://www.webbuild.com/~rtoy/pgstk/http://www.webbuild.com/~rtoy/pgstk/
+     .
+
+  +o  _T_a_b_u_l_a _r_a_s_a is a system written by David Fox which use the STk
+     interpreter (but not Tk).This package can be found at ?????. (TO BE
+     COMPLETED)
+
+  +o  spice package from Fritz.Heinrichmeyer@fernuni-hagen.de (I cannot
+     find the reference)
+
+  +o
+
+  33..  SSTTkk ttiippss
+
+
+  TO BE COMPLETED
+
+  44..  SSTTkkllooss ttiippss
+
+
+  TO BE COMPLETED
+
+  55..  GGeettttiinngg mmoorree iinnffoorrmmaattiioonn aabboouutt TTkk
+
+
+  There are two reference book about Tk (of course, you better not read
+  the chapters about Tcl ;-):
+
+  +o  "Tcl and the Tk Toolkit" by John Ousterhout (the author of the
+     Tcl/Tk package), ISBN  0-201-63337-X, Addison-Wesley, April 1994.
+
+  +o  "Practical Programming in Tcl and Tk" by Brent Welch, ISBN
+     0-13-182007-9, Prentice Hall, 1995.
+
+  There is also a Usenet newsgroup for Tcl/Tk: comp.lang.tcl A FAQ, for
+  Tcl/Tk is regulary posted in comp.lang.tcl.annonce
+  66..  MMiisscceelllleeaannoouuss
+
+
+  66..11..  SSuubbjjeecctt:: TThhee SSTTkk MMaaiilliinngg LLiisstt
+
+
+  There is a mailing list for STk located on kaolin.unice.fr. The intent
+  of this mailing list is to permit to STk users to share experiences,
+  expose problems, submit ideas and everything which you find
+  interesting (and which is related to STk).
+
+  To _s_u_b_s_c_r_i_b_e to the mailing list, simply send a message with the word
+  "subscribe" in the Subject: field of you mail. Mail must be sent to
+  the following address: stk-request@kaolin.unice.fr.
+
+  To _u_n_s_u_b_s_c_r_i_b_e from the mailing list, send a mail at previous e-mail
+  address with the word "unsubscribe" in the Subject: field.
+
+  For more information on the mailing list management, send a message
+  with the word "help" in the Subject: field of your mail. In
+  particular, it is possible to find all the messages which have already
+  been sent on the STk mailing list.
+
+  Subscription/un-subscription/information requests are processed
+  automatically without human intervention. If something goes wrong,
+  send a mail to eg@unice.fr
+
+  Once you have properly subscribe to the mailing list,
+
+  +o  you can send your messages about STk to stk@kaolin.unice.fr
+
+  +o  you will receive all the messages of the mailing list to the e-mail
+     address you used when you subscribed to the list.
+
+  The mailing list is archived at:
+
+  +o  http://kaolin.unice.fr/mlist/Hypermail/index.htmlin hypertext
+     format, or
+
+  +o  ftp://kaolin.unice.fr/pub/MailingList/index.htmlas raw text.
+
+  66..22..  SSuubbjjeecctt:: RReeppoorrttiinngg aa BBuugg
+
+
+  When you find a bug in STk, please send its description to the
+  following address stk-bugs@kaolin.unice.fr. Don't forget to indicate
+  the STk version you use, the architecture and the system release on
+  which you run the interpreter. STk version and architecture can be
+  found by using the version and machine-type Scheme primitives. If
+  possible, try to find a small program which exhibit the bug. Even
+  better, if you have a patch, plese send it at the previous address.
+
+  66..33..  SSuubbjjeecctt:: UUssiinngg SSTTkk ffrroomm EEmmaaccss
+
+
+  There are several ways to call STk from emacs. One simple way consists
+  to add the following lines in your file $HOME/.emacs:
+
+  TO BE COMPLETED (with ILISP)
+
+
+
+
+
+
+

@@ -1,0 +1,104 @@
+'\"
+'\" Copyright (c) 1990-1994 The Regents of the University of California.
+'\" Copyright (c) 1994-1995 Sun Microsystems, Inc.
+'\"
+'\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" @(#) label.n 1.26 95/08/12 17:35:10
+'\" 
+.so STk-man.macros
+.TH label n 3.1 STk "Tk Built-In Commands"
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+label \- Create and manipulate label widgets
+.SH SYNOPSIS
+(\fBlabel\fI \fIwidget\-name \fR?\fIoptions\fR?)
+.SO
+:anchor	:font	:image	:takefocus
+:background	:foreground	:justify	:text
+:bitmap	:highlightbackground	:padx	:textvariable
+:borderwidth	:highlightcolor	:pady	:underline
+:cursor	:highlightthickness	:relief	:wraplength
+.SE
+.SH "WIDGET-SPECIFIC OPTIONS"
+.OP :height height Height height
+Specifies a desired height for the label.
+If an image or bitmap is being displayed in the label then the value is in
+screen units (i.e. any of the forms acceptable to \fBTk_GetPixels\fR);
+for text it is in lines of text.
+If this option isn't specified, the label's desired height is computed
+from the size of the image or bitmap or text being displayed in it.
+.OP :width width Width width
+Specifies a desired width for the label.
+If an image or bitmap is being displayed in the label then the value is in
+screen units (i.e. any of the forms acceptable to \fBTk_GetPixels\fR);
+for text it is in characters.
+If this option isn't specified, the label's desired width is computed
+from the size of the image or bitmap or text being displayed in it.
+.BE
+
+.SH DESCRIPTION
+.PP
+The \fBlabel\fR procedure creates a new window (given by the
+\fIwidget\-name\fR argument) and makes it into a label widget.
+Additional
+options, described above, may be specified on the procedure line
+or in the option database
+to configure aspects of the label such as its colors, font,
+text, and initial relief.  The \fBlabel\fR procedure returns its
+\fIwidget\-name\fR argument.  At the time this procedure is invoked,
+there must not exist a window named \fIwidget\-name\fR, but
+\fIwidget\-name\fR's parent must exist.
+.PP
+A label is a widget
+that displays a textual string, bitmap or image.
+If text is displayed, it must all be in a single font, but it
+can occupy multiple lines on the screen (if it contains newlines
+or if wrapping occurs because of the \fBwrapLength\fR option) and
+one of the characters may optionally be underlined using the
+\fBunderline\fR option.
+The label can be manipulated in a few simple ways, such as
+changing its relief or text, using the procedures described below.
+
+.SH "WIDGET PROCEDURE"
+.PP
+The \fBlabel\fR procedure creates a new STk procedure whose
+name is \fIwidget\-name\fR.  This
+procedure may be used to invoke various
+operations on the widget.  It has the following general form:
+.CS
+(\fIwidget\-name option \fR?\fIarg arg ...\fR?)
+.CE
+\fIOption\fR and the \fIarg\fRs
+determine the exact behavior of the procedure.  The following
+procedures are possible for label widgets:
+.TP
+(\fIwidget\-name '\fBcget\fR \fIoption\fR)
+Returns the current value of the configuration option given
+by \fIoption\fR.
+\fIOption\fR may have any of the values accepted by the \fBlabel\fR
+procedure.
+.TP
+(\fIwidget\-name '\fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?)
+Query or modify the configuration options of the widget.
+If no \fIoption\fR is specified, returns a list describing all of
+the available options for \fIwidget\-name\fR (see \fBTk_ConfigureInfo\fR for
+information on the format of this list).  If \fIoption\fR is specified
+with no \fIvalue\fR, then the procedure returns a list describing the
+one named option (this list will be identical to the corresponding
+sublist of the value returned if no \fIoption\fR is specified).  If
+one or more \fIoption\-value\fR pairs are specified, then the procedure
+modifies the given widget option(s) to have the given value(s);  in
+this case the procedure returns an empty string.
+\fIOption\fR may have any of the values accepted by the \fBlabel\fR
+procedure.
+
+.SH BINDINGS
+.PP
+When a new label is created, it has no default event bindings:
+labels are not intended to be interactive.
+
+.SH SEE ALSO
+message

@@ -1,0 +1,248 @@
+<HTML><HEAD><TITLE>Tk Built-In Commands - grid manual page</TITLE></HEAD>
+<BODY bgcolor = #c3c3ff>
+<H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageBlue.gif"> grid</H2>
+<I>Geometry manager that arranges widgets in a grid</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<H3><A NAME="M2">SYNOPSIS</A></H3>
+(<B>grid </B><I>option arg </I>?<I>arg ...</I>?)<BR>
+<H3><A NAME="M3">DESCRIPTION</A></H3>
+The <B>grid</B> procedure is used to communicate with the grid
+geometry manager that arranges widgets in rows and columns inside
+of another window, called the geometry master (or master window).
+The <B>grid</B> procedure can have any of several forms, depending
+on the <I>option</I> argument:
+<P>
+<DL>
+<DT><A NAME="M4">(<B>grid </B><I>slave </I>?<I>slave ...</I>? ?<I>options</I>?)</A><DD>
+If the first argument to <B>grid</B> is a window name (any value
+starting with ``.''), then the procedure is processed in the same
+way as <B>grid configure</B>.
+<P>
+<DT><A NAME="M5">(<B>grid 'bbox </B><I>master column row</I>)</A><DD>
+The bounding box (in pixels) is returned for the space occupied by
+the grid position indicated by <I>column</I> and <I>row</I>.  The
+return value consists of 4 integers.  The first two are the pixel offset
+from the master window (x then y) of the top-left corner of the grid
+cell, and the second two are the width and height of the cell.
+<P>
+<DT><A NAME="M6">(<B>grid 'columnconfigure </B><I>master index </I>?<I>:option value...</I>?)</A><DD>
+Query or set the column properties of the <I>index</I> column of the 
+geometry master, <I>master</I>.
+The valid options are <B>:minsize</B> and <B>:weight</B>.
+The <B>:minsize</B> option sets the minimum column size, in screen units,
+and the <B>:weight</B> option (a floating point value)
+sets the relative weight for apportioning
+any extra spaces among
+columns.  If no value is specified, the current value is returned.
+<P>
+<DT><A NAME="M7">(<B>grid 'configure </B><I>slave </I>?<I>slave ...</I>? ?<I>options</I>?)</A><DD>
+The arguments consist of the names of one or more slave windows
+followed by pairs of arguments that specify how
+to manage the slaves.
+The characters <B>:</B>,  <B>x</B> and <B>^</B>, 
+can be specified instead of a window name to alter the default
+location of a <I>slave</I>, as described in the ``RELATIVE PLACEMENT''
+section, below.
+The following options are supported:
+<P>
+<P>
+<DL>
+<DT><A NAME="M8"><B>:column </B><I>n</I></A><DD>
+Insert the slave so that it occupies the <I>n</I>th column in the grid.
+Column numbers start with 0.  If this option is not supplied, then the
+slave is arranged just to the right of previous slave specified on this
+call to <I>grid</I>, or column &quot;0&quot; if it is the first slave.  For each
+<B>x</B> that immediately precedes the <I>slave</I>, the column position
+is incremented by one.  Thus the <B>x</B> represents a blank column
+for this row in the grid.
+<P>
+<DT><A NAME="M9"><B>:columnspan </B><I>n</I></A><DD>
+Insert the slave so that it occupies <I>n</I> columns in the grid.
+The default is one column, unless the window name is followed by a
+<B>:</B>, in which case the columnspan is incremented once for each immediately
+following <B>:</B>.
+<P>
+<DT><A NAME="M10"><B>:in </B><I>other</I></A><DD>
+Insert the slave(s) in the master
+window given by <I>other</I>.  The default is the first slave's
+parent window.
+<P>
+<DT><A NAME="M11"><B>:ipadx </B><I>amount</I></A><DD>
+The <I>amount</I> specifies how much horizontal internal padding to
+leave on each side of the slave(s).
+The <I>amount</I> must be a valid screen distance, such as <B>2</B> or <B>.5c</B>.
+It defaults to 0.
+<P>
+<DT><A NAME="M12"><B>:ipady </B><I>amount</I></A><DD>
+The <I>amount</I> specifies how much vertical internal padding to
+leave on on the top and bottom of the slave(s).
+The <I>amount</I>  defaults to 0.
+<P>
+<DT><A NAME="M13"><B>:padx </B><I>amount</I></A><DD>
+The <I>amount</I> specifies how much horizontal external padding to
+leave on each side of the slave(s).
+The <I>amount</I> defaults to 0.
+<P>
+<DT><A NAME="M14"><B>:pady </B><I>amount</I></A><DD>
+The <I>amount</I> specifies how much vertical external padding to
+leave on the top and bottom of the slave(s).
+The <I>amount</I> defaults to 0.
+<P>
+<DT><A NAME="M15"><B>:row </B><I>n</I></A><DD>
+Insert the slave so that it occupies the <I>n</I>th row in the grid.
+Row numbers start with 0.  If this option is not supplied, then the
+slave is arranged on the same row as the previous slave specified on this
+call to <B>grid</B>, or the first unoccupied row if this is the first slave.
+<P>
+<DT><A NAME="M16"><B>:rowspan </B><I>n</I></A><DD>
+Insert the slave so that it occupies <I>n</I> rows in the grid.
+The default is one row.  If the next <B>grid</B> procedure contains
+<B>^</B> characters instead of <I>slaves</I> that line up with the columns
+of this <I>slave</I>, then the <B>rowspan</B> of this <I>slave</I> is
+extended by one.
+<P>
+<DT><A NAME="M17"><B>:sticky </B><I>style</I></A><DD>
+If a slave's parcel is larger than its requested dimensions, this
+option may be used to position (or stretch) the slave within its cavity.
+<I>Style</I>  is a string that contains zero or more of the characters
+<B>n</B>, <B>s</B>, <B>e</B> or <B>w</B>.
+The string can optionally contains spaces or
+commas, but they are ignored.  Each letter refers to a side (north, south,
+east, or west) that the slave will &quot;stick&quot; to.  If both <B>n</B> and <B>s</B> (or
+<B>e</B> and <B>w</B>) are specified, the slave will be stretched to fill the entire
+height (or width) of its cavity.  The <B>sticky</B> option subsumes the
+combination of <B>:anchor</B> and <B>:fill</B> that is used by <B><A HREF="./pack.n.html">pack</A></B>.
+The default is the empty string, which causes the slave to be centered
+in its cavity, at its requested size.
+<P>
+</DL>
+<UL>
+<P>
+If any of the slaves are already managed by the geometry manager
+then any unspecified options for them retain their previous values rather
+than receiving default values.
+</UL>
+<DT><A NAME="M18">(<B>grid 'forget </B><I>slave </I>?<I>slave ...</I>?)</A><DD>
+Removes each of the <I>slave</I>s from grid for its
+master and unmaps their windows.
+The slaves will no longer be managed by the grid geometry manager.
+<P>
+<DT><A NAME="M19">(<B>grid 'info </B><I>slave</I>)</A><DD>
+Returns a list whose elements are the current configuration state of
+the slave given by <I>slave</I> in the same option-value form that
+might be specified to <B>grid configure</B>.
+The first two elements of the list are ``<B>:in </B><I>master</I>'' where
+<I>master</I> is the slave's master.
+<P>
+<DT><A NAME="M20">(<B>grid 'location </B><I>master x y</I>)</A><DD>
+Given  <I>x</I> and <I>y</I> values in screen units relative to the master window, 
+the column and row number at that <I>x</I> and <I>y</I> location is returned.
+For locations that are above or to the left of the grid, <B>-1</B> is returned.
+<P>
+<DT><A NAME="M21">(<B>grid 'propagate </B><I>master</I>)</A><DD>
+<DT><A NAME="M22">(<B>grid 'propagate </B><I>master</I> <I>boolean</I>)</A><DD>
+If <I>boolean</I> has a true boolean value
+then propagation is enabled for <I>master</I>, which must be a window
+name (see ``GEOMETRY PROPAGATION'' below).
+If <I>boolean</I> has a false boolean value then propagation is
+disabled for <I>master</I>.
+In either of these cases an empty list is returned.
+If <I>boolean</I> is omitted then the procedure returns <B>#f</B> or
+<B>#t</B> to indicate whether propagation is currently enabled
+for <I>master</I>.
+Propagation is enabled by default.
+<P>
+<DT><A NAME="M23">(<B>grid 'rowconfigure</B> <I>master index </I>)</A><DD>
+<DT><A NAME="M24">(<B>grid 'rowconfigure</B> <I>master index </I><I>:option value...</I>)</A><DD>
+Query or set the row properties of the <I>index</I> row of the 
+geometry master, <I>master</I>.
+The valid options are <B>:minsize</B> and <B>:weight</B>.
+<B>Minsize</B> sets the minimum row size, in screen units, and <B>weight</B>
+sets the relative weight for apportioning any extra spaces among
+rows.  If no value is specified, the current value is returned.
+<P>
+<DT><A NAME="M25">(<B>grid 'size </B><I>master</I>)</A><DD>
+Returns the size of the grid (in columns then rows) for <I>master</I>.
+The size is determined either by the <I>slave</I> occupying the largest
+row or column, or the largest column or row with a <B>minsize</B> or
+<B>weight</B>.
+<P>
+<DT><A NAME="M26">(<B>grid 'slaves </B><I>master</I>)</A><DD>
+<DT><A NAME="M27">(<B>grid 'slaves </B><I>master</I> <I>:option value</I>)</A><DD>
+If no options are supplied, a list of all of the slaves in <I>master</I>
+are returned. <I>Option</I> can be either <B>:row</B> or <B>:column</B> which
+causes only the slaves in the row (or column) specified by <I>value</I>
+to be returned.
+<P>
+</DL>
+<H3><A NAME="M28">RELATIVE PLACEMENT</A></H3>
+The <B>grid</B> procedure contains a limited set of capabilities that
+permit layouts to be created without specifying the row and column 
+information for each slave.  This permits slaves to be rearranged, 
+added, or removed without the need to explicitly specify row and
+column information.
+When no column or row information is specified for a <I>slave</I>, 
+default values are chosen for
+<B>column</B>, <B>row</B>, <B>columnspan</B> and <B>rowspan</B>
+at the time the <I>slave</I> is managed. The values are chosen
+based upon the current layout of the grid, the position of the <I>slave</I>
+relative to other <I>slave</I>s in the same grid procedure, and the presence
+of the characters <B>:</B>, <B>^</B>, and <B>^</B> in <B>grid</B>
+procedure where <I>slave</I> names are normally expected.
+<P>
+<DL>
+<DT><A NAME="M29"><B>:</B></A><DD>
+This increases the columnspan of the <I>slave</I> to the left.  Several
+<B>:</B>'s in a row will successively increase the columnspan. S <B>:</B>
+may not follow a <B>^</B> or a <B>x</B>.
+<P>
+<DT><A NAME="M30"><B>x</B></A><DD>
+This leaves an empty column between the <I>slave</I> on the left and
+the <I>slave</I> on the right.
+<P>
+<DT><A NAME="M31"><B>^</B></A><DD>
+This extends the <B>rowspan</B> of the <I>slave</I> above the <B>^</B>'s
+in the grid.  The number of <B>^</B>'s in a row must match the number of
+columns spanned by the <I>slave</I> above it.
+<P>
+</DL>
+<H3><A NAME="M32">GEOMETRY PROPAGATION</A></H3>
+Grid normally computes how large a master must be to
+just exactly meet the needs of its slaves, and it sets the
+requested width and height of the master to these dimensions.
+This causes geometry information to propagate up through a
+window hierarchy to a top-level window so that the entire
+sub-tree sizes itself to fit the needs of the leaf windows.
+However, the <B>grid propagate</B> procedure may be used to
+turn off propagation for one or more masters.
+If propagation is disabled then grid will not set
+the requested width and height of the master window.
+This may be useful if, for example, you wish for a master
+window to have a fixed size that you specify.
+
+<H3><A NAME="M33">RESTRICTIONS ON MASTER WINDOWS</A></H3>
+The master for each slave must either be the slave's parent
+(the default) or a descendant of the slave's parent.
+This restriction is necessary to guarantee that the
+slave can be placed over any part of its master that is
+visible without danger of the slave being clipped by its parent.
+
+<H3><A NAME="M34">STACKING ORDER</A></H3>
+If the master for a slave is not its parent then you must make sure
+that the slave is higher in the stacking order than the master.
+Otherwise the master will obscure the slave and it will appear as
+if the slave hasn't been managed correctly.
+The easiest way to make sure the slave is higher than the master is
+to create the master window first:  the most recently created window
+will be highest in the stacking order.
+
+<H3><A NAME="M35">CREDITS</A></H3>
+The <B>grid</B> procedure is based on the <I>GridBag</I> geometry manager
+written by D. Stein.  The first table-based geometry manager for Tk
+was <B>blt_table</B>, written by George Howlett;  many of the features
+of <B>grid</B> are similar to features in <B>blt_table</B>.
+
+<H3><A NAME="M36">SEE ALSO</A></H3>
+<B><A HREF="./pack.n.html">pack</A></B>, <B><A HREF="./place.n.html">place</A></B>
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookBlue.gif"> Back to the <B>STk</B> main page</A>
+</BODY></HTML>

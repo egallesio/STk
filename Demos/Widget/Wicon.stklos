@@ -1,0 +1,42 @@
+;;;;
+;;;; STk adaptation of the Tk widget demo.
+;;;;
+;;;; This demonstration script creates a toplevel window containing
+;;;; buttons that display bitmaps instead of text.
+;;;;
+
+(define (demo-icon)
+  (let* ((w     (make-demo-toplevel  "icon"
+				     "Iconic Button Demonstration"   
+				     "This window shows three ways of using bitmaps or images in radiobuttons and checkbuttons.  On the left are two radiobuttons, each of which displays a bitmap and an indicator.  In the middle is a checkbutton that displays a different image depending on whether it is selected or not.  On the right is a checkbutton that displays a single bitmap but changes its background color to indicate whether or not it is selected."))
+	 (up    (make <Bitmap-Image> :file (string-append *STk-images* "flagup")))
+	 (down  (make <Bitmap-Image> :file (string-append *STk-images* "flagdown")))
+	 (left  (make <Frame> :parent w :border-width 10))
+	 (right (make <Frame> :parent w :border-width 10)))
+
+	;; Create Radio buttons
+	(pack (make <Radio-button>
+		    :parent left
+		    :bitmap (string-append "@" *STk-images* "letters")
+		    :variable 'letters
+		    :value "full")	      
+	      (make <Radio-button>
+		    :parent left
+		    :bitmap (string-append "@" *STk-images* "noletters")
+		    :variable 'letters
+		    :value "empty")
+	      :pady "3m")
+
+	;; Create check buttons
+	(pack (make <Check-button>
+		    :parent right
+		    :image down
+		    :select-image up
+		    :indicator-on #f)
+	      (make <Check-button>
+		    :parent right
+		    :bitmap (string-append "@" *STk-images* "letters")
+		    :indicator-on "0"
+		    :select-color "SeaGreen1")
+	      :side "left" :expand #t :padx "5m")
+	(pack left right :side "left" :expand #t)))

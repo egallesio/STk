@@ -1,0 +1,109 @@
+#!/bin/sh
+:;exec /usr/local/bin/stk -f "$0" "$@"
+;;;;
+;;;; h b r o w s e 		-- A HTML browser
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 31-Aug-1995 15:15
+;;;; Last file update: 17-Sep-1996 11:49
+;;;;
+
+(require "Tk-classes")
+(require "Basics")
+(require "html")
+
+(expand-heap 100000) ; but far lower than netscape ;-)
+
+;;;
+;;; <Gauge> class definition 
+;;;
+;;; I don't use the <Canvas> class to avoid its (long) loading.
+;;; Only a little bit of canvas capabilities are used here
+
+(define-class <Gauge> (<Tk-simple-widget> <Tk-sizeable>)
+  ((foreground  :accessor foreground :initform "red" :init-keyword :foreground)))
+
+(define-method tk-constructor ((self <Gauge>))
+  Tk:canvas)
+
+(define-method initialize ((self <Gauge>) initargs)
+  (next-method)
+  (slot-set! self 'highlight-thickness 0)
+  ((slot-ref self 'Id) 'create 'line 0 0 0 0
+		       :fill (foreground self)
+		       :width (* 2 (+ (height self) 2))))
+
+(define (update-gauge g percent)
+  ((slot-ref g 'Id) 'coords "1" 0 0 (quotient (* (width g) percent) 100) 0)
+  (update))
+
+;;;
+;;; Make interface
+;;;
+(let ((loc (make <Labeled-entry> 
+		 :title "Location:" 
+		 :text-variable '*location*
+		 :font "fixed"))
+      (txt (make <Scroll-text> 
+		 :font "fixed"
+		 :width 80 
+		 :height 45)))
+
+  (bind (Id loc) "<Return>" (lambda () (Html:view-url (Id txt) (value loc))))
+  (pack loc :expand #f :fill "x"    :padx 30 :pady 4)
+  (pack txt :expand #t :fill "both")
+
+  (let* ((f     (make <Frame>))
+	 (lab   (make <Label> :parent f :anchor "w"))
+	 (gauge (make <Gauge> :width 200 :height 10 :background "blue")))
+    (pack lab   :padx 30 :pady 4 :side "left")
+    (pack gauge :padx 10 :side "right")
+    (pack f     :fill "x")
+    
+    ;; See if a file was specified 
+    (when (> *argc* 0)
+	(set! *location* (car *argv*))
+	(Html:view-url (Id txt) *location*))
+
+    ;; Initialize hooks
+    (let ((counter    0)
+	  (pos	     0))
+      (set! html:hook-formatting 
+	    (lambda ()
+	      (when (= counter 20)
+		(set! pos (modulo (+ pos 5) 105))
+		(set! counter 0)
+		(update-gauge gauge pos))
+	      (set! counter (+ counter 1))))
+
+      (set! html:hook-start-loading
+	    (lambda ()
+	      (slot-set! txt 'cursor "watch")
+	      (slot-set! lab 'text "Loading Document ...")
+	      (update)))
+	
+      (set! html:hook-stop-loading 
+	    (lambda ()
+	      (update-gauge gauge 0)
+	      (slot-set! lab 'text "Document done.")
+	      (slot-set! txt 'cursor "top_left_arrow")
+	      (after 5000 (lambda () (slot-set! lab 'text "")))))
+
+      (set! html:hook-title 
+	    (lambda (value)
+	      (slot-set! *top-root* 'title value)))
+
+      (set! html:hook-location
+	    (lambda (value)
+	      (set! *location* value))))))
+

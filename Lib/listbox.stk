@@ -1,0 +1,376 @@
+;;;;
+;;;; Listboxes bindings and procs
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; This software is a derivative work of other copyrighted softwares; the
+;;;; copyright notices of these softwares are placed in the file COPYRIGHTS
+;;;;
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 17-May-1993 12:35
+;;;; Last file update:  2-Sep-1996 10:48
+;;;;
+
+(let ()
+;;
+;; Global variables used in this file
+;; 
+(define tk::listbox-selection  '())
+(define tk::listbox-prev       0)
+
+;; ----------------------------------------------------------------------
+;; Class bindings for listbox widgets.
+;; ----------------------------------------------------------------------
+
+(define-binding "Listbox" "<1>" (|W| x y)
+  ; Note: the check for existence of %W below is because this binding
+  ; is sometimes invoked after a window has been deleted (e.g. because
+  ; there is a double-click binding on the widget that deletes it).  Users
+  ; can put "break"s in their bindings to avoid the error, but this check
+  ; makes that unnecessary.
+  (when (winfo 'exists |W|)
+    (Tk:listbox-begin-select |W| (|W| 'index (format #f "@~A,~A" x y)))))
+
+(define-binding "Listbox" "<Double-1>" 
+  ;; Ignore double clicks so that users can define their own behaviors.
+  ;; Among other things, this prevents errors if the user deletes the
+  ;; listbox on a double click.
+  (lambda () #f))
+
+(define-binding "Listbox" "<B1-Motion>" (|W| x y)
+  (set! tk::x x)
+  (set! tk::y y)
+  (Tk:listbox-motion |W| (|W| 'index (format #f "@~A,~A" x  y))))
+
+(define-binding "Listbox" "<ButtonRelease-1>" (|W| x y)
+  (Tk:cancel-repeat)
+  (|W| 'activate (format #f "@~A,~A" x  y)))
+
+(define-binding "Listbox" "<Shift-1>" (|W| x y)
+  (Tk:listbox-begin-extend |W| (|W| 'index (format #f "@~A,~A" x  y))))
+
+(define-binding "Listbox" "<Control-1>" (|W| x y)
+  (Tk:listbox-begin-toggle |W| (|W| 'index (format #f "@~A,~A" x  y))))
+
+(define-binding "Listbox" "<B1-Leave>" (|W| x y)
+  (set! tk::x x)
+  (set! tk::y y)
+  (Tk:listbox-auto-scan |W|))
+
+(define-binding "Listbox" "<B1-Enter>" ()
+  (Tk:cancel-repeat))
+
+(define-binding "Listbox" "<Up>" (|W|)
+  (Tk:listbox-up-down |W| -1))
+
+(define-binding "Listbox" "<Shift-Up>" (|W|)
+  (Tk:listbox-extend-up-down |W| -1))
+
+(define-binding "Listbox" "<Down>" (|W|)
+  (Tk:listbox-up-down |W| 1))
+
+(define-binding "Listbox" "<Shift-Down>" (|W|)
+  (Tk:listbox-extend-up-down |W| 1))
+
+(define-binding "Listbox" "<Left>" 	    (|W|) (|W| 'xview 'scroll -1 'units))
+(define-binding "Listbox" "<Control-Left>"  (|W|) (|W| 'xview 'scroll -1 'pages))
+(define-binding "Listbox" "<Right>" 	    (|W|) (|W| 'xview 'scroll  1 'units))
+(define-binding "Listbox" "<Control-Right>" (|W|) (|W| 'xview 'scroll  1 'pages))
+(define-binding "Listbox" "<Prior>" 	    (|W|) (|W| 'yview 'scroll -1 'pages))
+(define-binding "Listbox" "<Next>" 	    (|W|) (|W| 'yview 'scroll  1 'pages))
+(define-binding "Listbox" "<Control-Prior>" (|W|) (|W| 'xview 'scroll -1 'pages))
+(define-binding "Listbox" "<Control-Next>"  (|W|) (|W| 'xview 'scroll  1 'pages))
+
+(define-binding "Listbox" "<Home>" (|W|)
+  (|W| 'xview 'moveto 0))
+
+(define-binding "Listbox" "<End>" (|W|)
+  (|W| 'xview 'moveto 1))
+
+(define-binding "Listbox" "<Control-Home>" (|W|)
+  (|W| 'activate 0)
+  (|W| 'see 0)
+  (|W| 'selection 'clear 0 'end)
+  (|W| 'selection 'set   0))
+
+(define-binding "Listbox" "<Shift-Control-Home>" (|W|)
+  (Tk:listbox-data-extend |W| 0))
+
+(define-binding "Listbox" "<Control-End>" (|W|)
+  (|W| 'activate 'end)
+  (|W| 'see 'end)
+  (|W| 'selection 'clear 0 'end)
+  (|W| 'selection 'set 'end))
+
+(define-binding "Listbox" "<Shift-Control-End>" (|W|)
+  (Tk:listbox-data-extend |W| 'end))
+
+(define-binding "Listbox" "<F16>" (|W|)
+  (when (equal? (selection 'own :displayof |W|) |W|)
+    (clipboard 'clear :displayof |W|)
+    (clipboard 'append :displayof |W| (selection 'get :displayof |W|))))
+
+(define-binding "Listbox" "<space>" (|W|)
+  (Tk:listbox-begin-select |W| (|W| 'index 'active)))
+
+(define-binding "Listbox" "<Select>" (|W|)
+  (Tk:listbox-begin-select |W| (|W| 'index 'active)))
+
+(define-binding "Listbox" "<Control-Shift-space>" (|W|)
+  (Tk:listbox-begin-extend |W| (|W| 'index 'active)))
+
+(define-binding "Listbox" "<Shift-Select>" (|W|)
+  (Tk:listbox-begin-extend |W| (|W| 'index 'active)))
+
+(define-binding "Listbox" "<Escape>" (|W|)
+  (Tk:listbox-cancel |W|))
+
+(define-binding "Listbox" "<Control-slash>" (|W|)
+  (Tk:listbox-select-all |W|))
+
+(define-binding "Listbox" "<Control-backslash>" (|W|)
+  (unless (equal? (tk-get |W| :selectmode != "browse"))
+     (|W| 'selection 'clear 0 'end)))
+
+;; Additional Tk bindings that aren't part of the Motif look and feel:
+
+(define-binding "Listbox" "<Shift-2>" (|W| x y)
+  (|W| 'scan 'mark x y))
+
+(define-binding "Listbox" "<B2-Motion>" (|W| x y)
+  (|W| 'scan 'dragto x y))
+
+
+;; Tk:listbox-begin-select --
+;;
+;; This procedure is typically invoked on button-1 presses.  It begins
+;; the process of making a selection in the listbox.  Its exact behavior
+;; depends on the selection mode currently in effect for the listbox;
+;; see the Motif documentation for details.
+;;
+;; w -		The listbox widget.
+;; el -		The element for the selection operation (typically the
+;;		one under the pointer).  Must be in numerical form.
+
+(define (Tk:listbox-begin-select w el)
+  (if (equal? (tk-get w :selectmode) "multiple")
+      (if (w 'selection 'includes el)
+	  (w 'selection 'clear el)
+	  (w 'selection 'set el))
+      (begin
+	(w 'selection 'clear 0 'end)
+	(w 'selection 'set el)
+	(w 'selection 'anchor el)
+	(set! tk::listbox-selection '())
+	(set! tk::listbox-prev el))))
+
+
+;; Tk:listbox-Motion --
+;;
+;; This procedure is called to process mouse motion events while
+;; button 1 is down.  It may move or extend the selection, depending
+;; on the listbox's selection mode.
+;;
+;; w -		The listbox widget.
+;; el -		The element under the pointer (must be a number).
+
+(define (Tk:listbox-Motion w el)
+  (unless (= el tk::listbox-prev)
+    (let ((anchor (w 'index 'anchor))
+	  (mode   (tk-get w :selectmode)))
+      (cond
+         ((string=? mode "browse")
+	        (w 'selection 'clear 0 'end)
+		(w 'selection 'set el)
+		(set! tk::listbox-prev el))
+	 
+	((string=? mode "extended")
+	 	(let ((i tk::listbox-prev))
+		  (if (w 'selection 'includes 'anchor)
+		      (begin
+			(w 'selection 'clear i el)
+			(w 'selection 'set 'anchor el))
+		      (begin
+			(w 'selection 'clear i el)
+			(w 'selection 'clear 'anchor el)))
+		  (while (and (< i el) (< i anchor))
+		     (if (member i tk::listbox-selection)
+			 (w 'selection 'set i))
+		     (set! i (+ i 1)))
+		  (while (and (> i el) (> i anchor))
+		     (if (member i tk::listbox-selection)
+			 (w 'selection 'set i))
+		     (set! i (- i 1)))
+		  (set! tk::listbox-prev el)))))))
+
+;; Tk:listbox-BeginExtend --
+;;
+;; This procedure is typically invoked on shift-button-1 presses.  It
+;; begins the process of extending a selection in the listbox.  Its
+;; exact behavior depends on the selection mode currently in effect
+;; for the listbox;  see the Motif documentation for details.
+;;
+;; w -		The listbox widget.
+;; el -		The element for the selection operation (typically the
+;;		one under the pointer).  Must be in numerical form.
+
+(define (Tk:listbox-begin-extend w el)
+  (when (and (equal? (tk-get w :selectmode) "extended")
+	     (w 'selection 'includes 'anchor))
+	(Tk:listbox-motion w el)))
+
+
+;; Tk:listbox-begin-toggle --
+;;
+;; This procedure is typically invoked on control-button-1 presses.  It
+;; begins the process of toggling a selection in the listbox.  Its
+;; exact behavior depends on the selection mode currently in effect
+;; for the listbox;  see the Motif documentation for details.
+;;
+;; w -		The listbox widget.
+;; el -		The element for the selection operation (typically the
+;;		one under the pointer).  Must be in numerical form.
+
+(define (Tk:listbox-begin-toggle w el)
+  (when (equal? (tk-get w :selectmode) "extended")
+     (set! tk::listbox-selection (w 'curselection))
+     (set! tk::listbox-prev 	 el)
+     (w 'selection 'anchor el)
+     (if (w 'selection 'includes el)
+	 (w 'selection 'clear el)
+	 (w 'selection 'set   el))))
+
+
+;; Tk:listbox-auto-scan --
+;; This procedure is invoked when the mouse leaves an entry window
+;; with button 1 down.  It scrolls the window up, down, left, or
+;; right, depending on where the mouse left the window, and reschedules
+;; itself as an "after" command so that the window continues to 'scroll until
+;; the mouse moves back into the window or the mouse button is released.
+;;
+;; Arguments:
+;; w -		The entry window.
+
+(define (Tk:listbox-auto-scan w)
+  (when (winfo 'exists w)
+    (let* ((x    tk::x)
+	   (y    tk::y)
+	   (scan (lambda ()
+		   (Tk:listbox-motion w (w 'index (format #f "@~A,~A" x y)))
+		   (set! tk::after-id (after 50 (lambda ()
+						  (Tk:listbox-auto-scan w)))))))
+      (cond
+       ((>= y (winfo 'height w)) (w 'yview 'scroll +1 'units) (scan))
+       ((< y 0)		     (w 'yview 'scroll -1 'units) (scan))
+       ((>= x (winfo 'width w))  (w 'xview 'scroll +2 'units) (scan))
+       ((< x 0)		     (w 'xview 'scroll -2 'units) (scan))))))
+
+
+;; Tk:listbox-up-down --
+;;
+;; Moves the location cursor (active element) up or down by one element,
+;; and changes the selection if we're in browse or extended selection
+;; mode.
+;;
+;; w -		The listbox widget.
+;; amount -	+1 to move down one item, -1 to move back one item.
+
+(define (Tk:listbox-up-down w amount)
+  (let ((mode (tk-get w :selectmode)))
+    (w 'activate (+ (w 'index 'active) amount))
+    (w 'see 'active)
+    (cond 
+      ((string=? mode "browse") 
+                 (w 'selection 'clear 0 'end)
+		 (w 'selection 'set 'active))
+      ((string=? mode "extended") (w 'selection 'clear 0 'end)
+				  (w 'selection 'set 'active)
+				  (w 'selection 'anchor 'active)
+				  (set! tk::listbox-prev      (w 'index 'active))
+				  (set! tk::listbox-selection '())))))
+
+;; Tk:listbox-extend-up-down --
+;;
+;; Does nothing unless we're in extended selection mode;  in this
+;; case it moves the location cursor (active element) up or down by
+;; one element, and extends the selection to that point.
+;;
+;; w -		The listbox widget.
+;; amount -	+1 to move down one item, -1 to move back one item.
+
+(define (Tk:listbox-extend-up-down w amount)
+  (when  (equal? (tk-get w :selectmode) "extended")
+     (w 'activate (+ (w 'index 'active) amount))
+     (w 'see 'active)
+     (Tk:listbox-motion w (w 'index 'active))))
+
+
+;; Tk:listbox-data-extend
+;;
+;; This procedure is called for key-presses such as Shift-KEndData.
+;; If the selection mode isn't multiple or extend then it does nothing.
+;; Otherwise it moves the active element to el and, if we're in
+;; extended mode, extends the selection to that point.
+;;
+;; w -		The listbox widget.
+;; el -		An integer element number.
+
+(define (Tk:listbox-data-extend w el)
+  (let ((mode (tk-get w :selectmode)))
+    (cond 
+       ((string=? mode "extended")	(w 'activate el)
+					(w 'see el)
+					(if (w 'selection 'includes 'anchor)
+					    (Tk:listbox-motion w el)))
+       ((string=? mode "multiple")	(w 'activate $el)
+					(w 'see el)))))
+
+;; Tk:listbox-cancel
+;;
+;; This procedure is invoked to cancel an extended selection in
+;; progress.  If there is an extended selection in progress, it
+;; restores all of the items between the active one and the anchor
+;; to their previous selection state.
+;;
+;; w -		The listbox widget.
+
+(define (Tk:listbox-cancel w)
+  (when (equal? (tk-get w :selectmode) "extended")
+     (let ((first (w 'index 'anchor))
+	   (last  tk::listbox-prev))
+       (when (> first last)
+	  (let ((tmp first))
+	    (set! first last)
+	    (set! last tmp)))
+       (w 'selection 'clear first last)
+       (while (<= first last)
+	  (if (member first tk::listbox-selection)
+	      (w 'selection 'set first))
+	  (set! first (+ first 1))))))
+
+;; Tk:listbox-select-all
+;;
+;; This procedure is invoked to handle the "select all" operation.
+;; For single and browse mode, it just selects the active element.
+;; Otherwise it selects everything in the widget.
+;;
+;; w -		The listbox widget.
+
+(define (Tk:listbox-select-all w)
+  (let ((mode (tk-get w :selectmode)))
+    (if (or (equal? mode "single") (equal? mode "browse"))
+	(begin
+	  (w 'selection 'clear 0 'end)
+	  (w 'selection 'set 'active))
+	(w 'selection 'set 0 'end))))
+
+)

@@ -1,0 +1,172 @@
+\begin{alltt}
+{\it ;;;;}
+{\it ;;;; {\bf Utilities}}
+{\it ;;;;}
+(define make-tk-name 
+  (lambda (parent)
+    (gensym (format #f "~A.v" (if (eq? parent *root*) "" (Id parent))))))
+
+(define split-options
+  (lambda (valid-slots initargs)
+    (letrec 
+        ((separate 
+          (lambda (valids args tk-opt other)
+            (if (null? args)
+                (cons tk-opt other)
+                (if (member (car args) valids)
+                    (separate valids (cddr args)
+                              (list* (car args) (cadr args) tk-opt)
+                              other)
+                    (separate valids (cddr args)
+                              tk-opt 
+                              (list* (car args) (cadr args) other)))))))
+      (separate valid-slots initargs '() '()))))
+
+{\it ;;;;}
+{\it ;;;; {\bf Simple widgets}}
+{\it ;;;;}
+{\it ;; }
+{\it ;; {\tt{}<}Tk-metaclass{\tt{}>} class definition and associated methods}
+{\it ;;}
+(define-class {\tt{}<}Tk-Metaclass{\tt{}>} ({\tt{}<}class{\tt{}>})
+  ((valid-options :accessor Tk-valid-options)))
+
+
+(define-method initialize ((class {\tt{}<}Tk-Metaclass{\tt{}>}) initargs)
+  (next-method)
+  {\it ;; Build a list of allowed keywords. These keywords will be passed to}
+  {\it ;; the Tk-command at build time}
+  (let ((slots        (slot-ref class 'slots))
+        (res         '())
+        (tk-virtual?  (lambda(s) 
+                        (eqv? (get-slot-allocation s) :tk-virtual))))
+    (for-each (lambda (s)
+                (when (tk-virtual? s)
+                  (let ((key (make-keyword (car s))))
+                    (set! res (cons key res)))))
+              slots)
+    {\it ;; Store this list in the new allocated class}
+    (set! (Tk-valid-options class) res)))
+
+
+(define-method compute-get-n-set ((class {\tt{}<}Tk-Metaclass{\tt{}>}) slot)
+  (if (eqv? (get-slot-allocation slot) :tk-virtual)
+      {\it ;; this is a Tk-virtual slot}
+      (let ((opt (make-keyword (car slot))))
+        (list (lambda (o)   (list-ref ((Id o) 'configure opt) 4))
+              (lambda (o v) ((Id o) 'configure opt v))))
+      {\it ;; call super compute-get-n-set}
+      (next-method)))
+
+{\it ;;}
+{\it ;; Basic virtual classes for widgets: {\tt{}<}Tk-object{\tt{}>}, {\tt{}<}Tk-widget{\tt{}>} and }
+{\it ;; {\tt{}<}Tk-simple-widget{\tt{}>}}
+{\it ;;}
+(define-class {\tt{}<}Tk-object{\tt{}>} ()
+  ((Id      :accessor Id)                             {\it ;; Widget Id}
+   (parent  :accessor parent :init-keyword :parent))) {\it ;; Parent widget}
+
+(define-class {\tt{}<}Tk-widget{\tt{}>} ({\tt{}<}Tk-object{\tt{}>})
+  ())
+
+
+
+(define-class {\tt{}<}Tk-simple-widget{\tt{}>} ({\tt{}<}Tk-widget{\tt{}>})
+  {\it ;; Each widget has at least the slot bg for its background colour}
+  ((bg :accessor bg :init-keyword :bg :allocation :tk-virtual))
+  :metaclass {\tt{}<}Tk-Metaclass{\tt{}>})
+
+
+(define-method initialize ((self {\tt{}<}Tk-simple-widget{\tt{}>}) initargs)
+  {\it ;; Use split-options on initargs to separate STklos slots }
+  {\it ;; from Tk ones. Set parent to the root window if not specified}
+  {\it ;; in initargs}
+  (let* ((options (split-options (Tk-valid-options (class-of self))
+                                 initargs))
+         (parent  (get-keyword :parent (cdr options) *root*)))
+    {\it ;; Call the Tk command which creates the widget}
+    (set! (Id self) (apply (tk-constructor self)
+                           (make-tk-name parent) 
+                           (car options)))
+    {\it ;; Initialize other slots (i.e. non Tk-virtual ones)}
+    (next-method self (cdr options))))
+
+
+{\it ;;}
+{\it ;; We can now define three widget classes: {\tt{}<}Label{\tt{}>}, {\tt{}<}Button{\tt{}>} and {\tt{}<}Canvas{\tt{}>}}
+{\it ;; as well as their associated Tk-command}
+{\it ;;}
+(define-class {\tt{}<}Label{\tt{}>} ({\tt{}<}Tk-simple-widget{\tt{}>})
+  ((font :accessor font :init-keyword :font :allocation :tk-virtual)
+   (text :accessor text :init-keyword :text :allocation :tk-virtual)))
+
+(define-class {\tt{}<}Button{\tt{}>} ({\tt{}<}Label{\tt{}>})
+  ((command :accessor command :init-keyword :command 
+            :allocation :tk-virtual)))
+
+(define-class {\tt{}<}Canvas{\tt{}>} ({\tt{}<}Tk-simple-widget{\tt{}>})
+  ())
+
+(define-method tk-constructor ((self {\tt{}<}Label{\tt{}>}))  label)
+(define-method tk-constructor ((self {\tt{}<}Button{\tt{}>})) button)
+(define-method tk-constructor ((self {\tt{}<}Canvas{\tt{}>})) canvas)
+
+
+{\it ;;;;}
+{\it ;;;; {\bf Canvas items widgets}}
+{\it ;;;;}
+{\it ;; }
+{\it ;; {\tt{}<}Tk-item-metaclass{\tt{}>} class definition and associated methods  }
+{\it ;; }
+
+(define-class {\tt{}<}Tk-item-metaclass{\tt{}>} ({\tt{}<}Tk-Metaclass{\tt{}>})
+  ())
+
+(define-method compute-get-n-set ((class {\tt{}<}Tk-item-metaclass{\tt{}>}) slot)
+  (if (eqv? (get-slot-allocation slot) :tk-virtual)
+      {\it ;; this is a Tk-virtual slot}
+      (let ((opt (make-keyword (car slot))))
+        (list (lambda (obj)   
+                (list-ref ((Id obj) 'itemconfigure (Cid obj) opt) 4))
+              (lambda (obj val) 
+                ((Id obj) 'itemconfigure (Cid obj) opt val))))
+      {\it ;; call super compute-get-n-set}
+      (next-method)))
+
+{\it ;;}
+{\it ;; Basic virtual class: {\tt{}<}Tk-canvas-item{\tt{}>} }
+{\it ;;}
+(define-class {\tt{}<}Tk-canvas-item{\tt{}>} ({\tt{}<}Tk-object{\tt{}>})
+  ((Cid :accessor  Cid)
+   (width :accessor width :allocation :tk-virtual))
+  :metaclass {\tt{}<}Tk-item-metaclass{\tt{}>})
+
+
+(define-method initialize ((self {\tt{}<}Tk-canvas-item{\tt{}>}) initargs)
+  (let* ((options (split-options (Tk-valid-options (class-of self))
+                                 initargs))
+         (parent  (get-keyword :parent (cdr options) #f))
+         (coords  (get-keyword :coords (cdr options) #f)))
+    (if (not (and parent coords))
+        (error "Parent widget and coordinates must be given!!"))
+    (set! (Id  self) (Id parent))
+    (set! (CId self) (apply (Id parent) 
+                            'create
+                            (canvas-item-initializer self)
+                            (append coords (car options))))
+    {\it ;; Initialize other slots (i.e. non Tk-virtual ones)}
+    (next-method self (cdr options))))
+
+{\it ;;}
+{\it ;; We can now define two canvas item classes: {\tt{}<}Line{\tt{}>} and {\tt{}<}Rectangle{\tt{}>}}
+{\it ;; as well as their associated initializer}
+{\it ;;}
+(define-class {\tt{}<}Line{\tt{}>}      ({\tt{}<}Tk-canvas-item{\tt{}>})
+  ())
+
+(define-class {\tt{}<}Rectangle{\tt{}>} ({\tt{}<}Tk-canvas-item{\tt{}>})
+  ((fill  :accessor fill :init-keyword :fill :allocation :tk-virtual)))
+
+(define-method canvas-item-initializer ((self {\tt{}<}Rectangle{\tt{}>})) "rectangle")
+(define-method canvas-item-initializer ((self {\tt{}<}Line{\tt{}>}))      "line")
+\end{alltt}

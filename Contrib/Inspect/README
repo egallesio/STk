@@ -1,0 +1,5 @@
+This directory contains the STk graphical Inspector. It is a first step toward
+a true debugger (able to set breakpoints, to see the stack, ...).
+This work is due to Eric Fintzel (fintzel@kaolin.unice.fr).
+
+Hacked by Erick Gallesio (eg@unice.fr) for version 2 integration.

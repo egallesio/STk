@@ -1,0 +1,39 @@
+<HTML>
+<HEAD>
+<TITLE>STk error help (13-Sep-1995)</TITLE>
+<!-- Changed by: Erick Gallesio, 13-Sep-1995 -->
+</HEAD>
+
+<BODY>
+<H1><IMG ALIGN=BOTTOM SRC="Img/note.gif">STk stack window help</H1>
+<IMG ALIGN=TOP SRC="Img/colorline.gif">
+<BR>
+
+This window allows you to see the stack when an error occurs. Two
+sub-windows compose it.
+  <UL> 
+  <LI> the topmost window (labeled <strong>Stack content</strong>)
+       shows the contents of the stack when the error occurred. Each line
+       contains the parameters passed to an invocation of the <TT>eval</TT> 
+       procedure (last call to eval is on the first line).
+       <BR>
+       This window is also made of two sub-windows.
+       <UL>
+	  <LI> On the left side is the environment in which the expression 
+	       must be evaluated. Click on an item of this list to view
+	       the bindings defined in this environment.
+
+      	  <LI> On the right side, there is the expression to evaluate. Clicking on
+	       an item of this list sets the <em>Listener</em> 
+	       default environment to the environment of this expression.
+       </UL>
+  <LI> the bottom window (labeled <strong>Listener</strong>) allows you to 
+       interact with the <EM>STk</EM> interpreter. The listener reads an
+       expression in this window, evaluates it (in the environment previously
+       selected in the above <EM>Stack window</EM>) and prints its result in 
+       this window. 
+</UL>
+<hr>
+<A HREF="STk-hlp.html"><IMG ALIGN=TOP SRC="Img/home.gif"> Go to top</A>
+</BODY>
+</HTML>

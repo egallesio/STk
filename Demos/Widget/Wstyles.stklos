@@ -1,0 +1,164 @@
+;;;;
+;;;; STk adaptation of the Tk widget demo.
+;;;;
+;;;; This demonstration script creates a text widget that illustrates the
+;;;; various display styles that may be set for tags.
+;;;;
+(require "Tk-classes")
+
+(define (demo-styles)
+  (let* ((w          (make-demo-toplevel "styles"
+					 "Text Demonstration - Display Styles"
+					 ""))
+	 (t          (make <Scroll-Text> :parent w :setgrid #t :width 70 
+			   :height 23 :wrap "word"))
+	 (bold       (make <Text-tag> :parent t 
+			   :font "-*-Courier-Bold-O-Normal--*-120-*-*-*-*-*-*"))
+	 (big        (make <Text-tag> :parent t
+			   :font "-*-Courier-Bold-R-Normal--*-140-*-*-*-*-*-*"))
+	 (huge       (make <Text-tag> :parent t
+			   :font "-*-Helvetica-Bold-R-Normal--*-240-*-*-*-*-*-*"))
+	 (color1     (make <Text-tag> :parent t
+			   :background "#a0b7ce"))
+	 (color2     (make <Text-tag> :parent t
+			   :foreground "red"))
+	 (raised     (make <Text-tag> :parent t
+			   :relief "raised" :border-width 1))		       
+	 (sunken     (make <Text-tag> :parent t
+			   :relief "sunken" :border-width 1))
+	 (bgstipple  (make <Text-tag> :parent t
+			   :background "black" :border-width 0 
+			   :bg-stipple "gray25"))
+	 (fgstipple  (make <Text-tag> :parent t
+			   :fg-stipple "gray50"))
+	 (underline  (make <Text-tag> :parent t
+			   :underline #t))
+	 (overstrike (make <Text-tag> :parent t
+			   :overstrike #t))
+	 (right      (make <Text-tag> :parent t
+			   :justify "right"))
+	 (center     (make <Text-tag> :parent t
+			   :justify "center"))
+	 (super      (make <Text-tag> :parent t
+			   :font "-Adobe-Courier-Medium-R-Normal--*-100-*-*-*-*-*-*"
+			   :offset 4))
+	 (sub 	     (make <Text-tag> :parent t
+			   :font "-Adobe-Courier-Medium-R-Normal--*-100-*-*-*-*-*-*"
+			   :offset -2))
+	 (margins    (make <Text-tag> :parent t
+			   :lmargin1 "12m" 
+			   :lmargin2 "6m"
+			   :rmargin  "10m"))
+	 (spacing    (make <Text-tag> :parent t
+			   :spacing1 "10p" 
+			   :spacing2 "2p"
+			   :lmargin1 "12m"
+			   :lmargin2 "6m" 
+			   :rmargin "10m")))
+
+    (when (= (winfo 'depth w) 1)
+        ;; Monochrome
+	(slot-set! color1 :background   "black")
+	(slot-set! color1 :foreground   "white")
+	(slot-set! color2 :background   "black")
+	(slot-set! color2 :foreground   "white")
+	(slot-set! raised :background   "white")
+	(slot-set! raised :relief       "raised")
+	(slot-set! raised :border-width 1)
+	(slot-set! sunken :background   "white")
+	(slot-set! sunken :relief       "sunken")
+	(slot-set! sunken :border-width 1))
+
+    (pack t :expand #t :fill "both")
+
+    (text-insert t "end" 
+"Text widgets like this one allow you to display information in a
+variety of styles.  Display styles are controlled using a mechanism
+called "						'()
+"tags" 							bold
+". Tags are just textual names that you can apply to one
+or more ranges of characters within a text widget.  You can configure
+tags with various display styles.  If you do this, then the tagged
+characters will be displayed with the styles you chose.  The
+available display styles are:" 				'()
+"\n1. Font." 						big
+"  You can choose any X font, " 			'()
+"large" 						huge
+" or "  						'()
+"small.\n"	 					'()
+"\n2. Color." 						big
+"  You can change either the " 				'()
+"background" 						color1
+" or "							'()
+"foreground" 						color2
+"\ncolor, or "						'()
+"both" 							(list color1 color2)
+".\n"							'()
+"\n3. Stippling." 					big
+"  You can cause either the "				'()
+"background" 						bgstipple
+" or "							'()
+"foreground " 						fgstipple
+"information to be drawn with a stipple fill instead of a solid fill."
+							'()
+"\n4. Underlining." 					big
+"  You can "						'()
+"underline" 						underline
+" ranges of text.\n"					'()
+"\n5. Overstrikes." 					big
+"  You can "						'()
+"draw lines through" 					overstrike
+" ranges of text.\n"					'()
+"\n6. 3-D effects." 					big
+"  You can arrange for the background to be drawn
+with a border that makes characters appear either "	'()
+"raised" 						raised
+" or "							'()
+"sunken" 						sunken
+".\n"							'()
+"\n7. Justification." 					big
+" You can arrange for lines to be displayed
+left-justified,\n"					'()
+"right-justified, or\n"					right
+"centered.\n" 						center
+"\n8. Superscripts and subscripts."  			big
+" You can control the vertical position of text \
+to generate superscript effects like 10"		'()
+"n" 							super
+" or\nsubscript effects like X"				'()
+"i" 							sub
+".\n"							'()
+"\n9. Margins." 					big
+" You can control the amount of extra space left"	'()
+" on\neach side of the text:\n"				'()
+"This paragraph is an example of the use of " 		margins
+"margins.  It consists of a single line of text "	margins
+"that wraps around on the screen.  There are two "	margins
+"separate left margin values, one for the first "	margins
+"display line associated with the text line, "		margins
+"and one for the subsequent display lines, which "	margins
+"occur because of wrapping.  There is also a "		margins
+"separate specification for the right margin, "		margins
+"which is used to choose wrap points for lines.\n"	margins
+"\n10. Spacing." 					big
+" You can control the spacing of lines with three\n"	'()
+"separate parameters.  \"Spacing1\" tells how much "	'()
+"extra space to leave\nabove a line, \"spacing3\" "	'()
+"tells how much space to leave below a line,\nand "	'()
+"if a text line wraps, \"spacing2\" tells how much "	'()
+"space to leave\nbetween the display lines that "	'()
+"make up the text line.\n"				'()
+"These indented paragraphs illustrate how spacing " 	spacing
+"can be used.  Each paragraph is actually a " 		spacing
+"single line in the text widget, which is " 		spacing
+"word-wrapped by the widget.\n" 			spacing
+"Spacing1 is set to 10 points for this text, " 		spacing
+"which results in relatively large gaps between " 	spacing
+"the paragraphs.  Spacing2 is set to 2 points, " 	spacing
+"which results in just a bit of extra space " 		spacing
+"within a pararaph.  Spacing3 isn't used " 		spacing
+"in this example.\n" 					spacing
+"To see where the space is, select ranges of " 		spacing
+"text within these paragraphs.  The selection " 	spacing
+"highlight will cover the extra space." 		spacing
+)))

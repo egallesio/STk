@@ -1,0 +1,6 @@
+;; Even more event binding: accessing the event parameters
+
+(entry '.e1 :relief "sunken")
+(pack .e1 :expand #t :fill "x")
+(bind .e1 "<ButtonPress-1>" (lambda (x y) 
+			      (format #t "button down at ~a,~a\n" x y)))

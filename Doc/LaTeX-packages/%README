@@ -1,0 +1,5 @@
+This directory contains files which are used in various doc files but which 
+are not distributed in some LaTeX versions.
+This are mainly files for using A4 paper. 
+You must place this directory in your TEXINPUTS shell variable if you want to use 
+one of this file. 

@@ -1,0 +1,133 @@
+;;;;
+;;;; Focus management
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; This software is a derivative work of other copyrighted softwares; the
+;;;; copyright notices of these softwares are placed in the file COPYRIGHTS
+;;;;
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 27-Jul-1995 14:10
+;;;; Last file update:  4-Aug-1995 11:15
+;;;;
+
+
+;; tk_focusNext --
+;; This procedure returns the name of the next window after "w" in
+;; "focus order" (the window that should receive the focus next if
+;; Tab is typed in w).  "Next" is defined by a pre-order search
+;; of a top-level and its non-top-level descendants, with the stacking
+;; order determining the order of siblings.  The "-takefocus" options
+;; on windows determine whether or not they should be skipped.
+
+(define Tk:focus-on  	(lambda (w) #t))
+(define Tk:focus-off	(lambda (w) #f))
+
+(define Tk:focus-next 	#f)	; will be redefined below
+(define Tk:focus-prev	#f)	; will be redefined below
+
+;; ----------------------------------------------------------------------
+;; Default bindings for keyboard traversal.
+;; ----------------------------------------------------------------------
+
+(bind "all" "<Tab>" 	   (lambda (|W|) (focus (Tk:focus-next |W|))))
+(bind "all" "<Shift-Tab>"  (lambda (|W|) (focus (Tk:focus-prev |W|))))
+
+
+(let ()
+  (define (all-children w)
+    (let ((res '()))
+      (for-each (lambda (x)
+		  (unless (equal? x (winfo 'toplevel x))
+		      ;; x is not a toplevel
+			  (set! res (append res (all-children x)))))
+		(winfo 'children w))
+      (cons w res)))
+
+   (define (focusable? w)
+     (let ((focus #t)
+	   (value #f))
+
+       (if (winfo 'viewable w)
+	   (begin
+	     ;; 1. See if this window tells something in its :takefocus option
+	     (if (not (catch (set! value (tk-get w :takefocus))))
+		 ;; widget has :takefocus option
+		 ;; Remark: :takefocus option must be a closure. But original 
+		 ;; Tcl/Tk code can define the focus action as "0" or "1".
+		 ;; Those values can be hard-coded in the Tk library. So take them
+		 ;; into account
+		 (cond 
+		    ((boolean? value) (set! focus value))
+		    ((closure? value) (set! focus (value w)))))
+
+	     ;; 2. See if the window is not disabled
+	     (if focus
+		 (if (not (catch (set! value (tk-get w :state))))
+		     ;; widget has a :state option
+		     (set! focus (not (equal? value "disabled")))))
+
+	     ;; 3. Claim that the window is focuable inly if it exist some
+	     ;;    keyboard binding associated to it
+	     (if focus
+		 (let ((p (open-output-string)))
+		   (display (bind w) p)
+		   (display (bind (winfo 'class w)) p)
+		   (let ((s (get-output-string p)))
+		     (set! focus (or (string-find? "Key" s)
+				     (string-find? "Focus" s)))))))
+	   ;; w is not visible
+	   (set! focus #f))
+       focus))
+
+  (define (find-next w l)
+    (let* ((len   (length l))
+	   (index (- len (length (member w l)))))
+
+      ;; index is the position of the current widget in l
+      (let loop ((i (modulo (+ index 1) len)))
+	   (if (= i index)
+	       ;; not found, return w
+	       w
+	       (let ((widget (list-ref l i)))
+		 (if (focusable? widget)
+		     widget
+		     (loop (modulo (+ i 1) len))))))))
+
+  
+  (set! Tk:focus-next 
+	(lambda (w)
+	  (let ((all (all-children (winfo 'toplevel w))))
+	    (if (= (length all) 1)
+		(car all)
+		(find-next w all)))))
+
+  (set! Tk:focus-prev
+	(lambda (w)
+	  (let ((all (all-children (winfo 'toplevel w))))
+	    (if (= (length all) 1)
+		(car all)
+		(find-next w (reverse all)))))))
+
+
+(define (Tk:focus-follows-mouse)
+  (let ((old    (bind "all" "<Enter>"))
+	(script (lambda(|W| d)
+		  (if (or (equal? d "NotifyAncestor")
+			  (equal? d "NotifyNonlinear")
+			  (equal? d "NotifyInferior"))
+		      (focus |W|)))))
+    (add-binding "all" "<Enter>" script #f)))
+
+ 
+
+

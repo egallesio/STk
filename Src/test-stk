@@ -1,0 +1,11 @@
+#!/bin/sh
+#
+# A simple shell script to test stk without installing it
+#
+
+STK_LIBRARY=../Lib 
+STK_LOAD_PATH=$STK_LIBRARY:../STklos:../STklos/Tk:../STklos/Tk/Composite:../Extensions
+STK_HELP_PATH=../Help
+
+export STK_LIBRARY STK_LOAD_PATH STK_HELP_PATH
+exec ../Src/stk "$@"

@@ -1,0 +1,83 @@
+<HTML><HEAD><TITLE>Tk Built-In Commands - send manual page</TITLE></HEAD>
+<BODY bgcolor = #c3c3ff>
+<H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageBlue.gif"> send</H2>
+<I>Execute a command in a different application</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<H3><A NAME="M2">SYNOPSIS</A></H3>
+(<B>send ?</B><I>options</I>? <I>app cmd </I>?<I>arg arg ...</I>?)<BR>
+(<B>inhibit-send</B>)<BR>
+<H3><A NAME="M3">DESCRIPTION</A></H3>
+This procedure arranges for <I>cmd</I> (and <I>arg</I>s) to be executed in the
+application named by <I>app</I>. It returns the result (converted to a string)
+that procedure execution.
+<I>App</I> may be the name of any application whose main window is
+on the display containing the sender's main window;  it need not
+be within the same process.
+If no <I>arg</I> arguments are present, then the procedure to be executed is
+contained entirely within the <I>cmd</I> argument.  If one or
+more <I>arg</I>s are present, they are concatenated to form the
+procedure to be executed, just as for the <B>eval</B> procedure.
+<P>
+If the initial arguments of the procedure begin with ``-''
+they are treated as options.  The following options are
+currently defined:
+<P>
+<DL>
+<DT><A NAME="M4"><B>:async</B></A><DD>
+Requests asynchronous invocation.  In this case the <B>send</B>
+procedure will complete immediately without waiting for <I>cmd</I>
+to complete in the target application;  no result will be available
+and errors in the sent procedure will be ignored.
+If the target application is in the same process as the sending
+application then the \fB\:async\fR option is ignored.
+<P>
+<DT><A NAME="M5"><B>:displayof</B> <I>widget-name</I></A><DD>
+Specifies that the target application's main window is on the display
+of the window given by <I>widget-name</I>, instead of the display containing
+the application's main window.
+<P>
+<DT><A NAME="M6"><B>:-</B></A><DD>
+Serves no purpose except to terminate the list of options.  This
+option is needed only if <I>app</I> could contain a leading ``-''
+character.
+
+<P>
+</DL>
+<H3><A NAME="M7">APPLICATION NAMES</A></H3>
+The name of an application is set initially from the name of the
+program or script that created the application.
+You can query and change the name of an application with the
+<B><A HREF=.././tk.n.html>tk appname</A></B> procedure.
+
+<H3><A NAME="M8">DISABLING SENDS</A></H3>
+The <B>send</B> procedure can be removed from an application 
+by calling the <B>inhibit-send</B><I> procedure.
+If the </I><B>send</B> procedure is removed then the application
+will not respond to incoming send requests anymore,  nor will it
+be able to issue outgoing requests.
+Communication can be reenabled by invoking the <B><A HREF=.././tk.n.html>tk appname</A></B>
+procedure.
+
+<H3><A NAME="M9">SECURITY</A></H3>
+The <B>send</B> procedure is potentially a serious security loophole,
+since any application that can connect to your X server can send
+scripts to your applications.
+These incoming scripts can use STk to read and
+write your files and invoke subprocesses under your name.
+Host-based access control such as that provided by <B>xhost</B>
+is particularly insecure, since it allows anyone with an account
+on particular hosts to connect to your server, and if disabled it
+allows anyone anywhere to connect to your server.
+In order to provide at least a small amount of
+security, Tk checks the access control being used by the server
+and rejects incoming sends unless (a) <B>xhost</B>-style access control
+is enabled (i.e. only certain hosts can establish connections) and (b) the
+list of enabled hosts is empty.
+This means that applications cannot connect to your server unless
+they use some other form of authorization
+such as that provide by <B>xauth</B>.
+
+<H3><A NAME="M10">SEE ALSO</A></H3>
+<B><A HREF="./tk.n.html">tk</A></B>
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookBlue.gif"> Back to the <B>STk</B> main page</A>
+</BODY></HTML>

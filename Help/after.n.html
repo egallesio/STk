@@ -1,0 +1,82 @@
+<HTML><HEAD><TITLE>Tk Built-In Commands - after manual page</TITLE></HEAD>
+<BODY bgcolor = #c3c3ff>
+<H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageBlue.gif"> after</H2>
+<I>Execute a command after a time delay</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<H3><A NAME="M2">SYNOPSIS</A></H3>
+(<B>after </B><I>ms</I>)<BR>
+(<B>after </B><I>ms </I><I>thunk</I>)<BR>
+(<B>after 'cancel </B><I>id</I>)<BR>
+(<B>after 'cancel </B><I>thunk)</I><BR>
+(<B>after 'idle </B>?<I>thunk</I>?)<BR>
+(<B>after info</B>)<BR>
+(<B>after info </B><I>id</I>)<BR>
+<H3><A NAME="M3">DESCRIPTION</A></H3>
+The <B>after</B> procedure is used to delay execution of the program or to execute
+a procedure in background after a delay.  It has several forms,
+depending on the first argument to the procedure:
+<P>
+<DL>
+<DT><A NAME="M4">(<B>after </B><I>ms</I>)</A><DD>
+<I>Ms</I> must be an integer giving a time in milliseconds.
+The procedure sleeps for <I>ms</I> milliseconds and then returns.
+While the procedure is sleeping the application does not respond to
+X events or any other events.
+<P>
+<DT><A NAME="M5">(<B>after </B><I>ms thunk</I>)</A><DD>
+In this form the procedure returns immediately, but it arranges
+for a STk procedure to be executed <I>ms</I> milliseconds later as a
+background event handler.
+The procedure will be executed exactly once, at the given time.
+The delayed procedure must be a <I>thunk</I>.
+If an error occurs while executing the delayed procedure then the
+<B>tkerror</B> mechanism is used to report the error.
+The <B>after</B> procedure returns a symbol that can be used
+to cancel the delayed procedure using <B>after cancel</B>.
+<P>
+<DT><A NAME="M6">(<B>after 'cancel </B><I>id</I>)</A><DD>
+Cancels the execution of a delayed procedure that
+was previously scheduled.
+<I>Id</I> indicates which procedure should be canceled;  it must have
+been the return value from a previous <B>after</B> procedure.
+If the procedure given by <I>id</I> has already been executed then
+the <B>after cancel</B> procedure has no effect.
+<P>
+<DT><A NAME="M7">(<B>after 'cancel </B><I>thunk</I>)</A><DD>
+This procedure also cancels the execution of a delayed procedure. If there is
+a pending procedure that matches <I>thunk</I>, it is cancelled and will
+never be executed; if no such procedure is currently
+pending then the <B>after cancel</B> procedure has no effect.
+<P>
+<DT><A NAME="M8">(<B>after 'idle </B><I>thunk</I>)</A><DD>
+Arranges for the given <I>thunk</I> to be evaluated later as an idle handler
+The script will be run exactly once, the next time the Tk event
+loop is entered and there are no events to process.
+The procedure returns an identifier that can be used
+to cancel the delayed procedure using <B>after cancel</B>.
+If an error occurs while executing the script then the
+<B>tkerror</B> mechanism is used to report the error.
+<P>
+<DT><A NAME="M9">(<B>after 'info </B><I>id</I>)</A><DD>
+<DT><A NAME="M10">(<B>after 'info</B>)</A><DD>
+This procedure returns information about existing event handlers.
+If no <I>id</I> argument is supplied, then the procedure returns
+a list of the identifiers for all existing
+event handlers created by the <B>after</B> procedure for this
+interpreter.
+If <I>id</I> is supplied, it specifies an existing handler;
+<I>id</I> must have been the return value from some previous call
+to <B>after</B> and it must not have triggered yet or been cancelled.
+In this case the procedure returns a list with two elements.
+The first element of the list is the script associated
+with <I>id</I>, and the second element is either
+<B>idle</B> or <B>timer</B> to indicate what kind of event
+handler it is.
+
+
+<P>
+</DL>
+<H3><A NAME="M11">SEE ALSO</A></H3>
+<B>tkerror</B>
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookBlue.gif"> Back to the <B>STk</B> main page</A>
+</BODY></HTML>

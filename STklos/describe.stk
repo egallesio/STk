@@ -1,0 +1,94 @@
+;;;;
+;;;; The DESCRIBE method (partly stolen fom Elk lib)
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 21-Mar-1993 14:33
+;;;; Last file update: 27-Sep-1994 14:07
+;;;;
+
+(require "stklos")
+;;;
+;;; describe for simple objects
+;;;
+(define-method describe ((x <top>))
+  (format #t "~s is " x)
+  (cond
+     ((integer? x)      (format #t "an integer"))
+     ((real?    x)      (format #t "a real"))
+     ((null?	x)      (format #t "an empty list"))
+     ((boolean?	x)      (format #t "a boolean value (~s)" (if x 'true 'false)))
+     ((char?	x)      (format #t "a character, ascii value is ~s" 
+				(char->integer x)))
+     ((symbol?	x)      (format #t "a symbol"))
+     ((pair?	x)	(format #t "a list"))
+     ((string?	x)	(if (eqv? x "")
+			    (format #t "an empty string")
+			    (format #t "a string of length ~s" (string-length x))))
+     ((vector?  x)   	(if (eqv? x '#())
+			    (format #t "an empty vector")
+			    (format #t "a vector of length ~s" (vector-length x))))
+     ((procedure? x)	(format #t "a procedure"))
+     ((environment? x)	(format #t "an environment"))
+     ((eof-object? x)	(format #t "the end-of-file object.~%"))
+     (else	     	(format #t "an unknown object (~s)" x)))
+  (format #t ".~%"))
+
+
+;;;
+;;; describe for STklos instances
+;;;
+(define-method describe ((x <object>))
+  (format #t "~S is an instance of class ~A~%" x (class-name (class-of x)))
+
+  ;; print all the instance slots
+  (format #t "Slots are: ~%")
+  (for-each (lambda (slot)
+	      (let ((name (if (pair? slot) (car slot) slot)))
+		(format #t "     ~S = ~A~%" name 
+					    (if (slot-bound? x name) 
+						(format #f "~S" (slot-ref x name))
+						"#[unbound]"))))
+       (class-slots (class-of x)))
+  #f)
+
+;;;
+;;; Describe for classes
+;;;
+(define-method describe ((x <class>))
+  (format #t "~S is a class. It's an instance of ~A~%" 
+	  (class-name x) (class-name (class-of x)))
+
+  (format #t "Superclasses are:~%")
+  (for-each (lambda (class) (format #t "    ~A~%" (class-name class)))
+       (class-direct-supers x))
+
+  (format #t "Directs slots are:~%") 
+  (for-each (lambda (s) 
+	 (let ((slot (if (pair? s) (car s) s)))
+	   (format #t "    ~A~%" slot)))
+       (class-direct-slots x))
+  
+  (format #t "Class Precedence List is:~%")
+  (for-each (lambda (s) (format #t "    ~A~%" (class-name s))) 
+	    (class-precedence-list x))
+
+  (format #t "~%Field Initializers ~%    ")
+  (write (slot-ref x 'initializers)) (newline)
+
+  (format #t "~%Getters and Setters~%    ")
+  (write (slot-ref x 'getters-n-setters)) (newline)
+  #f
+)
+
+(provide "describe")
+

@@ -1,0 +1,568 @@
+;; pretty-printer by mf
+;*************************************************************
+(define *pp:port* #t)   ; default value = current output
+(define *pp:lgth* 80)   ; default value = max length of a line
+
+(define (pp obj . options)
+  ; obj = file name in a string or
+  ;       expression to be pretty printed
+  ; options = toutes facultatives
+  ; destination = file name in a string
+  ;               #t ==> current output (default value)
+  ;               #f ==> a string
+  ; line-length = integer >= 0 = max length of a line on output
+  ;               (default value = 80)
+  (let ((dest 'output))
+    (set! *pp:port* #t)
+    (set! *pp:lgth* 80)
+    (let loop ((L options))
+      (when (not (null? L))
+            ; there is options....
+            (cond ((string? (car L)) ; output in a file
+                   (set! *pp:port* (open-output-file (car L)))
+                   (set! dest 'file))
+                  ((integer? (car L))
+                   (set! *pp:lgth* (car L)))
+                  ((boolean? (car L)) ; current output or a string
+                   (when (not (car L))
+                         (set! *pp:port* (open-output-string))
+                         (set! dest 'string))))
+            (loop (cdr L))))
+
+    (if (string? obj)     ; file name
+        (let* ((p (open-input-file obj))
+              (to-pp (read p)))
+          (while (not (eof-object? to-pp))
+                 (*pp:pp-one-exp* to-pp)
+                 (format *pp:port* "~%")
+                 (set! to-pp (read p))))
+        (*pp:pp-one-exp* obj))
+    (cond ((eq? dest 'file) (close-output-port *pp:port*))
+          ((eq? dest 'string) (get-output-string *pp:port*)))))
+
+;*************************************************************
+;    pretty-print an expression
+;*************************************************************
+
+(define *pp:cur-pos* 0)   ; current position in line
+
+(define *pp:line* 1)      ; current line
+
+(define *pp:lgth-symb* 0) ; lgth of symb to write
+
+(define *printer-list* '(()))
+
+(define *pp:last-symb-is-new-line* #t)
+
+(define *pp:to-substitute* #t)
+
+(define *pp:last* 0)  ; for *pp:fit?*
+
+(define (*pp:pp-one-exp* expr)
+  (set! *pp:cur-pos* 0)   ; current position in line
+  (set! *pp:line* 1)      ; current line
+  (set! *pp:lgth-symb* 0) ; lgth of symb to write
+  (set! *pp:last-symb-is-new-line* #t)
+  (set! *pp:to-substitute* #t)
+  (set! *pp:last* 0)  ; for *pp:fit?*
+  (let ((expr (if (procedure? expr) (procedure-body expr)
+                  expr)))
+    (*pp:print-expr* expr *pp:cur-pos*)
+    (format *pp:port* "~%")
+    #t))
+
+
+(define (*pp:out-char* c)        ; output the char c NOT at end of line
+  ; c = left parenthesis|quote|quasiquote|unquote|unquote-splicing
+  (format *pp:port* "~A" c)
+  (set! *pp:last-symb-is-new-line* #t)
+  (set! *pp:cur-pos* (+ *pp:cur-pos* 1)))
+
+(define (*pp:left-par*) ; output a left parenthesis
+  (*pp:out-char* #\( ))
+
+(define (*pp:out-char-eol* c)     ; output the char c perhaps at end of line
+  ; c = right parenthesis|space|period
+  (format *pp:port* "~A" c)
+  (set! *pp:last-symb-is-new-line* #f)
+  (set! *pp:cur-pos* (+ *pp:cur-pos* 1)))
+
+(define (*pp:right-par*) ; output a right parenthesis
+  (*pp:out-char-eol* #\)))
+
+(define (*pp:space*)    ; output a space
+  (*pp:out-char-eol* #\space))
+
+(define (*pp:period*)        ; output " . "
+  (*pp:space*)
+  (*pp:out-char-eol* #\.)
+  (*pp:space*))
+
+(define (*pp:output-symb* symb)   ; output the symbol symb
+  (format *pp:port* "~S" symb)
+  (set! *pp:last-symb-is-new-line* #f)
+  (set! *pp:cur-pos* (+ *pp:cur-pos* *pp:lgth-symb*)))
+
+
+(define (*pp:newline-indent* x)  ; output a newline and x spaces
+  (when (not *pp:last-symb-is-new-line*)
+        (format *pp:port* "~%")
+        (cond ((<= x 0) #t)
+              ((>= x *pp:lgth*) (set! x 0))
+              (else
+               (format *pp:port* "~A" (make-string x #\space))))
+        (set! *pp:last-symb-is-new-line* #t)
+        (set! *pp:line* (+ *pp:line* 1))
+        (set! *pp:cur-pos* x)))
+
+
+; #t if expr will fit between *pp:last* and *pp:lgth*
+(define (*pp:fit?* expr)
+
+  (define (inc-pos? val)
+    (if (<= (+ *pp:last* val) *pp:lgth*)
+        (begin (set! *pp:last* (+ *pp:last* val)) #t)
+        #f))
+
+  (cond ((keyword? expr)
+         (set! *pp:lgth-symb* (string-length (keyword->string expr)))
+         (inc-pos? *pp:lgth-symb*))
+        ((symbol? expr)
+         (set! *pp:lgth-symb* (string-length (symbol->string expr)))
+         (inc-pos? *pp:lgth-symb*))
+        ((string? expr)    ; don't forget " "
+         (set! *pp:lgth-symb* (+ 2 (string-length expr)))
+         (inc-pos? *pp:lgth-symb*))
+        ((boolean? expr)   ; #t or #f
+         (set! *pp:lgth-symb* 2)
+         (inc-pos? *pp:lgth-symb*))
+        ((number? expr)
+         (set! *pp:lgth-symb*  (string-length (number->string expr)))
+         (inc-pos? *pp:lgth-symb*))
+        ((eof-object? expr) (inc-pos? 5))  ;??????????????????
+        ((char? expr)                   ; #\...
+         (inc-pos? (case expr
+                     (#\null 6)
+                     (#\bell 6)
+                     (#\space 7)
+                     (#\delete 8)
+                     (#\backspace 11)
+                     (#\tab 5)
+                     (#\newline 9)
+                     (#\page 6)
+                     (#\return 8)
+                     (#\escape 8)
+                     (else 3))))
+        ((pair? expr)      ; ( a b ...)
+         (let ((head (car expr))
+               (tail (cdr expr))
+               (subst (*pp:abbrev* expr)))
+           (cond (subst      ; to substitute
+                  (set! *pp:lgth-symb* 
+                        (if (or (eq? subst 'unquote-splicing)
+                                (eq? subst 'quote-unquote))
+                            2 
+                            1))
+                  (and (inc-pos? *pp:lgth-symb*)
+                       (*pp:fit?* tail)))
+                 ((null? tail)    ;  (a)
+                  (and (inc-pos? 2) (*pp:fit?* head)))
+                 ((and (pair? tail)
+                       (null? (cdr tail))) ; (a b)
+                  (and (inc-pos? 1) (*pp:fit?* head) (*pp:fit?* tail)))
+                 (else            ; (a b ...)
+                  (and (inc-pos? 2) (*pp:fit?* head) (*pp:fit?* tail))))))
+        ((vector? expr)
+         (letrec ((vlen (- (vector-length expr) 1))
+                  (vloop
+                   (lambda (n)
+                     (if (< n vlen)
+                         (and (inc-pos? 1)
+                              (*pp:fit?* (vector-ref expr n))
+                              (vloop (+ n 1)))
+                         (and (inc-pos? 1)
+                              (*pp:fit?* (vector-ref expr vlen)))))))
+           (and (inc-pos? 2) (vloop 0))))
+        (else   ; null list
+         #t)))
+
+;******************************************************************
+; output an expression
+;******************************************************************
+(define (*pp:print-expr* expr pos)
+  (let ((special 
+         (if (and *pp:to-substitute* (pair? expr))
+             (assoc (car expr) *printer-list*)
+             #f)))
+    (if (pair? special)
+        ((cdr special) expr pos)
+        (begin (set! *pp:last* *pp:cur-pos*)
+               (if (not (*pp:fit?* expr))
+                   (*pp:newline-indent* pos))
+               (cond ((vector? expr) (*pp:print-vector* expr pos))
+                     ((not (pair? expr))
+                      ; *pp:lgth-symb* = lgth of the last symb
+                      (*pp:output-symb* expr))
+                     ((and (not (pair? (car expr)))
+                           (list? expr))  ; (operator args)
+                      (*pp:print-op* expr pos))
+                     (else (*pp:print-list* expr pos)))))))
+
+;******************************************************************
+; output a vector
+;******************************************************************
+(define (*pp:print-vector* vect pos)
+  (*pp:out-char* "#")   
+; en attendant de pouvoir mettre :
+;  (*pp:out-char* #\#)
+  (*pp:left-par*)
+  (let ((vect-lgth (- (vector-length vect) 1))
+        (n 0))
+    (set! pos (+ pos 2))
+    (*pp:print-expr* (vector-ref vect n) pos) ; first element
+    (while (< n vect-lgth)
+           (*pp:space*)
+           (set! n (+ n 1))
+           (*pp:print-expr* (vector-ref vect n) pos)))
+  (*pp:right-par*))
+
+  ;******************************************************************
+; output (operator args)
+;******************************************************************
+(define (*pp:print-op* expr pos)
+  (*pp:left-par*)
+  (*pp:print-expr* (car expr) (+ pos 1))
+  (let ((first-line *pp:line*))
+    (unless (null? (cdr expr))
+          (set! *pp:last* *pp:cur-pos*)
+          (if (or (and (pair? (cadr expr)) (not (*pp:fit?* (caadr expr))))
+                  (and (not (pair? (cadr expr)))
+                       (not (*pp:fit?* (cadr expr)))))
+              (*pp:newline-indent* (+ pos 1))
+              (*pp:space*))
+
+          (set! pos *pp:cur-pos*)
+          (set! *pp:last-symb-is-new-line* #t)
+          (*pp:print-expr* (cadr expr) pos) ; 1st arg on the same line
+          (for-each (lambda (arg)
+                      (set! *pp:last* *pp:cur-pos*)
+;                     (if (or (not (*pp:fit?* arg)) (< first-line *pp:line*))
+                      (if (not (*pp:fit?* arg))
+                          (*pp:newline-indent* pos)
+                          (*pp:space*))
+                      (*pp:print-expr* arg pos))
+                    (cddr expr))))
+  (*pp:right-par*))
+
+;******************************************************************
+; output (if cond then else)
+;******************************************************************
+(define (*pp:print-if* expr pos)
+  (let ((on-new-line #f) (first-line *pp:line*))
+    (*pp:left-par*)
+    (*pp:print-expr* (car expr) pos)   ; if
+    (*pp:space*)
+    (set! pos *pp:cur-pos*)
+    (set! *pp:last-symb-is-new-line* #t) ; to stay on the same line
+    (*pp:print-expr* (cadr expr) pos)       ; cond
+    (set! *pp:last* *pp:cur-pos*)
+    (set! on-new-line (or (not (*pp:fit?* (cddr expr)))  ; (then else)
+                          (< first-line *pp:line*)))
+    (if on-new-line (*pp:newline-indent* pos) (*pp:space*))
+    (*pp:print-expr* (caddr expr) pos) ; then
+    (when (not (null? (cdddr expr)))
+          (if on-new-line (*pp:newline-indent* pos) (*pp:space*))
+          (*pp:print-expr* (cadddr expr) pos))
+    (*pp:right-par*)))
+
+;******************************************************************
+; output clause
+;******************************************************************
+(define (*pp:print-clause* clause pos)
+  (*pp:left-par*)
+  (unless (null? clause)
+          (*pp:print-expr* (car clause) pos)
+          (set! *pp:last* *pp:cur-pos*)
+          (if (not (*pp:fit?* (cdr clause)))
+              (*pp:newline-indent* pos)
+              (*pp:space*))
+          (set! clause (cdr clause))
+          (while (not (null? clause))
+                 (*pp:print-expr* (car clause) pos)
+                 (unless (null? (cdr clause))
+                       (set! *pp:last* *pp:cur-pos*)
+                       (if (not (*pp:fit?* (cadr clause)))
+                           (*pp:newline-indent* pos)
+                           (*pp:space*)))
+                 (set! clause (cdr clause))))
+  (*pp:right-par*))
+
+;******************************************************************
+; output (cond clauses)
+;******************************************************************
+(define (*pp:print-cond* expr pos)
+  (*pp:left-par*)
+  (*pp:print-expr* (car expr) (+ pos 1)) ; output "cond"
+  (*pp:space*)
+  (set! pos (+  pos 6))
+  (*pp:print-clause* (cadr expr) (+ pos 1))  ; the first clause
+  (for-each (lambda (clause)
+              (*pp:newline-indent* pos)
+              (*pp:print-clause* clause (+ pos 1)))
+            (cddr expr))
+  (*pp:right-par*))
+
+;******************************************************************
+; output (case clauses)
+;******************************************************************
+(define (*pp:print-case* expr pos)
+  (*pp:left-par*)
+  (*pp:print-expr* (car expr) (+ pos 1))
+  (*pp:space*)
+  (set! pos (+  pos 2))
+  (*pp:print-expr* (cadr expr) pos)
+  (for-each (lambda (clause)
+              (*pp:newline-indent* pos)
+              (*pp:print-clause* clause pos))
+            (cddr expr))
+  (*pp:right-par*))
+
+;******************************************************************
+; output (do inits exit body)
+;******************************************************************
+(define (*pp:print-do* expr pos)
+  (*pp:left-par*)
+  (*pp:print-expr* (car expr) (+ pos 1))  ; do
+  (*pp:space*)
+  (let ((inits (cadr expr))
+        (exit (caddr expr))
+        (body (cdddr expr))
+        (pos-ie (+ pos 4))
+        (pos-body (+ pos 2)))
+    (*pp:print-clause* inits pos-ie)
+    (*pp:newline-indent* pos-ie)
+    (*pp:print-clause* exit pos-ie)
+    (for-each (lambda (expr)
+                (*pp:newline-indent* pos-body)
+                (*pp:print-expr* expr pos-body))
+              body))
+  (*pp:right-par*))
+
+;******************************************************************
+; output  (let|let*|letrec|let-syntax|letrec-syntax bindings  body)
+;******************************************************************
+(define (*pp:print-let* expr pos)
+
+  (define (print-binding bind pos)
+    (*pp:left-par*)
+    (*pp:print-expr* (car bind) pos)
+    (*pp:space*)
+    (set! *pp:last-symb-is-new-line* #t) ; to stay on the same line
+    (*pp:print-expr* (cadr bind) pos)
+    (*pp:right-par*))
+
+  (*pp:newline-indent* pos)
+  (*pp:left-par*)
+  (*pp:print-expr* (car expr) (+ pos 1))
+  (*pp:space*)
+  (set! pos (+ pos 2))
+  (let ((pos-bind (+ pos *pp:lgth-symb* 1))
+        (bindings (cadr expr))
+        (body (cddr expr)))
+    (if (symbol? bindings)          ; named let
+        (begin (*pp:print-expr* bindings pos-bind)
+               (*pp:space*)
+               (set! pos-bind (+ pos-bind *pp:lgth-symb* 1))
+               (set! bindings (caddr expr))
+               (set! body (cdr body))))
+    (*pp:left-par*)
+    (when (not (null? bindings))
+	  (print-binding (car bindings) pos-bind)  ; the first binding
+	  (for-each (lambda (clause)
+		      (*pp:newline-indent* pos-bind)
+		      (print-binding clause pos-bind))                  
+		    (cdr bindings)))
+    (*pp:right-par*)
+    (for-each (lambda (expr)
+                (*pp:newline-indent* pos)
+                (*pp:print-expr* expr pos))
+              body))
+  (*pp:right-par*))
+
+;******************************************************************
+; output (define|define-macro|extend-syntax|when|unless|while arg body) 
+; on a new line  
+;******************************************************************
+(define (*pp:print-sform* expr pos)
+  (*pp:newline-indent* pos)
+  (*pp:left-par*)
+  (*pp:print-expr* (car expr) (+ pos 1))
+  (*pp:space*)
+  (set! pos (+ pos 2))
+  (set! *pp:last* *pp:cur-pos*)
+  (if (not (*pp:fit?* (cadr expr))) (*pp:newline-indent* pos))
+  (*pp:print-expr* (cadr expr) pos)
+  (let ((next-on-new-line (pair? (cadr expr))))
+    (for-each (lambda (arg)
+                (set! *pp:last* *pp:cur-pos*)
+                (if (or next-on-new-line (not (*pp:fit?* arg)))
+                    (*pp:newline-indent* pos)
+                    (*pp:space*))
+                (*pp:print-expr* arg pos))
+              (cddr expr)))
+  (*pp:right-par*))
+
+;******************************************************************
+;  output (lambda arg body) 
+;******************************************************************
+(define (*pp:print-lambda* expr pos)
+  (let ((next-line #f))
+    (*pp:left-par*)
+    (*pp:print-expr* (car expr) (+ pos 1))
+    (*pp:space*)
+    (set! pos (+ pos 2))
+    (set! *pp:last* *pp:cur-pos*)
+    (unless (*pp:fit?* (cadr expr))
+            (set! next-line #t)
+            (*pp:newline-indent* pos))
+    (*pp:print-expr* (cadr expr) pos)
+    (set! next-line (or next-line (not (*pp:fit?* (cddr expr)))))
+    (for-each (lambda (arg)
+                (if next-line (*pp:newline-indent* pos))
+                (*pp:print-expr* arg pos))
+              (cddr expr))
+    (*pp:right-par*)))
+
+;******************************************************************
+; check for substitution of quote, quasiquote, unquote, unquote-splicing
+; general rules :
+;   After a quote, symbols don't have to be substitued except for unquote
+;******************************************************************
+(define (*pp:abbrev* expr)
+  (if (and *pp:to-substitute* (pair? expr))
+      (cond ((and (pair? (cdr expr))
+                  (null? (cddr expr))
+                  (eq? (car expr) 'quote))    ; (quote x)
+             (if (and (pair? (cadr expr))
+                      (eq? (caadr expr) 'unquote))
+                 'quote-unquote
+                 'quote))
+            (else
+             (if (memq (car expr)
+                       '(quasiquote unquote unquote-splicing))
+                 (car expr)
+                 #f)))
+      #f))
+
+;******************************************************************
+;  output (quote arg)                        ==> 'arg 
+;         (quote ( arg1 arg2 ...))           ==> '(arg1 ag2 ...)
+;         (quote (unquote arg))              ==> ',arg
+;         (quote (unquote arg1 arg2 ...))    ==> ',(arg1 arg2 ...)
+;         (quasiquote arg)                   ==> `arg
+;         (quasiquote (arg1 arg2 ...))       ==> `(arg1 arg2 ...)
+;         (unquote arg)                      ==> , arg
+;         (unquote (arg1 arg2 ...))          ==> ,(arg1 arg2 ...)
+;         (unquote-splicing  arg)            ==> ,@ arg
+;         (unquote-splicing (arg1 arg2 ...)) ==> ,@(arg1 arg2 ...)
+;******************************************************************
+(define (*pp:print-quote*  expr pos)
+  (let ((which (*pp:abbrev* expr)))
+    (cond ((not which)
+           (set! *pp:to-substitute* #f)
+           (*pp:print-expr* expr pos)
+           (set! *pp:to-substitute* #t))
+          ((eq? which 'quote)
+           (set! *pp:to-substitute* #f)
+           (set! *pp:last* (+ *pp:cur-pos* 1))
+           (if (not (*pp:fit?* (cdr expr))) (*pp:newline-indent* pos))
+           (*pp:out-char* #\')
+           (*pp:print-expr* (cadr expr) (+ pos 1))
+           (set! *pp:to-substitute* #t))
+          ((eq? which 'quote-unquote)
+           (*pp:out-char* #\') (*pp:out-char* #\,)
+           (*pp:print-expr* (car (cdadr expr)) (+ pos 2)))
+          (else
+           (case which
+             (quasiquote (*pp:out-char* #\`))
+             (unquote (*pp:out-char* #\,))
+             (unquote-splicing (*pp:out-char* #\,) (*pp:out-char* #\@)))
+           (*pp:print-expr* (cadr expr)
+                            (+ pos (if (eq? which 'unquote-splicing)
+                                       2 
+                                       1)))))))
+
+;******************************************************************
+;  output (call/cc|call-with-current-continuation body)
+;******************************************************************
+(define (*pp:print-sform0* expr pos)
+  (*pp:left-par*)
+  (*pp:print-expr* (car expr) pos)
+  (set! pos (+ pos 2))
+  (for-each (lambda (arg)
+              (*pp:newline-indent* pos)
+              (*pp:print-expr* arg pos))
+            (cdr expr))
+  (*pp:right-par*))
+
+
+;******************************************************************
+;  output a list
+;******************************************************************
+(define (*pp:print-list*  lst pos)
+  (*pp:left-par*)
+  (set! pos (+ pos 1))
+  (*pp:print-expr* (car lst) pos)  ; 1st element
+  (let ((last #f) (lst (cdr lst)))
+    (while (and (not (null? lst)) (not last))
+           (cond ((not (pair? lst))
+                  (*pp:period*)
+                  (*pp:print-expr* lst pos)
+                  (set! last #t))
+                 (else
+                  (*pp:space*)
+                  (*pp:print-expr* (car lst) pos)))
+           (if (not last) (set! lst (cdr lst)))))
+  (*pp:right-par*))
+    
+;******************************************************************
+;  define special forms
+;******************************************************************
+
+(define (printer-add form printer)    ; add special pretty printers
+  (set! *printer-list*
+        (cons '()
+              (cons (cons form printer)
+                    (cdr *printer-list*)))))
+  
+(printer-add 'quote *pp:print-quote*)
+(printer-add 'quasiquote *pp:print-quote*)
+(printer-add 'unquote *pp:print-quote*)
+(printer-add 'unquote-splicing *pp:print-quote*)
+
+(printer-add 'lambda *pp:print-lambda*)
+
+(printer-add 'define *pp:print-sform*)
+(printer-add 'define-macro *pp:print-sform*)
+(printer-add 'extend-syntax *pp:print-sform*)
+(printer-add 'when *pp:print-sform*)
+(printer-add 'unless *pp:print-sform*)
+(printer-add 'while *pp:print-sform*)
+
+(printer-add 'let *pp:print-let*)
+(printer-add 'letrec *pp:print-let*)
+(printer-add 'let* *pp:print-let*)
+(printer-add 'let-syntax *pp:print-let*)
+(printer-add 'letrec-syntax *pp:print-let*)
+
+(printer-add 'do *pp:print-do*)
+
+(printer-add 'if *pp:print-if*)
+
+(printer-add 'cond *pp:print-cond*)
+
+(printer-add 'case *pp:print-case*)
+(printer-add 'record-case *pp:print-case*)
+
+(printer-add 'call-with-current-continuation *pp:print-sform0*)
+(printer-add 'call/cc *pp:print-sform0*)

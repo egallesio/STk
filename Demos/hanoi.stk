@@ -1,0 +1,267 @@
+#!/usr/local/bin/stk -f
+;;
+;; Hanoi - Towers of Hanoi diversion
+;;
+;; This program is a rewriting in STk of a program found on the net. Original
+;; author is Damon A Permezel (probably fubar!dap@natinst.com)
+;; Re-writing is very direct and needs much more working
+;;
+
+(define *gc-verbose*	#f)
+
+(define hanoi-canvas	"")
+(define hanoi-running 	#f)
+(define hanoi-stop	#f)
+(define previousRings   0)
+(define max-rings 	20)
+(define num-rings	6)
+(define colours		'(DarkOliveGreen snow4 royalblue2 palegreen4
+			  rosybrown1 wheat4 tan2 brown2 tomato3 hotpink3))
+
+(define pole		(make-vector 3))	     ; elts are <nRing . xPos>
+(define ring 		(make-vector (+ max-rings 1))); elts are <pole width . obj>
+
+(define accel		0)
+(define base		32)
+(define fly-row 	32)
+(define width-incr	12)
+(define width-min	(* 8 width-incr))    
+(define ring-height 	26)
+(define ring-spacing	(* 2 (/ ring-height 3)))
+
+
+;;
+;; Setup the main window
+;;
+(define (SetupHanoi)
+  (wm 'title "." "Towers of Hanoi")
+
+  ;;
+  ;; setup frame and main menu button
+  ;;
+  (label ".title" :text "Towers of Hanoi" :bd 4 :fg "RoyalBlue" :relief "ridge")
+  (frame ".f")
+  (button ".f.run"  :text "Run"  :command (lambda ()
+					    (DoHanoi (.nrframe.scale 'get) #t)))
+  (button ".f.stop" :text "Stop" :command (lambda ()
+					    (set! hanoi-stop 1)))
+  (button ".f.quit" :text "Quit" :command (lambda ()
+					    (exit 0)))
+  (pack .f.run .f.stop .f.quit :fill "x" :side "left" :expand #t)
+
+  ;;
+  ;; setup next frame, for #rings slider
+  ;;
+  (frame ".nrframe" :bd 2 :relief 'raised)
+  (pack [label ".nrframe.label" :text "Number of Rings: " :width 15 :anchor 'e]
+	:side "left")
+  (pack [scale ".nrframe.scale" :orient 'hor :from 1 :to max-rings :font "fixed"
+			        :command (lambda (val)
+					   (set! num-rings val))]
+	:side "right" :expand #t :fill "x")
+  (.nrframe.scale 'set num-rings)
+
+  ;;
+  ;; setup next frame, for speed slider
+  ;;
+  (frame ".speed-frame" :bd 2 :relief 'raised)
+  (pack [label ".speed-frame.label" :text "Speed: " :width 15 :anchor 'e]
+	:side "left")
+  (pack [scale ".speed-frame.scale" :orient 'hor :from 1 :to 100 :font "fixed"
+	                      :command (lambda (val)
+					 (set! accel val))]
+	:side "right" :expand #t :fill "x")	
+  (.speed-frame.scale 'set 100)
+
+  ;;
+  ;; setup frame for canvas to appear in
+  ;;
+  (frame ".canv-frame" :bd 4 :relief 'groove)
+  (pack [canvas ".canv-frame.canvas" :relief 'sunken])
+  (set! hanoi-canvas .canv-frame.canvas)
+
+  ;; 
+  ;; Pack evrybody
+  ;;
+  (pack .title .nrframe .speed-frame .canv-frame .f :expand #t :fill "x")
+
+  ;;
+  ;; key bindings
+  ;;
+  (bind "." "<KeyPress-r>"  (lambda () (DoHanoi [.nrframe.scale 'get] #t)))
+  (bind "." "<KeyPress-s>"  (lambda () (set! hanoi-stop #t)))
+  (bind "." "<KeyPress-q>"  (lambda () (exit 0)))
+  
+  ;; 
+  ;; Display tower
+  ;;
+  (DoHanoi num-rings #f)
+)
+
+;;
+;; DoHanoi	
+;;
+;; Input:
+;;	n	# of rings
+;;
+;; setup the canvas for displaying the Hanoi simulation
+;; Call hanoi if run-it is true.
+;;
+(define (DoHanoi n run-it)
+  (unless hanoi-running
+    (define ring-width 		(+ width-min (* n width-incr)))
+    (define wm-width 		(+ (* 3 ring-width) (* 4 12)))
+    (define wm-height           (+ (* ring-spacing n) fly-row (* 2 ring-height)))
+
+
+    (set! hanoi-stop 	 #f)
+    (set! hanoi-running	 #t)
+    (set! base 		 (- wm-height 32))
+
+    ;;
+    ;; cleanup from previous run
+    ;;
+    (do ((i 1 (+ i 1)))
+	((> i previousRings))
+      (hanoi-canvas 'delete (cddr (vector-ref ring i))))
+    
+    ;;
+    ;; configure the canvas appropriately
+    ;;
+    (hanoi-canvas 'configure :width wm-width :height wm-height)
+    
+    ;;
+    ;; setup poles
+    ;;
+    (let loop ((i 0))
+      (vector-set! pole i (cons 0 (+ (* i (/ wm-width 3)) (/ ring-width 2) 8)))
+      (when (< i 2) (loop (+ 1 i))))
+    ;;
+    ;; setup rings
+    ;;
+    
+    (let loop ((i 0))
+      (let* ((colour (list-ref colours (modulo i 10)))
+	     (w      (- ring-width (* i 12)))
+	     (y	     (- base (* i ring-spacing)))
+	     (x      (- (cdr (vector-ref pole 0)) (/ w 2)))
+	     (r      (- n i)))
+      
+	(vector-set! ring r 
+		     (cons 0
+			   (cons w
+				 (hanoi-canvas 'create 
+					      'oval x y (+ x w) (+ y ring-height)
+					      :fill colour 
+					      :outline colour
+					      :width 12)))))
+      (if (< i (- n 1)) (loop (+ i 1))))
+    
+    (vector-set! pole 0 (cons n (cdr (vector-ref pole 0))))
+    (set! previousRings n)
+
+    (update)
+    (when run-it (Hanoi n 0 2 1))
+    (set! hanoi-running #f)))
+;;
+;; Hanoi : the guts of the algorithm
+;;
+;; Input:
+;;	n	# of rings
+;;	from	pole to move from
+;;	to	pole to move to
+;;	work	pole to aid in performing work
+;;
+(define (Hanoi n from to work)
+  (when (and (> n 0) (not hanoi-stop))
+    (Hanoi (- n 1) from work to)
+    (unless  hanoi-stop (MoveRing n to))
+    (Hanoi (- n 1) work to from)))
+
+;;
+;; MoveRing :	move a ring to a new pole
+;;
+;; Input:
+;;	n	ring number
+;;	to	destination pole
+;;
+(define (MoveRing n to)
+  ;;
+  ;; ring(n,obj) can be queried as to its current position.
+  ;; Thus, we don't need to know which pole the ring is moving from.
+  ;;
+  (let* ((inc	  0)
+	 (tox     0)
+	 (toy  	  0)
+	 
+	 (r  	  (cddr (vector-ref ring n)))
+	 (coords  (hanoi-canvas 'coords r))
+	 (x0 	  (list-ref coords 0))
+	 (y0 	  (list-ref coords 1))
+	 (x1 	  (list-ref coords 2))
+	 (y1 	  (list-ref coords 3)))
+    
+    ;;
+    ;; move up to the "fly row"
+    ;;
+    (do ()
+	((<= y0 fly-row))
+      (set! inc (if (> (- y0 fly-row) accel) accel (- y0 fly-row)))
+      (set! y0  (- y0 inc))
+      (set! y1  (- y1 inc))
+      (hanoi-canvas 'coords r x0 y0 x1 y1)
+      (update))
+
+    ;;
+    ;; one less ring on this pole
+    ;;
+    (let ((tmp (car (vector-ref ring n))))
+      (set-car! (vector-ref pole tmp) (- (car (vector-ref pole tmp)) 1)))
+
+    ;;
+    ;; determine target X position, based on destination pole, and fly ring
+    ;; over to new pole
+    ;;
+    (set! toX (- (cdr (vector-ref pole to)) 
+		 (/ (cadr (vector-ref ring n)) 2)))
+
+    (do ()
+	((>= x0 toX))
+      (set! inc (if (> (- toX x0) accel) accel (- toX x0)))
+      (set! x0 (+ x0 inc))
+      (set! x1 (+ x1 inc))
+      (hanoi-canvas 'coords r x0 y0 x1 y1)
+      (update))
+
+    (do ()
+	((<= x0 toX))
+      (set! inc (if (> (- x0 toX) accel) accel (- x0 toX)))
+      (set! x0 (- x0 inc))
+      (set! x1 (- x1 inc))
+      (hanoi-canvas 'coords r x0 y0 x1 y1)
+      (update))
+
+    ;;
+    ;; determine target Y position, based on ;; rings on destination pole.
+    ;;
+    (set! toY (- base (* (car (vector-ref pole to)) ring-spacing)))
+
+    ;;
+    ;; float ring down
+    ;;
+    (do ()
+	((>= y0 toY))
+      (set! inc (if (> (- toY y0) accel) accel (- toY y0)))
+      (set! y0 (+ y0 inc))
+      (set! y1 (+ y1 inc))
+      (hanoi-canvas 'coords r x0 y0 x1 y1)
+      (update))
+
+    ;;
+    ;; increase destination pole usage
+    ;;
+    (set-car! (vector-ref pole to) (+ (car (vector-ref pole to)) 1))
+    (set-car! (vector-ref ring n) to)))
+
+
+(SetupHanoi)

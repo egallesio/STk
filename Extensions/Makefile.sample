@@ -1,0 +1,99 @@
+# 
+# M a k e f i l e . s a m p l e		-- A Makefile prototype for compiling
+#					   extensions which are dynamically 
+#					   loaded
+# Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+# 
+#
+# Permission to use, copy, and/or distribute this software and its
+# documentation for any purpose and without fee is hereby granted, provided
+# that both the above copyright notice and this permission notice appear in
+# all copies and derived works.  Fees for distribution or use of this
+# software or derived works may only be charged with express written
+# permission of the copyright holder.  
+# This software is provided ``as is'' without express or implied warranty.
+#
+#           Author: Erick Gallesio [eg@kaolin.unice.fr]
+#    Creation date: 17-Mar-1995 10:20
+# Last file update: 17-Mar-1995 10:48
+
+
+#####
+##### Start of configuration section
+#####
+
+CC=gcc
+LIBMALLOC=
+INCLUDES = -I../Tk -I../Tcl -I../Src -I../Mp
+
+
+# Define the 4 next line if you are running SUNOS4
+# Use -pic if using acc and fpic if using gcc
+     SH_CCFLAGS=-fpic
+     SH_LDFLAGS=-assert pure-text -o
+     SH_LOADER=ld
+     SH_SUFFIX=so
+# Define the 4 next lines if you are running SUNOS5
+#     SH_CCFLAGS=-K pic
+#     SH_LDFLAGS=-G -z text -h
+#     SH_LOADER=ld
+#     SH_SUFFIX=so
+# Define the 4 next lines if you are running OSF1
+#     SH_CCFLAGS=-fpic
+#     SH_LDFLAGS=-shared -o
+#     SH_LOADER=ld
+#     SH_SUFFIX=so 
+# Define the 4 next lines if you are running NETBSD1)
+#     SH_CCFLAGS=-fpic
+#     SH_LDFLAGS=-Bshareable -o
+#     SH_LOADER=ld
+#     SH_SUFFIX=so
+# Define the 5 next lines if you are running HPUX
+#     SH_CCFLAGS=+Z
+#     SH_LDFLAGS=-b -o
+#     SH_LOADER=ld
+#     SH_SUFFIX=sl
+#     CFLAGS=$CFLAGS -Wl,-E
+# Define the 5 next lines if you are running FREEBSD
+#     SH_CCFLAGS=-pic
+#     SH_LDFLAGS=-Bshareable -o
+#     SH_LOADER=ld
+#     LIB_MALLOC=/usr/lib/libgnumalloc.a
+#     SH_SUFFIX=so
+# Define the 4 next lines if you are running IRIX5
+#     SH_CCFLAGS=-fpic
+#     SH_LDFLAGS=-shared -o
+#     SH_LOADER=$CC
+#     SH_SUFFIX=so 
+# Define the 4 next lines if you are running LINUX
+#     SH_CCFLAGS=
+#     SH_LDFLAGS=-r -o
+#     SH_LOADER=ld
+#     SH_SUFFIX=so      
+#
+
+####
+#### End of of configuration section
+####
+
+
+##############################################################################
+.SUFFIXES: .$(SH_SUFFIX) .o .c
+
+.c.$(SH_SUFFIX):
+	$(CC) $(CFLAGS) -c -o $*.o $*.c
+	$(SH_LOADER) $(SH_LDFLAGS) $*.$(SH_SUFFIX) $*.o
+	if test -f a.out  ;then mv a.out $*.$(SH_SUFFIX); fi
+.o.$(SH_SUFFIX): 
+	$(SH_LOADER) $(SH_LDFLAGS) $*.$(SH_SUFFIX) $<
+	if test -f a.out  ;then mv a.out $*.$(SH_SUFFIX); fi
+
+##############################################################################
+CFLAGS = $(SH_CCFLAGS) $(INCLUDES) 
+
+help:
+	@echo "To make a new xxx.$(SH_SUFFIX) file, just type"
+	@echo "	   make xxx.$(SH_SUFFIX)"
+
+clean:
+	@/bin/rm -f *.o *.$(SH_SUFFIX) core *~ 

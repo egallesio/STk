@@ -1,0 +1,40 @@
+This directory contains contributions which have been sent to me.
+
+Inspect
+   The STk-inspector (contributor Erick Fintzel -- fintzel@kaolin.unice.fr)
+Pretty
+   A pretty printer (contributor Martine Follen -- mf@unice.fr)
+
+Process 
+   A set of new primitives to deal with Unix processes. This contribution will
+   be included in the core interpreter in the next release (contributors
+   Alexander Taranov, Grygory Niconov and David Tolpin -- tay@jet.msk.su, 
+   gn@jet.msk.su and Dvd@CIM.Msk.SU)
+   
+Python
+   A patch which permits to communicate with a Python interpreter 
+   (contibutor jredford@lehman.com)
+
+Socket
+   An implementation of BSD-INET sockets and is known to run on  
+   Solaris 1 and Linux. This is the starting point of current implementation.
+   Contributor: David Tolpin (dvd@pizza.msk.su)
+
+Stetris
+  This is a falling block game not unlike tetris(tm) :).  It is
+  implemented in STk just to prove it can be done, and as a challenge to
+  TCLers. (contributor Harvey J. Stein -- hjstein@math.huji.ac.il)
+
+STk-wtour
+  A rewritting of the Andrew Payne Tcl/Tk wtour for STk.
+  This is excellent for learning basics od STk programming
+  (contributor Suresh Srinivas  -- ssriniva@cs.indiana.edu)
+
+Trace
+   A trace procedure (contributor Martine Follen -- mf@unice.fr)
+
+
+
+Another contribution, called XS, (a Scheme graphical debugger) is also available
+as a separate file on kaolin.unice.fr in the file ~ftp/pub/xscheme0.2.gz.
+

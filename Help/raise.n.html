@@ -1,0 +1,25 @@
+<HTML><HEAD><TITLE>Tk Built-In Commands - raise manual page</TITLE></HEAD>
+<BODY bgcolor = #c3c3ff>
+<H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageBlue.gif"> raise</H2>
+<I>Change a window's position in the stacking order</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<H3><A NAME="M2">SYNOPSIS</A></H3>
+(<B>raise </B><I>window</I>)<BR>
+(<B>raise </B><I>window </I><I>aboveThis</I>)<BR>
+<H3><A NAME="M3">DESCRIPTION</A></H3>
+If the <I>aboveThis</I> argument is omitted then the procedure raises
+<I>window</I> so that it is above all of its siblings in the stacking
+order (it will not be obscured by any siblings and will obscure
+any siblings that overlap it).
+If <I>aboveThis</I> is specified then it must be the path name of
+a window that is either a sibling of <I>window</I> or the descendant
+of a sibling of <I>window</I>.
+In this case the <B>raise</B> procedure will insert
+<I>window</I> into the stacking order just above <I>aboveThis</I>
+(or the ancestor of <I>aboveThis</I> that is a sibling of <I>window</I>);
+this could end up either raising or lowering <I>window</I>.
+
+<H3><A NAME="M4">SEE ALSO</A></H3>
+<B><A HREF="./lower.n.html">lower</A></B>
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookBlue.gif"> Back to the <B>STk</B> main page</A>
+</BODY></HTML>

@@ -1,0 +1,6 @@
+;;; Basic text widget
+
+(pack (text '.text))
+
+(.text 'insert "current" "This is a text widget, displaying some text.\n")
+(.text 'insert "current" "Try editing the text in the widget.\n")

@@ -1,0 +1,257 @@
+<HTML><HEAD><TITLE>Tk Built-In Commands - pack manual page</TITLE></HEAD>
+<BODY bgcolor = #c3c3ff>
+<H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageBlue.gif"> pack</H2>
+<I>Geometry manager that packs around edges of cavity</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<H3><A NAME="M2">SYNOPSIS</A></H3>
+(<B>pack </B><I>option arg </I>?<I>arg ...</I>?)<BR>
+<H3><A NAME="M3">DESCRIPTION</A></H3>
+The <B>pack</B> procedure is used to communicate with the packer,
+a geometry manager that arranges the children of a parent by
+packing them in order around the edges of the parent.
+The <B>pack</B> procedure can have any of several forms, depending
+on the <I>option</I> argument:
+<P>
+<DL>
+<DT><A NAME="M4">(<B>pack </B><I>slave </I>?<I>slave ...</I>? ?<I>options</I>?)</A><DD>
+If the first argument to <B>pack</B> is a window name (any value
+starting with ``.''), then the procedure is processed in the same
+way as <B>pack configure</B>.
+<P>
+<DT><A NAME="M5">(<B>pack 'configure </B><I>slave </I>?<I>slave ...</I>? ?<I>options</I>?)</A><DD>
+The arguments consist of the names of one or more slave windows
+followed by pairs of arguments that specify how
+to manage the slaves.
+See ``THE PACKER ALGORITHM'' below for details on how the options
+are used by the packer.
+The following options are supported:
+<P>
+<P>
+<DL>
+<DT><A NAME="M6"><B>:after </B><I>other</I></A><DD>
+<I>Other</I> must the name of another window.
+Use its master as the master for the slaves, and insert
+the slaves just after <I>other</I> in the packing order.
+<P>
+<DT><A NAME="M7"><B>:anchor </B><I>anchor</I></A><DD>
+<I>Anchor</I> must be a valid anchor position such as <B>n</B>
+or <B>sw</B>; it specifies where to position each slave in its
+parcel.
+Defaults to <B>center</B>.
+<P>
+<DT><A NAME="M8"><B>:before </B><I>other</I></A><DD>
+<I>Other</I> must the name of another window.
+Use its master as the master for the slaves, and insert
+the slaves just before <I>other</I> in the packing order.
+<P>
+<DT><A NAME="M9"><B>:expand </B><I>boolean</I></A><DD>
+Specifies whether the slaves should be expanded to consume
+extra space in their master.
+<I>Boolean</I> may have any proper boolean value. Defaults to #f.
+<P>
+<DT><A NAME="M10"><B>:fill </B><I>style</I></A><DD>
+If a slave's parcel is larger than its requested dimensions, this
+option may be used to stretch the slave.
+<I>Style</I> must have one of the following values:
+<P>
+<P>
+<DL>
+<DT><A NAME="M11"><B>none</B></A><DD>
+Give the slave its requested dimensions plus any internal padding
+requested with <B>:ipadx</B> or <B>:ipady</B>.  This is the default.
+<P>
+<DT><A NAME="M12"><B>x</B></A><DD>
+Stretch the slave horizontally to fill the entire width of its
+parcel (except leave external padding as specified by <B>:padx</B>).
+<P>
+<DT><A NAME="M13"><B>y</B></A><DD>
+Stretch the slave vertically to fill the entire height of its
+parcel (except leave external padding as specified by <B>:pady</B>).
+<P>
+<DT><A NAME="M14"><B>both</B></A><DD>
+Stretch the slave both horizontally and vertically.
+<P>
+</DL>
+<DT><A NAME="M15"><B>:in </B><I>other</I></A><DD>
+Insert the slave(s) at the end of the packing order for the master
+window given by <I>other</I>.
+<P>
+<DT><A NAME="M16"><B>:ipadx </B><I>amount</I></A><DD>
+<I>Amount</I> specifies how much horizontal internal padding to
+leave on each side of the slave(s).
+<I>Amount</I> must be a valid screen distance, such as <B>2</B> or <B>.5c</B>.
+It defaults to 0.
+<P>
+<DT><A NAME="M17"><B>:ipady </B><I>amount</I></A><DD>
+<I>Amount</I> specifies how much vertical internal padding to
+leave on each side of the slave(s).
+<I>Amount</I>  defaults to 0.
+<P>
+<DT><A NAME="M18"><B>:padx </B><I>amount</I></A><DD>
+<I>Amount</I> specifies how much horizontal external padding to
+leave on each side of the slave(s).
+<I>Amount</I> defaults to 0.
+<P>
+<DT><A NAME="M19"><B>:pady </B><I>amount</I></A><DD>
+<I>Amount</I> specifies how much vertical external padding to
+leave on each side of the slave(s).
+<I>Amount</I> defaults to 0.
+<P>
+<DT><A NAME="M20"><B>:side </B><I>side</I></A><DD>
+Specifies which side of the master the slave(s) will be packed against.
+Must be <B>left</B>, <B>right</B>, <B>top</B>, or <B>bottom</B>.
+Defaults to <B>top</B>.
+<P>
+</DL>
+<UL>
+<P>
+If no <B>:in</B>, <B>:after</B> or <B>:before</B> option is specified
+then each of the slaves will be inserted at the end of the packing list
+for its parent unless it is already managed by the packer (in which
+case it will be left where it is).
+If one of these options is specified then all the slaves will be
+inserted at the specified point.
+If any of the slaves are already managed by the geometry manager
+then any unspecified options for them retain their previous values rather
+than receiving default values.
+</UL>
+<DT><A NAME="M21">(<B>pack 'forget </B><I>slave </I>?<I>slave ...</I>?)</A><DD>
+Removes each of the <I>slave</I>s from the packing order for its
+master and unmaps their windows.
+The slaves will no longer be managed by the packer.
+<P>
+<DT><A NAME="M22">(<B>pack 'info </B><I>slave</I>)</A><DD>
+Returns a list whose elements are the current configuration state of
+the slave given by <I>slave</I> in the same option-value form that
+might be specified to <B>pack configure</B>.
+The first two elements of the list are ``<B>:in </B><I>master</I>'' where
+<I>master</I> is the slave's master.
+<P>
+<DT><A NAME="M23">(<B>pack 'propagate </B><I>master</I> ?<I>boolean</I>?)</A><DD>
+If <I>boolean</I> has a true boolean value such as <B>1</B> or <B>on</B>
+then propagation is enabled for <I>master</I>, which must be a window
+name (see ``GEOMETRY PROPAGATION'' below).
+If <I>boolean</I> has a false boolean value then propagation is
+disabled for <I>master</I>.
+In either of these cases an empty string is returned.
+If <I>boolean</I> is omitted then the procedure returns <B>#f</B> or
+<B>#t</B> to indicate whether propagation is currently enabled
+for <I>master</I>.
+Propagation is enabled by default.
+<P>
+<DT><A NAME="M24">(<B>pack 'slaves </B><I>master</I>)</A><DD>
+Returns a list of all of the slaves in the packing order for <I>master</I>.
+The order of the slaves in the list is the same as their order in
+the packing order.
+If <I>master</I> has no slaves then an empty string is returned.
+
+<P>
+</DL>
+<H3><A NAME="M25">THE PACKER ALGORITHM</A></H3>
+For each master the packer maintains an ordered list of slaves
+called the <I>packing list</I>.
+The <B>:in</B>, <B>:after</B>, and <B>:before</B> configuration
+options are used to specify the master for each slave and the slave's
+position in the packing list.
+If none of these options is given for a slave then the slave
+is added to the end of the packing list for its parent.
+<P>
+The packer arranges the slaves for a master by scanning the
+packing list in order.
+At the time it processes each slave, a rectangular area within
+the master is still unallocated.
+This area is called the <I>cavity</I>;  for the first slave it
+is the entire area of the master.
+<P>
+For each slave the packer carries out the following steps:
+<OL>
+<LI>
+The packer allocates a rectangular <I>parcel</I> for the slave
+along the side of the cavity given by the slave's <B>:side</B> option.
+If the side is top or bottom then the width of the parcel is
+the width of the cavity and its height is the requested height
+of the slave plus the <B>:ipady</B> and <B>:pady</B> options.
+For the left or right side the height of the parcel is
+the height of the cavity and the width is the requested width
+of the slave plus the <B>:ipadx</B> and <B>:padx</B> options.
+The parcel may be enlarged further because of the <B>:expand</B>
+option (see ``EXPANSION'' below)
+<LI>
+The packer chooses the dimensions of the slave.
+The width will normally be the slave's requested width plus
+twice its <B>:ipadx</B> option and the height will normally be
+the slave's requested height plus twice its <B>:ipady</B>
+option.
+However, if the <B>:fill</B> option is <B>x</B> or <B>both</B>
+then the width of the slave is expanded to fill the width of the parcel,
+minus twice the <B>:padx</B> option.
+If the <B>:fill</B> option is <B>y</B> or <B>both</B>
+then the height of the slave is expanded to fill the width of the parcel,
+minus twice the <B>:pady</B> option.
+<LI>
+The packer positions the slave over its parcel.
+If the slave is smaller than the parcel then the <B>:anchor</B>
+option determines where in the parcel the slave will be placed.
+If <B>:padx</B> or <B>:pady</B> is non-zero, then the given
+amount of external padding will always be left between the
+slave and the edges of the parcel.
+</OL>
+<P>
+Once a given slave has been packed, the area of its parcel
+is subtracted from the cavity, leaving a smaller rectangular
+cavity for the next slave.
+If a slave doesn't use all of its parcel, the unused space
+in the parcel will not be used by subsequent slaves.
+If the cavity should become too small to meet the needs of
+a slave then the slave will be given whatever space is
+left in the cavity.
+If the cavity shrinks to zero size, then all remaining slaves
+on the packing list will be unmapped from the screen until
+the master window becomes large enough to hold them again.
+
+<H3><A NAME="M26">EXPANSION</A></H3>
+If a master window is so large that there will be extra space
+left over after all of its slaves have been packed, then the
+extra space is distributed uniformly among all of the slaves
+for which the <B>:expand</B> option is set.
+Extra horizontal space is distributed among the expandable
+slaves whose <B>:side</B> is <B>left</B> or <B>right</B>,
+and extra vertical space is distributed among the expandable
+slaves whose <B>:side</B> is <B>top</B> or <B>bottom</B>.
+
+<H3><A NAME="M27">GEOMETRY PROPAGATION</A></H3>
+The packer normally computes how large a master must be to
+just exactly meet the needs of its slaves, and it sets the
+requested width and height of the master to these dimensions.
+This causes geometry information to propagate up through a
+window hierarchy to a top-level window so that the entire
+sub-tree sizes itself to fit the needs of the leaf windows.
+However, the <B>pack propagate</B> procedure may be used to
+turn off propagation for one or more masters.
+If propagation is disabled then the packer will not set
+the requested width and height of the packer.
+This may be useful if, for example, you wish for a master
+window to have a fixed size that you specify.
+
+<H3><A NAME="M28">RESTRICTIONS ON MASTER WINDOWS</A></H3>
+The master for each slave must either be the slave's parent
+(the default) or a descendant of the slave's parent.
+This restriction is necessary to guarantee that the
+slave can be placed over any part of its master that is
+visible without danger of the slave being clipped by its parent.
+
+<H3><A NAME="M29">PACKING ORDER</A></H3>
+If the master for a slave is not its parent then you must make sure
+that the slave is higher in the stacking order than the master.
+Otherwise the master will obscure the slave and it will appear as
+if the slave hasn't been packed correctly.
+The easiest way to make sure the slave is higher than the master is
+to create the master window first:  the most recently created window
+will be highest in the stacking order.
+Or, you can use the <B><A HREF="./raise.n.html">raise</A></B> and <B><A HREF="./lower.n.html">lower</A></B> procedures to change
+the stacking order of either the master or the slave.
+
+<H3><A NAME="M30">SEE ALSO</A></H3>
+<B><A HREF="./grid.n.html">grid</A></B>, <B><A HREF="./place.n.html">place</A></B>
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookBlue.gif"> Back to the <B>STk</B> main page</A>
+</BODY></HTML>

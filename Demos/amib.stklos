@@ -1,0 +1,600 @@
+#!/bin/sh
+:; exec /usr/local/bin/stk -f "$0" "$@"
+;;;;
+;;;; a m i b . s t k l o s  --  A mini interface builder. I hope it will serve 
+;;;;			        as the basis of something more complete...
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 22-May-1995 14:56
+;;;; Last file update: 26-Sep-1996 19:21
+
+(require "Tk-classes")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Definitions.
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define *amib-version*		 0.3)
+(define *pretty-names*		(make-hash-table))
+(define *current-file*		#f)
+(define *special-slots*		'("id" "eid" "parent"))
+(define *delay*			100)
+;;;;
+;;;; All the widgets and their defaults
+;;;;
+(define *table-defaults*
+  `(("Button"		,<Button>
+			(:text "Button"))
+    ("Canvas"		,<Canvas>
+			(:width 200 :height 100 :border-width 3 :relief "raised"))
+    ("Check button"	,<Check-button>	
+			(:text "Check" :anchor "w"))
+    ("Frame"		,<Frame>
+			(:width 50 :height 50 :relief "ridge" :border-width 2))
+    ("Label"		,<Label>
+			(:text "Label"))
+    ("Labeled entry"	,<Labeled-entry>
+			(:title "Title"))
+    ("Listbox"		,<Listbox>
+		        (:relief raised))
+    ("Message"		,<Message>
+			(:text "Message" :relief "raised" :aspect 1000))
+    ("Radio button"	,<Radio-button>	
+			(:text "Radio" :anchor "w"))
+    ("Scale"		,<Scale>
+			())	))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Drag and Drop stuff
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define d-n-d-widget   #f)	; The widget whih we can drag and drop
+(define d-n-d-defaults #f)	; Its defaults
+
+;; Default bindings
+(bind "Dnd" "<ButtonRelease-1>" (lambda (|X| |Y| x y)
+				  (Drag-n-Drop-Finish |X| |Y|)
+				  'break))
+
+(define (make-drag-n-drop-widget type initargs)
+  (let ((m (make <Menu> :border-width 12 :background "Blue")))
+    (pack (apply make type :parent m initargs) :padx 2 :pady 2)
+    m))
+
+(define (Drag-n-Drop-Motion)
+  (when d-n-d-widget
+      (apply menu-post d-n-d-widget (winfo 'pointerxy d-n-d-widget))
+      (after *delay* (lambda () (Drag-n-Drop-Motion)))))
+
+(define (Drag-n-Drop-Finish X Y)
+  (when d-n-d-widget
+    (let ((dwidth  (winfo 'width d-n-d-widget))
+	  (dheight (winfo 'height d-n-d-widget)))
+      ;; Unpost the d-n-d-widget to see on which window we depose it
+      (menu-unpost d-n-d-widget)
+      
+      (let* ((p    (Id->instance (winfo 'containing X Y)))
+	     (top  (Id->instance (winfo 'toplevel p))))
+	(when (string=? (slot-ref top 'class) "Amib-toplevel")
+	  ;; OK. We try to depose the new widget in a valid toplevel
+	  (let* ((w    (apply make (car d-n-d-defaults) :parent p 
+			      (cadr d-n-d-defaults)))
+		 (pw   (max 1 (winfo 'width  p)))
+		 (ph   (max 1 (winfo 'height p)))
+		 (x    (- X (winfo 'x top) (winfo 'x p)))
+		 (y    (- Y (winfo 'y top) (winfo 'y p)))
+		 (relw (/ dwidth pw))
+		 (relh (/ dheight ph)))
+	    (place w :relx (/ x pw) :rely (/ y ph) :relwidth relw :relheight relh)
+	    (raise w)
+
+	    ;; Associate bindings for manipulating the new widget
+	    (bind w "<Shift-1>"     (lambda (|X| |Y|)
+				      (widget-resize-start w |X| |Y|)
+				      'break))
+	    (bind w "<Button-2>"    (lambda () (edit-widget w) 'break))
+	    (bind w "<Shift-3>"	    (lambda () (edit-widget w) 'break)) ; for Win32
+	    (bind w "<Button-3>"    (lambda () (destroy w) 'break))))))
+
+    ;; We can now delete the drag and drop window,which doesn't serve anymore
+    (destroy d-n-d-widget)
+    (set! d-n-d-widget #f)))
+
+
+
+(define (create-new-widget lb x y Xabs Yabs)
+  (unless d-n-d-widget
+      (let* ((index  (nearest lb y))
+	     (type   (list-ref (value lb) index))
+	     (search (assoc type *table-defaults*)))
+	(when search 
+	    ;; Create a drag and drow window and post it under the mouse
+	    (let ((W (apply make-drag-n-drop-widget (cadr search) (cddr search))))
+	      (menu-post W Xabs Yabs)
+	      (bindtags W (cons "Dnd" (bindtags W)))
+	      (set! d-n-d-widget   W)
+	      (set! d-n-d-defaults (cdr search))
+	      (after *delay* (lambda () (Drag-n-Drop-Motion))))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Define a Toplevel for working
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define new-amib-toplevel
+  (let ((count 0))
+    (lambda ()
+      (let* ((n (* count 20))
+	     (t (make <Toplevel> :title (format #f "Toplevel # ~A" count)
+		      :class "Amib-toplevel"
+		      :geometry (format #f "450x300+~A+~A" n n))))
+	(set! count (+ count 1))
+	(pack  (make <Frame> :parent t) :expand #t :fill "both")))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; build-interface		-- construct the button panel
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (build-interface)
+  (let* ((mess   (make <Label> :relief "ridge" :border-width 3 :foreground "blue"
+			       :text (format #f "A Mini Interface Builder (V~A)" 
+					     *amib-version*)))
+	 ;; Menus
+	 (menus  `((" File "
+		      ("Load"	 ,load-file)
+		      ("Save"	 ,save-file)
+		      ("Save as" ,write-file)
+		      ("")
+		      ("Quit"	 ,quit))
+		   (" Toplevel "
+		      ("Create"	,new-amib-toplevel))
+		   ((" Help " :side "right" :fill "x")
+		      ("About"	,(lambda () 
+				   (stk:show-help-file "amib-abt.html")))
+		      ("Help"   ,(lambda () 
+				   (stk:show-help-file "amib-hlp.html"))))))
+	 ;; Menu bar
+	 (bar     (make-menubar *top-root* menus))
+	 ;; Widget Panel
+	 (chooser (make <Scroll-Listbox> :value (map car *table-defaults*)))
+	 (lb      (listbox-of chooser)))
+
+    ;; Associate new bindings to the listbox
+    (bind lb "<ButtonRelease-1>"  (lambda (x y |X| |Y|)
+				    (create-new-widget lb x y |X| |Y|)))
+
+    ;; Change characteristics of root window
+    (set! (title *top-root*) 	     (format #f "AMIB ~A" *amib-version*))
+    (set! (maximum-size *top-root*) '(1000 1000))
+    (set! (geometry *top-root*)	    "+10-10")
+
+    ;; Pack everybody
+    (pack mess :fill "x" :ipadx 30 :ipady 5 :padx 5 :pady 5)
+    (pack bar  :fill "x" :ipadx 30)
+    (pack chooser :expand #t :fill 'both :ipadx 5 :ipady 5 :padx 5 :pady 5)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Widget resize
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define *cursors* #("top_left_corner"    "top_side"    "top_right_corner"
+		    "left_side"          "crosshair"   "right_side"
+		    "bottom_left_corner" "bottom_side" "bottom_right_corner"))
+
+(define *positions* #(NW N NE W center E SW S SE))
+
+(define *grips-on* #f)
+(define *resizing* #f)
+(define *vector-of-grips* (make-vector 9 #f))
+
+(define (widget-resize-start W X Y)
+  (let ((parent (parent W))
+	(width  (winfo 'width  W))
+	(height (winfo 'height W))
+	(bw     (if (slot-exists? W 'border-width) (border-width W) 0)))
+    (if (equal? *grips-on* W)
+	(begin
+	  (widget-resize-clear)
+	  (set! *grips-on* #f))
+	(begin
+	  (widget-resize-clear)
+	  (set! *grips-on* W)
+	  (dotimes (i 9)
+	     (let ((butt (make <Frame> :parent parent :width 8 :height 8
+			       :background "blue" :border-width 2 :relief "raised" 
+			       :cursor (vector-ref *cursors* i))))
+	       (place butt :in W :bordermode "outside" 
+		      :anchor (vector-ref *positions* (- 8 i))
+		      :relx (* 0.5 (modulo i 3))
+		      :rely (* 0.5 (quotient i 3)))
+
+	       ;; Associate bindings to this grip
+	       (bind butt "<ButtonPress-1>"
+		     (lambda ()
+		       (set! *resizing* #t)
+		       (widget-resize-motion W (vector-ref *positions* i))
+		       'break))
+	       (bind butt "<ButtonRelease-1>" 
+		     (lambda ()
+		       (set! *resizing* #f)
+		       (widget-resize-release W)
+		       'break))
+
+	       ;; Keep the grip in the global vector
+	       (vector-set! *vector-of-grips* i butt)))
+
+	  ;; Place the central button on top (its index is 4)
+	  (raise W)
+	  (raise (vector-ref *vector-of-grips* 4))))))
+
+(define (widget-resize-clear)
+  (for-each (lambda (x) (if (Tk-widget? x) (destroy x)))
+	    (vector->list *vector-of-grips*)))
+
+(define (widget-resize-motion W index)
+  (when *resizing*
+    (let* ((parent (parent W))
+	   (pos-x  (winfo 'rootx parent))
+	   (pos-y  (winfo 'rooty parent))
+	   (width  (winfo 'width W))
+	   (height (winfo 'height W))
+	   (x      (winfo 'pointerx W))
+	   (y      (winfo 'pointery W))
+	   (x1     (- (winfo 'rootx W) pos-x))
+	   (y1	   (- (winfo 'rooty W) pos-y))
+	   (x2     (+ x1 width))
+	   (y2	   (+ y1 height))
+	   (x      (- X pos-x))
+	   (y	   (- Y pos-y)))
+      (case index
+	 ((NW) 	   (set! x1 x)	(set! y1 y))
+	 ((N) 			(set! y1 y))
+	 ((NE)     (set! x2 x)	(set! y1 y))
+	 ((W)	   (set! x1 x))
+         ((E) 	   (set! x2 x))
+         ((SW) 	   (set! x1 x)	(set! y2 y))
+         ((S) 			(set! y2 y))
+	 ((SE) 	   (set! x2 x)	(set! y2 y))
+	 ((center) (set! x1 (- x (quotient width 2)))
+	           (set! y1 (- y (quotient height 2)))
+		   (set! x2 (+ x1 width))		
+		   (set! y2 (+ y1 height))))
+      (place 'forget W)
+      (place W :in parent :x x1 :y y1 :width (- x2 x1) :height (- y2 y1))
+
+      (after 30 (lambda () (widget-resize-motion W index))))))
+      
+(define (widget-resize-release W)
+  ;; Calculate the relative width and height of the widget 
+  (let* ((parent (parent W))
+	 (pw     (winfo 'width  parent))
+	 (ph     (winfo 'height parent))
+	 (pos-x  (winfo 'rootx parent))
+	 (pos-y  (winfo 'rooty parent))
+	 (width  (winfo 'width W))
+	 (height (winfo 'height W))
+	 (x      (- (winfo 'rootx W) pos-x))
+	 (y	 (- (winfo 'rooty W) pos-y)))
+    (place 'forget W)
+    (place W :in parent 
+	     :relx      (if (= pw 0) 0 (/ x pw))
+	     :rely      (if (= ph 0) 0 (/ y ph))
+	     :relwidth  (if (= pw 0) 0 (/ width pw))
+	     :relheight (if (= ph 0) 0 (/ height ph)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Widget Geometry management
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (MAKE-PACKING-WINDOW W)
+  (define old-packing-options (if (equal? (winfo 'manager W) "pack")
+				  (pack 'info W)
+				  '()))
+  (define (build-var-name x)
+    (string->symbol (format #f "amib-~A~A" x (widget-name (Id W)))))
+  
+  (define (make-var v val)
+    (let ((var (build-var-name v)))
+      (eval `(define ,var ',val) (global-environment))
+      var))
+
+  (define (change-pack-opt)
+    (pack 'forget W)
+    (pack W :side    (eval (build-var-name 'side))
+	    :anchor  (eval (build-var-name 'anchor))
+	    :fill    (eval (build-var-name 'fill))
+	    :expand  (eval (build-var-name 'expand))
+	    :padx    (eval (build-var-name 'padx))
+	    :pady    (eval (build-var-name 'pady))
+	    :ipadx   (eval (build-var-name 'ipadx))
+	    :ipady   (eval (build-var-name 'ipady))))
+
+  (define (make-side parent)
+    (let* ((f   (make <Frame> :parent parent :relief "groove" :border-width 2))
+	   (val (get-keyword :side old-packing-options "top"))
+	   (v   (make-var 'side val)))
+      (pack (make <Label> :text "Side: " :parent f :font "fixed") :side "left")
+      (for-each (lambda (x)
+		  (pack (make <Radio-button> :parent f :text x :variable v
+			      		     :value x :command change-pack-opt)
+			:side "left" :expand #t :fill "x"))
+		'("top" "bottom" "left" "right"))
+      f))
+
+  (define (make-anchor parent)
+    (let* ((f   (make <Frame> :parent parent :relief "groove" :border-width 2))
+	   (val (string->symbol (get-keyword :anchor old-packing-options "center")))
+	   (v   (make-var 'anchor val)))
+      (dotimes (i 3)
+	(let ((g (make <Frame> :parent f)))
+	  (dotimes (j 3)
+	    (let ((anchor (vector-ref *positions* (+ (* i 3) j))))
+	      (pack (make <Radio-Button> :text anchor :width 10 :parent g
+			  		 :variable v :value anchor :anchor "w"
+					 :command change-pack-opt)
+		    :side "left" :expand #t :fill "x")))
+	  (pack g :side "top")))
+      f))
+  
+  (define (make-fill parent)
+    (let* ((f   (make <Frame> :parent parent :relief "groove" :border-width 2))
+	   (val (get-keyword :fill old-packing-options "none"))
+	   (v   (make-var 'fill val)))
+      (pack (make <Label> :text "Fill: " :parent f :font "fixed") :side "left")
+      (for-each (lambda (x)
+		  (pack (make <Radio-button> :parent f :text x :variable v
+			      :value x :command  change-pack-opt)
+			:side "left" :expand #t :fill "x"))
+		  '("none" "x" "y" "both"))
+      f))
+
+  (define (make-expand parent)
+    (let ((val (get-keyword :expand old-packing-options #f)))
+      (make <Check-button> :parent parent :relief "groove" :border-width 2
+	    :text "Expand" :variable (make-var 'expand val) :value val
+	    :command change-pack-opt)))
+  
+  (define (make-padding parent)
+    (let ((f (make <Frame> :parent parent :relief "groove" :border-width 2)))
+      (for-each (lambda (x)
+		  (let* ((val (get-keyword (make-keyword x) old-packing-options 10))
+			 (v   (make-var x val)))
+		    (pack (make <Scale> :orientation "h" :parent f :text x
+				:variable v :value val 
+				:command (lambda (_) (change-pack-opt)))
+			  :expand #t :fill "x")))
+		'(ipadx ipady padx pady))
+      f))
+
+  ;; MAKE-PACKING-WINDOW starts here
+  (let ((top     (make <Toplevel> :title "Packer options" :class "Amib" 
+		       		  :geometry "-100+100")))
+    (pack (make-side   top)
+	  (make-anchor top)
+	  (make-fill top) 
+	  (make-expand top)
+	  (make-padding top)
+	  :padx 5 :pady 5 :fill "x")
+    (pack (make <Button> :parent top :text "Dismiss" :command (lambda () 
+								(destroy top)))
+	  :fill "x")))
+
+(define (use-pack-for-widget W)
+  (place 'forget W)
+  (pack W :in (parent W))
+  (update)
+  (make-packing-window W))
+
+(define (use-place-for-widget W)
+    (pack 'forget W)
+    (place W :in (parent W))
+    (update))	   
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; edit-widget		-- Interactively change widget options
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
+(define (edit-widget w)
+  (letrec ((top    (make <Toplevel> :class "Amib" :title "Widget Editor"
+			 	    :geometry "-10+10"))
+	   (slots  (map (lambda (x) (symbol->string (if (pair? x) (car x) x)))
+			(class-slots (class-of w))))
+	   (filter (lambda (slots forget)
+		     (let loop ((l slots) (res '()))
+		       (cond 
+			((null? l) 	res)
+			((member (car l) forget)
+			 		(loop (cdr l) res))
+			(else		(loop (cdr l) (cons (car l) res)))))))
+	   (maxl  0))
+    
+    ;; Display only useful slots
+    (set! slots (sort (filter slots *special-slots*) string<?))
+    (set! maxl (apply max (map string-length slots)))
+    
+    ;; Pretty name of this object
+    (let ((name-editor (make <Labeled-Entry> 
+			     :parent top 
+			     :title "Widget name"
+			     :value (hash-table-get *pretty-names* w "?none?"))))
+      (bind (entry-of name-editor) "<Return>"
+	    (lambda ()
+	      (hash-table-put! *pretty-names* w (value name-editor))))
+      (pack name-editor :expand #t :fill 'x))
+
+    ;; Display the geometry manager used for this widget
+    (let* ((f  (make <Frame> :border-width 2 :relief "ridge" :parent top))
+	   (v  (string->symbol (format #f "cb-var~A" (widget-name (Id w)))))
+	   (c1 (make <Radio-Button> :text "Packed" :variable v :parent f
+		     :value "pack" 
+		     :command (lambda () (Use-pack-for-widget w))))
+	   (c2 (make <Radio-Button> :text "Placed" :variable v :parent f
+		     :value "place"
+		     :command (lambda () (Use-place-for-widget w)))))
+      ;; Set the valid check button
+      (eval `(set! ,v ,(if (null? (place 'info w)) "pack" "place")))
+      (pack c1 c2 :side "left" :expand #t :fill "x")
+      (pack f :expand #t :fill "x"))
+
+    ;; Display the widget editor
+    (for-each (lambda (s)
+		(let* ((name (string->symbol s))
+		       (le   (make <Labeled-Entry> :parent top :title name
+				   :width 40
+				   :value (slot-ref w (string->symbol s)))))
+		  ;; Customize label
+		  (set! (width  (label-of le))  maxl)
+		  (set! (anchor (label-of le)) "e")
+		  ;; Customize entry
+		  (bind (entry-of le) "<Return>" (lambda ()
+						   (slot-set! w name (value le))))
+		  ;; Pack the new entry
+		  (pack le :fill "y" :expand #t)))
+	      slots)
+    ;; Dismiss button
+    (pack (make <Button> :text "Dismiss" :parent top
+			 :command (lambda () (destroy top)))
+	  :expand #t 
+	  :fill 'x)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Code generation
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (Pretty-name w)
+  (let ((name (hash-table-get *pretty-names* w #f)))
+    (unless name
+       ;; If this object has no name, a name is generated for it
+       (set! name (if (eqv? w *root*) "*root*" (gensym "W")))
+       (hash-table-put! *pretty-names* w name))
+    name))
+
+;;;;
+;;;; Generate-placement: generate pack or place depending of the geometry manager
+;;;; used.
+;;;;
+(define-method generate-placement ((w <Tk-widget>))
+  (let* ((infos      (place 'info w))
+	 (use-pack?  (null? infos)))
+    (if use-pack?
+	(set! infos (pack 'info w)))
+
+    (format #t "(~A ~A " (if use-pack? "pack " "place") (pretty-name w))
+
+    ;; Display informations returned by Tk
+    (let loop ((i infos))
+      (cond 
+         ((null? i)		(display ")\n\n"))
+	 ((eqv? (car i) ':in)	(format #t "\n       :in ~A" 
+					(pretty-name 
+					    (Id->instance (eval (cadr i)))))
+				(loop (cddr i)))
+	 (ELSE			(let ((val (cadr i)))
+				  (format #t "\n       ~S " (car i))
+				  (if (number? val)
+				      (display val)
+				      (format #t "\"~A\"" val)))
+				(loop (cddr i)))))))
+
+(define-method generate-placement ((w <Toplevel>))
+  (format #f ";; End of Toplevel ~A\n\n" (pretty-name w)))
+
+;;;;
+;;;; Generate-code-for-widget methods
+;;;;
+(define-method generate-code-for-widget ((w <Toplevel>))
+  (format #t "\n;; Start of Toplevel ~A\n" (pretty-name w))
+  (next-method))
+
+(define-method generate-code-for-widget ((w <Tk-widget>))
+  ;; Generate name
+  (format #t ";-----------\n(define ~A (make ~A\n\t:parent ~A\n" 
+	     (pretty-name w) (class-name (class-of w)) (pretty-name (parent w)))
+
+  ;; Generate non special slots
+  (for-each (lambda (slot)
+	      (unless (member slot *special-slots*)
+		    (unless (member (symbol->string (car slot)) *special-slots*)
+		       ;; Generate code for this slot (which is for sure a list)
+		       (let* ((slot-name (car slot))
+			      (val       (slot-ref w slot-name))
+			      (init-key  (get-keyword :init-keyword (cdr slot) #f)))
+		      (when (and init-key (not (equal? (slot-ref w slot-name) "")))
+			 (format #t "\t~S ~A~S\n"
+				init-key (if (list? val) "'" "") val))))))
+	    (class-slots (class-of w)))
+  ;; Close parenthesis
+  (format #t "))\n\n")
+  
+  ;; Generate code for embedded widgets. Don't do this if w is a composite
+  (unless (is-a? w <Tk-composite-widget>)
+     (for-each generate-code-for-widget
+	       (map Id->instance (winfo 'children w))))
+  
+  ;; Generate placement for this widget
+  (generate-placement w))
+
+;;;;
+;;;; Generate-code (the entry point of code generation)
+;;;;
+(define (generate-code file)
+  (with-output-to-file file
+    (lambda ()
+      (format #t ";;\n;; Code generated by Amib (v~A)\n;;\n" *amib-version*)
+      (for-each (lambda (x)
+		  (when (and (is-a? x <Toplevel>) 
+			     (not (equal? (slot-ref x 'class) "Amib")))
+			(generate-code-for-widget x)))
+		(map Id->instance (winfo 'children *root*))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; File Management
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (save-file)
+  (if *current-file*
+      (generate-code *current-file*)
+      (write-file)))
+
+(define (load-file)
+  (let ((f (make-file-box)))
+    (when f (load f))))
+
+(define (write-file)
+  (let ((f (make-file-box)))
+    (when f
+      (set! *current-file* f)
+      (generate-code f))))
+	  
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Inits
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(bind "all" "<ButtonRelease-1>" (lambda () (set! *resizing* #f)))
+(new-amib-toplevel)
+(build-interface)

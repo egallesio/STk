@@ -1,0 +1,81 @@
+'\" Color=Green
+'\"
+'\" Copyright © 1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+'\" 
+'\" Permission to use, copy, and/or distribute this software and its
+'\" documentation for any purpose and without fee is hereby granted, provided
+'\" that both the above copyright notice and this permission notice appear in
+'\" all copies and derived works.  Fees for distribution or use of this
+'\" software or derived works may only be charged with express written
+'\" permission of the copyright holder.  
+'\" This software is provided ``as is'' without express or implied warranty.
+'\"
+'\"           Author: Erick Gallesio [eg@unice.fr]
+'\"    Creation date: 19-Jul-1996 15:21
+'\" Last file update: 19-Jul-1996 16:31
+'\" 
+'\" 
+.so STk-man.macros
+.TH listener n 3.1 STk "Tk Built-In Commands"
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+listener \- Create and manipulate listener widgets
+.SH SYNOPSIS
+(\fBlistener\fI \fIwidget\-name \fR?\fIoptions\fR?)
+
+.SH "WIDGET-SPECIFIC OPTIONS"
+.OP :command "" "" command
+Specifies a STk procedure to associate with the listener.  This procedure
+is invoked when a complete s-expr is entered in the listener. This s-expr is
+passed as a string to the procedure. The procedure must return the string
+which will be inserted in response to the s-expr input. The default procedure
+is the Identity procdure.
+.OP :output-color "" "" output-color
+Specifies the color used the output lines
+.OP :prompt-color "" "" prompt-color
+Specifies the color used for the prompt
+.OP :prompt "" "" prompt
+Specifies the prompt used for reading s-expr. Defaults to "> "
+.BE
+
+.SH DESCRIPTION
+.PP
+The \fBlistener\fR procedure creates a new text window (given by the
+\fIwidget\-name\fR argument) and associates it bindiangs suitable for a listener.
+Since a listener is in fact a text widget, all the options of \fBtext\fR
+are applicable to a listener.
+The \fBlistener\fR procedure returns its
+\fIwidget\-name\fR argument.  At the time this procedure is invoked,
+there must not exist a window named \fIwidget\-name\fR, but
+\fIwidget\-name\fR's parent must exist.
+.PP
+A listener is a widget for doing interactive I/O. Typical usage for
+this widget consists of a text window whose inputs are sent to the
+Scheme evaluator and whose result is displayed in the listener. An
+example for this is shown at the end of this page.
+
+.SH "WIDGET PROCEDURE"
+.PP
+All the \fBtext\fR procedure are avialble for a listener, plus
+
+.TP
+(\fBlistener-insert-string\fR \fIwidget-name str\fR)
+inserts the string \fIstr\fR just before the input prompt. 
+.SH EXAMPLE
+Hereafter is a simple use of the listener widget which interact with the 
+evaluator.
+.sp
+.CS
+(listener '.t :width   50 
+              :height  10
+              :command (lambda (x) 
+                         (eval-string x (global-environment))))
+(pack .t)
+.CE
+.SH "DEFAULT BINDINGS"
+.PP
+The defaults bindings are identical to the \fBtext\fR bindings.
+
+.SH SEE ALSO
+text

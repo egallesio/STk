@@ -1,0 +1,45 @@
+'\" Color=Green
+'\"
+'\" 
+.so STk-man.macros
+.TH report-error n 3.1 STk "Tk Built-In Commands"
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+report-error \- Command invoked to process errors
+.SH SYNOPSIS
+(\fBreport-error \fIhead message obj\fR)
+.BE
+
+.SH DESCRIPTION
+.PP
+\fBReport-error\fR is called by the interpreter when an error occurs.
+This procedure is written in Scheme and can be by an application which
+needs to handle redefined to handle errors. The \fIhead\fR argument is
+a string which identify the kind of error. The \fIhead\fR argument
+contains the error message and \fIobj\fR contains the object which 
+causes the error (or the empty list when there is no object to incriminate).
+.PP
+The STk library includes a default \fBreport-error\fR procedure
+that posts a dialog box containing the error message and offers
+the user a chance to see a stack trace showing where the
+error occurred and its associated environment..
+.PP 
+If an error occurs while is \fBreport-error\fR execution, the
+interpreter detect that the procedure is buggy and it redirect further
+messages on the standard error port.
+.LP
+Hereafter is a simple non-graphical error reporter.
+.CS
+(define (report-error head message obj)
+  (let ((port (current-error-port)))
+    ;; Display message
+    (format port "~A: ~A ~S\n\n"  head message obj)
+    ;; Display stack
+    (let ((stack (%get-eval-stack))
+	  (env   (%get-environment-stack)))
+      (for-each (lambda (x y) (format port "~A ~A\n" x (uncode y)))
+		env 
+		stack))))
+.CE
+

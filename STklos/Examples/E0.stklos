@@ -1,0 +1,93 @@
+;;;;
+;;;; E x a m p l e 0 .  s t k
+;;;;
+;;;; Copyright (C) 1993,1994,1995 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
+;;;;    Creation date:  5-Aug-1994 10:30
+;;;; Last file update: 27-Nov-1994 15:18 
+
+;;;; This file desmonstates the use of composite objects. First we define the class
+;;;; <Car> and <Caravan>.
+
+(define-class <Car> ()
+  ((power  :init-keyword :power  :accessor power)
+   (driver :init-keyword :driver :accessor driver)
+   (color  :init-keyword :color  :accessor color)))
+
+(define-class <Caravan> ()
+  ((capacity :init-keyword :capacity :accessor capacity)
+   (color    :init-keyword :color    :accessor color)))
+
+
+;;;; Hereafter is a first definition of <Camping-car>. Note that the color slot 
+;;;; is propagated to the color slot of the "house" and "car" components of the
+;;;; camping car. Note the use of the :metaclass option for managing :propagated
+;;;; slots.
+
+(define-class <Camping-car>()
+  ((car     :getter car-of) ;; Don't redefine CAR!!!!
+   (house   :getter house)
+   (color   :init-keyword :color :accessor color
+	    :allocation :propagated :propagate-to (car house)))
+  :metaclass <Composite-metaclass>)
+
+;;;; Defining a composite widget requires to define a initialize method.
+(define-method initialize ((self <Camping-car>) initargs)
+  (slot-set! self 'car   (make <Car>))
+  (slot-set! self 'house (make <Caravan>))
+  (next-method))
+	     
+;;;; And now we can define a camping-car
+(define cc (make <Camping-car> :color "red"))
+(color cc)  			; ===> "red"
+(color (car-of cc))		; ===> "red"
+(color (house cc))		; ===> "red"
+(slot-set! cc 'color "yellow")  ; other writing: (set! (color cc) "yellow")
+(color cc)  			; ===> "yellow"
+(color (car-of cc))		; ===> "yellow"
+(color (house cc))		; ===> "yellow"
+;;;; Of course, color of the house coud be different and we can do
+(set! (color (house cc)) "green")
+(color cc)  			; ===> "yellow"
+(color (car-of cc))		; ===> "yellow"
+(color (house cc))		; ===> "green"
+
+
+;;;; Getting or setting the power of the car with this first definition
+;;;; is a little bit messy. We have to do
+;;;;        (set! (power (car-of cc)) 10)
+;;;; To avoid this we can use a "power" propagated slot which will propagate
+;;;; to the "car" component. Another way consists to use inheritance. 
+;;;;
+;;;; Note: Purists will tell you that inheritance permits object specialization
+;;;; and NOT object composition. However, we can use it here to avoid the 
+;;;; definition of propagated slots.
+;;;;
+;;;; Here is the new definition of <Camping-car>.
+
+(define-class <Camping-car>(<Car>)
+  ((car     :getter car-of) ;; Don't redefine CAR!!!!
+   (house   :getter house)
+   (color   :init-keyword :color :accessor color
+	    :allocation :propagated :propagate-to (car house)))
+  :metaclass <Composite-metaclass>)
+
+;;;; initialize is unmodified (but we have to redefine it since <Camping-car>
+;;;; was changed.
+(define-method initialize ((self <Camping-car>) initargs)
+  (slot-set! self 'car   (make <Car>))
+  (slot-set! self 'house (make <Caravan>))
+  (next-method))
+
+;;;; Now we can do
+
+(define cc2 (make <Camping-Car> :color "brown" :driver "Joe" :power 10))

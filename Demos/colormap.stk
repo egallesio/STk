@@ -1,0 +1,49 @@
+#!/bin/sh
+:;exec /usr/local/bin/stk -f "$0" "$@"
+;;;;
+;;;;  Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;;  Permission to use, copy, and/or distribute this software and its
+;;;;  documentation for any purpose and without fee is hereby granted, provided
+;;;;  that both the above copyright notice and this permission notice appear in
+;;;;  all copies and derived works.  Fees for distribution or use of this
+;;;;  software or derived works may only be charged with express written
+;;;;  permission of the copyright holder.  
+;;;;  This software is provided ``as is'' without express or implied warranty.
+;;;; 
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 19-Aug-1993 15:08
+;;;; Last file update: 21-Jul-1996 11:24
+
+(define Color "#000000")
+(define V     (vector 0 0 0))
+
+(define (make-color index name)
+  (let* ((f    (format #f ".f.v~a"    index))
+	 (conv (lambda (n)
+		 (string-append (if (>= n 16) "" "0") (number->string n 16))))
+	 (cmd (lambda (val)
+		(vector-set! V index val)
+		(set! Color (apply string-append "#" (map conv (vector->list V))))
+		(tk-set! .sample :bg Color))))
+    
+    (frame f :relief "groove" :bd 2)
+    (pack
+       [label (format #f "~a.l" f) :text name :width 10]
+       [scale (format #f "~a.s" f) :from 0 :to 255 :orient "horiz" 
+	      :command cmd :length 300]
+       :side "left" :padx 2 :pady 2)
+    (pack f :padx 5 :pady 5)))
+
+;;; Make interface
+(pack 
+    [frame '.f :relief "raised" :bd 2]
+    [frame '.sample :width 30 :height 50 :bg Color]
+    [label '.color :font "fixed" :textvariable 'Color :relief "ridge" :bd 4]
+    [button '.quit :text "Quit"  :command (lambda ()
+					    (format #t "color=~A~%" Color)
+					    (destroy *root*))]
+    :fill "both")
+
+(let ((c '#("Red" "Green" "Blue")))
+  (dotimes (i 3) (make-color i (vector-ref c i))))

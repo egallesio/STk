@@ -1,0 +1,356 @@
+;;;;
+;;;; Scrollbars bindings and procs
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; This software is a derivative work of other copyrighted softwares; the
+;;;; copyright notices of these softwares are placed in the file COPYRIGHTS
+;;;;
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 17-May-1993 12:35
+;;;; Last file update:  2-Jul-1996 19:40
+;;;;
+
+(let ()
+
+(define tk::init-pos    "")
+(define tk::init-values '())
+
+;; Standard Motif bindings:
+
+(define-binding "Scrollbar" "<Enter>" (|W| x y)
+  (when *tk-strict-motif* 
+     (set! tk::active-bg (tk-get |W| :activebackground))
+     (tk-set! |W| :activebackground (tk-get |W| :background)))
+  (|W| 'activate (|W| 'identify x y)))
+
+(define-binding "Scrollbar" "<Motion>" (|W| x y)
+  (|W| 'activate (|W| 'identify x y)))
+
+(define-binding "Scrollbar" "<Leave>" (|W|)
+  (if *tk-strict-motif* 
+      (tk-set! |W| :activebackground tk::active-bg))
+  (|W| 'activate ""))
+
+(define-binding "Scrollbar" "<1>" (|W| x y)
+  (Tk:scroll-button-down |W| x y))
+
+(define-binding "Scrollbar" "<B1-Motion>" (|W| x y)
+  (Tk:scroll-drag |W| x y))
+
+(define-binding "Scrollbar" "<B1-B2-Motion>" (|W| x y)
+  (Tk:scroll-drag |W| x y))
+
+(define-binding "Scrollbar" "<ButtonRelease-1>" (|W| x y)
+  (Tk:scroll-button-up |W| x y))
+
+(define-binding "Scrollbar" "<B1-Leave>" ()
+  ;; Prevents <Leave> binding from being invoked.
+  'nop)
+
+(define-binding "Scrollbar" "<B1-Enter>" ()
+  ;; Prevents <Enter> binding from being invoked.
+  'nop)
+
+(define-binding "Scrollbar" "<2>" (|W| x y)
+  (Tk:scroll-button-2-down |W| x y))
+
+(define-binding "Scrollbar" "<B1-2>" ()
+  ; Do nothing, since button 1 is already down.
+  'nop)
+
+(define-binding "Scrollbar" "<B2-1>" (|W| x y)
+  ; Do nothing, since button 2 is already down.
+  'nop)
+
+(define-binding "Scrollbar" "<B2-Motion>" (|W| x y)
+  (Tk:scroll-drag |W| x y))
+
+(define-binding "Scrollbar" "<ButtonRelease-2>" (|W| x y)
+  (Tk:scroll-button-up |W| x y))
+
+(define-binding "Scrollbar" "<B1-ButtonRelease-2>" ()
+  ;Do nothing:  B1 release will handle it.
+  'nop)
+
+(define-binding "Scrollbar" "<B2-ButtonRelease-1>" ()
+  ;Do nothing:  B1 release will handle it.
+  'nop)
+
+(define-binding "Scrollbar" "<B2-Leave>" ()
+  ;; Prevents <Leave> binding from being invoked.
+  'nop)
+
+(define-binding "Scrollbar" "<B2-Enter>" ()
+  ;; Prevents <Enter> binding from being invoked.
+  'nop)
+
+(define-binding "Scrollbar" "<Control-1>" (|W| x y)
+  (Tk:scroll-top-bottom |W| x y))
+
+(define-binding "Scrollbar" "<Control-2>" (|W| x y)
+  (Tk:scroll-top-bottom |W| x y))
+
+(define-binding "Scrollbar" "<Up>"            (|W|) (Tk:scroll-by-units |W| 'v -1))
+(define-binding "Scrollbar" "<Down>"          (|W|) (Tk:scroll-by-units |W| 'v +1))
+(define-binding "Scrollbar" "<Control-Up>"    (|W|) (Tk:scroll-by-pages |W| 'v -1))
+(define-binding "Scrollbar" "<Control-Down>"  (|W|) (Tk:scroll-by-pages |W| 'v +1))
+(define-binding "Scrollbar" "<Left>" 	      (|W|) (Tk:scroll-by-units |W| 'h -1))
+(define-binding "Scrollbar" "<Right>"         (|W|) (Tk:scroll-by-units |W| 'h +1))
+(define-binding "Scrollbar" "<Control-Left>"  (|W|) (Tk:scroll-by-pages |W| 'h -1))
+(define-binding "Scrollbar" "<Control-Right>" (|W|) (Tk:scroll-by-pages |W| 'hd +1))
+(define-binding "Scrollbar" "<Prior>" 	      (|W|) (Tk:scroll-by-pages |W| 'hv -1))
+(define-binding "Scrollbar" "<Next>" 	      (|W|) (Tk:scroll-by-pages |W| 'hv +1))
+
+(define-binding "Scrollbar" "<Home>" (|W|)
+  (Tk:scroll-to-pos |W| 0))
+
+(define-binding "Scrollbar" "<End>" (|W|)
+  (Tk:scroll-to-pos |W| 1))
+
+
+;; Tk:scroll-button-down --
+;; This procedure is invoked when a button is pressed in a scrollbar.
+;; It changes the way the scrollbar is displayed and takes actions
+;; depending on where the mouse is.
+;;
+;; w -		The scrollbar widget.
+;; x, y -	Mouse coordinates.
+
+(define (Tk:scroll-button-down w x y)
+  (let ((element (w 'identify x y)))
+    (set! tk::relief (tk-get w :activerelief))
+    (tk-set! w :activerelief "sunken")
+    (if (equal? element "slider")
+	(Tk:scroll-start-drag w x y)
+	(Tk:scroll-select w element "initial"))))
+
+;; Tk:scroll-button-up --
+;; This procedure is invoked when a button is released in a scrollbar.
+;; It cancels scans and auto-repeats that were in progress, and restores
+;; the way the active element is displayed.
+;;
+;; w -		The scrollbar widget.
+;; x, y -	Mouse coordinates.
+
+(define (Tk:scroll-button-up w x y)
+  (Tk:cancel-repeat)
+  (tk-set! w :activerelief tk::relief)
+  (Tk:scroll-end-drag w x y)
+  (w 'activate (w 'identify x y)))
+
+
+;; Tk:scroll-select --
+;; This procedure is invoked when a button is pressed over the scrollbar.
+;; It invokes one of several scrolling actions depending on where in
+;; the scrollbar the button was pressed.
+;;
+;; w -		The scrollbar widget.
+;; element -	The element of the scrollbar that was selected, such
+;;		as "arrow1" or "trough2".  Shouldn't be "slider".
+;; repeat -	Whether and how to auto-repeat the action:  "noRepeat"
+;;		means don't auto-repeat, "initial" means this is the
+;;		first action in an auto-repeat sequence, and "again"
+;;		means this is the second repetition or later.
+
+(define (Tk:scroll-select w element repeat)
+  (when (winfo 'exists w)
+    (let ((cont (lambda ()
+		  (cond
+		   ((string=? repeat "again") 
+		         (set! tk::after-id
+			       (after (tk-get w :repeatinterval)
+				      (lambda ()
+					(Tk:scroll-select w 
+							  element 
+							  "again")))))
+		   ((string=? repeat "initial")
+		         (let ((delay (tk-get w :repeatdelay)))
+			   (if (> delay 0)
+			       (set! tk::after-id 
+				     (after delay
+					    (lambda ()
+					      (Tk:scroll-select w 
+								element 
+								"again")))))))))))
+      (cond
+       ((equal? element "arrow1")  (Tk:scroll-by-units w 'hv -1) (cont))
+       ((equal? element "trough1") (Tk:scroll-by-pages w 'hv -1) (cont))
+       ((equal? element "trough2") (Tk:scroll-by-pages w 'hv +1) (cont))
+       ((equal? element "arrow2")  (Tk:scroll-by-units w 'hv +1) (cont))))))
+
+
+;; Tk:scroll-start-drag --
+;; This procedure is called to initiate a drag of the slider.  It just
+;; remembers the starting position of the mouse and slider.
+;;
+;; w -		The scrollbar widget.
+;; x, y -	The mouse position at the start of the drag operation.
+
+(define (Tk:scroll-start-drag w x y)
+  (unless (equal? (tk-get w :command) "")
+     (set! tk::press-x x)
+     (set! tk::press-y y)
+     (set! tk::init-values (w 'get))
+     (let ((iv0 (car tk::init-values)))
+       (if (= (length tk::init-values) 2)
+	   (set! tk::init-pos iv0)
+	   (if (= iv0 0)
+	       (set! tk::init-pos 0.0)
+	       (set! tk::init-pos (/ (caddr tk::init-values) 
+				     (car tk::init-values))))))))
+
+;; Tk:scroll-drag --
+;; This procedure is called for each mouse motion even when the slider
+;; is being dragged.  It notifies the associated widget if we're not
+;; jump scrolling, and it just updates the scrollbar if we are jump
+;; scrolling.
+;;
+;; w -		The scrollbar widget.
+;; x, y -	The current mouse position.
+
+(define (Tk:scroll-drag w x y)
+  (unless (equal? tk::init-pos "")
+     (let ((delta (w 'delta (- x tk::press-x) (- y tk::press-y))))
+       (if (tk-get w :jump)
+	     (if (equal? (length tk::init-values) 2)
+		 (w 'set (+ (car  tk::init-values) delta)
+		         (+ (cadr tk::init-values) delta))
+		 (let ((delta (floor (* delta (car tk::init-values)))))
+		   (w 'set (car  tk::init-values)
+		      	   (cadr tk::init-values)
+			   (+ (caddr tk::init-values)  delta)
+			   (+ (cadddr tk::init-values) delta))))
+	     (Tk:scroll-to-pos w (+ tk::init-pos delta))))))
+
+;; Tk:scroll-end-drag --
+;; This procedure is called to end an interactive drag of the slider.
+;; It scrolls the window if we're in jump mode, otherwise it does nothing.
+;;
+;; w -		The scrollbar widget.
+;; x, y -	The mouse position at the end of the drag operation.
+
+(define  (Tk:scroll-end-drag w x y)
+  (unless (equal? tk::init-pos "")
+     (if (tk-get w :jump)
+	 (let ((delta (w 'delta (- x tk::press-x) (- y tk::press-y))))
+	   (Tk:scroll-to-pos w (+ tk::init-pos delta))))
+     (set! Tk::init-pos "")))
+
+
+;; Tk:scroll-by-units --
+;; This procedure tells the scrollbar's associated widget to scroll up
+;; or down by a given number of units.  It notifies the associated widget
+;; in different ways for old and new command syntaxes.
+;;
+;; w -		The scrollbar widget.
+;; orient -	Which kinds of scrollbars this applies to:  "h" for
+;;		horizontal, "v" for vertical, "hv" for both.
+;; amount -	How many units to scroll:  typically 1 or -1.
+
+(define (Tk:scroll-by-units w orient amount)
+  (let ((cmd     (tk-get w :command))
+	(worient (tk-get w :orient)))
+    (unless (equal? cmd "")
+       (when (or (eq? orient 'hv) 
+		 (and (eq? orient 'h) (string=? worient "horizontal"))
+		 (and (eq? orient 'v) (string=? worient "vertical")))
+	   (let ((info (w 'get)))
+	     (if (= (length info) 2)
+		 (cmd 'scroll amount 'units)
+		 (cmd (+ (caddr info) amount))))))))
+
+;; Tk:scroll-by-pages --
+;; This procedure tells the scrollbar's associated widget to scroll up
+;; or down by a given number of screenfuls.  It notifies the associated
+;; widget in different ways for old and new command syntaxes.
+;;
+;; Arguments:
+;; w -		The scrollbar widget.
+;; orient -	Which kinds of scrollbars this applies to:  "h" for
+;;		horizontal, "v" for vertical, "hv" for both.
+;; amount -	How many screens to scroll:  typically 1 or -1.
+
+(define (Tk:scroll-by-pages w orient amount)
+  (let ((cmd     (tk-get w :command))
+	(worient (tk-get w :orient)))
+    (unless (equal? cmd "")
+       (when (or (eq? orient 'hv) 
+		 (and (eq? orient 'h) (string=? worient "horizontal"))
+		 (and (eq? orient 'v) (string=? worient "vertical")))
+	   (let ((info (w 'get)))
+	     (if (= (length info) 2)
+		 (cmd 'scroll amount 'pages)
+		 (cmd (+ (caddr info) (* (cadr info) amount) -1))))))))
+
+;; Tk:scroll-ToPos --
+;; This procedure tells the scrollbar's associated widget to scroll to
+;; a particular location, given by a fraction between 0 and 1.  It notifies
+;; the associated widget in different ways for old and new command syntaxes.
+;;
+;; Arguments:
+;; w -		The scrollbar widget.
+;; pos -		A fraction between 0 and 1 indicating a desired position
+;;		in the document.
+
+(define (Tk:scroll-to-pos w pos)
+  (let ((cmd (tk-get w :command)))
+    (unless (equal? cmd "")
+	(let ((info (w 'get)))
+	  (if (= (length info) 2)
+	      (cmd 'moveto pos)
+	      (cmd (floor (* (car info) pos))))))))
+
+;; Tk:scroll-top-bottom
+;; Scroll to the top or bottom of the document, depending on the mouse
+;; position.
+;;
+;; w -		The scrollbar widget.
+;; x, y -	Mouse coordinates within the widget.
+
+(define (Tk:scroll-top-bottom w x y)
+  (let ((element (w 'identify x y)))
+    (cond
+       ((member element '("arrow1" "trough1")) (Tk:scroll-to-pos w 0))
+       ((member element '("arrow2" "trough2")) (Tk:scroll-to-pos w 1)))
+
+    ;; Set tk::relief, since it's needed by Tk:scroll-button-up.
+    (set! tk::relief (tk-get w :activerelief))))
+
+
+;; Tk:scroll-button-2-down
+;; This procedure is invoked when button 2 is pressed over a scrollbar.
+;; If the button is over the trough or slider, it sets the scrollbar to
+;; the mouse position and starts a slider drag.  Otherwise it just
+;; behaves the same as button 1.
+;;
+;; Arguments:
+;; w -		The scrollbar widget.
+;; x, y -	Mouse coordinates within the widget.
+
+(define (Tk:scroll-button-2-down w x y)
+  (let ((element (w 'identify x y)))
+    (if (or (equal? element "arrow1") (equal? element "arrow2"))
+	(Tk:scroll-button-down w x y)
+	(begin
+	   (Tk:scroll-to-pos w (w 'fraction x y))
+	   (set! tk::relief (tk-get w :activerelief))
+
+	   ; Need the "update idletasks" below so that the widget calls us
+	   ; back to reset the actual scrollbar position before we start the
+	   ; slider drag.
+	   (update 'idletasks)
+	   (tk-set! w :activerelief "sunken")
+	   (w 'activate 'slider)
+	   (Tk:scroll-start-drag w x y)))))
+
+)

@@ -1,0 +1,2 @@
+(label '.lab :text "This is a label")
+(pack .lab)

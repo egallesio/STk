@@ -1,0 +1,4 @@
+;; A basic scale widget
+
+(pack (scale '.s1))
+

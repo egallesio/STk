@@ -1,0 +1,175 @@
+Herafter is an excerpt of a mail of jredford@lehman.com about Python/STk mail
+I hope it will suffice to build a running system (I had no time to test it).
+------------------
+
+
+This is the file I added.. python-stk.c:
+
+
+#include <stk.h>
+#include <Py/allobjects.h>
+#include <Py/pythonrun.h>
+#include <Py/import.h>
+
+PRIMITIVE python_init(void)
+{
+  initall();
+  return UNDEFINED;
+}
+
+PRIMITIVE python(SCM string)
+{
+  run_command(CHARS(string));
+  return UNDEFINED;
+}
+
+SCM convert(object *o)
+{
+  if is_intobject(o) {
+    return makeinteger(getintvalue(o));
+  } else {
+    if is_floatobject(o) {
+      return makenumber(getfloatvalue(o));
+    } else {
+      if is_stringobject(o) {
+	return makestrg(getstringsize(o),getstringvalue(o));
+      } else {
+	if is_tupleobject(o) {
+	  int i,j = gettuplesize(o);
+	  SCM vec;
+	  vec = makevect(j,makeinteger(0));
+	  for (i = 0; i < j; i++) {
+	    vector_set(vec, makeinteger(i), convert(gettupleitem(o,i)));
+	  }
+	  return vector2list(vec);
+	} else {
+	  if is_listobject(o) {
+	    int i,j = getlistsize(o);
+	    SCM vec;
+	    vec = makevect(j,makeinteger(0));
+	    for (i = 0; i < j; i++) {
+	      vector_set(vec, makeinteger(i), convert(getlistitem(o,i)));
+	    }
+	    return vector2list(vec);
+	  }
+	}
+      }
+    }
+  }
+  return UNDEFINED;
+}
+
+PRIMITIVE python_value(SCM dict, SCM var)
+{
+  object *m, *d, *v;
+  m = add_module(CHARS(dict));
+  if (m == NULL)
+    return UNDEFINED;
+  d = getmoduledict(m);
+  v = dictlookup(d,CHARS(var));
+  return convert(v);
+}
+
+char *
+getprogramname()
+{
+        return "stk";
+}
+
+
+END of file python-stk.c
+
+The initall() should be done in init_python-stk(). You might know of a
+better way to convert the data types, or to more efficiently make
+lists. These were the calls that I found easilly. I also didnt know
+how to typecheck the arguments passed. They should all be strings.
+
+
+This is the summary of what I added to primitives.c
+/*
+ *
+ * p r i m i t i v e s . c			-- List of STk subrs
+ */
+
+#ifdef USE_PYTHON
+extern PRIMITIVE python_init(void);
+extern PRIMITIVE python(SCM string);
+extern PRIMITIVE python_value(SCM dict, SCM var);
+#endif
+
+static struct Primitive Scheme_primitives[] = { 
+ .
+ .
+ .
+
+#ifdef USE_PYTHON
+  {"python-init",           tc_subr_0,          python_init},
+  {"python",                tc_subr_1,          python},
+  {"python-value",          tc_subr_2,          python_value},
+#endif
+ .
+ .
+ .
+
+
+
+
+An example.. well, I never used Tk before Stk, so Im not gonna do
+anything too pretty.
+
+#!/opt/stk/bin/stk -file
+
+(python-init)  ;This should really be (require "python") or (require "python-stk")
+(python "import posix") ;Python is a module based language
+
+(button ".b" :text "Press me" :borderwidth 2 :background "slate gray" :foreground "gold"
+	:command '(begin
+		    (python "a = posix.listdir('.')")
+		    (for-each (lambda (a) (.f.lb 'insert 99999 a))
+			      (python-value "__main__" "a"))))
+
+(frame ".f")
+(listbox ".f.lb" :foreground "grey40" :background "grey70" :yscroll ".f.s 'set")
+(scrollbar ".f.s" :relief "sunken" :command ".f.lb 'yview")
+
+(pack .f.lb .f.s :side "right" :fill "y")
+(pack .b .f)
+
+
+
+Where this would populate a listbox with the filenames in the current
+directory, everytime the button was pushed. posix.listdir() returns a
+python 'list' type. __main__ is the name/alias of the primary module.
+If I could figure out STk calling enough to use variable args, I'd
+have made (python-value "a") assume a value of "__main__" for the
+dict..
+
+
+
+Makefile modifications:
+
+# This isnt the default python dir, just what I use. should be a
+# configure option.. --with-python=/opt/python 
+PYTHONDIR     = /opt/python
+PYTHONLIBPATH = $(PYTHONDIR)/lib/python/lib
+PYTHONCFLAGS  = -I$(PYTHONDIR)/include -I$(PYTHONDIR)/include/Py
+PYTHONOBJ     = python-stk.o
+PYTHONLIB     = $(PYLIBPATH)/libModules.a \
+                $(PYLIBPATH)/libPython.a \
+                $(PYLIBPATH)/libParser.a \
+                $(PYLIBPATH)/libObjects.a
+PYTHONLIBS    = -lreadline -ltermcap
+LIBS          = -lnsl -ldl $(PYTHONLIBS) -lm
+
+
+
+...
+		/bin/rm -f primitives.o
+		make CFLAGS="$(CFLAGS) -DUSE_PYTHON" primitives.o
+		$(CC) -o stkp-bin  -DUSE_PYTHON $(OBJ) $(PYTHONOBJ) -I$(PYTHONDIR)/include/Py -DNO_MAIN $(PYTHONLIBPATH)/config.c userinit.c $(ALLIBS) $(XLIBSW) $(PYTHONLIB) $(LIBS)
+		/bin/rm -f primitives.o
+
+
+Removing primitives.c to recompile with -DUSE_PYTHON is a horrible
+kludge, as I am sure you agree. The key thing is to also compile in
+   -DNO_MAIN $(PYLIBPATH)/config.c

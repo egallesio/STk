@@ -1,0 +1,149 @@
+%
+% STk Reference manual (Main file)
+%
+% Copyright (C) 1993,1994,1995 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+%
+% Permission to use, copy, and/or distribute this software and its
+% documentation for any purpose and without fee is hereby granted, provided
+% that both the above copyright notice and this permission notice appear in
+% all copies and derived works.  Fees for distribution or use of this
+% software or derived works may only be charged with express written
+% permission of the copyright holder.  
+% This software is provided ``as is'' without express or implied warranty.
+%
+%           Author: Erick Gallesio [eg@unice.fr]
+%    Creation date: ??-Nov-1993 ??:??
+% Last file update: 24-Jul-1996 13:53
+%
+
+\documentclass[10pt,a4paper]{book}
+\usepackage{a4wide}
+\usepackage{fancyheadings}
+\pagestyle{fancy}
+\setlength{\headheight}{15pt}
+
+\makeindex                              % Build Index
+
+\begin{document}
+
+\input{commands}                        % Stolen macros from R4RS
+\input{psfig}                           % Postscript stuff
+\parindent 0pt                          % No indentation at paragraph
+                                        % beginning
+\bibliographystyle{unsrt}               % Unsorted bibliography
+
+% \showboxdepth=0                               
+
+%
+%  Some changes in standard commands
+% 
+\renewcommand{\thechapter}{}                    % No chapter number
+\renewcommand{\thesection}{\arabic{section}}    % Subsection inherits from this
+
+%
+% Some new commands
+%
+\newcommand{\stkversion}{3.1}
+\newcommand{\stk}{{\sc STk}}
+\newcommand{\stklos}{{\sc STklos}}
+\newcommand{\doc}{{\em Identical to R$^{4}$RS.}}
+\newcommand{\rrrr}{{\em R$^{4}\!RS$}}
+\newcommand{\saut}{\vskip2mm}
+\newcommand{\tilda}{{\tt\char126}}
+\newcommand{\etoile}{{\tt\char42}}
+\newcommand{\leftbracket}{{\tt\char91}}
+\newcommand{\rightbracket}{{\tt\char93}}
+\newcommand{\hyperiii}[1]{\hyper{#1$_3$}}
+\newcommand{\clearemptydoublepage}{\newpage{\thispagestyle{empty}\cleardoublepage}}
+
+%
+% Title page
+%
+\thispagestyle{empty}
+\begin{center}   
+\ \\[3cm]
+{\huge\bf ST{\large\bf{K}} Reference manual}\\[3mm]
+{\Large Version \stkversion}\\[3cm]
+{\large Erick Gallesio \\
+Universit\'e de Nice~-~Sophia Antipolis \\
+Laboratoire I3S - CNRS URA 1376 - ESSI. \\
+Route des Colles\\
+B.P. 145\\
+06903 Sophia-Antipolis Cedex - FRANCE\\[3mm]
+email: eg@unice.fr}
+\end{center}
+\vskip8cm
+\begin{flushright}
+July 1996
+\end{flushright}
+\newpage
+\thispagestyle{empty}
+{\ }
+\vskip2cm
+{\bf Document Reference}
+\begin{quote}
+Erick Gallesio, {\em STk Reference Manual}, RT 95-31b,
+I3S-CNRS~/~Universit\'e de Nice - Sophia Antipolis, juillet 1995.
+\end{quote}
+
+
+
+%\renewcommand{\sectionmark}[1]{\markboth{\bf #1}{}}
+%\renewcommand{\subsectionmark}[1]{\markright{\bf\thesubsection~~#1}}
+%\lhead[\fancyplain{}{\bf\thepage}]{\fancyplain{}{\rightmark}}
+%\chead{}
+%\rhead[\fancyplain{}{\leftmark}]{\fancyplain{}{\bf\thepage}}
+
+\lhead[\fancyplain{}{\bf\thepage}]{\fancyplain{}{\bf{\stk} Reference Manual}}
+\chead{}
+\rhead[\fancyplain{}{\bf{\stk} Reference Manual}]{\fancyplain{}{\bf\thepage}}
+\lfoot{}
+\cfoot{\fancyplain{\bf\thepage}{}}
+\rfoot{}
+
+
+%
+% Table of content
+%
+\tableofcontents
+
+
+
+%
+% Part 1: Reference manual
+%
+\part{Reference Manual}
+\pagestyle{fancy}
+\thispagestyle{plain}
+\input{Reference1.tex}
+\input{Reference2.tex}
+
+%
+% Annexes
+%
+\part{Annexes}
+\appendix
+
+
+\chapter{Using the Tk toolkit}
+\input{Appendix-A}
+
+\chapter{Differences with R4RS}
+\input{Appendix-B}
+
+\chapter{An introduction to {\stklos}}
+\input{Appendix-C}
+
+\chapter{Miscellaneous Informations}
+\input{Appendix-D}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bibliography{bibliography}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{theindex}
+\bigskip
+\input{index}
+\end{theindex}
+
+\end{document}

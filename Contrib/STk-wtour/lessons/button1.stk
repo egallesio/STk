@@ -1,0 +1,4 @@
+;; A basic button widget
+
+(button '.hello :text "Hello World!" :command (lambda () (display "hello\n")))
+(pack .hello)

@@ -1,0 +1,96 @@
+'\" Color=Green
+'\" 
+'\" Derived from a document with following copyright
+'\"
+'\" Copyright (c) 1992 The Regents of the University of California.
+'\" Copyright (c) 1994 Sun Microsystems, Inc.
+'\"
+'\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" @(#) dialog.n 1.4 95/06/07 21:15:13
+'\" 
+.so STk-man.macros
+.TH STk:make-dialog n 4.1 STk "STk procedure"
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+STk:make-dialog \- Create modal dialog and wait for response
+.SH SYNOPSIS
+(\fBSTk:make-dialog\fR \fIarguments ...\fR)
+.BE
+
+.SH DESCRIPTION
+.PP
+This procedure is part of the STk library. Its arguments describe a dialog box. 
+They can be set using the following keywords.
+.TP
+\fB:window\fR
+Name of top-level window to use for dialog. The default value for 
+this parameter is  \fI.dialog\fR. If a window with this name 
+already exists, it is destroyed.
+.TP
+\fB:title\fR
+Text to appear in the window manager's title bar for the dialog. Default to 
+\fB"Dialog"\fR.
+.TP
+\fB:text\fR
+Message to appear in the top portion of the dialog box. Default to the empty string.
+.TP
+\fB:bitmap\fR
+If non-empty, specifies a bitmap to display in the top portion of
+the dialog, to the left of the text.
+If this is an empty string (or if not specified) then no bitmap is displayed 
+in the dialog.
+.TP
+\fB:default\fR
+If this is an integer greater than or equal to zero, then it gives
+the index of the button that is to be the default button for the dialog
+(0 for the leftmost button, and so on).
+If less than zero then there won't be any default button.
+By default, there is no default button.
+.TP
+\fB:buttons\fR
+the given argument must be a list of couples indicating for each the button text and
+its associated action (a closure). The sepcified buttons are displayed 
+in order from left to right.
+.TP
+\fB:grab\fR
+is a boolean value indicating if the \fBSTk:make-dialog\fR must wait that a
+button be pressed before returning. Use the symbol \fBglobal\fR to have
+a global grab. If grabbing is set, \fBSTk:make-dialog\fR returns the button
+pressed index (or -1 if the window is detroyed before a button is pressed).
+By default, the grab is unset.
+
+.LP
+Hereafter are simple uses of the \fBSTk:make-dialog\fR procedure
+.LP
+\fI;; A simple dialog; returns after displaying the window\fR
+.CS
+(STk:make-dialog :text    "Do you want to exit?"
+                 :bitmap  "question"
+                 :buttons (list (list "Yes" (lambda () 
+                                              (display "Yes\n")))
+                                (list "No"  (lambda () 
+                                              (display "No\n")))))
+.CE
+.LP
+\fI;; Another one which wait that the user chooses a response\fR
+.br
+\fI;; Default is "bar"\fR
+.br
+\fI;; Return value will be 0 1 or 2\fR
+.br
+\fI;; The @ in a bitmap allows to specify a file\fR
+.CS
+(STk:make-dialog :text    "Choose one"
+                 :bitmap  "@/usr/include/X11/bitmaps/terminal"
+                 :default 1
+                 :grab    #t
+                 :buttons (list (list "foo" (lambda () 
+                                              (display "foo\n")))
+                                (list "bar" (lambda () 
+                                              (display "bar\n")))
+                                (list "baz" (lambda ()
+                                              (display "baz\n")))))
+.CE

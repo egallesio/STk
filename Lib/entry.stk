@@ -1,0 +1,545 @@
+;;;;
+;;;; Entries bindings and procs
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; This software is a derivative work of other copyrighted softwares; the
+;;;; copyright notices of these softwares are placed in the file COPYRIGHTS
+;;;;
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 17-May-1993 12:35
+;;;; Last file update:  2-Jul-1996 13:00
+;;;;
+
+;; ----------------------------------------------------------------------
+;; Class bindings for entry widgets.
+;; ----------------------------------------------------------------------
+
+
+;;-------------------------------------------------------------------------
+;; Elements of tkPriv that are used in this file:
+;;
+;; after-id -		If non-null, it means that auto-scanning is underway
+;;			and it gives the "after" id for the next auto-scan
+;;			command to be executed.
+;; mouse-moved -	Non-zero means the mouse has moved a significant
+;;			amount since the button went down (so, for example,
+;;			start dragging out a selection).
+;; press-x -		X-coordinate at which the mouse button was pressed.
+;; select-mode -	The style of selection currently underway:
+;;			char, word, or line.
+;; x, y -		Last known mouse coordinates for scanning
+;;			and auto-scanning.
+;;-------------------------------------------------------------------------
+(let()
+
+;;
+;; Utilities
+;;
+(define (Tk:word-character c)
+  (or (char-alphabetic? c)
+      (char-numeric? c)
+      (char=? c #\-)
+      (char=? c #\*)))
+
+(define (Tk:word-separator c)
+  (not (Tk:word-character c)))
+
+(define (Tk:end-of-word str index . separator)
+  (let ((len (string-length str))
+	(sep (if (null? separator) Tk:word-separator separator)))
+    (let loop ((i index))
+      (cond
+         ((= len 0)			0)
+         ((>= i len) 			len)
+	 ((sep (string-ref str i))	(if (= index i) (+ i 1) i))
+	 (ELSE				(loop (+ i 1)))))))
+
+(define (Tk:beginning-of-word str index . separator)
+  (let ((len (string-length str))
+	(sep (if (null? separator) Tk:word-separator separator)))
+    (let loop ((i index))
+      (cond
+         ((= len 0)			0)
+         ((= i -1) 			0)
+	 ((>= i len)			(loop (- len 1)))
+	 ((sep (string-ref str i)) 	(if (= index i) i (+ i 1)))
+	 (ELSE 				(loop (- i 1)))))))
+
+;; Tk:entry-clipboard-keysyms
+;; This procedure is invoked to identify the keys that correspond to
+;; the "copy", "cut", and "paste" functions for the clipboard.
+;;
+;; Arguments:
+;; copy -	Name of the key (keysym name plus modifiers, if any,
+;;		such as "Meta-y") used for the copy operation.
+;; cut -		Name of the key used for the cut operation.
+;; paste -	Name of the key used for the paste operation.
+
+(define (Tk:entry-clipboard-keysyms copy cut paste)
+  (define-binding "Entry" copy (|W|)
+    (when (equal? [selection 'own :displayof |W|] (widget->string |W|))
+       (clipboard 'clear :displayof |W|)
+       (catch 
+	  (clipboard 'append :displayof |W| (selection 'get :displayof |W|)))))
+
+  (define-binding "Entry" cut (|W|)
+    (when (equal? [selection 'own :displayof |W|] (widget->string |W|))
+       (clipboard 'clear :displayof |W|)
+       (catch
+	  (clipboard 'append :displayof |W| (selection 'get :displayof |W|))
+	  (|W| 'delete 'sel.first 'sel.last))))
+
+  (define-binding "Entry" paste (|W|)
+    (catch
+       (|W| 'insert 'insert (selection 'get :displayof |W| 
+				            :selection "CLIPBOARD"))))
+)
+
+;; Tk:entry-button-1 --
+;; This procedure is invoked to handle button-1 presses in "Entry"
+;; widgets.  It moves the insertion cursor, sets the selection anchor,
+;; and claims the input focus.
+;;
+;; Arguments:
+;; w -		The "Entry" window in which the button was pressed.
+;; x -		The x-coordinate of the button press.
+
+(define (Tk:entry-button-1 w x)
+  (let ((pos (format #f "@~A" x)))
+    (set! tk::select-mode "char")
+    (set! tk::mouse-moved #f)
+    (set! tk::press-x x)
+    (w 'icursor (Tk:entry-closest-gap w x))
+    (w 'selection 'from 'insert)
+    (if (equal? (tk-get w :state) "normal")
+	(focus w))))
+
+;; Tk:entry-mouse-select --
+;; This procedure is invoked when dragging out a selection with
+;; the mouse.  Depending on the selection mode (character, word,
+;; line) it selects in different-sized units.  This procedure
+;; ignores mouse motions initially until the mouse has moved from
+;; one character to another or until there have been multiple clicks.
+;;
+;; Arguments:
+;; w -		The "Entry" window in which the button was pressed.
+;; x -		The x-coordinate of the mouse.
+
+(define (Tk:entry-mouse-select w x)
+  (let* ((cur    (Tk:entry-closest-gap w x))
+	 (anchor (w 'index 'anchor)))
+
+    (if (or (equal? cur anchor)  
+	    (>= (abs (- tk::press-x x)) 3))
+	(set! tk::mouse-moved #t))
+
+    (cond
+      ((string=? tk::select-mode "char")
+       		(if tk::mouse-moved
+		    (cond
+		      ((< cur anchor) (w 'selection 'range cur anchor))
+		      ((> cur anchor) (w 'selection 'range anchor cur))
+		      (ELSE	      (w 'selection 'clear)))))
+      ((string=? tk::select-mode "word")
+                (if (< cur (w 'index 'anchor))
+		    (w 'selection 'range 
+		       (Tk:beginning-of-word (w 'get) cur)
+		       (Tk:end-of-word       (w 'get) (- anchor 1)))
+		    (w 'selection 'range 
+		       (Tk:beginning-of-word (w 'get) anchor)
+		       (Tk:end-of-word       (w 'get) (- cur 1)))))
+      ((string=? tk::select-mode "line")
+	    	(w 'selection 'range 0 'end)))
+
+    (update 'idletasks)))
+
+
+;; Tk:entry-auto-scan --
+;; This procedure is invoked when the mouse leaves an "Entry" window
+;; with button 1 down.  It scrolls the window left or right,
+;; depending on where the mouse is, and reschedules itself as an
+;; "after" command so that the window continues to scroll until the
+;; mouse moves back into the window or the mouse button is released.
+;;
+;; Arguments:
+;; w -	The "Entry" window.
+
+(define (Tk:entry-auto-scan w)
+  (when (winfo 'exists w)
+    (let ((x tk::x))
+      (if (>= x  (winfo 'width w))
+	  (begin
+	    (w 'xview 'scroll 2 'units)
+	    (Tk:entry-mouse-select w x))
+	  (if (< x 0)
+	      (w 'xview 'scroll -2 'units)
+	      (Tk:entry-mouse-select w x)))
+      
+      (set! tk::after-id (after 50 (lambda ()
+				     (Tk:entry-auto-scan w)))))))
+
+;; Tk:entry-key-select --
+;; This procedure is invoked when stroking out selections using the
+;; keyboard.  It moves the cursor to a new position, then extends
+;; the selection to that position.
+;;
+;; Arguments:
+;; w -		The "Entry" window.
+;; new -	A new position for the insertion cursor (the cursor hasn't
+;;		actually been moved to this position yet).
+
+(define (Tk:entry-key-select w new)
+  (if (w 'selection 'present)
+      (w 'selection 'adjust new)
+      (begin
+	(w 'selection 'from 'insert)
+	(w 'selection 'to new)))
+  (w 'icursor new))
+
+;; Tk:entry-Insert --
+;; Insert a string into an "Entry" at the point of the insertion cursor.
+;; If there is a selection in the "Entry", and it covers the point of the
+;; insertion cursor, then delete the selection before inserting.
+;;
+;; Arguments:
+;; w -	The "Entry" window in which to insert the string
+;; s -		The string to insert (usually just a single character)
+
+(define (Tk:entry-insert w s)
+  (unless (equal? s "")
+     (let ((insert (w 'index 'insert)))
+       (catch
+	   (if (and (<= (w 'index 'sel.first) insert)
+		    (>= (w 'index 'sel.last)  insert))
+	       (w 'delete 'sel.first 'sel.last))))
+     (w 'insert 'insert s)
+     (Tk:entry-see-insert w)))
+
+;; Tk:entry-backspace --
+;; Backspace over the character just before the insertion cursor.
+;; If backspacing would move the cursor off the left edge of the
+;; window, reposition the cursor at about the middle of the window.
+;;
+;; Arguments:
+;; w -		The "Entry" window in which to backspace.
+
+(define (Tk:entry-backspace w)
+  (if (w 'selection 'present)
+      (w 'delete 'sel.first 'sel.last)
+      (let ((x (- (w 'index 'insert) 1)))
+	(if (>= x 0) (w 'delete x))
+	(when (>= (w 'index "@0") 
+		  (w 'index 'insert))
+	  (let* ((range (w 'xview))
+		 (left  (car range))
+		 (right (cadr range)))
+	    (w 'xview 'moveto (- left (/ (- right left) 2.0))))))))
+
+;; Tk:entry-see-insert --
+;; Make sure that the insertion cursor is visible in the "Entry" window.
+;; If not, adjust the view so that it is.
+;;
+;; Arguments:
+;; w -		The "Entry" window.
+
+(define (Tk:entry-see-insert w)
+  (let ((c    (w 'index 'insert))
+	(left (w 'index "@0")))
+    
+    (if (> left c)
+	(w 'xview c)
+	(let ((x (winfo 'width w)))
+	  (while (and (<= (w 'index (format #f "@~A" x)) c)
+		      (< left c))
+	     (set! left (+ left 1))
+	     (w 'xview left))))))
+
+;; Tk:entry-set-cursor -
+;; Move the insertion cursor to a given position in an "Entry".  Also
+;; clears the selection, if there is one in the "Entry", and makes sure
+;; that the insertion cursor is visible.
+;;
+;; Arguments:
+;; w -		The "Entry" window.
+;; pos -	The desired new position for the cursor in the window.
+
+(define (Tk:entry-set-cursor w pos)
+  (w 'icursor pos)
+  (w 'selection 'clear)
+  (Tk:entry-see-insert w))
+
+;; Tk:entry-Transpose -
+;; This procedure implements the "transpose" function for "Entry" widgets.
+;; It tranposes the characters on either side of the insertion cursor,
+;; unless the cursor is at the end of the line.  In this case it
+;; transposes the two characters to the left of the cursor.  In either
+;; case, the cursor ends up to the right of the transposed characters.
+;;
+;; w -		The "Entry" window.
+
+(define (Tk:entry-transpose w)
+  (let ((i (w 'index 'insert)))
+    (if (< i (w 'index 'end))
+	(set! i (+ i 1)))
+    (let ((first (- i 2)))
+      (if (>= first 0)
+	  (let* ((str (w 'get))
+		 (new (string (string-ref str (- i 1)) (string-ref str first))))
+	    (w 'delete first i)
+	    (w 'insert 'insert new)
+	    (Tk:entry-see-insert w))))))
+
+;; Tk:entry-closest-gap --
+;; Given x and y coordinates, this procedure finds the closest boundary
+;; between characters to the given coordinates and returns the index
+;; of the character just after the boundary.
+;;
+;; w -		The entry window.
+;; x -		X-coordinate within the window.
+
+(define (Tk:entry-closest-gap w x)
+  (let* ((pos  (w 'index (format #f "@~A" x)))
+	 (bbox (w 'bbox pos)))
+    (if (< [- x (list-ref bbox 0)] (/ (list-ref bbox 2) 2))
+	pos
+	(+ pos 1))))
+
+
+;; Tk:entry-paste --
+;; This procedure sets the insertion cursor to the current mouse position,
+;; pastes the selection there, and sets the focus to the window.
+;;
+;; w -		The entry window.
+;; x -		X position of the mouse.
+
+(define (Tk:entry-paste w x)
+  (w 'icursor (Tk:entry-closest-gap w x))
+  (catch (w 'insert 'insert (selection 'get :displayof w)))
+  (if (string=? (tk-get w :state) "normal")
+      (focus w)))
+
+;;-------------------------------------------------------------------------
+;; The code below creates the default class bindings for entries.
+;;-------------------------------------------------------------------------
+
+;; Standard Motif bindings:
+
+
+
+;;-------------------------------------------------------------------------
+;; The code below creates the default class bindings for entries.
+;;-------------------------------------------------------------------------
+
+;; Standard Motif bindings:
+
+(define-binding "Entry" "<1>" (|W| x)
+  (Tk:entry-button-1 |W| x)
+  (|W| 'selection 'clear))
+
+(define-binding "Entry" "<B1-Motion>" (|W| x)
+  (set! tk::x x)
+  (Tk:entry-mouse-select |W| x))
+
+(define-binding "Entry" "<Double-1>" (|W| x)
+  (set! tk::select-mode "word")
+  (Tk:entry-mouse-select |W| x)
+  (catch 
+     (|W| 'icursor 'sel.first)))
+
+(define-binding "Entry" "<Triple-1>" (|W| x)
+  (set! tk::select-mode "line")
+  (Tk:entry-mouse-select |W| x)
+  (|W| 'icursor 0))
+
+(define-binding "Entry" "<Shift-1>" (|W| x)
+  (set! tk::select-mode "char")
+  (|W| 'selection 'adjust (format #f "@~A" x)))
+
+(define-binding "Entry" "<Double-Shift-1>" (|W| x)
+  (set! tk::select-mode "word")
+  (Tk:entry-mouse-select |W| x))
+
+(define-binding "Entry" "<Triple-Shift-1>" (|W| x)
+  (set! tk::select-mode "line")
+  (Tk:entry-mouse-select |W| x))
+
+(define-binding "Entry" "<B1-Leave>" (|W| x)
+  (set! tk::x x)
+  (Tk:entry-auto-scan |W|))
+
+(define-binding "Entry" "<B1-Enter>" ()
+  (Tk:cancel-repeat))
+
+(define-binding "Entry" "<ButtonRelease-1>" ()
+  (Tk:cancel-repeat))
+
+(define-binding "Entry" "<Control-1>" (|W| x)
+  (|W| 'icursor (format #f "@~A" x)))
+
+
+(define-binding "Entry" "<Left>" (|W|)
+  (Tk:entry-set-cursor |W| (- (|W| 'index 'insert) 1)))
+
+(define-binding "Entry" "<Right>" (|W|)
+  (Tk:entry-set-cursor |W| (+ (|W| 'index 'insert) 1)))
+
+(define-binding "Entry" "<Shift-Left>" (|W|)
+  (Tk:entry-key-select |W| (- (|W| 'index 'insert) 1))
+  (Tk:entry-see-insert |W|))
+
+(define-binding "Entry" "<Shift-Right>" (|W|)
+  (Tk:entry-key-select |W| (+ (|W| 'index 'insert) 1))
+  (Tk:entry-see-insert |W|))
+
+(define-binding "Entry" "<Control-Left>" (|W|)
+  (Tk:entry-set-cursor |W|
+		       (Tk:beginning-of-word (|W| 'get) 
+					     (- (|W| 'index 'insert) 1))))
+
+(define-binding "Entry" "<Control-Right>" (|W|)
+  (Tk:entry-set-cursor |W| (Tk:end-of-word (|W| 'get) (|W| 'index 'insert))))
+
+(define-binding "Entry" "<Shift-Control-Left>" (|W|)
+  (Tk:entry-key-select |W|
+			(Tk:beginning-of-word (|W| 'get) 
+					     (- (|W| 'index 'insert) 1)))
+  (Tk:entry-see-insert |W|))
+
+(define-binding "Entry" "<Shift-Control-Right>" (|W|)
+  (Tk:entry-key-select |W| (Tk:end-of-word (|W| 'get) (|W| 'index 'insert)))
+  (Tk:entry-see-insert |W|))
+
+(define-binding "Entry" "<Home>" (|W|)
+  (Tk:entry-set-cursor |W| 0))
+
+(define-binding "Entry" "<Shift-Home>" (|W|)
+  (Tk:entry-key-select |W| 0)
+  (Tk:entry-see-insert |W|))
+
+(define-binding "Entry" "<End>" (|W|)
+  (Tk:entry-set-cursor |W| 'end))
+
+(define-binding "Entry" "<Shift-End>" (|W|)
+  (Tk:entry-key-select |W| 'end)
+  (Tk:entry-see-insert |W|))
+
+(define-binding "Entry" "<Delete>" (|W|)
+  (if (|W| 'selection 'present)
+      (|W| 'delete 'sel.first 'sel.last)
+      (|W| 'delete 'insert)))
+
+(define-binding "Entry" "<BackSpace>" (|W|)
+  (Tk:entry-backspace |W|))
+
+(define-binding "Entry" "<Control-space>" (|W|)
+  (|W| 'selection 'from 'insert))
+
+(define-binding "Entry" "<Select>" (|W|)
+  (|W| 'selection 'from 'insert))
+
+(define-binding "Entry" "<Control-Shift-space>" (|W|)
+  (|W| 'selection 'adjust 'insert))
+
+(define-binding "Entry" "<Shift-Select>" (|W|)
+  (|W| 'selection 'adjust 'insert))
+
+(define-binding "Entry" "<Control-slash>" (|W|)
+  (|W| 'selection 'range 0 'end))
+
+(define-binding "Entry" "<Control-backslash>" (|W|)
+  (|W| 'selection 'clear))
+
+(Tk:entry-clipboard-keysyms "<F16>" "<F20>" "<F18>")
+
+(define-binding "Entry" "<KeyPress>" (|W| |A|)
+  (Tk:entry-Insert |W| |A|))
+
+
+;; Ignore all Alt, Meta, and Control keypresses unless explicitly bound.
+;; Otherwise, if a widget binding for one of these is defined, the
+;; <KeyPress> class binding will also fire and insert the character,
+;; which is wrong.  Ditto for Escape, Return, and Tab.
+(let ((nop (lambda () '())))
+  (bind "Entry" "<Alt-KeyPress>" 	nop)
+  (bind "Entry" "<Meta-KeyPress>" 	nop)
+  (bind "Entry" "<Control-KeyPress>" 	nop)
+  (bind "Entry" "<Escape>" 		nop)
+  (bind "Entry" "<Return>" 		nop)
+  (bind "Entry" "<KP_Enter>" 		nop)
+  (bind "Entry" "<Tab>" 		nop))
+
+
+(define-binding "Entry" "<Insert>" (|W|)
+  (catch 
+    (Tk:entry-insert |W| (selection 'get :displayof |W|))))
+
+;; Additional emacs-like bindings:
+
+(define-binding "Entry" "<Control-a>" (|W|)
+  (Tk:entry-set-cursor |W| 0))
+
+(define-binding "Entry" "<Control-b>" (|W|)
+  (Tk:entry-set-cursor |W| (- (|W| 'index 'insert) 1)))
+
+(define-binding "Entry" "<Control-d>" (|W|)
+  (|W| 'delete 'insert))
+
+(define-binding "Entry" "<Control-e>" (|W|)
+  (Tk:entry-set-cursor |W| 'end))
+
+(define-binding "Entry" "<Control-f>" (|W|)
+  (Tk:entry-set-cursor |W| (+ (|W| 'index 'insert) 1)))
+
+(define-binding "Entry" "<Control-h>" (|W|)
+  (Tk:entry-backspace |W|))
+
+(define-binding "Entry" "<Control-k>" (|W|)
+  (|W| 'delete 'insert 'end))
+
+(define-binding "Entry" "<Control-t>" (|W|)
+  (Tk:entry-transpose |W|))
+
+(define-binding "Entry" "<Meta-b>" (|W|)
+ (Tk:entry-set-cursor |W|
+		       (Tk:beginning-of-word (|W| 'get) 
+					     (- (|W| 'index 'insert) 1))))
+
+(define-binding "Entry" "<Meta-d>" (|W|)
+  (|W| 'delete 'insert (Tk:end-of-word (|W| 'get) (|W| 'index 'insert))))
+
+(define-binding "Entry" "<Meta-f>" (|W|)
+  (Tk:entry-set-cursor |W| (Tk:end-of-word (|W| 'get) (|W| 'index 'insert))))
+
+(define-binding "Entry" "<Meta-BackSpace>" (|W|)
+  (|W| 'delete (Tk:beginning-of-word (|W| 'get) (- (|W| 'index 'insert) 1))
+       'insert))
+
+(Tk:entry-clipboard-keysyms "<Meta-w>" "<Control-w>" "<Control-y>")
+
+
+;; A few additional bindings of my own.
+
+(define-binding "Entry" "<Shift-2>" (|W| x)
+  (|W| 'scan 'mark x)
+  (set! tk::x x)
+  (set! tk::mouse-moved #f))
+
+(define-binding "Entry" "<Shift-B2-Motion>" (|W| x)
+  (if (> (abs (- x tk::x)) 2)
+      (set! tk::mouse-moved #t))
+  (|W| 'scan 'dragto x))
+
+(define-binding "Entry" "<ButtonRelease-2>" (|W| x)
+  (when (or *tk-strict-Motif* (not tk::mouse-moved))
+    (Tk:entry-paste |W| x)))
+)

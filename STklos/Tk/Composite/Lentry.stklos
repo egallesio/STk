@@ -1,0 +1,77 @@
+;;;;
+;;;; L e n t r y  . s t k 	  --  Labeled Entry composite widget
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
+;;;;    Creation date: 22-Mar-1994 13:05
+;;;; Last file update: 13-Aug-1996 23:14
+
+(require "Frame")
+(require "Button")
+(require "Entry")
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Labeled-Entry> class definition
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class <Labeled-entry> (<Tk-composite-widget> <Entry>)
+  ((entry	 :accessor   entry-of)
+   (label	 :accessor   label-of)
+   ;; Fictive slots
+   (title	 :accessor	title
+		 :init-keyword	:title
+		 :allocation	:propagated
+		 :propagate-to	((label text)))
+   (title-width	 :accessor	title-width
+		 :init-keyword	:title-width
+		 :allocation	:propagated
+		 :propagate-to	((label width)))
+   (anchor 	 :accessor	anchor
+		 :init-keyword	:anchor
+		 :allocation	:propagated
+		 :propagate-to	(label))
+   (background	 :accessor	background
+		 :init-keyword	:background
+		 :allocation	:propagated
+		 :propagate-to	(frame entry label))
+   (foreground	 :accessor	foreground
+		 :init-keyword	:foreground
+		 :allocation	:propagated
+		 :propagate-to	(entry label))
+   (border-width :accessor	border-width 
+		 :allocation	:propagated
+		 :init-keyword	:border-width
+		 :propagate-to	(frame))
+   (relief	 :accessor	relief
+		 :init-keyword	:relief
+		 :allocation	:propagated
+		 :propagate-to	(frame))
+   (entry-relief :accessor	dentry-relief
+		 :init-keyword	:entry-relief
+		 :allocation	:propagated
+		 :propagate-to	((entry relief)))  ))
+
+(define-method initialize-composite-widget ((self <Labeled-entry>) initargs frame)
+  (let* ((e (make <Entry> :parent frame :relief "ridge"))
+	 (l (make <Label> :parent frame)))
+
+    (pack l :side "left")
+    (pack e :side "right" :expand #t :fill "x")
+
+    (slot-set! self 'Id     (slot-ref e 'Id))
+    (slot-set! self 'entry  e)
+    (slot-set! self 'label  l)))
+
+(provide "Lentry")

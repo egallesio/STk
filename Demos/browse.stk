@@ -1,0 +1,52 @@
+#!/bin/sh
+:;exec /usr/local/bin/stk -f "$0" "$@"
+;;;;
+;;;; A simple STk browser 
+;;;;
+;;;; This script generates a directory browser, which lists the working
+;;;; directory and allows you to open files or subdirectories by
+;;;; double-clicking.
+;;;; This is a new version of the demo which can be run before STk is installed
+;;;;
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date:  3-Aug-1993 17:33
+;;;; Last file update: 18-Sep-1995 14:25
+
+(require "unix")
+
+;; Create a scrollbar on the right side of the main window and a listbox
+;; on the left side.
+(frame '.f)
+(scrollbar '.f.scroll :command (lambda l (apply .f.list   'yview l)))
+(listbox   '.f.list   :yscroll (lambda l (apply .f.scroll 'set   l))
+	   	      :width 30 :height 20 :font "fixed")
+
+(pack .f.scroll .f.list :side "right" :expand #t :fill "both")
+(pack .f :side "top" :fill "both" :expand #t)
+
+(button '.quit :text "Quit" :command (lambda () (exit)))
+(pack .quit :fill "x" :side "bottom" :expand #t)
+
+;;;
+;;; Callback
+;;;
+(define (fill-listbox dir)
+  (chdir dir)
+  (.f.list 'delete 0 "end")
+  (apply .f.list 'insert 0 (sort (glob "*" ".*") string<?)))
+
+(define (browse)
+  (catch 
+    (let ((file (string-append (getcwd) "/" (selection 'get))))
+      (cond
+        ((file-is-directory? file) (fill-listbox file))
+	((file-is-readable? file)  (system (string-append "xedit " file "&")))
+	(else			   (error "Bad directory or file ~S" file))))))
+
+
+;; Fill the listbox with a list of all the files (in the given directory or ".")
+(fill-listbox (if (> *argc* 0) (car *argv*) (getcwd)))
+
+;; Set binding for "Double-click" on the listbox
+(bind .f.list "<Double-Button-1>" browse)

@@ -1,0 +1,7 @@
+;; A message widget
+ 
+(message '.m :text    "This is a message.  Note how the lines wrap" 
+   	     :aspect  200 
+	     :justify "center")
+(pack .m)
+ 

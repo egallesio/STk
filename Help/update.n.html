@@ -1,0 +1,40 @@
+<HTML><HEAD><TITLE>Tk Built-In Commands - update manual page</TITLE></HEAD>
+<BODY bgcolor = #c3c3ff>
+<H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageBlue.gif"> update</H2>
+<I>Process pending events and/or when-idle handlers</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<H3><A NAME="M2">SYNOPSIS</A></H3>
+(<B>update</B>)<BR>
+(<B>update</B> '<B>idletasks</B>)<BR>
+<H3><A NAME="M3">DESCRIPTION</A></H3>
+This procedure is used to bring the entire application world
+``up to date.''
+It flushes all pending output to the display,  waits for the
+server to process that output and return errors or events,
+handles all pending events of any sort (including when-idle handlers),
+and repeats this set of operations until there are no pending
+events, no pending when-idle handlers, no pending output to the server,
+and no operations still outstanding at the server.  
+<P>
+If the <B>idletasks</B> option is specified as an argument to the
+procedure, then no new events or errors are processed;  only when-idle
+idlers are invoked.
+This causes operations that are normally deferred, such as display
+updates and window layout calculations, to be performed immediately.
+<P>
+The <B>update idletasks</B> procedure is useful in scripts where
+changes have been made to the application's state and you want those
+changes to appear on the display immediately, rather than waiting
+for the script to complete.  Most display updates are performed as
+idle handlers, so <B>update idletasks</B> will cause them to run.
+However, there are some kinds of updates that only happen in
+response to events, such as those triggered by window size changes;
+these updates will not occur in <B>update idletasks</B>.
+<P>
+The <B>update</B> procedure with no options is useful in scripts where
+you are performing a long-running computation but you still want
+the application to respond to user interactions;  if you occasionally
+call <B>update</B> then user input will be processed during the
+next call to <B>update</B>.
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookBlue.gif"> Back to the <B>STk</B> main page</A>
+</BODY></HTML>

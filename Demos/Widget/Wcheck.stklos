@@ -1,0 +1,23 @@
+;;;;
+;;;; STk adaptation of the Tk widget demo.
+;;;;
+;;;; This demonstration script creates a toplevel window containing
+;;;; several checkbuttons.
+;;;;
+(require "Button")
+
+(define (demo-check)
+  (let ((w  (make-demo-toplevel "check"
+				"Checkbutton Demonstration"
+				"Three checkbuttons are displayed below.  If you click on a button, it will toggle the button's selection state and set a Tcl variable to a value indicating the state of the checkbutton.  Click the \"See Variables\" button to see the current values of the variables."
+				'wipers 'brakes 'sober)))
+	;; Create checkbuttons
+	(pack (make <Check-button> :parent w :text "Wipers OK" 
+		    :variable 'wipers :relief "flat")
+	      (make <Check-button> :parent w :text "Brakes OK" 
+		    :variable 'brakes :relief "flat")
+	      (make <Check-button> :parent w :text "Driver Sober" 
+		    :variable 'sober :relief "flat")
+	      :side "top"
+	      :pady 2
+	      :anchor "w")))

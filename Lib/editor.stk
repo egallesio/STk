@@ -1,0 +1,276 @@
+;;;; e d i t o r . s t k		-- A small editor to create enhanced
+;;;;					   text (used for Help page construction)
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; This software is a derivative work of other copyrighted softwares; the
+;;;; copyright notices of these softwares are placed in the file COPYRIGHTS
+;;;;
+;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
+;;;;    Creation date:  6-Dec-1993 17:25
+;;;; Last file update: 17-Oct-1994 18:41
+
+(provide "editor")
+
+;;;;
+;;;; Font definition
+;;;;
+
+(define stk:STF-signature "STF-0.1")
+
+(define stk:normal-font "*-Courier-Medium-R-Normal-*-120-*")
+
+(define stk:all-fonts `(
+   (normal		,stk:normal-font)
+   (fixed		"fixed")
+   (big			"-*-times-*-r-*-*-*-240-*-*-*-*-*-*")
+   (roman-12		"-*-times-*-r-*-*-*-120-*-*-*-*-*-*")
+   (roman-14		"-*-times-*-r-*-*-*-140-*-*-*-*-*-*")
+   (roman-16		"-*-times-*-r-*-*-*-160-*-*-*-*-*-*")
+   (roman-18		"-*-times-*-r-*-*-*-180-*-*-*-*-*-*")
+   (italic-12		"-*-times-*-i-*-*-*-120-*-*-*-*-*-*")
+   (italic-14		"-*-times-*-i-*-*-*-140-*-*-*-*-*-*")
+   (italic-16		"-*-times-*-i-*-*-*-160-*-*-*-*-*-*")
+   (italic-18		"-*-times-*-i-*-*-*-180-*-*-*-*-*-*")
+   (bold-12		"-*-helvetica-bold-r-*-*-*-120-*-*-*-*-*-*")
+   (bold-14		"-*-helvetica-bold-r-*-*-*-140-*-*-*-*-*-*")
+   (bold-16		"-*-helvetica-bold-r-*-*-*-160-*-*-*-*-*-*")
+   (bold-18		"-*-helvetica-bold-r-*-*-*-180-*-*-*-*-*-*")
+   (bold-italic-12	"-*-helvetica-bold-o-*-*-*-120-*-*-*-*-*-*")
+   (bold-italic-14	"-*-helvetica-bold-o-*-*-*-140-*-*-*-*-*-*")
+   (bold-italic-16	"-*-helvetica-bold-o-*-*-*-160-*-*-*-*-*-*")
+   (bold-italic-18	"-*-helvetica-bold-o-*-*-*-180-*-*-*-*-*-*")
+   (tty-12		"-adobe-courier-medium-*-*-*-*-120-*-*-*-*-*-*")
+   (tty-14		"-adobe-courier-medium-*-*-*-*-140-*-*-*-*-*-*")
+   (tty-16		"-adobe-courier-medium-*-*-*-*-160-*-*-*-*-*-*")
+   (tty-18		"-adobe-courier-medium-*-*-*-*-180-*-*-*-*-*-*")))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Fonts utilities
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (stk:unset-tags editor-window start end)
+  (for-each (lambda (tag) 
+	      (editor-window 'tag 'remove (car tag) start end))
+	    stk:all-fonts))
+  
+(define (stk:set-font editor-window font start end)
+  ;; Be sure this tag exists
+  (editor-window 'tag 'conf font :font (cadr (assoc font stk:all-fonts)))
+  ;; Delete all the tags associated to this range
+  (stk:unset-tags editor-window start end)
+  ;; Set a new tag for this character range
+  (editor-window 'tag 'add font start end))
+
+(define (stk:set-underline editor-window start end)
+  (editor-window 'tag 'conf 'underline :underline #t)
+  (editor-window 'tag 'add 'underline start end))
+
+(define (stk:fontify-selection editor-window font)
+  (catch
+     (stk:set-font editor-window 
+		   font 
+		   (editor-window 'index 'sel.first)
+		   (editor-window 'index 'sel.last))))
+
+(define (stk:underline-selection editor-window value)
+  (catch
+     (let ((start (editor-window 'index 'sel.first))
+	   (end   (editor-window 'index 'sel.last)))
+       ;; Remove all underlining information in this area
+       (editor-window 'tag 'remove 'underline start end)
+       ;; Set underline if value is #t
+       (when value (stk:set-underline editor-window start end)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Scheme Text Format (STF) management
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (stk:get-STF editor-window)
+  (list stk:STF-signature
+	(editor-window 'get "1.0" 'end)
+	(let ((l '()))
+	  (for-each (lambda (t)
+		      (let ((tags (editor-window 'tag 'range (car t))))
+			(unless (null? tags)
+			   (set! l (cons (list (car t) tags) l)))))
+		    (cons `(underline #f) stk:all-fonts))
+	  l)))
+
+(define (stk:set-STF editor-window STF)
+  (let ((text (cadr STF)) (fmts (caddr STF)))
+    ;; First insert new text
+    (editor-window 'delete "1.0" 'end)
+    (editor-window 'insert "1.0" text)
+    (editor-window 'mark 'set 'insert "1.0")
+    ;; And now enhence it
+    (for-each (lambda (t) 
+		(do ((l (cadr t) (cddr l)))
+		    ((null? l))
+		  (if (eqv? (car t) 'underline)
+		      (stk:set-underline editor-window (car l) (cadr l))
+		      (stk:set-font editor-window (car t) (car l) (cadr l)))))
+	      fmts))
+  (update))
+  
+(define (stk:write-file editor-window file)
+  (with-output-to-file file 
+    (lambda ()
+      (format #t ";;;; ~S\n" stk:STF-signature)
+      (format #t "~S\n" (stk:get-STF editor-window)))))
+
+
+(define (stk:write-file-ascii editor-window file)
+  (with-output-to-file file 
+    (lambda ()
+      (format #t "~A" (editor-window 'get "1.0" 'end)))))
+
+(define (stk:read-file editor-window file)
+  (with-input-from-file file
+      (lambda ()
+	(let ((first-line (read-line)))
+	  (if (string=? first-line (format #f ";;;; ~S" stk:STF-signature))
+	      ;; File is a STF file
+	      (stk:set-STF editor-window (read))
+	      ;; File must be read as a "normal" file
+	      (begin
+		(editor-window 'delete "1.0" 'end)
+		(do ((l first-line (read-line)))
+		    ((eof-object? l))
+		  (editor-window 'insert 'end l)
+		  (editor-window 'insert 'end "\n"))
+		(editor-window 'mark 'set 'insert "1.0")))))))
+
+(define (stk:get-filename toplevel) ; return the content of the file name  entry
+  (let ((entry (string->widget (& toplevel ".bt.e"))))
+    (entry 'get)))
+
+(define (stk:set-filename toplevel filename)
+  (let ((entry (string->widget (& toplevel ".bt.e"))))
+    (entry 'delete 0 'end)
+    (entry 'insert 0 filename)))
+	
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Interface
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (stk:make-editor name  . exit_code)
+  (let* ((top 	     (toplevel name))
+	 (menu-bar   (frame     (& name ".mb") :bd 2 :relief "groove"))
+	 (bottom     (frame     (& name ".bt")))
+	 (text-area  (frame     (& name ".ta")))
+	 (exit_code  (if (null? exit_code) `(destroy ,top) (car exit_code)))
+	 (the-editor ()))
+
+    ;;
+    ;; Window manager management
+    ;; 
+    (wm 'maxsize name 1000 800)
+    (wm 'protocol name "WM_DELETE_WINDOW" exit_code)
+	
+    ;;
+    ;; Text area frame
+    ;;
+    (pack [scrollbar (& text-area ".sc") :orient "vert" 
+		     			 :bd 2
+					 :relief "groove"
+		     			 :command (format #f "~A 'yview" 
+							  (& text-area ".ed"))]
+	  :side "left" :fill "y")
+    (pack [text (& text-area ".ed") :padx 4 
+				    :pady 4
+				    :bd 2
+				    :wrap "word"
+				    :relief "groove"
+				    :yscroll (format #f "~A 'set"
+						     (& text-area ".sc"))]
+	  :side "right" :expand #t :fill "both")
+
+    (set! the-editor (string->widget (& text-area ".ed")))
+
+    ;;
+    ;; Menu Creation
+    ;;
+
+    (let* ((File (menubutton (& menu-bar ".file") 
+			     :text "File"
+			     :padx 10
+			     :menu (& menu-bar ".file.m")))
+	   (m	 (eval (menu (& menu-bar ".file.m")))))
+
+      (m 'add 'command 
+	      :label "  Read  "    
+	      :command `(stk:read-file ,the-editor (stk:get-filename ,top)))
+      (m 'add 'command 
+	      :label "  Save  "
+	      :command `(stk:write-file ,the-editor (stk:get-filename ,top)))
+      (m 'add 'command 
+	      :label "  Save Ascii  "
+	      :command `(stk:write-file-ascii ,the-editor (stk:get-filename ,top)))
+      (m 'add 'separator)
+      (m 'add 'command :label "  Quit  " :command exit_code)
+      
+      (pack File :side "left"))
+
+    (let* ((Font (menubutton (& menu-bar ".font")		       
+			     :text "Font" 
+			     :padx 10
+			     :menu (& menu-bar ".font.m")))
+	    (m    (eval (menu (& menu-bar ".font.m")))))
+
+      (for-each (lambda(font)
+		  (m 'add 'command 
+		     	  :label    (car font)
+			  :font     (cadr font)
+			  :command `(stk:fontify-selection ,the-editor
+							   ',(car font))))
+		stk:all-fonts)
+      (m 'add 'separator)
+      (m 'add 'command
+	      :label "Underline"    
+	      :command `(stk:underline-selection ,the-editor #t))
+      (m 'add 'command 
+	      :label "No underline"
+	      :command `(stk:underline-selection ,the-editor #f))
+
+      (pack Font :side "left"))
+
+    ;;
+    ;; Bottom frame
+    ;;
+    (pack [label (& bottom ".l") :text "File name" :padx 10] :side "left")
+    (pack [entry (& bottom ".e") :relief "ridge"] :side "left" :expand #t :fill "x")
+
+    ;;
+    ;; Pack everybody
+    ;;
+    (pack menu-bar  :fill "x")
+    (pack text-area :expand #t :fill "both")
+    (pack bottom    :fill "x" :ipady 4 :ipadx 10)))
+
+
+;; A simple editor accessible from prompt
+(define (ed . file)
+  (require "editor")
+  (let ((editor-name (gensym ".editor")))
+    (stk:make-editor editor-name)
+    (unless (null? file)
+       (stk:read-file (string->widget (& editor-name ".ta.ed")) (car file))
+       (stk:set-filename editor-name (car file)))))
+  

@@ -1,0 +1,24 @@
+<HTML><HEAD><TITLE>Tk Built-In Commands - Tk:popup manual page</TITLE></HEAD>
+<BODY bgcolor = #c3ffc3>
+<H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageGreen.gif"> popup</H2>
+<I>Post a popup menu</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<H3><A NAME="M2">SYNOPSIS</A></H3>
+<B>(Tk:popup </B><I>menu x y </I>)<BR>
+<B>(Tk:popup </B><I>menu x y </I> <I>entry</I>)<BR>
+<H3><A NAME="M3">DESCRIPTION</A></H3>
+This procedure posts a menu at a given position on the screen and
+configures Tk so that the menu and its cascaded children can be
+traversed with the mouse or the keyboard.
+<I>Menu</I> is the name of a menu widget and <I>x</I> and <I>y</I>
+are the root coordinates at which to display the menu.
+If <I>entry</I> is omitted or an empty string, the
+menu's upper left corner is positioned at the given point.
+Otherwise <I>entry</I> gives the index of an entry in <I>menu</I> and
+the menu will be positioned so that the entry is positioned over
+the given point.
+
+<H3><A NAME="M4">SEE ALSO</A></H3>
+<B><A HREF="./menu.n.html">menu</A></B>, <B><A HREF="./option-menu.n.html">option-menu</A></B>
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookGreen.gif"> Back to the <B>STk</B> main page</A>
+</BODY></HTML>

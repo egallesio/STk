@@ -1,0 +1,267 @@
+;;;;
+;;;; e r r o r . s t k 		-- All the stuff going with error messages 
+;;;;				   display
+;;;;
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 15-Sep-1993 14:11
+;;;; Last file update:  7-Jul-1996 17:14
+;;;;
+
+(require "dialog")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; report-error (this version of report-error needs Tk)
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (STk:report-error head message obj)
+  ;; Since this function is loaded only when needed the stack is different 
+  ;; on first execution 
+  (define stack 	  (cddddr (%get-eval-stack)))
+  (define env   	  (cddddr (%get-environment-stack)))
+  (define current-env (global-environment))
+
+  (define (truncate s len)
+    (if (> (string-length s) len)
+	(string-append (substring s 0 (- len 1)) " ...")
+	s))
+
+  (define (adjust-string s len)
+    (let ((l (string-length s)))
+      (if (>= l len)
+	  s
+	  (string-append s (make-string (- len l) #\space)))))
+
+  (define (local-eval x)
+    (eval x current-env))
+
+  (define (select-expression |W| x y)
+    (let ((index (|W| 'index (format #f "@~a,~a" x y))))
+      (when (< index (length stack))
+	(set! current-env (list-ref env index))
+	(listener-insert-string .stackview.vt.l
+				(format #f ";; Current environment is ~A\n"
+					(if (eq? current-env (global-environment))
+					    "global environment"
+					    current-env))))))
+
+  (define (select-environment |W| x y)
+    (let ((index (|W| 'index (format #f "@~a,~a" x y))))
+      (display-environment (if (= index (length env))
+			       (global-environment)
+			       (list-ref env index)))))
+
+  (define (display-environment e)
+    (let* ((top      (gensym ".top_env"))
+	   (f1       (format #f "~A.f"        top))
+	   (lst      (format #f "~A.f.lst"    top))
+	   (scroll-x (format #f "~A.f.sx"     top))
+	   (scroll-y (format #f "~A.f.sy"     top))
+	   (f2	     (format #f "~A.b"	      top))
+	   (parent   (format #f "~A.b.parent" top))
+	   (quit     (format #f "~A.b.quit"   top))
+	   (el	     (car (environment->list e))))
+
+      (toplevel top)
+      (wm 'title top (format #f "~S" e))
+      (pack (frame f1) (frame f2) :expand #t :fill "both" :side "top")
+
+      ;;;;;  Listbox and its scrollbar
+      (set! lst (listbox lst :width 70 :height (max 2 (min (length el) 20))
+			 :font "fixed"
+			 :xscroll (lambda args (apply scroll-x 'set args))
+			 :yscroll (lambda args (apply scroll-y 'set args))))
+      (set! scroll-x (scrollbar scroll-x :orient "hor" 
+				:command (lambda args (apply lst 'xview args))))
+      (set! scroll-y (scrollbar scroll-y :orient "ver"
+				:command (lambda args (apply lst 'yview args))))
+
+      (pack scroll-x :side "bottom" :fill "x")
+      (pack lst :expand #t :fill "both" :side "left")
+      (pack scroll-y :side "left"   :fill "y")
+
+      ;; fill it
+      (let ((bindings (map (lambda (x) 
+			     (format #f "~A = ~S" 
+				     (adjust-string (symbol->string (car x)) 20)
+				     (cdr x)))
+			   el)))
+	(apply lst 'insert 0 (sort bindings string<?)))
+
+      ;; Parent and quit button
+      (let ((p (parent-environment e)))
+	(pack (button quit 
+		      :text "Quit" :command (lambda () (destroy top)))
+	      (button parent
+		      :text "Parent environment" 
+		      :state (if p "normal" "disabled")
+		      :command (lambda () (display-environment p)))
+	    :expand #t :fill "x" :side "left"))))
+
+
+  (define (display-stack stack env)
+    (catch (destroy ".stackview"))
+
+    ;; Build a toplevel
+    (toplevel '.stackview)
+    (wm 'title .stackview "STk stack")
+
+    ;; Dispose items
+    (pack (label '.stackview.l :text "Stack content" :fg "RoyalBlue")
+	  :side "top")
+    (pack (frame '.stackview.f :bd 3 :relief "groove")
+	  :side "top" :expand #t :fill "both" :padx 5 :pady 5)
+    (pack (frame '.stackview.b)
+	  :side "bottom" :fill "x")
+
+    ;;;;;;;;;;;;;;;;;;;;
+    ;;
+    ;; The (double) listbox
+    ;;
+    ;;;;;;;;;;;;;;;;;;;;
+    (pack (scrollbar '.stackview.f.sx 
+		     :orient "hor" 
+		     :command (lambda args 
+				(apply .stackview.f.list 'xview args)))
+	  :side "bottom" :fill "x")
+
+    (pack (listbox '.stackview.f.env 
+		   :width  18
+		   :height 10
+		   :font "fixed"
+		   :bd 1
+		   :relief "raised")
+	  :expand #f :fill "y" :side "left")
+
+    (pack (listbox '.stackview.f.list 
+		   :width  70
+		   :height 10
+		   :font "fixed"
+		   :bd 1
+		   :relief "raised"
+		   :xscroll (lambda args (apply .stackview.f.sx 'set args))
+		   :yscroll (lambda args (apply .stackview.f.sy 'set args)))
+	  :expand #t :fill "both" :side "left")
+
+    (pack (scrollbar '.stackview.f.sy
+		     :orient "vert"
+		     :command (lambda args 
+				(apply .stackview.f.list 'yview args)))
+	  :side "left" :fill "y")
+
+    ;; Insert the stack elements in the listbox
+    (do ((stack stack (cdr stack))
+	 (env   env   (cdr env)))
+	((null? stack))
+      (.stackview.f.list 'insert 'end 
+			 (truncate (format #f "~S" (uncode(car stack))) 150))
+      (.stackview.f.env 'insert 'end 
+			(format #f "~A" 
+				(if (equal? (car env) (global-environment))
+				    "*global*"
+				    (address-of (car env))))))
+
+    ;; Insert a marker to delimit bottom of the stack
+    (.stackview.f.list 'insert 'end "<<< STACK BOTTOM >>>")
+    (.stackview.f.env  'insert 'end "*global*")
+
+    ;; listbox bindings
+    (bind .stackview.f.env  "<ButtonRelease-1>" select-environment)
+    (bind .stackview.f.list "<ButtonRelease-1>" select-expression)
+
+    ;;;;;;;;;;;;;;;;;;;;
+    ;;;;
+    ;;;; Listener
+    ;;;;
+    ;;;;;;;;;;;;;;;;;;;;
+    (pack (label '.stackview.l2 :text "Listener" :fg "RoyalBlue")
+	  :side "top")
+
+    (pack (frame '.stackview.vt :bd 3 :relief "groove") 
+	  :expand #t :fill "both" :padx 5 :pady 5)
+    (pack (listener '.stackview.vt.l 
+		    :font   "fixed" 
+		    :wrap   "word" 
+		    :height 10
+		    :command (lambda (x) (format #f "~S" 
+						 (eval-string x current-env)))
+		    :yscroll (lambda args (apply .stackview.vt.s 'set args)))
+	  :side "left" :expand #t :fill "both")
+    (pack (scrollbar '.stackview.vt.s
+		     :orient "vert"
+		     :command (lambda args (apply .stackview.vt.l 'yview args)))
+	  :side "right" :expand #f :fill "y")
+    ;;;;;;;;;;;;;;;;;;;;
+    ;;
+    ;; Bottom buttons
+    ;;
+    ;;;;;;;;;;;;;;;;;;;;
+    (pack [button '.stackview.b.q 
+		  :text "Quit"
+		  :command (lambda () (destroy .stackview))]
+	  [button '.stackview.b.h 
+		  :text "Help"
+		  :command (lambda () 
+			     (STk:show-help-file "error-hlp.html"))]
+     :side "left" :expand #t :fill "x")
+
+    ;; Center the window
+    (STk:center-window .stackview))
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;;;
+  ;;;; Report-error starts here
+  ;;;; 
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  (let* ((who (if (null? obj) "" (format #f "~S" obj)))
+	 (msg (truncate (string-append head "\n" message "\n" who "\n") 200)))
+
+    ;; Print message on standard error stream
+    (format (current-error-port) "\n~A~A~A\n" 
+	    head 
+	    message 
+	    (if (equal? who "") "" (string-append ": " who)))
+
+    ;; Open dialog box
+    (stk::make-dialog 
+	    :window   '.report-error
+	    :title    "STk error"
+	    :text     msg
+	    :bitmap   "error"
+	    :grab     #f
+	    :default  0
+	    :buttons  `(("    Quit     " ,(lambda () '()))
+			("See the stack" ,(lambda ()
+					    (display-stack stack env)))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Misc 
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define *error-info* "")
+
+(define (bgerror . message)
+  ;; Important note: When a background error occurs, tk try to see if 
+  ;; bgerror is bound to something. This is achieved by calling bgerror
+  ;; with an empty message. In this case, nothing is printed
+  (unless (null? message)
+      (format (current-error-port) "**** Tk error (~S) ~S~%" 
+	      (car message) *error-info*))
+  (set! *error-info* ""))
+
+(define tkerror bgerror) ;; For compatibility with pre-Tk4.1 (i.e STk-3.1)

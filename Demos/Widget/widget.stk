@@ -1,0 +1,282 @@
+#!/bin/sh
+:;exec /usr/local/bin/stk -f "$0" "$@"
+;;;;
+;;;; STk adaptation of the Tk widget demo.
+;;;;
+;;;; This script demonstrates the various widgets provided by Tk, along
+;;;; with many of the features of the Tk toolkit.  This file only
+;;;; contains code to generate the main window for the application,
+;;;; which invokes individual demonstrations.  The code for the actual
+;;;; demonstrations is contained in separate ".stklos" files in this
+;;;; directory, which are sourced by this script as needed.
+
+(require "Tk-classes")
+
+(define demo-font     "-*-Helvetica-Medium-R-Normal--*-140-*-*-*-*-*-*")
+(define *STk-images*  (string-append  *STk-library* "/images/"))
+(set!   *load-path*   `("./Widget" 
+			,(string-append *STk-library* "/demos")
+			,@*load-path*))
+
+;;
+;; make-demo-toplevel
+;;
+(define (make-demo-toplevel name title text . variables)
+  (let* ((t (make <Toplevel> :title title :geometry "+300+300"))
+	 (f (make <Frame> :parent t))
+	 (b (make <Frame> :parent t)))
+
+    ;; Pack the demo text
+    (when text 
+      (pack (make <Label> :font   	demo-font 
+		  	  :parent 	t
+			  :wrap-length 	"4i"
+			  :justify 	"left" 
+			  :text 	text)
+	    :side "top" :expand #f :fill "both"))
+    
+    ;; Pack the frame where the demo will be done
+    (pack f :side "top" :expand #t :fill "both")
+    
+    ;; Add the two bottom buttons
+    (pack (make <Button> :parent b :text "Dismiss" 
+		:command (lambda () (destroy t)))
+	  (make <Button> :parent b :text "See Code" 
+		:command (lambda () (show-code name)))
+	  :side   "left"
+	  :expand #t)
+
+    ;; If variables is not null, add a 'See variables' button
+    (unless (null? variables)
+       (pack (make <Button> :parent b :text "Show Variables"
+		   :command (lambda () (show-variables t variables)))
+	     :side   "left"
+	     :expand #t))
+    
+    (pack b :side "bottom" :expand #f :fill "x" :pady "2m")
+
+    ;; return the middle frame
+    f))
+
+
+;;;; show-code
+;;;; This procedure creates a toplevel window that displays the code for
+;;;; a demonstration and allows it to be edited and reinvoked.
+(define (show-code name)
+  (define (show file)
+    (if (file-exists? file)
+	(let* ((top (make <Toplevel> :title (format #f "Demo code: ~A" file)
+			  	     :geometry "+400+400"))
+	       (but (make <Frame> :parent top))
+	       (txt (make <Scroll-Text>  :parent top  :wrap "none"
+			  :h-scroll-side "bottom" :width 85 :height 30 :font "fixed"
+			  :value (exec (string-append "cat " file)))))
+      
+	  (pack txt :side "top"    :expand #t :fill "both")
+	  (pack but :side "bottom" :expand #f :fill "x")
+      
+	  (pack  (make <Button> :text "Dismiss" :parent top
+		       :command (lambda() (destroy top)))
+		 (make <Button> :text "Rerun Demo" :parent top
+		       :command (lambda ()
+				  (eval-string 
+				    (format #f "(begin ~A (demo-~A))"
+					    (slot-ref txt 'value)
+					    name))))
+		 :side   "left" 
+		 :expand #t)
+	  #t)
+	  #f))
+  (let ((file (string-append "W" name ".stklos")))
+    (unless (show (string-append *STk-library* "/../Demos/Widget/" file))
+	    (unless (show (string-append *STk-library* "/demos/" file))
+	       (error "Unable to show the code of the file ~S" file)))))
+
+
+;;;; show-variables
+;;;; Displays the values of one or more variables in a window, and
+;;;; updates the display whenever any of the variables changes.
+(define (show-variables parent vars)
+  (unless (null? vars)
+     (let ((top (make <Toplevel> :parent parent :title "Variable values")))
+
+       (pack (make <Label> :text "Variable values:" 
+		   :width 20
+		   :parent top
+		   :anchor "center"
+		   :font "-Adobe-helvetica-medium-r-normal--*-180-*-*-*-*-*-*")
+	     :side "top" 
+	     :fill "x")
+
+       ;; For each variable create a trace.
+       (for-each (lambda (x)
+		   (let ((f (make <Frame> :parent top)))
+		     (pack (make <Label> :parent f :text (format #f "~A = " x))
+			   :side "left")
+		     (pack (make <Label> :parent f :text-variable x :anchor "w")
+			   :side "left" :expand #t :fill "x")
+		     (pack f :side "top" :anchor "w" :fill "x")))
+		 vars)
+
+       ;; Create a destroy button
+       (pack (make <Button> :parent top :text "Dismiss" 
+		   	    :command (lambda () (destroy top)))
+	     :side "bottom"
+	     :pady 2))))
+
+;;;;--------------------------------------------------------------------------
+;;;;
+;;;; Create the main window widgets
+;;;;
+;;;;--------------------------------------------------------------------------
+
+(slot-set! *top-root* 'title  "Widget Demonstration")
+
+(let* ((t          (make <Scroll-Text> :wrap "word" :width 60 :height 30 
+			 :font demo-font :set-grid #t))
+       (quit	   (make <Button> :text "Quit" :command (lambda () (exit 0))))
+       (title      (make <Text-tag> :parent t
+			 :font "-*-Helvetica-Bold-R-Normal--*-180-*-*-*-*-*-*"))
+       (demo       (make <Text-tag> :parent t :lmargin1 "1c" :lmargin2 "1c"))
+       (hot        (apply make <Text-tag> :parent t
+			  (if (= (winfo 'depth *root*) 1)
+			      (list :background "black" :foreground "white")
+			      (list :relief "raised" :border-width 1 
+				    :background "SeaGreen3"))))
+       (last-line '()))
+  
+  (pack t    :expand #t :fill "both")
+  (pack quit :expand #f :fill "x")
+  
+  ;; Associate binfings to tags
+  (bind demo "<Button-1>" 
+	(lambda ()
+	  (invoke-demo-binding t (text-index t 'current))))
+
+  (bind demo "<Enter>"
+	(lambda (x y)
+	  (set! last-line (text-index t (format #f "@~A,~A linestart" x y)))
+	  (tag-add hot last-line (cons (car last-line) "end"))))
+  
+  (bind demo "<Leave>"
+	(lambda ()
+	  (tag-remove hot '(1 . 0) "end")))
+
+  (bind demo "<Motion>" 
+	(lambda (x y)
+	  (let ((new-line (text-index t (format #f "@~A,~A linestart" x y))))
+	    (unless (equal? new-line last-line)
+	       (tag-remove hot '(1 . 0) "end")
+	       (tag-add hot new-line (cons (car new-line) "end"))
+	       (set! last-line new-line)))))
+
+  ;; Create the text for the text widget.
+
+  (text-insert t "end" 
+	       "Tk Widget Demonstrations\n\n" (list title)
+	       "This application provides a front end for several short scripts that demonstrate what you can do with Tk widgets.  Each of the numbered lines below describes a demonstration;  you can click on it to invoke the demonstration.  Once the demonstration window appears, you can click the \"See Code\" button to see the Tcl/Tk code that created the demonstration.  If you wish, you can edit the code and click the \"Rerun Demo\" button in the code window to reinvoke the demonstration with the modified code.\n" '()
+"\nLabels, buttons, checkbuttons, and radiobuttons\n" (list title)
+"1. Labels (text and bitmaps).\n" 		   (list demo 'demo-label)
+"2. Buttons.\n" 			 	   (list demo 'demo-button)
+"3. Checkbuttons (select any of a group).\n" 	   (list demo 'demo-check)
+"4. Radiobuttons (select one of a group).\n" 	   (list demo 'demo-radio)
+"5. A 15-puzzle game made out of buttons.\n" 	   (list demo 'demo-puzzle)
+"6. Iconic buttons that use bitmaps.\n" 	   (list demo 'demo-icon)
+"7. Two labels displaying images.\n" 		   (list demo 'demo-image1)
+"8. A simple user interface for viewing images.\n" (list demo 'demo-image2)
+;;;;;;       
+"\nListboxes\n" (list title)
+"1. 50 states.\n" 				   (list demo 'demo-states)
+"2. Colors: change the color scheme for the application.\n" 
+	       					   (list demo 'demo-colors)
+"3. A collection of famous sayings.\n" 		   (list demo 'demo-sayings)
+;;;;;;
+"\nEntries\n" title
+"1. Without scrollbars.\n" 			   (list demo 'demo-entry1)
+"2. With scrollbars.\n" 			   (list demo 'demo-entry2)
+"3. Simple Rolodex-like form.\n" 		   (list demo 'demo-form)
+;;;;;;
+"\nText\n" title
+"1. Basic editable text.\n" 			   (list demo 'demo-text)
+"2. Text display styles.\n" 			   (list demo 'demo-styles)
+"3. Hypertext (tag bindings).\n" 		   (list demo 'demo-bind)
+"4. A text widget with embedded windows.\n" 	   (list demo 'demo-wind)
+"5. A search tool built with a text widget.\n" 	   (list demo 'demo-search)
+;;;;
+"\nCanvases\n" title
+"1. The canvas item types.\n" 			   (list demo 'demo-items)
+"2. A simple 2-D plot.\n" 			   (list demo 'demo-plot)
+"3. Text items in canvases.\n" 			   (list demo 'demo-ctext)
+"4. An editor for arrowheads on canvas lines.\n"   (list demo 'demo-arrow)
+"5. A ruler with adjustable tab stops.\n" 	   (list demo 'demo-ruler)
+"6. A building floor plan.\n" 			   (list demo 'demo-floor)
+"7. A simple scrollable canvas.\n" 		   (list demo 'demo-cscroll)
+;;;;
+"\nScales\n" title
+"1. Vertical scale.\n" 				   (list demo 'demo-vscale)
+"2. Horizontal scale.\n" 			   (list demo 'demo-hscale)
+;;;;
+"\nMenus\n" title
+"1. A window containing several menus and cascades.\n" 
+						   (list demo 'demo-menu)
+;;;;
+"\nMiscellaneous\n" title
+"1. The built-in bitmaps.\n" 			   (list demo 'demo-bitmap)
+"2. A dialog box with a local grab.\n" 		   (list demo 'demo-dialog1)
+"3. A dialog box with a global grab.\n" 	   (list demo 'demo-dialog2)
+))
+
+(define (invoke-demo-binding t index)
+  (let loop ((t  (text-tags t index)))
+    (cond 
+       ((null? t) 	      		#f)
+       ((string-find? "demo-" (car t))  (apply (eval (string->symbol (car t)))
+					       '()))
+       (ELSE		      		(loop (cdr t))))))
+
+(define (NYI)
+  (error "This demo is not yet implemented"))
+
+;;
+;; Autolooads
+;;
+
+(autoload "Wlabel"	demo-label)
+(autoload "Wbutton" 	demo-button)
+(autoload "Wcheck"	demo-check)
+(autoload "Wradio"	demo-radio)
+(autoload "Wpuzzle"	demo-puzzle)
+(autoload "Wicon"	demo-icon)
+(autoload "Wimage1"	demo-image1)
+(autoload "Wimage2"	demo-image2)
+
+(autoload "Wstates"	demo-states)
+(autoload "Wcolors"	demo-colors)
+(autoload "Wsayings"	demo-sayings)
+
+(autoload "Wentry1"	demo-entry1)
+(autoload "Wentry2"	demo-entry2)
+(autoload "Wform"	demo-form)
+
+(autoload "Wtext"	demo-text)
+(autoload "Wstyles"	demo-styles)
+(autoload "Wbind"	demo-bind)
+(autoload "Wwind"	demo-wind)
+(autoload "Wsearch"	demo-search)
+
+(autoload "Witems"	demo-items)
+(autoload "Wplot"	demo-plot)
+(autoload "Wctext"	demo-ctext)
+(autoload "Warrow"	demo-arrow)
+(define demo-ruler NYI)
+(define demo-floor NYI)
+(define demo-cscroll NYI)
+
+(autoload "Wvscale"	demo-vscale)
+(autoload "Whscale"	demo-hscale)
+
+(autoload "Wmenu"	demo-menu)
+
+(autoload "Wbitmap"	demo-bitmap)
+(autoload "Wdialog1"	demo-dialog1)
+(autoload "Wdialog2"	demo-dialog2)

@@ -1,0 +1,105 @@
+;;;;
+;;;; STk adaptation of the Tk widget demo.
+;;;;
+;;;;  This demonstration script creates a text widget with a bunch of
+;;;; embedded windows.
+;;;;
+
+(define (demo-wind)
+
+  (define embedded-canvas #f)
+
+  (define (text-window-on t)
+    (slot-set! t 'wrap "none")
+    (slot-set! t 'h-scroll-side "bottom"))
+
+  (define (text-window-off t)
+    (slot-set! t 'wrap "word")
+    (slot-set! t 'h-scroll-side #f))
+
+  (define (text-window-plot t mark)
+    (unless embedded-canvas 
+      (let ((idx (Mid mark)))
+	(text-insert t idx "\n")
+	(set! embedded-canvas (demo-plot t))
+	(make <Text-window> :parent t :index idx :window embedded-canvas)
+	(text-insert t idx"\n"))))
+
+  (define (text-window-delete t mark)
+    (when embedded-canvas
+      (destroy embedded-canvas)
+      (text-delete t mark)
+      (text-delete t mark)
+      (text-delete t mark)
+      (set! embedded-canvas #f)))
+    
+  (let* ((w     (make-demo-toplevel  "wind"
+				     "Text Demonstration - Embedded Windows"
+				     ""))
+	 (t	(make <Scroll-text> :parent w :set-grid #t :font demo-font 
+		      :width 70 :height 35 :wrap "word" :highlight-thickness 0 
+		      :border-width 0))
+	 (on    (make <Button> :parent t :text "Turn On" :cursor "top_left_arrow"
+		      :command (lambda () (text-window-on t))))
+	 (off   (make <Button> :parent t :text "Turn Off" :cursor "top_left_arrow"
+		      :command (lambda () (text-window-off t))))
+	 (mrk  #f)
+	 (click (make <Button> :parent t :text "Click here" :cursor "top_left_arrow"
+		      :command (lambda () (text-window-plot t mrk))))
+	 (del	(make <Button> :parent t :text "Delete" :cursor "top_left_arrow"
+		      :command (lambda () (text-window-delete t mrk)))))
+
+    (pack t :expand #t :fill "both")
+
+    (text-insert t "end" "A text widget can contain other widgets embedded it.  These are called \"embedded windows\", and they can consist of arbitrary widgets.  For example, here are two embedded button widgets.  You can click on the first button to ")
+    (make <Text-window> :window on :index "end")
+    (text-insert t "end" " horizontal scrolling, which also turns off word wrapping.  Or, you can click on the second button to\n")
+    (make <Text-window> :window off :index "end")
+    (text-insert t "end" " horizontal scrolling and turn back on word wrapping.\n\nOr, here is another example.  If you ")
+    (make <Text-window> :window click :index "end")
+    (text-insert t "end" " a canvas displaying an x-y plot will appear right here. ")
+
+    (set! mrk (make <Text-mark> :parent t :gravity "left"  :index "insert"))
+    
+    (text-insert t "end" "You can drag the data points around with the mouse, or you can click here to ")
+    (make <Text-window> :window del :index "end")
+    (text-insert t "end" " the plot again.\n\n")
+
+    (text-insert t "end" "You may also find it useful to put embedded windows in a text without any actual text.  In this case the text widget acts like a geometry manager.  For example, here is a collection of buttons laid out neatly into rows by the text widget.  These buttons can be used to change the background color of the text widget (\"Default\" restores the color to its default).  If you click on the button labeled \"Short\", it changes to a longer string so that you can see how the text widget automatically changes the layout.  Click on the button again  to restore the short string.\n")
+    (make <Text-window> 
+	  :index "end" 
+	  :pad-x 3
+	  :pad-x 2
+	  :window (make <Button> 
+			:parent t
+			:text "Default"
+			:cursor "top_left_arrow"
+			:command (lambda () 
+				   (slot-set! t 'background 
+					      (get-Tk-default-value t 
+								    'background)))))
+    (make <Text-window>
+	  :index "end"
+	  :pad-x 3
+	  :pad-y 2
+	  :window (make <Check-Button>
+			:parent t
+			:text-variable 'demo-wind-toggle
+			:indicator-on #f
+			:variable 'demo-wind-toggle
+			:string-value #t
+			:on-value "A much longer string"
+			:off-value "Short"
+			:cursor "top_left_arrow"))
+    (for-each (lambda (color)
+		(make <Text-window>
+		      :index "end"
+		      :pad-x 3
+		      :pad-y 2
+		      :window (make <Button>
+				    :parent t
+				    :text color
+				    :cursor "top_left_arrow"
+				    :command (lambda ()
+					       (slot-set! t 'background color)))))
+	      '("AntiqueWhite3" "Bisque1" "Bisque2" "Bisque3" "Bisque4" "SlateBlue3" "RoyalBlue1" "SteelBlue2" "DeepSkyBlue3" "LightBlue1" "DarkSlateGray1" "Aquamarine2" "DarkSeaGreen2" "SeaGreen1" "Yellow1" "IndianRed1" "IndianRed2" "Tan1" "Tan4"))))

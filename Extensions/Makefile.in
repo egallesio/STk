@@ -1,0 +1,53 @@
+#
+# Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+# 
+#
+# Permission to use, copy, and/or distribute this software and its
+# documentation for any purpose and without fee is hereby granted, provided
+# that both the above copyright notice and this permission notice appear in
+# all copies and derived works.  Fees for distribution or use of this
+# software or derived works may only be charged with express written
+# permission of the copyright holder.  
+# This software is provided ``as is'' without express or implied warranty.
+#
+#           Author: Erick Gallesio [eg@kaolin.unice.fr]
+#    Creation date:  6-Mar-1994 15:49
+# Last file update: 21-Jul-1996 22:27
+
+include ../config.make
+
+EXAMPLES = stack.$(SH_SUFFIX) \
+	   when.$(SH_SUFFIX)
+
+CFLAGS= $(SH_CCFLAGS) $(STKCFLAGS) $(DFLGS) -DUSE_TK @DEFS@ \
+        -I../Tk/generic -I../Tk/$(FLAVOR) -I../Tcl -I../Src -I../Mp $(XINCLUDES) 
+
+##############################################################################
+.SUFFIXES: .$(SH_SUFFIX) .o .c
+
+.o.$(SH_SUFFIX): 
+	-$(SH_LOADER) $(SH_LDFLAGS) $*.$(SH_SUFFIX) $<
+	if test -f a.out  ;then mv a.out $*.$(SH_SUFFIX); fi
+
+
+##############################################################################
+all: $(EXTRA_OBJ)
+
+# Following lines are needed for weird make commands. Use Gnu make....
+hash.$(SH_SUFFIX): 	hash.o 
+sregexp.$(SH_SUFFIX): 	sregexp.o 
+process.$(SH_SUFFIX): 	process.o 
+socket.$(SH_SUFFIX): 	socket.o 
+posix.$(SH_SUFFIX):	posix.o
+html.$(SH_SUFFIX):	html.o
+pixmap.$(SH_SUFFIX):	pixmap.o
+examples: $(EXAMPLES)
+
+install:
+	if test "$(EXTRA_OBJ)" != "" ; then $(CP) $(EXTRA_OBJ) $(execdir); fi
+
+install.libs:
+
+
+clean:
+	@/bin/rm -f *.o *.$(SH_SUFFIX) core *~ Makefile config.status config.log

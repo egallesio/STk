@@ -1,0 +1,185 @@
+'\" Color=White
+'\"
+'\" File modified by Erick Gallesio for STk man page. Original file Copyright:
+'\"
+'\" Copyright (c) 1992 The Regents of the University of California.
+'\" All rights reserved.
+'\"
+'\" Permission is hereby granted, without written agreement and without
+'\" license or royalty fees, to use, copy, modify, and distribute this
+'\" documentation for any purpose, provided that the above copyright
+'\" notice and the following two paragraphs appear in all copies.
+'\"
+'\" IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY
+'\" FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES
+'\" ARISING OUT OF THE USE OF THIS DOCUMENTATION, EVEN IF THE UNIVERSITY OF
+'\" CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+'\"
+'\" THE UNIVERSITY OF CALIFORNIA SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+'\" INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+'\" AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS
+'\" ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATION TO
+'\" PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+'\" 
+'\" $Header: /users/eg/STk/STk/Doc/Manual/RCS/stk.1,v 1.3 1996/07/24 13:39:51 eg Exp $ SPRITE (Berkeley)
+'/"
+.so STk-man.macros
+.TH STk 1 3.1 July_1996 ""
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+stk, snow \- A Scheme interpreter using the Tk toolkit
+.SH SYNOPSIS
+\fBstk\fR  [\fIoptions\fR] [\fIarg arg ...\fR]
+.br
+\fBsnow\fR [\fIoptions\fR] [\fIarg arg ...\fR]
+.SH OPTIONS
+.LP 
+\fBstk\fR interpreter accepts several command-line options which  may
+be abbreviated, as long as the abbreviation
+is unambiguous (e.g. \fB-h\fR, \fB-he\fR, \fB-hel\fR are three possibe 
+abbreviations for the \fB-help\fR option).
+
+.IP "\fB\-display \fIdisplay\fR" 15
+Display (and screen) on which to display window.
+.IP "\fB\-file \fIfileName\fR" 15
+Read commands from \fIfileName\fR rather than standard input.  The
+last element in \fIfileName\fR will be used as the title for the
+application and name of its interpreter for \fBsend\fR
+commands (unless overridden by the \fB\-name\fR option\fR).
+.IP "\fB\-geometry \fIgeometry\fR" 15
+Initial geometry to use for window.
+.IP "\fB\-name \fIname\fR" 15
+Use \fIname\fR as the title to be displayed in the window, and
+as the name of the interpreter for \fBsend\fR commands.
+.IP  "\fB\-new-colormap\fR" 15
+Specifies that the main window should have a new private colormap instead of
+using the default colormap for the screen.
+.IP "\fB\-sync\fR" 15
+Execute all X server commands synchronously, so that errors
+are reported immediately.  This will result in much slower
+execution, but it is useful for debugging.
+.IP "\fB\-visual \fIvisual\fR" 15
+Specifies the visual to use for the window.\fIVisual\fR may be one of the following:
+\fIbest\fR, \fIdirectcolor\fR, \fIgrayscale\fR, \fIgreyscale\fR, 
+\fIpseudocolor\fR, \fIstaticcolor\fR, \fIstaticgray\fR, 
+\fIstaticgrey\fR, \fItruecolor\fR, or \fIdefault\fR
+.IP "\fB\-no-tk\fR" 15
+Don't initialize the Tk toolkit
+.IP "\fB\-load \fIfileName\fR" 15
+Evaluate expressions contained in \fIfileName\fR before reading 
+expressions from standard input.
+.IP "\fB\-image \fIfileName\fR" 15
+Restore the state saved in \fIfileName\fR by the \fIdump\fR primitive
+(Note: For now, \fIdump\fR works only on SunOS 4.1.x, Linux 1.x (a.out format) 
+and FreeBSD).
+.IP "\fB\-cells \fInumber\fR" 15
+Set the default size for the heap to \fInumber\fR cells. The given number is
+also the amount of cells used when extending the heap. Default value is 20000.
+.IP "\fB\-interactive\fR" 15
+Tell the interpreter that it is used interactively (even if it doesn't
+think so).  
+.IP "\fB\-help\fR" 15
+Print a summary of the command-line options and exit.
+.IP "\fB\-\|\-\fR" 15
+Pass all remaining arguments through to the script's \fBargv\fR
+variable without interpreting them.
+This provides a mechanism for passing arguments such as \fB\-name\fR
+to a script instead of having \fBwish\fR interpret them.
+.BE
+
+.SH DESCRIPTION 
+.PP 
+
+\fBStk\fR is a Scheme R4RS interpreter which provide a simple access to the
+X11 Tk toolkit. If the \fB\-no-tk\fR option is provided to the interpreter,
+the Tk library is not initialized and no main window is created.  If
+\fBstk\fR is invoked with no \fB\-f\fR option then it reads Scheme
+expressions interactively from standard input.  It will continue processing
+commands until all windows have been deleted or until end-of-file is
+reached on standard input.
+
+.PP 
+\fBSnow\fR is a \fIlight\fR version of the \fBstk\fR interpreter which
+does not provide support for the Tk toolkit. This interpreter does not
+recognize the options \fB\-display\fR, \fB\-geometry\fR, \fB\-sync\fR 
+\fBnew-colormap\fR, \fBvisual\fR and \fB\-no-tk\fR which are meaningless 
+without Tk. This interpreter is called, rather than the standard one, 
+when the shell DISPLAY variable is not initialized.
+
+.PP
+If the \fB\-file\fR option is provided to Tk, then \fBstk\fR reads Scheme
+forms from the file named in the \fB\-file\fR option.  These
+forms will normally create an interactive interface consisting
+of one or more widgets.  When the end of the command file is
+reached, \fBstk\fR will continue to respond to X events until
+all windows have been deleted.
+
+.PP 
+The \fB\-interactive\fR option forces the interpreter in interactive
+mode. In this mode, standard output and standard error are unbuffered. 
+Use this option when you launch \fBstk\fR from \fBemacs\fR.
+
+
+.SH "VARIABLES"
+.PP
+Following Scheme variables are set when \fBStk\fR starts:
+.TP 15
+\fB*argc*\fR
+Contains a count of the number of \fIarg\fR arguments (0 if none),
+not including the options described above.
+.TP 15
+\fB*argv*\fR
+Contains a Scheme list whose elements are the \fIarg\fR arguments (not
+including the options described above), in order, or an empty list
+if there are no \fIarg\fR arguments.
+.TP 15
+\fB*program-name*\fR
+Contains \fIfileName\fR if it was specified.
+Otherwise, contains the name by which \fBstk\fR was invoked.
+
+
+.SH "SCRIPT FILES"
+.PP
+If you create a STk script in a file whose first line is
+.DS
+\fB#!/usr/local/bin/stk -f\fR
+.DE
+then you can invoke the script file directly from your shell if
+you mark it as executable.
+This assumes that \fBstk\fR has been installed in the default
+location in /usr/local/bin;  if it's installed somewhere else
+then you'll have to modify the above line to match.
+
+.SH ENVIRONMENT VARIABLES
+.PP
+\fBstk\fR uses the following shell variables:
+.IP "\fISTK_LIBRARY\fR" 15
+This variable indicates where the library files are located. This variable
+allows to overload the default value of the Scheme variable \fI*stk-library*\fR 
+which is automatically calculated by the interpreter.(i.e. \fIstk\fR or \fIsnow\fR).
+.IP "\fISTK_LOAD_PATH\fR" 15
+This variable serves to initialize the \fI*load-path*\fR Scheme variable. This
+variable is a list of paths to try when in a load command. 
+.IP "\fISTK_HELP_PATH\fR" 15
+This variable serves to initialize the \fI*help-path*\fR Scheme variable. It 
+must contain a list of documentation directories. This variable is used by the help 
+procedure.
+
+
+.SH FILES
+.IP "\fI./init.stk\fR" 15
+.IP "\fI$STK_LIBRARY/STk/init.stk\fR" 15
+When \fBstk\fR starts running, it tries to load the file \fIinit.stk\fR
+in the current directory. If this file is not present, it tries to load 
+this file in the \fBSTk_LIBRARY\fR directory (the value of \fBSTk_LIBRARY\fR
+is automatically computed to be in a sibling directory of the interpreter 
+executable.
+
+.IP "\fI~/.stkrc\fR" 15
+Standard \fIinit.stk\fR file tries to load the file \fI~/.stkrc\fR. This file 
+can be used to store function definitions or variables settings that you want
+to be executed at each interpretater invocation.
+
+.SH SEE ALSO
+wish(1)

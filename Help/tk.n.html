@@ -1,0 +1,41 @@
+<HTML><HEAD><TITLE>Tk Built-In Commands - tk manual page</TITLE></HEAD>
+<BODY bgcolor = #c3c3ff>
+<H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageBlue.gif"> tk</H2>
+<I>Manipulate Tk internal state</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<H3><A NAME="M2">SYNOPSIS</A></H3>
+(<B>tk</B> <I>option </I>?<I>arg arg ...</I>?)<BR>
+<H3><A NAME="M3">DESCRIPTION</A></H3>
+The <B>tk</B> procedure provides access to miscellaneous
+elements of Tk's internal state.
+Most of the information manipulated by this procedure pertains to the
+application as a whole, or to a screen or display, rather than to a
+particular window.
+The procedure can take any of a number of different forms
+depending on the <I>option</I> argument.  The legal forms are:
+<P>
+<DL>
+<DT><A NAME="M4">(<B>tk 'appname</B>)</A><DD>
+<DT><A NAME="M5">(<B>tk 'appname </B><I>newName</I>)</A><DD>
+If <I>newName</I> isn't specified, this procedure returns the name
+of the application (the name that may be used in <B><A HREF="./send.n.html">send</A></B>
+procedures to communicate with the application).
+If <I>newName</I> is specified, then the name of the application
+is changed to <I>newName</I>.
+If the given name is already in use, then a suffix of the form
+``<B> #2</B>'' or ``<B> #3</B>'' is appended in order to make the name unique.
+The procedure's result is the name actually chosen.
+<I>newName</I> should not start with a capital letter.
+This will interfere with option processing, since names starting with
+capitals are assumed to be classes;  as a result, Tk may not
+be able to find some options for the application.
+If sends have been disabled by deleting the <B><A HREF="./send.n.html">send</A></B> procedure,
+(with <B>inhibit-send</B>) this procedure will reenable them and 
+recreate the <B><A HREF="./send.n.html">send</A></B> procedure.
+
+<P>
+</DL>
+<H3><A NAME="M6">SEE ALSO</A></H3>
+<B><A HREF="./send.n.html">send</A></B>
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookBlue.gif"> Back to the <B>STk</B> main page</A>
+</BODY></HTML>

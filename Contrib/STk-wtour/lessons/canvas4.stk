@@ -1,0 +1,13 @@
+;; Canvas item stacking
+;; Use mouse button 1 to put a square on top of stack
+(canvas '.c3)
+(pack .c3 :fill "both" :expand #t)
+
+(define r1 (.c3 'create 'rectangle 20 20 80 80 :fill "red"))
+(define r2 (.c3 'create 'rectangle 60 60 120 120 :fill "green"))
+(define r3 (.c3 'create 'rectangle 40 40 100 100 :fill "blue"))
+
+(.c3 'bind r1 "<Button-1>" (lambda () (.c3 'raise r1)))
+(.c3 'bind r2 "<Button-1>" (lambda () (.c3 'raise r2)))
+(.c3 'bind r3 "<Button-1>" (lambda () (.c3 'raise r3)))
+

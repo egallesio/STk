@@ -1,0 +1,88 @@
+\typeout{tcl.sty}
+
+\newlength{\p@perwidth}
+\setlength{\p@perwidth}{8 true in}     % a4 paper width
+\newlength{\p@perlength}
+\setlength{\p@perlength}{11 true in}  % a4 paper height
+
+\setlength{\voffset}{0 true in}        % shift origin to paper corner
+\setlength{\hoffset}{0 true in}
+
+% pick up point size of current font
+% these parameters are not changed by the macros below
+\newlength{\mainsize}
+\setlength{\mainsize}{1\@ptsize pt}
+\setlength{\topskip}{\mainsize} % plain has 10pt
+\setlength{\maxdepth}{.4\mainsize}      % plain has 4pt
+\setlength{\@maxdepth}{\maxdepth}       % this has to be set as well
+
+\newlength{\leftsidemargin}
+\newlength{\leftsideshift}
+\newlength{\rightsidemargin}
+\newlength{\rightsideshift}
+\newlength{\headsidemargin}
+\newlength{\footsidemargin}
+
+\let\resetmargins\relax
+
+\def\setleftmargin#1#2{% set left printer margin and odd page shift
+  \setlength{\leftsidemargin}{#1}%
+  \setlength{\leftsideshift}{#2}%
+  \resetmargins
+}
+\setleftmargin{1.0 true in}{0 in}
+
+\def\setrightmargin#1#2{% set right printer margin and even page shift
+  \setlength{\rightsidemargin}{#1}%
+  \setlength{\rightsideshift}{#2}%
+  \resetmargins
+}
+\setrightmargin{0.00 true in}{0 in}
+
+\def\setheadmargin#1#2#3{% set head printer margin, size, and separation
+  \setlength{\headsidemargin}{#1}%
+  \setlength{\headheight}{#2}%
+  \setlength{\headsep}{#3}%
+  \resetmargins
+}
+\setheadmargin{1 true in}{\mainsize}{2\mainsize}
+
+\def\setfootmargin#1#2#3{% set foot printer margin, size, and separation
+  \setlength{\footsidemargin}{#1}%
+  \setlength{\footheight}{#2}%
+  \setlength{\footskip}{#3}%
+  \addtolength{\footskip}{\footheight}%
+  \resetmargins
+}
+\setfootmargin{1 true in}{\mainsize}{1.5\mainsize}
+
+\def\setmarginnote#1#2{% set marginal note width and separation
+  \setlength{\marginparwidth}{#1}%
+  \setlength{\marginparsep}{#2}%
+  \resetmargins
+}
+%\setmarginnote{62 pt}{10pt}
+\setmarginnote{62.27 true pt}{10 true pt}
+
+\def\resetmargins{% reset textheight and length from parameters
+  \setlength{\oddsidemargin}{\leftsidemargin}%
+  \addtolength{\oddsidemargin}{-1 true in}%
+  \addtolength{\oddsidemargin}{\leftsideshift}%
+  \setlength{\evensidemargin}{\oddsidemargin}%
+  \addtolength{\evensidemargin}{-\rightsideshift}%
+  \setlength{\textwidth}{\p@perwidth}% start at full width
+  \addtolength{\textwidth}{-\leftsidemargin}%
+  \addtolength{\textwidth}{-\leftsideshift}%
+  \addtolength{\textwidth}{-\marginparwidth}%
+  \addtolength{\textwidth}{-\marginparsep}%
+  \addtolength{\textwidth}{-\rightsidemargin}%
+  \setlength{\topmargin}{\headsidemargin}%
+  \addtolength{\topmargin}{-1 true in}%
+  \setlength{\textheight}{\p@perlength}% start at full height
+  \addtolength{\textheight}{-\headsidemargin}%
+  \addtolength{\textheight}{-\headheight}%
+  \addtolength{\textheight}{-\headsep}%
+  \addtolength{\textheight}{-\footskip}%
+  \addtolength{\textheight}{-\footsidemargin}%
+}
+\resetmargins

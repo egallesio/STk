@@ -1,0 +1,224 @@
+<HTML>
+<HEAD>
+<TITLE>Introduction </TITLE>
+</HEAD>
+<BODY>
+<H1>1. <A NAME="s1"></A>Introduction </H1>
+<P>
+<A HREF="FAQ.html#toc1">Contents of this section</A></P>
+
+<P></P>
+<P>The aim of this document is to answer to the frequently asked questions about STk. First versions of this document were written by Marc Furrer 
+<A HREF="mailto:furrer@di.epfl.ch">(furrer@di.epfl.ch)</A>
+with the support of Erick Gallesio 
+<A HREF="mailto:eg@unice.fr">(eg@unice.fr)</A>
+ Marc has not enough time to continue to maintain the FAQ up to date and he asked me to continue. Since I too have not a lot of time for keeping the FAQ alive, any help would be greatly apreciated. </P>
+<P>The latest version of the FAQ is available at 
+<A HREF="http://kaolin.unice.fr/FAQ/FAQ.html">http://kaolin.unice.fr/FAQ/FAQ.html</A>
+ Text and Postscript versions of this document are also available at 
+<A HREF="ftp://kaolin.unice.fr/pub/FAQ">ftp://kaolin.unice.fr/pub/FAQ</A>
+ The HTML version is the recommended version of this document since all the links to other documents or softwares can be followed just by clicking on them.</P>
+<P>This version of the document is very incomplete and if you think of questions that are appropriate for this FAQ, or would like to improve an answer, please send me e-mail. </P>
+<H2>1.1 <A NAME="ss1.1"></A> Subject: What is STk</H2>
+
+<P></P>
+<P>STk is a R4RS Scheme interpreter which can access to the Tk graphical package. It can be seen as the John Ousterhout's Tk package where the Tcl language has been replaced by Scheme (for more information on Scheme, Tcl and Tk, see the references below).</P>
+<P>STk also provides an efficient object oriented system called STklos. STklos is an OO system with multi-inheritance, generic functions, multi-methods. It's implementation relies on a Meta Object Protocol (MOP) inspired from the Tiny -CLOS model. </P>
+<P>Other features of STk are:
+<UL>
+<LI>Interpreter can be easily extended by adding new C modules. </LI>
+<LI>All the commands defined by the Tk toolkit are available to the STk interpreter (Tk commands are seen as a special type of objects by the interpreter). </LI>
+<LI>Widgets callbacks are Scheme closures </LI>
+<LI>Based on Tk4.1 (the last stable release of Tk)</LI>
+<LI>STk does not use the Tcl interpreter for Tk programming </LI>
+<LI>Tk variables (such are -textvariable) are reflected back into Scheme as Scheme variables. </LI>
+<LI>A set of STklos classes have been defined to manipulate Tk commands (menu, buttons, scales, canvas, canvas items) as STklos objects. </LI>
+<LI>New widgets can easily be built in STklos by composition of existing widgets.</LI>
+</UL>
+</P>
+
+<H2>1.2 <A NAME="ss1.2"></A> Subject: Where do I get STk from</H2>
+
+<P></P>
+<P>STk distribution is available on various sites. The official distribution site is 
+<A HREF="http://kaolin.unice.fr/">http://kaolin.unice.fr/</A>
+or 
+<A HREF="ftp://kaolin.unice.fr/pub">ftp://kaolin.unice.fr/pub</A>
+ Distribution file names have the form <CODE>STk-x.y.tar.gz,</CODE> where <CODE>x</CODE> and <CODE>y</CODE> represent the version and the release of the package. You can also find here interim releases of STk. Intermediate releases are stored in file whose name have the form <CODE>STk-x.y.z.tar.gz</CODE> where <CODE>z</CODE> is the intermediate release number. Last stable release can be taken from 
+<A HREF="http://kaolin.unice.fr/STk.tar.gz">http://kaolin.unice.fr/STk.tar.gz</A>
+or 
+<A HREF="ftp://kaolin.unice.fr/pub/STk.tar.gz">ftp://kaolin.unice.fr/pub/STk.tar.gz</A>
+</P>
+
+<H2>1.3 <A NAME="ss1.3"></A> Subject: Are there distribution mirror sites</H2>
+
+<P></P>
+<P>Stable releases of STk are also placed in 
+<A HREF="ftp://sunsite.unc.edu/pub/Linux/devel/lang/lisp">ftp://sunsite.unc.edu/pub/Linux/devel/lang/lisp</A>
+ Since this site is eavily mirrored around the planet, you should easily find a stable release near you.</P>
+<P>David Fox also maintain a mirror site of kaolin (daily updated) in the USA at the following URL 
+<A HREF="ftp://cs.nyu.edu/pub/local/fox/stk">ftp://cs.nyu.edu/pub/local/fox/stk</A>
+</P>
+
+<H2>1.4 <A NAME="ss1.4"></A> Subject: Which are the systems STk support</H2>
+
+<P></P>
+<P>STk runs on a large variety of Unixes. It is known to run on:
+<UL>
+<LI>Sparc (SunOs 4.1.x &amp; Solaris 2.{34})</LI>
+<LI>Dec 5xxx (Ultrix 4.2)</LI>
+<LI>SGI (IRIX 4.05, 5.1.1, 5.2)</LI>
+<LI>DEC Alpha 3000/400 (OSF-1 V1.3)</LI>
+<LI>RS6000 AIX 3.2.5</LI>
+<LI>HP 9000/735 (HP-UX 9.01)</LI>
+<LI>PC (Linux 1.0 -&gt; 2.0)</LI>
+<LI>PC (FreeBSD 1.1) </LI>
+<LI>PC (SCO) Thanks to markd@grizzly.com</LI>
+<LI>PC (NetBSD-1.0)</LI>
+<LI>Sony WS (Sony NEWS, NEWSOS 4.2R)</LI>
+<LI>...</LI>
+</UL>
+</P>
+
+<H2>1.5 <A NAME="ss1.5"></A> Subject: STk and Windows</H2>
+
+<P></P>
+<P>Starting with release 3.1, STk runs on 32 bits Microsoft Windows (only tested on Windows 95, but it should run on Windows NT). This version is based on the Tk 4.1 final release.</P>
+<P>STk Win32 version is distributed in source and binary forms, since binary release seems more convenient on Windows.</P>
+<P>Development of STk on this platform is not easy for me since it is not the system I use dayly. In particular, a lot of work need to be done (loading of packages compiled in DLL, sockets, ...). Help of a Win32 hacker would be greatly appreciated to achieve those tasks. </P>
+
+<H2>1.6 <A NAME="ss1.6"></A> Subject: STk and MacOS</H2>
+
+<P></P>
+<P>It is not intended to port STk on MAcOS, by lack of resource (and interest of myself :). However, port should be simple for a Mac hacker. I can provide help if necessary for this job. </P>
+<P>Another way to run STk on a Mac consists to run STk under Mach Ten. If I have well understood, Mach Ten is a Unix (Mach-) like system running on top of MacOS. STk compiles fine on this system.</P>
+
+<H2>1.7 <A NAME="ss1.7"></A> Subject: Getting more information about Scheme</H2>
+
+<P></P>
+<P><B>The R4RS document</B>
+<UL>
+<LI>R4RS is the document which fully describes the Scheme Programming Language, it can be found in the Scheme repository at the following URL 
+<A HREF="ftp://ftp.cs.indiana.edu/pub/scheme-repository/doc">ftp://ftp.cs.indiana.edu/pub/scheme-repository/doc</A>
+</LI>
+<LI>Aubrey Jaffer has also translated this document in HTML. A version of this document can be browsed at 
+<A HREF="http://www-swiss.ai.mit.edu/~jaffer/r4rs\_toc.html">http://www-swiss.ai.mit.edu/~jaffer/r4rs\_toc.html</A>
+</LI>
+</UL>
+</P>
+<P><B>The Scheme Repository </B></P>
+<P>The main site where you can find (many) informations about Scheme is located in the University of Indiana. The Scheme repository is maintained by David Eby. The repository currently consists of the following areas:
+<UL>
+<LI>Lots of scheme code meant for benchmarking, library/support, research, education, and fun. </LI>
+<LI>On-line documents: Machine readable standards documents, standards proposals, various Scheme-related tech reports, conference papers, mail archives, etc. </LI>
+<LI>Most of the publicly available Scheme Implementations. </LI>
+<LI>Material designed primarily for instruction.</LI>
+<LI>Freely-distributable promotional or demonstration material for Scheme-related products. </LI>
+<LI>Utilities (e.g., Schemeweb, SLaTeX). </LI>
+<LI>Extraneous stuff, extensions, etc. </LI>
+</UL>
+</P>
+<P>You can access the Scheme repository at:
+<UL>
+<LI>
+<A HREF="ftp://ftp.cs.indiana.edu/pub/scheme-repository">ftp://ftp.cs.indiana.edu/pub/scheme-repository</A>
+</LI>
+<LI>
+<A HREF="http://www.cs.indiana.edu/scheme-repository/SRhome.html">http://www.cs.indiana.edu/scheme-repository/SRhome.html</A>
+</LI>
+</UL>
+</P>
+<P>The Scheme Repository is mirrored in Europe at: 
+<UL>
+<LI>
+<A HREF="ftp://ftp.inria.fr/lang/Scheme">ftp://ftp.inria.fr/lang/Scheme</A>
+</LI>
+<LI>
+<A HREF="ftp://faui80.informatik.uni-erlangen.de/pub/scheme/yorku">ftp://faui80.informatik.uni-erlangen.de/pub/scheme/yorku</A>
+</LI>
+<LI>
+<A HREF="ftp://ftp.informatik.uni-muenchen.de/pub/comp/programming/ languftp://ftp.informatik.uni-muenchen.de/pub/comp/programming/ languages/scheme/scheme-repository">ftp://ftp.informatik.uni-muenchen.de/pub/comp/programming/ languages/scheme/scheme-repository</A>
+</LI>
+</UL>
+</P>
+<P><B>Usenet newsgroup and other addresses</B></P>
+<P>There is a usenet newsgroup about the Scheme Programming language: 
+<A HREF="news:comp.lang.scheme">comp.lang.scheme</A>
+</P>
+<P><B>Miscelleanous</B></P>
+<P>Following addresses contains also interesting material about the Scheme language
+<UL>
+<LI>The Scheme FAQ 
+<A HREF="http://www.cs.cmu.edu:8001/Web/Groups/AI/html/faqs/lang/scheme/thttp://www.cs.cmu.edu:8001/Web/Groups/AI/html/faqs/lang/scheme/top.htmlheme/scheme-repository">http://www.cs.cmu.edu:8001/Web/Groups/AI/html/faqs/lang/scheme/top.htmlheme/scheme-repository</A>
+</LI>
+<LI>The Scheme Home Page at MIT 
+<A HREF="http://www-swiss.ai.mit.edu/scheme-home.html">http://www-swiss.ai.mit.edu/scheme-home.html</A>
+</LI>
+<LI>The Scheme Underground web page: 
+<A HREF="http://www.ai.mit.edu/projects/su/su.html">http://www.ai.mit.edu/projects/su/su.html</A>
+</LI>
+</UL>
+</P>
+
+<H2>1.8 <A NAME="ss1.8"></A> Subject: Differences with R4RS</H2>
+
+<P></P>
+<P><B>Symbols</B></P>
+<P>STk symbol syntax has been augmented to allow case significant symbols. Many global symbols have been added to the global environment, see Appendix B of the <CODE></CODE><CODE><B>STk</B></CODE><B></B> Reference Manual. </P>
+<P><B>Types </B></P>
+<P>STk implements all the types defined as mandatory in R4RS. However, complex numbers and rational numbers (which are defined but not required in R4RS) are not implemented. The lack of these types implies that some functions of R4RS are not defined. </P>
+<P>Some types which are not defined in R4RS are implemented in STk. Those types are listed below:
+<UL>
+<LI>input string port type </LI>
+<LI>output string port type </LI>
+<LI>keyword type </LI>
+<LI>Tk command type (to use the Tk widgets)</LI>
+<LI>environment type (environments are first class in STk)</LI>
+<LI>macro type </LI>
+<LI>address type (obsolete now)</LI>
+<LI>hash table type </LI>
+<LI>process type (launch and communication with subprocess)</LI>
+<LI>socket type (TCP/UDP sockets)</LI>
+<LI>regexp type (access to tcl regexp)</LI>
+</UL>
+</P>
+<P><B>Procedures</B></P>
+<P>The following procedures are required by R4RS and are not implemented in the STk interpreter: 
+<UL>
+<LI>transcript-off </LI>
+<LI>transcript-on</LI>
+</UL>
+</P>
+<P>These procedure can be easily simulated with various Unix tools such as <EM>script </EM>or <EM>fep</EM>. </P>
+<P>The following procedures are not implemented in the STk interpreter whereas they are defined in R4RS (but not required). They are all related to complex or rational numbers:
+<UL>
+<LI>numerator </LI>
+<LI>denominator </LI>
+<LI>rationalize </LI>
+<LI>make-rectangular </LI>
+<LI>make-polar </LI>
+<LI>real-part </LI>
+<LI>imag-part</LI>
+<LI>magnitude </LI>
+<LI>angle</LI>
+</UL>
+</P>
+<P>This is more detailed in the Appendix B of the STk Reference Manual.</P>
+
+<H2>1.9 <A NAME="ss1.9"></A> Subject: Compatibility with SLIB</H2>
+
+<P></P>
+<P>Aubrey Jaffer maintains a package called <B>SLIB</B> which is a portable Scheme library which provides compatibility and utility functions for all standard Scheme implementations. To use this package, you have just to type </P>
+<P><CODE>(require "slib")</CODE></P>
+<P>and follow the instructions given in the library to use a particular package. </P>
+
+<HR>
+<P>
+<A HREF="FAQ-2.html">Next</A> Chapter<P>
+Table of contents of <A HREF="FAQ.html#toc1">this chapter</A>,
+ General <A HREF="FAQ.html#toc">table of contents</A></P>
+<P>
+<A HREF="FAQ.html">Top</A> of the document,
+ <A HREF="#0"> Beginning of this Chapter</A></P>
+</BODY>
+</HTML>

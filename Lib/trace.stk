@@ -1,0 +1,178 @@
+
+; trace of a procedure
+
+; list of traced  procedures : global variable, empty at first
+(define *traced-proc-list* '(()))
+; value of indent for trace : global variable, null at first
+(define *trace-indent* 0)
+
+;***********************************************************************
+; UNTRACE of an object
+;***********************************************************************
+(define (delete! proc)
+  ; "proc" is in *traced-proc-list*
+  (let ((before *traced-proc-list*)
+	(now (cdr *traced-proc-list*)))
+    (while (not (eq? proc (caar now)))
+	   (set! before now)
+	   (set! now (cdr now)))
+    ; "now" <==> proc, ==> remove it
+    (set-cdr! before (cdr now))))
+
+(define-macro (untrace-one obj)
+  `(let ((already (assoc ',obj *traced-proc-list*)))
+     (cond ((pair? already)  ; the name of this procedure is in *traced-proc-list*
+	    (delete! ',obj)  ; remove it in *traced-proc-list*
+	    (if (eq? (cdr already) 'var) ; the obj traced is a variable
+		(untrace-var ',obj)
+		; else the obj traced is a procedure
+		(if (and (procedure? ,obj)
+			 (eq? (cadr (procedure-body ,obj))
+			      '**arguments-de-trace-mf**))
+		    ; obj was a procedure already traced ==> restore its body
+		    (set! ,obj (cdr already)))))
+	   (else   ; "obj" is not "traced on" ==> message without error
+	    (format #t "~S is not traced on~%" ',obj)))))
+
+(define-macro (untrace . args)
+  `(if (not (null? ',args))
+       (begin
+	 ,@(map (lambda (x)
+		  `(untrace-one ,x))
+		args))
+       (error "untrace: too few arguments")))
+
+;***********************************************************************
+; UNTRACE-ALL <==> UNTRACE ALL the objects traced
+; ==> restore the bodies of all traced procedures
+;***********************************************************************
+
+(define-macro (untrace-all)
+  `(if (not (null? (cdr *traced-proc-list*)))
+      (begin 
+	 ,@(map (lambda (x)
+		  `(untrace-one ,(car x)))
+		(cdr *traced-proc-list*)))))
+
+;***********************************************************************
+; TRACE
+;***********************************************************************
+
+(define (indent x)            ; displays "x" periods on current output-port
+  (format #t "~A" (make-string x #\.)))
+
+(define (display-arguments form-list act-list)
+  ; "form-list" contains formal parameters
+  ; "act-list" contains actual parameters
+  (cond ((and (null? form-list) (null? act-list))
+	 ; two empty lists ==> nothing to do, go to new line
+	 (newline))
+	((not (list? form-list)) ; x or improper list (x a b c . y)
+	 (if (not (pair? form-list)) ; x only
+	     (format #t "~S=~S~%" form-list act-list)
+	     ; improper list :
+	     (if (not (null? act-list))
+		 (begin   
+		   (format #t "~S=~S "    ; display x
+			   (car form-list) (car act-list))
+		   (if (not (list? (cdr form-list))) 
+		       ; form-list = (a b c . y)
+		       (display-arguments (cdr form-list)
+					  (cdr act-list))
+		       ; else form-list was (x . y)
+		       (format #t "~S=~S~%"    ; display y
+			       (cdr form-list) (cdr act-list))))
+		 ; else, form-list = (x . y) and act-list = () ==> error
+		 (begin (newline)
+			(set! *trace-indent* 0) 
+			(error "Too few actual parameters")))))
+	((null? form-list)  ; error
+	 (newline)
+	 (set! *trace-indent* 0) 	
+	 (error "Too many actual parameters"))
+	((null? act-list) ; error
+	 (newline)
+	 (set! *trace-indent* 0) 	
+	 (error "Too few actual parameters"))
+	(else ; form-list and act-list are "proper lists" and not empty
+	 (format #t "~S=~S " (car form-list) (car act-list))
+	 (display-arguments (cdr form-list) (cdr act-list)))))
+
+
+(define-macro (trace-one obj)
+  `(let ((last-proc ,obj) ; body of procedure to trace
+	 (res '())         ; result of procedure to trace
+	 (already (assoc ',obj *traced-proc-list*)))
+     (cond ((primitive? ,obj) ; on ne peut pas.....
+	    (error "the primitive ~S can't be traced~%" ',obj))
+	   ((not (procedure? ,obj))
+	    ; obj is a variable
+	    (if (pair? already) 
+		; name of the obj is already in *traced-proc-list*
+		(if (not (eq? (cdr already) 'var))
+		    ; this variable is already traced on but as a procedure
+		    (begin
+		      (untrace-one ,obj)  ; remove the last trace
+		      (trace-one ,obj))  ; trace the new variable
+		    ; else, this variable is already traced on as a variable
+		    ; ==> display a message, without error
+		    (format #t "~S already traced on~%" ',obj))
+		; else it's the first trace on this variable
+		(begin     ; ==> put it in *traced-proc-list*
+		  (set! *traced-proc-list*
+			(cons '()
+			      (cons (cons ',obj 'var)
+				    (cdr *traced-proc-list*))))
+		  (trace-var ',obj
+			     (lambda () (format #t "~S ==> ~S~%" ',obj ,obj))))))
+	   ; obj is a procedure, not a primitive
+	   ((pair? already)   ; name of obj is already in *traced-proc-list*
+	    (if (eq? (cadr (procedure-body ,obj))
+		     '**arguments-de-trace-mf**)
+		; this obj is already traced on as a procedure
+		; ==> display a message, without error
+		(format #t "~S already traced on~%" ',obj)
+		; this procedure has the same name of an obj
+		; already traced on ==> perhaps a new definition... ==>
+		(begin
+		  (untrace-one ,obj)  ; remove the last
+		  (trace-one ,obj))))  ; trace the new
+	   (else ; this procedure is not already traced on
+	    ; ==> put it in *traced-proc-list*
+	    (set! *traced-proc-list*
+		  (cons '()
+			(cons (cons ',obj last-proc)
+			      (cdr *traced-proc-list*))))
+	    (set! ,obj
+		  (lambda **arguments-de-trace-mf**
+		    (dynamic-wind 
+
+		     (lambda ()
+		        ; indent more
+		       (set! *trace-indent* (+ *trace-indent* 2))
+		       (indent *trace-indent*)
+		       ; display entering in procedure (its name)
+		       (format #t "Entering ~S " ',obj)
+		       ; display formal and actual parameters
+		       (display-arguments (cadr (procedure-body last-proc))
+					  **arguments-de-trace-mf**))
+		     (lambda ()
+		       ; eval the result of the procedure
+		       (set! res 
+			     (apply last-proc **arguments-de-trace-mf**))
+		       ; exiting of procedure
+		       (indent *trace-indent*)
+		       (format #t "Exiting ~S result = ~S~%" ',obj res))
+		     (lambda ()
+		       (set! *trace-indent* (- *trace-indent* 2)))) ; indent less
+		    res))))))
+
+(define-macro (trace . args)
+  `(if (not (null? ',args))
+       (begin
+	 ,@(map (lambda (x)
+		  `(trace-one ,x))
+		args))
+       (error "trace: too few arguments")))
+
+

@@ -1,0 +1,205 @@
+;;;;
+;;;; Palette -- procedures that change the color palette used by Tk
+;;;;
+;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; This software is a derivative work of other copyrighted softwares; the
+;;;; copyright notices of these softwares are placed in the file COPYRIGHTS
+;;;;
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date:  4-Aug-1995 11:24
+;;;; Last file update:  4-Aug-1995 14:07
+;;;;
+
+(require "hash")
+
+;; Tk:set-palette! --
+;; Changes the default color scheme for a Tk application by setting
+;; default colors in the option database and by modifying all of the
+;; color options for existing widgets that have the default value.
+;;
+;; The arguments consist of either a single color name, which
+;; will be used as the new background color (all other colors will
+;; be computed from this) or an even number of values consisting of
+;; option names and values.  The name for an option is the one used
+;; for the option database, such as activeForeground, not -activeforeground.
+
+(define Tk:set-palette!
+  (let ((tk::palette #f))
+  
+    (define (make-color r g b)
+      (let ((hexa (lambda (n) 
+		    (string-append (number->string (quotient n 16) 16) 
+				   (number->string (modulo n 16) 16)))))
+	(string-append "#" (hexa (min (inexact->exact r) 255))
+		           (hexa (min (inexact->exact g) 255))
+			   (hexa (min (inexact->exact b) 255)))))
+		   
+    (define (Tk:recolor-tree w colors)
+      (hash-table-for-each colors 
+			   (lambda (db-opt db-value)
+			     (let ((opt (make-keyword (string-lower db-opt)))
+				   (val #f))
+			       (unless (catch (set! val (tk-get w opt)))
+				   (if (equal? val
+					       (hash-table-get tk::palette db-opt))
+				       (tk-set! w opt db-value))))))
+
+      ;; Do the same job for all the children
+      (for-each (lambda (child) (Tk:recolor-tree child colors))
+		(winfo 'children w)))
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;;;
+  ;;;; Start of procedure Tk:set-palette!
+  ;;;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  (lambda args
+    (let ((new (make-hash-table string=?)))
+      ;; Create a hash table that has the complete new palette. If some colors
+      ;; aren't specified, compute them from other colors that are specified.
+      (if (= (length args) 1)
+	  (hash-table-put! new "background" (car args))
+	  ;; place all given colors in the "new" hashatable
+	  (for-each (lambda (x) (hash-table-put! new (car x) (cadr x))) args))
+
+      (unless (hash-table-get new "background" #f)
+	 (error "you must specify a background color"))
+
+      (unless (hash-table-get new "foreground" #f)
+	 (hash-table-put! new "foreground" "black"))
+
+      (let* ((back      (hash-table-get new "background"))
+	     (fore      (hash-table-get new "foreground"))
+	     (bg        (winfo 'rgb *root* back))
+	     (fg        (winfo 'rgb *root* fore))
+	     (darker-bg (make-color (/ (* 9 (list-ref bg 0)) 2560)
+				    (/ (* 9 (list-ref bg 1)) 2560)
+				    (/ (* 9 (list-ref bg 2)) 2560))))
+	(for-each (lambda (x)
+		    (unless (hash-table-get new x #f)
+		       (hash-table-put! new x fore)))
+		  (list "activeForeground" "insertBackground" 
+			"selectForeground" "highlightColor"))
+
+	(unless (hash-table-get new "disabledForeground" #f)
+	   (hash-table-put! new 
+			    "disabledForeground" 
+			    (make-color (+ (* 3 (car   bg)) (/ (car   fg) 1024))
+					(+ (* 3 (cadr  bg)) (/ (cadr  fg) 1024))
+					(+ (* 3 (caddr bg)) (/ (caddr fg) 1024)))))
+
+	(unless (hash-table-get new "highlightBackground" #f)
+	   (hash-table-put! new "highlightBackground" back))
+
+
+	(unless (hash-table-get new "activeBackground" #f)
+	  ;; Pick a default active background that is lighter than the
+	  ;; normal background.  To do this, round each color component
+	  ;; up by 15% or 1/3 of the way to full white, whichever is
+	  ;; greater.
+
+	  (let ((light (make-vector 3)))
+	    (dotimes (i 3)
+	       (let* ((c    (/ (list-ref bg i) 256))
+		      (inc1 (* c 0.15))
+		      (inc2 (/ (- 255 c) 3)))
+		 (set! c (+ c (max inc1 inc2)))
+		 (vector-set! light i (min c 255))))
+	    (hash-table-put! new 
+			     "activeBackground" 
+			     (make-color (vector-ref light 0)
+					 (vector-ref light 1)
+					 (vector-ref light 2)))))
+
+	(unless (hash-table-get new "selectBackground" #f)
+	   (hash-table-put! new "selectBackground" darker-bg))
+
+	(unless (hash-table-get new "troughColor" #f)
+	   (hash-table-put! new "troughColor" darker-bg))
+
+	(unless (hash-table-get new "selectColor" #f)
+	   (hash-table-put! new "selectColor" "#b03060"))
+
+	;; Walk the widget hierarchy, recoloring all existing windows.
+	;; Before doing this, make sure that the tk::palette variable holds
+	;; the default values of all options, so that Tk:recolor-tree can
+	;; be sure to only change options that have their default values.
+	;; If the variable exists, then it is already correct (it was created
+	;; the last time this procedure was invoked).  If the variable
+	;; doesn't exist, fill it in using the defaults from a few widgets.
+
+      (unless (hash-table? tk::palette)
+	 (let ((c (checkbutton (gensym ".tmp")))
+	       (e (entry	     (gensym ".tmp")))
+	       (s (scrollbar   (gensym ".tmp"))))
+
+	   (set! tk::palette (make-hash-table string=?))
+
+	   (hash-table-put! tk::palette "activeBackground"
+			    (cadddr (c 'configure :activebackground)))
+	   (hash-table-put! tk::palette "activeForeground"
+			    (cadddr (c 'configure :activeforeground)))
+	   (hash-table-put! tk::palette "background"
+			    (cadddr (c 'configure :background)))
+	   (hash-table-put! tk::palette "disabledForeground"
+			    (cadddr (c 'configure :disabledforeground)))
+	   (hash-table-put! tk::palette "foreground"
+			    (cadddr (c 'configure :foreground)))
+	   (hash-table-put! tk::palette "highlightBackground"
+			    (cadddr (c 'configure :highlightbackground)))
+	   (hash-table-put! tk::palette "highlightColor"
+			    (cadddr (c 'configure :highlightcolor)))
+	   (hash-table-put! tk::palette "insertBackground"
+			    (cadddr (e 'configure :insertbackground)))
+	   (hash-table-put! tk::palette "selectColor"
+			    (cadddr (c 'configure :selectcolor)))
+	   (hash-table-put! tk::palette "selectBackground"
+			    (cadddr (e 'configure :selectbackground)))
+	   (hash-table-put! tk::palette "selectForeground"
+			    (cadddr (e 'configure :selectforeground)))
+	   (hash-table-put! tk::palette "troughColor"
+			    (cadddr (s 'configure :troughcolor)))
+
+	   ;; Destroy temporary widgets
+	   (destroy c e s)))
+
+      (Tk:recolor-tree *root* new)
+
+      ;; Change the option database so that future windows will get the
+      ;; same colors. Save the options in the global variable tk::palette, 
+      ;; for use the next time we change the options.
+      (hash-table-for-each new (lambda (x y)
+				 (option 'add 
+					 (format #f "*~A" x)
+					 (hash-table-get new x))
+				 (hash-table-put! tk::palette x y))))))))
+
+;;
+;; Tk:bisque --
+;; Reset the Tk color palette to the old "bisque" colors.
+;;
+
+
+(define (Tk:bisque)
+  (tk:set-palette! '("activeBackground" 	"#e6ceb1")
+		   '("activeForeground" 	"black")
+		   '("background" 		"#ffe4c4")
+		   '("disabledForeground" 	"#b0b0b0")
+		   '("foreground" 		"black")
+		   '("highlightBackground" 	"#ffe4c4")
+		   '("highlightColor" 		"black")
+		   '("insertBackground" 	"black")
+		   '("selectColor" 		"#b03060")
+		   '("selectBackground" 	"#e6ceb1")
+		   '("selectForeground" 	"black")
+		   '("troughColor" 		"#cdb79e")))

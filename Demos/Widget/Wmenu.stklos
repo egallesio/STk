@@ -1,0 +1,115 @@
+;;;;
+;;;; STk adaptation of the Tk widget demo.
+;;;;
+;;;; This demonstration script creates a window with a bunch of menus
+;;;; and cascaded menus.
+;;;;
+
+
+(define (demo-menu)
+  (let ((w   (make-demo-toplevel  "menu" "Menu Demonstration" #f))
+	(txt "This window contains a collection of menus and cascaded menus.  You can post a menu from the keyboard by typing Alt+x, where \"x\" is the character underlined on the menu.  You can then traverse among the menus using the arrow keys.  When a menu is posted, you can invoke the current entry by typing space, or you can invoke any entry by typing its underlined character.  If a menu entry has an accelerator, you can invoke the entry without posting the menu just by typing the accelerator."))
+    (define (mess str) 
+      (error "This is just a demo: no action has been defined for the \"~A\" entry"
+	     str))
+    
+    (define (print-letter letter)
+      (let ((binding (lambda () (display letter) (newline))))
+	(bind w (format #f "<Meta-~A>" letter) binding)
+	`(command :label ,(format #f "Print letter ~S" letter) :underline 14 
+		  :accel ,(format #f "Meta+~a" letter) :command ,binding)))
+
+    (define (print-hello-goodbye text letter)
+      (let ((binding (lambda () (display text) (newline))))
+	(bind w (format #f "<Control-~A>" letter) binding)
+	`(command :label ,(format #f "Print ~A" text)
+		  :underline 6 :accel ,(format #f "Control+~a" letter)
+		  :command ,binding)))
+
+    (define (print-message mess)
+      `(command :label ,mess :command ,(lambda ()
+					 (format #t "You invoked ~S\n" mess))))
+
+    (define (print-message2 mess)
+      `(command :label ,mess :background ,mess
+		:command ,(lambda () (format #t "You invoked ~S\n" mess))))
+    
+    (define f (make-menubar w 
+	`(("File" 
+	     ("Open ..." 	,(lambda () (mess "Open ...")))
+	     ("New"	 	,(lambda () (mess "New")))
+	     ("Save"	 	,(lambda () (mess "Save")))
+	     ("Save As ..."	,(lambda () (mess "Save As ...")))
+	     ("")
+	     ("Print Setup ..." ,(lambda () (mess "Print Setup ...")))
+	     ("Print ..."	,(lambda () (mess "Print ...")))
+	     ("")
+	     ("Quit"		,(lambda () (destroy (winfo 'toplevel w)))))
+	  ("Basic"
+	     ("Long entry that does nothing"
+	      			,(lambda () #f))
+	     ,(print-letter "a")
+	     ,(print-letter "b")
+	     ,(print-letter "c")
+	     ,(print-letter "d")
+	     ,(print-letter "e")
+	     ,(print-letter "f")
+	     ,(print-letter "g"))
+	  ("Cascades"
+	     ,(print-hello-goodbye "Hello" "a") 
+	     ,(print-hello-goodbye "Goodbye" "b")
+	     ("Check buttons"
+	         ((check :label "Oil checked" :variable oil)
+		  (check :label "Transmission checked" :variable trans)
+		  (check :label "Brakes checked" :variable brakes)
+		  (check :label "Lights checked" :variable lights)
+		  ("")
+		  ("Show current values" 
+		   		,(lambda () 
+				   (show-variables w '(oil trans brakes lights))))))
+	     ("Radio buttons"
+	         ((radio :label "10 point" :variable point-size :value 10)
+		  (radio :label "14 point" :variable point-size :value 14)
+		  (radio :label "18 point" :variable point-size :value 18)
+		  (radio :label "24 point" :variable point-size :value 24)
+		  (radio :label "32 point" :variable point-size :value 32)
+		  ("")
+		  (radio :label "Roman"  :variable style :value "roman")
+		  (radio :label "Bold"   :variable style :value "bold")
+		  (radio :label "Italic" :variable style :value "italic")
+		  ("")
+		  ("Show current values" 
+		         ,(lambda () (show-variables w '(style point-size)))))))
+	  ("Icons"
+  	     (command :bitmap ,(string-append "@" *stk-images* "/pattern")
+		      :command ,(lambda ()
+				  (STk:make-dialog :text "The menu entry you invoked displays a bitmap rather than a text string.  Other than this, it is just like any other menu entry." :buttons (list (list "OK" (lambda () 'OK))))))
+	     (command :bitmap "info" 
+		      :command (format #t "You invoked the info bitmap\n"))
+	     (command :bitmap "questhead" 
+		      :command (format #t "You invoked the questhead bitmap\n"))
+	     (command :bitmap "error" 
+		      :command (format #t "You invoked the error bitmap\n")))
+	  ("More"
+	     ,(print-message "An entry")
+	     ,(print-message "Another entry")
+	     ,(print-message "Does nothing")
+	     ,(print-message "Does almost nothing")
+	     ,(print-message "Make life meaningful"))
+
+	  ("Colors"
+	     ,(print-message2 "red")
+	     ,(print-message2 "orange")
+	     ,(print-message2 "yellow")
+	     ,(print-message2 "green")
+	     ,(print-message2 "blue")))))
+
+    (slot-set! f 'border-width 3)
+    (slot-set! f 'relief "raised")
+    (pack f 
+	  (make <Label> :parent w 
+			:wrap-length 	"4i" 
+			:justify 	"left"
+			:font		demo-font
+			:text txt)
+	  :expand #t :fill "x")))

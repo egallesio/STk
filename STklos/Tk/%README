@@ -1,0 +1,6 @@
+This directory contains a "reification" of all Tk widgets. For now all, only
+the text  widget has not been rewritten as a STklos class.
+
+
+The directory Composite contains Composites widgets. Creation of a composite 
+widget is exposed in the Xhibition'94 paper (see the Doc directory).

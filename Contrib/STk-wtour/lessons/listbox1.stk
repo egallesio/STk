@@ -1,0 +1,7 @@
+;; Basic listbox widget
+
+(pack (listbox '.list))
+
+(.list 'insert 'end "First list item"
+       		    "Second list item"
+		    "Third list item")

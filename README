@@ -1,0 +1,233 @@
+
+		    This is the release 3.1 of STk
+		   --------------------------------
+
+
+(Last release is always available from kaolin.unice.fr [193.48.229.225])
+
+STk is a R4RS Scheme interpreter which can access the Tk graphical
+package.  Concretely it can be seen as the John Ousterhout's Tk
+package where the Tcl language has been replaced by Scheme.
+
+STk also provides an efficient object oriented system called STklos.
+STklos is an extensive OO system with multiple inheritance, generic
+functions, multi-methods and a Meta Object Protocol).
+
+This release runs on several Unix boxes (see below) and on Microsoft
+Win32. It uses the Tk 4.1 package for the graphical part.
+
+DIFFERENCE PREVIOUS RELEASE
+---------------------------
+
+	- Version of Tk is now at Tk4.1 level. 
+
+	- STk run now on Win32!!! 
+	Some details need a little more work (some oddities on file names
+	due to difference conventions between Unix and DOS, and things like 
+	that). No socket support and no dynamic loading on Win32
+
+	- A complete documentation of STk widgets pages (both in nroff 
+	and HTML format). The help command really allow you to browse
+	man pages now. Man pages are prefixed by "stk_" now to avoid confusion 
+	with original Tk manual pages. 
+
+	- STklos is now integrated to STk (it was dynamically loaded before).
+	  This simplify its implementation and speed up generic functions:
+		o gf are now 2-4 time faster
+		o gf are now tail recursive
+		o the MOP for gf is now "public" (i.e. you can change the way 
+		  gf are called in Scheme -- it was not possible with previous 
+		  versions without using C).
+
+	- Port implementation is different: A port contains now its
+	input and output handler. New primitives to access the handler:
+	when-port-readable and when-port-writable.
+	BTW, The Tk function fileevent function is no more useful
+	(it is written in Scheme now for compatibility, but its usage 
+	is deprecated). It may not be supported in a future release.
+
+	- New composite widgets: <Multiple-window> and <Inner-window>
+	which allow to have embedded windows. A multiple window 
+	has a task bar below and allow to iconify inner-windows. 
+	Some people think it looks like Win95 desktop ;-)	
+
+	- pixmap extension doesn't require anymore the Xpm library. Code
+	is stolen from the Tix Library.
+
+	- New socket code which allow multiple concurrent connection
+
+	- Extended types can now have a compare function which	is called
+	 when eqv? or equal? is called. This modification should be 
+	 compatible with the previous extensions (I hope so)
+	
+	- STklos: Two new methods: object-eqv? and object-equal? which are 
+	called when applying eqv? or equal? to instances.
+
+	- A rewriting of bind-for-dragging canvas method. You can now specify 
+	a :before-motion, which if it returns #f, forbid to move the selected 
+	canvas item.
+
+	- New primitives:setenv!, posix-host-name, posix-domain-name, 
+	posix-uname	  
+	
+	- Option separator "--" allows to pass reserved keyword 
+	  (such as -help) to a script. Option and parameter cannot
+	   be mixed anymore:
+		stk xyz -help ==> *argv* = ("xyz" "-help")
+
+	- HTML browser enhancement (support of the <FONT> tag with SIZE 
+	  and COLOR sub-tags. This must be compatible with the HTML spec. 
+
+	- and of course many many bug corrections.
+
+See file 'CHANGES' in the distribution main directory for more informations.
+
+SCHEME WITHOUT TK
+-----------------
+
+Standard make build a light version of STk which does not provide support for
+the Tk toolkit. This interpreter, called Snow (Scheme with NO Window), can be
+called directly with the 'snow' shell script. It is implicitly called if 
+your DISPLAY variable is not set.
+
+LEARNING STk
+------------
+
+In Contrib/STk-wtour, you'll find a program (called stk-wtour) which is a kind
+of tutorial for programming widgets in STk. This program, which is a
+contribution of Suresh Srinivas (ssriniva@cs.indiana.edu), is an excellent 
+starting point for learning basics of STk widgets programming.
+
+FILE ORGANIZATION
+-----------------
+
+Stk
+  |___ Contrib	   The contributors directory
+  |___ Demos	   some original Tk demos rewritten for stk plus some other
+  |                stuff found on  the net. 
+  |___ Extensions  This directory contains extensions of the core interpreter
+  |		   (hash tables, POSIX.1 support). See the README file for more 
+  |		   details
+  |___ Doc	   Documentation of STk.		   
+  |___ Help	   Various (HTML) help files for STk.
+  |___ Lib	   a set of Scheme files used by the interpreter
+  |___ Src	   contains source files of stk (i.e. the sources files of the 
+  |		   interpreter + some glue files between Tk and Scheme).
+  |___ Snow	   contains (mostly) links over Src files. This directory 
+  |		   is used to build snow the Scheme interpreter without Tk
+  |		   support
+  |___ STklos      an CLOS-like object extension of Scheme based on the
+  |    |	   Tiny CLOS package.
+  |    |_ Tk       A library of Tk objects based on the STklos object
+  |    |	   extension package (subdirectory Composite contains
+  |    |	   composite widgets definitions	
+  |    |_ Examples A (small) set of examples written in STklos.
+  |___ Tcl	   contains a set of unchanged files of the Tcl library which 
+  |		   pertain in Stk
+  |___ Tk 	   contains a modified version of the Tk library. Most of the
+  |		   files are unchanged; Search the string ORIGINAL_CODE to see
+  |		   performed changes.
+  |___ Win32	   contains file necessary to compile STk under Win32
+
+SUPPORTED ARCHITECTURES
+-----------------------
+
+For now, STk is known to run on the following machine/systems
+
+	- Sparc (SunOs 4.1.x & Solaris 2.{34})
+	- Dec 5xxx (Ultrix 4.2)
+	- SGI (IRIX 4.05, 5.1.1, 5.2)
+	- DEC Alpha 3000/400 (OSF-1 V1.3)
+	- RS6000 AIX 3.2.5	
+	- HP 9000/735 (HP-UX 9.01)
+	- PC (Linux 1.0 -> 2.0)
+	- PC (FreeBSD 1.1) 	  
+	- PC (SCO)		  
+	- PC (NetBSD-1.0)	  
+	- Sony WS (Sony NEWS, NEWSOS 4.2R)
+	- ...
+
+	- Windows 95 (and probably Windows NT) 
+
+If you install it on another architecture/system, please let me now the
+diffs you used such I can integrate them in the next release.
+
+The file COMPILING-HINTS may be useful for compiling STk on your system.
+
+DYNAMIC LOADING
+---------------
+
+Support for dynamic loading is provided for the following architectures/systems
+
+		- SunOs 4.1.x
+		- SunOs 5.3
+		- NetBSD-1.0 (i386-port)
+		- Linux (with the DLD package or ELF format). [ Dynamic
+		  loading is disabled by default. Use -enable-elf or 
+		  -enable-dld to choose the way you want to make dynamic 
+		  loading under Linux]
+		- FreeBSD
+		- HPUX
+		- SGI Irix 5.3 
+
+IMAGE CREATION
+--------------
+
+The following architecture support image creation (dumping the interpreter 
+memory in a file):
+		- SunOs 4.1.x
+		- Linux 1.1 (a.out format only)
+		- FreeBSD
+
+MAILING LIST
+------------
+
+Subscription/unsubscription/info requests to the STk mailing list
+should be sent to 'stk-request@kaolin.unice.fr'
+
+To subscribe to the mailing list, simply send a message with the word
+"subscribe" in the "Subject:" field to the following address:
+'stk-request@kaolin.unice.fr'
+
+To unsubscribe from the mailing list, simply send a message with the
+word (you guessed it :-) "unsubscribe" in the "Subject:" field to
+'stk-request@kaolin.unice.fr'
+
+For more information on the mailing list management send a message
+with the word "help" in the Subject: field to the
+'stk-request@kaolin.unice.fr'
+
+Subscription requests are processed automatically without human
+intervention. If you have a problem, send a mail to
+eg@kaolin.unice.fr.
+
+Messages sent to the mailing list are archived 
+     - in raw format at 
+		ftp://kaolin.unice.fr/pub/Mailing-list/
+     - as hypertext at 
+		http://kaolin.unice.fr/Mlist
+
+STk W3 HOME PAGE
+----------------
+
+The STk W3 home page is located at
+	http://kaolin.unice.fr/STk.html
+
+BUGS
+----
+
+If you find a bug, please report it to stk-bugs@kaolin.unice.fr. 
+
+AUTHOR ADDRESS
+--------------
+
+Erick Gallesio					  tel : (33) 92-96-51-53
+ESSI - I3S					  fax : (33) 92-96-51-55
+Universite de Nice - Sophia Antipolis		email : eg@unice.fr
+Route des colles
+BP 145
+06903 Sophia Antipolis CEDEX
+FRANCE
+
+     
+

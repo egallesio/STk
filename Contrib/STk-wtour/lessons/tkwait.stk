@@ -1,0 +1,30 @@
+;; tkwait, used for waiting for dialog input
+
+(define tkwait-label #f)
+
+(define make-panel 
+  (lambda ()
+    (toplevel '.top)
+    (button '.top.ok 
+	    :text "OK" 
+	    :command (lambda ()
+		       (set! tkwait-label "ok")
+		       (destroy .top)))
+    (button '.top.cancel 
+	    :text "Cancel" 
+	    :command (lambda ()
+		       (set! tkwait-label "cancel")
+		       (destroy .top)))
+    
+    (pack .top.ok .top.cancel :side "left" :padx "10" :pady "10")
+    (grab 'set .top)
+    (tkwait 'window .top)
+    tkwait-label))
+
+(button '.b 
+	:text "Try pressing me!" 
+	:command  (lambda ()
+		    (let ([x (make-panel)])
+		      (format #t "You pressed ~a\n" x))))
+
+(pack .b)

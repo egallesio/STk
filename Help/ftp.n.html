@@ -1,0 +1,104 @@
+<HTML><HEAD><TITLE>STk procedures - ftp manual page</TITLE></HEAD>
+<BODY bgcolor = #ffffa0>
+<H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageYellow.gif"> ftp </H2>
+<I>A small (and very incomplete) FTP library</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<H3><A NAME="M2">SYNOPSIS</A></H3>
+(<B>make </B><I>&lt;FTP-connection&gt; </I>?<I>options</I>?)<BR>
+(<B>ftp-login f user pass</B>)<BR>
+(<B>ftp-quit f</B>)<BR>
+(<B>ftp-chdir f dir</B>)<BR>
+(<B>ftp-pwd f</B>)<BR>
+(<B>ftp-type f mode</B>)<BR>
+(<B>ftp-help f</B>)<BR>
+(<B>ftp-help f command</B>)<BR>
+(<B>ftp-dir f</B>)<BR>
+(<B>ftp-dir f args</B>)<BR>
+(<B>ftp-get f file</B>)<BR>
+(<B>ftp-put f file</B>)<BR>
+(<B>ftp-display f file</B>)<BR>
+<H3><A NAME="M3">CLASS DESCRIPTION</A></H3>
+<DL>
+<DT><A NAME="M4"><I>Included&nbsp;with:</I></A><DD>
+(require &quot;ftp&quot;)
+<P>
+<DT><A NAME="M5"><I>Inherits&nbsp;from:</I></A><DD>
+&lt;top&gt;
+<P>
+<DT><A NAME="M6"><I>Direct&nbsp;slots:</I></A><DD>
+<B>host</B> contains the name of the host to connect to.
+<P>
+<P>
+<P>
+<B>port</B> specifies the port to use to establish the ftp connection. 
+This slot is initialized by default to 21 by default (the standard ftp port).
+<P>
+<P>
+<P>
+<B>echo</B> is the name of a one parameter procedure used to display
+the messages sent by the ftp server. This slot is initialized to by
+default to the standard <I>display</I> procedure.
+
+<P>
+</DL>
+<H3><A NAME="M7">DESCRIPTION</A></H3>
+This library is a first attempt to make the FTP protocol available
+from the STk interpreter.  It is still very incomplete and has not
+been intensively tested. Any help to make the subset implemented
+conform to RFC 959 would be greatly appreciated.
+
+<P>
+The following procedure are implemented by the library:
+<P>
+<DL>
+<DT><A NAME="M8">(<B>ftp-quit f</B>)</A><DD>
+close the connection <I>f</I> to the remote host and the associated files.
+<P>
+<DT><A NAME="M9">(<B>ftp-chdir f dir</B>)</A><DD>
+changes the remote working directory on the <I>f</I> connection.
+<P>
+<DT><A NAME="M10">(<B>ftp-pwd f</B>)</A><DD>
+returns the remote working directory on the <I>f</I> connection.
+<P>
+<DT><A NAME="M11">(<B>ftp-type f mode</B>)</A><DD>
+set the file transfer type to <I>mode</I> on the <I>f</I>
+connection. <I>Mode</I> must be a one letter symbol such as
+'a (for ASCII) or 'i (for image).
+<P>
+<DT><A NAME="M12">(<B>ftp-help f</B>)</A><DD>
+<DT><A NAME="M13">(<B>ftp-help f command</B>)</A><DD>
+prints help from the server connected to <I>f</I> on the standard output port.
+<P>
+<DT><A NAME="M14">(<B>ftp-dir f</B>)</A><DD>
+<DT><A NAME="M15">(<B>ftp-dir f args</B>)</A><DD>
+gives the list of files in the current remote directory. If args is specified
+it is passed to the ftp server.
+<P>
+<DT><A NAME="M16">(<B>ftp-get f file</B>)</A><DD>
+retrieves <I>file</I> on the remote server.
+<P>
+<DT><A NAME="M17">(<B>ftp-put f file</B>)</A><DD>
+stores <I>file</I> on the remote server.
+<P>
+<DT><A NAME="M18">(<B>ftp-display f file</B>)</A><DD>
+prints on the standard output port the content of the file <I>file</I> 
+located the remote server.
+
+<P>
+</DL>
+<P>
+All these procedures return a boolean value which indicate if the requested 
+operation succeeded or not.
+
+<H3><A NAME="M19">EXAMPLE</A></H3>
+Hereafter is a simple session which prints the content of the /pub
+directory and gets the last release of STk on the <I>kaolin</I>
+workstation:
+<PRE>(define f (make &lt;FTP-connection&gt; :host &quot;kaolin.unice.fr&quot;))
+(when (ftp-login &quot;anonymous&quot; &quot;eg@unice.fr&quot;)
+   (ftp-chdir f &quot;/pub&quot;)
+   (ftp-dir f &quot;-lsa&quot;)
+   (ftp-get f &quot;STk.tar.gz&quot;)
+   (ftp-quit f))</PRE>
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookYellow.gif"> Back to the <B>STk</B> main page</A>
+</BODY></HTML>

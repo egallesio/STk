@@ -1,0 +1,39 @@
+<HTML><HEAD><TITLE>Tk Built-In Commands - tkvars manual page</TITLE></HEAD>
+<BODY bgcolor = #c3c3ff>
+<H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageBlue.gif"> tkvars</H2>
+<I>Variables used or set by Tk</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<H3><A NAME="M2">DESCRIPTION</A></H3>
+The following STk variables are either set or used by Tk at various times
+in its execution:
+<P>
+<DL>
+<DT><A NAME="M3"><B>*tk-patch-level*</B></A><DD>
+Contains a string which represent the current patch level for Tk.
+The patch level is incremented for each new release or patch, and
+it uniquely identifies an official version of Tk.
+<P>
+<DT><A NAME="M4"><B>*tk-strict-motif*</B></A><DD>
+This variable is set to <B>#f</B> by default.
+If an application sets it to a true value, then Tk attempts to adhere as
+closely as possible to Motif look-and-feel standards.
+For example, active elements such as buttons and scrollbar
+sliders will not change color when the pointer passes over them.
+<P>
+<DT><A NAME="M5"><B>*tk-version*</B></A><DD>
+Tk sets this variable in the interpreter for each
+application.  The value of this variable is a string which holds the
+current version number of the Tk library in the form
+<I>major</I>.<I>minor</I>.  <I>Major</I> and <I>minor</I> are integers.
+The major version number increases in any Tk release that includes
+changes that are not backward compatible (i.e. whenever existing Tk
+applications and scripts may have to change to work with the new
+release).  The minor version number increases with each new release of
+Tk, except that it resets to zero whenever the major version number
+changes.
+
+
+<P>
+</DL>
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookBlue.gif"> Back to the <B>STk</B> main page</A>
+</BODY></HTML>

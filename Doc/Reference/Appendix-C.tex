@@ -1,0 +1,623 @@
+%
+% STk Reference manual (Appendix: An Introdution to STklos)
+%
+%           Author: Erick Gallesio [eg@unice.fr]
+%    Creation date: 22-May-1994 22:13
+% Last file update: 21-Jan-1996 17:35
+%
+
+\section{Introduction}
+
+{\stklos} is the object oriented layer of {\stk}. Its implementation is
+derived from version 1.3 of the Gregor Kickzales Tiny Clos
+package~\cite{Tiny-Clos}.  However, it has been extended to be as close as
+possible to CLOS, the Common Lisp Object System{\cite{CLtL2}}. Some features
+of {\stklos} are also issued from Dylan{\cite{Dylan}} or SOS{\cite{SOS}}.
+
+Briefly stated, the {\stklos} extension gives the user a full object
+oriented system with meta-classes, multiple inheritance, generic
+functions and multi-methods.  Furthermore, the whole implementation
+relies on a true meta object protocol, in the spirit of the one
+defined for CLOS\cite{AMOP}. This model has also been used to embody
+the predefined Tk widgets in a hierarchy of {\stklos} classes. This
+set of classes permits to simplify the core Tk usage by providing
+homogeneous accesses to widget options and by hiding the low level
+details of Tk widgets, such as naming conventions. Furthermore, as
+expected, using of objects facilitates code reuse and definition
+of new widgets classes.
+
+The purpose of this appendix is to introduce briefly the {\stklos}
+package and in no case will it replace the {\stklos} reference manual (which
+needs to be urgently written now~\ldots).
+In particular, methods relative to the meta object
+protocol and access to the Tk toolkit will not be described here.
+
+\section{Class definition and instantiation}
+
+\subsection {Class definition}
+
+A new class\mainindex{class} is defined with the {\tt
+define-class}{\schindex{define-class} macro. The syntax of {\tt define-class}
+is close to CLOS {\tt defclass}:
+
+\begin{scheme}
+(define-class \var{class} (\hyperi{superclass} \hyperii{superclass}...)
+   (\hyperi{slot description} \hyperii{slot description}...)
+   \hyper{metaclass option})
+\end{scheme}
+
+
+The \hyper{metaclass option} will not be discussed in this appendix.
+The \hyper{superclass}es list specifies the super classes of \var{class} (see 
+\ref{inheritance} for more details). 
+A \hyper{slot description} gives the name of a slot\mainindex{slot} and,
+eventually, some ``properties'' of this slot (such as its initial value, the
+function which permit to access its value, \ldots). Slot descriptions will be
+discussed in
+\ref{slot-description}.
+
+As an exemple, consider now that we have to define a complex number. This can
+be done with the following class definition:
+
+\begin{scheme}
+(define-class  <complex> (<number>)
+   (r i))
+\end{scheme}
+
+This binds the symbol {\tt <complex>} to a new class whose instances contain
+two slots. These slots are called {\tt r} an {\tt i} and we suppose here
+that they contain respectively the real part and the imaginary part of a
+complex number. Note that this class inherits from {\tt <number>} which is a
+pre-defined class ({\tt <number>} is the super class of the {\tt <real>} and
+{\tt <integer>} pre-defined classes).\footnote{With this definition, a {\tt
+<real>} is not a {\tt <complex>} since {\tt <real>} inherits from {\tt
+<number>} rather than {\tt <complex>}. In practice, inheritance could be
+modified {\em a posteriori}, if needed. However, this necessitates some
+knowledge of the meta object protocol and it will not be shown in this
+document}.
+
+\section{Inheritance}
+\label{inheritance}
+\subsection{Class hierarchy and inheritance of slots}
+Inheritance is specified upon class
+definition. As said in the introduction, {\stklos} supports multiple inheritance. 
+Hereafter are some classes definition: 
+\begin{scheme}
+(define-class A () (a))
+(define-class B () (b))
+(define-class C () (c))
+(define-class D (A B) (d a))
+(define-class E (A C) (e c))
+(define-class F (D E) (f))
+\end{scheme}
+
+{\tt A}, {\tt B}, {\tt C} have a null list of super classes. In this case, the
+system will replace it by the list which only contains \ide{<object>}, the
+root of all the classes defined by \ide{define-class}. {\tt D}, {\tt E}, {\tt
+F} use multiple inheritance: each class inherits from two previously
+defined classes.  Those class definitions define a hierarchy which is
+shown in Figure~1.  In this figure, the class \ide{<top>} is also shown; this
+class is the super class of all Scheme objects. In particular,
+\ide{<top>} is the super class of all standard Scheme types.
+
+\begin{figure}
+\centerline{\psfig{figure={hierarchy.eps}}}
+\caption{A class hierarchy}
+\end{figure}
+
+The set of slots of a given class is calculated by ``unioning'' the slots of
+all its super class. For instance, each instance of the class D, defined
+before will have three slots ({\tt a}, {\tt b} and {\tt d}). The slots of a class 
+can be obtained by the \ide{class-slots} primitive.
+For instance, 
+\begin{scheme}
+(class-slots A) \lev (a)
+(class-slots E) \lev (a e c)
+(class-slots F) \lev (d a b c f)
+\end{scheme}
+
+\begin{note}
+The order of slots is not significant.
+\end{note}
+
+\subsection {Instance creation and slot access}
+
+Creation of an instance\mainindex{instance} of a previously defined
+class can be done with the {\tt make}\schindex{make} procedure. This
+procedure takes one mandatory parameter which is the class of the
+instance which must be created and a list of optional
+arguments. Optional arguments are generally used to initialize some
+slots of the newly created instance. For instance, the following form
+
+\begin{scheme}
+(define c (make <complex>))
+\end{scheme}
+
+will create a new {\tt <complex>} object and will bind it to the {\tt c}
+Scheme variable.
+
+Accessing the slots of the new complex number can be done with the {\tt
+slot-ref}\schindex{slot-ref} and the {\tt slot-set!}\schindex{slot-set!}
+primitives. {\tt Slot-set!} primitive permits to set the value of an object
+slot and {\tt slot-ref} permits to get its value.
+
+\begin{scheme}
+(slot-set! c 'r 10)
+(slot-set! c 'i 3)
+(slot-ref c 'r) \lev 10
+(slot-ref c 'i) \lev 3
+\end{scheme}
+
+Using the \ide{describe} generic function is a simple way to see all
+the slots of an object at one time: this function prints all the slots
+of an object on the standard output. For instance, the expression
+
+\begin{scheme}
+(describe c)
+\end{scheme}
+will print the following informations on the standard output:
+\begin{scheme}
+\sharpsign[<complex> 122398] is an instance of class <complex>
+Slots are: 
+     r = 10
+     i = 3
+\end{scheme}
+
+\subsection{Slot description}
+\label{slot-description}
+
+When specifying a slot, a set of options can be given to the system. Each option 
+is specified with a keyword{\mainindex{keyword}}. The list of authorised keywords is 
+given below:
+\begin{itemize}
+
+\item {\tt :initform}\schindex{:initform}\schindex{default slot value} 
+permits to supply a default value for the slot. This default value is obtained
+by evaluating the form given after the {\tt :initform} in the global
+environment\mainindex{top level environment}.
+
+\item{\tt :init-keyword}\schindex{:init-keyword} permits to specify the 
+keyword for initializing a slot. The init-keyword may be provided 
+during instance creation (i.e. in the make optional parameter list). Specifying 
+such a keyword during instance initialization will supersede the 
+default slot initialization possibly given with {\tt :initform}.
+
+\item {\tt :getter}{\schindex{:getter}} permits to supply the name for the 
+slot getter\mainindex{getter}. The name binding is done in the global 
+environment\mainindex{top level environment}.
+
+\item {\tt :setter}{\schindex{:setter}} permits to supply the name for the 
+slot setter\mainindex{setter}. The name binding is done in the global 
+environment\mainindex{top level environment}.
+
+\item {\tt :accessor}\schindex{:accessor} permits to supply the name for the 
+slot accessor\mainindex{accessor}. The name binding is done in the global
+environment\mainindex{top level environment}. An accessor permits to get and
+set the value of a slot. Setting the value of a slot is done with the extended
+version of {\tt set!}\schindex{set!}.
+
+\item {\tt :allocation}\schindex{:allocation} permits to specify how storage for
+the slot is allocated. Three kinds of allocation are provided. 
+They are described below:
+  \begin{itemize}
+     \item {\tt :instance}\schindex{:instance} indicates that each instance gets
+     its own storage for the slot. This is the default.
+     \item {\tt :class}\schindex{:class} indicates that there is one storage 
+     location used by all the direct and indirect instances of the class. This 
+     permits to define a kind of global variable which can be accessed only 
+     by (in)direct instances of the class which defines this slot.
+     \item {\tt :virtual}\schindex{:virtual} indicates that no storage will
+     be allocated for this slot.  It is up to the user to define a getter 
+     and a setter function for this slot. Those functions must be defined with the
+     {\tt :slot-ref}\schindex{:slot-ref}
+      and {\tt :slot-set!}\schindex{:slot-set!} options. See the example below.
+  \end{itemize}
+\end{itemize}
+
+To illustrate slot description, we shall redefine the {\tt <complex>} class 
+seen before. A definition could be:
+\begin{scheme}
+(define-class <complex> (<number>) 
+   ((r :initform 0 :getter get-r :setter set-r! :init-keyword :r)
+    (i :initform 0 :getter get-i :setter set-i! :init-keyword :i)))
+\end{scheme}
+With this definition, the {\tt r} and {\tt i} slot are set to 0 by default. 
+Value of a slot can also be specified by calling {\tt make} with 
+the {\tt :r} and {\tt :i} keywords. Furthermore, the generic functions {\tt get-r} 
+and {\tt set-r!} (resp. {\tt get-i} and {\tt set-i!}) are automatically defined
+by the system to read and write the {\tt r} (resp. {\tt i}) slot.
+\begin{scheme}
+(define c1 (make <complex> :r 1 :i 2))
+(get-r c1) \lev 1
+(set-r! c1 12)
+(get-r c1) \lev 12
+(define c2 (make <complex> :r 2))
+(get-r c2) \lev 2
+(get-i c2) \lev 0
+\end{scheme}
+
+Accessors provide an uniform access for reading and writing an object slot.
+Writing a slot is done with an extended form of {\tt set!}\schindex{set!}
+which is close to the  Common Lisp {\tt setf} macro. So, another definition of the
+previous {\tt <complex>} class, using the {\tt :accessor} option, could be:
+\begin{scheme}
+(define-class <complex> (<number>) 
+   ((r :initform 0 :accessor real-part :init-keyword :r)
+    (i :initform 0 :accessor imag-part :init-keyword :i)))
+\end{scheme}
+
+Using this class definition, reading the real part of the {\tt c} complex can
+be done with:
+\begin{scheme}
+(real-part c)
+\end{scheme}
+and setting it to the value contained in the {\tt new-value} variable 
+can be done using the extended form of {\tt set!}.
+\begin{scheme}
+(set! (real-part c) new-value)
+\end{scheme}
+
+Suppose now that we have to manipulate complex numbers with rectangular
+coordinates as well as with polar coordinates. One solution could be to
+have a definition of complex numbers which uses one particular representation
+and some conversion functions to pass from one representation to the other.
+A better solution uses virtual slots. A complete definition of the {\tt <complex>}
+class using virtual slots is given in Figure~2.
+\begin{figure}
+{\footnotesize
+\begin{quote}
+\begin{quote}
+\begin{verbatim}
+(define-class <complex> (<number>)
+   (;; True slots use rectangular coordinates
+    (r :initform 0 :accessor real-part :init-keyword :r)
+    (i :initform 0 :accessor imag-part :init-keyword :i)
+    ;; Virtual slots access do the conversion
+    (m :accessor magnitude :init-keyword :magn  
+       :allocation :virtual
+       :slot-ref (lambda (o)
+                   (let ((r (slot-ref o 'r)) (i (slot-ref o 'i)))
+                     (sqrt (+ (* r r) (* i i)))))
+       :slot-set! (lambda (o m)
+                     (let ((a (slot-ref o 'a)))
+                       (slot-set! o 'r (* m (cos a)))
+                       (slot-set! o 'i (* m (sin a))))))
+    (a :accessor angle :init-keyword :angle
+       :allocation :virtual
+       :slot-ref (lambda (o)
+                   (atan (slot-ref o 'i) (slot-ref o 'r)))
+       :slot-set! (lambda(o a)
+                    (let ((m (slot-ref o 'm)))
+                       (slot-set! o 'r (* m (cos a)))
+                       (slot-set! o 'i (* m (sin a))))))))
+
+\end{verbatim}
+\caption{\em A {\tt <complex>} number class definition using virtual slots}
+\end{quote}
+\end{quote}
+}
+\end{figure}
+
+\bigskip
+This class definition implements two real slots ({\tt r} and {\tt i}). Values
+of the {\tt m} and {\tt a} virtual slots are calculated from real slot
+values. Reading a virtual slot leads to the application of the function
+defined in the {\tt :slot-ref}\schindex{:slot-ref} option. Writing such a slot 
+leads to the application of the function defined in the {\tt :slot-set!}\schindex{:slot-set!} option.
+For instance, the following expression
+\begin{scheme}
+(slot-set! c 'a 3)
+\end{scheme} 
+permits to set the angle of the {\tt c} complex number. This expression
+conducts, in fact, to the evaluation of the following expression
+\begin{scheme}
+((lambda o m)
+    (let ((m (slot-ref o 'm)))
+       (slot-set! o 'r (* m (cos a)))
+       (slot-set! o 'i (* m (sin a))))
+  c 3)
+\end{scheme}
+A more complete example is given below:
+\begin{scheme}
+(define c (make <complex> :r 12 :i 20))
+(real-part c) \lev 12
+(angle c) \lev 1.03037682652431
+(slot-set! c 'i 10)
+(set! (real-part c) 1)
+(describe c) \lev 
+          \sharpsign[<complex> 128bf8] is an instance of class <complex>
+          Slots are: 
+               r = 1
+               i = 10
+               m = 10.0498756211209
+               a = 1.47112767430373
+\end{scheme}
+
+Since initialization keywords have been defined for the four slots, we
+can now define the \ide{make-rectangular} and \ide{make-polar}
+standard Scheme primitives.
+\begin{scheme}
+(define make-rectangular 
+   (lambda (x y) (make <complex> :r x :i y)))
+
+(define make-polar
+   (lambda (x y) (make <complex> :magn x :angle y)))
+
+\end{scheme}
+
+\subsection{Class precedence list}
+
+A class may have more than one superclass.{\footnote{
+This section is an adaptation of Jeff Dalton's (J.Dalton@ed.ac.uk)
+Brief introduction to CLOS)}}
+With single inheritance (one superclass), it is easy to order the super classes 
+from most to least specific. This is the rule:
+
+\begin{quote}
+\begin{quote}
+{\bf Rule 1: Each class is more specific than its superclasses.
+}
+\end{quote}
+\end{quote}
+
+With multiple inheritance, ordering is harder. Suppose we have
+\begin{scheme}
+(define-class X ()
+   ((x :initform 1)))
+
+(define-class Y ()
+   ((x :initform 2)))
+
+(define-class Z (X Y)
+   (...))
+\end{scheme}
+
+In this case, the {\tt Z} class is more specific than the {\tt X} or 
+{\tt Y} class for instances of {\tt Z}. However, the {\tt :initform} 
+specified in {\tt X} and {\tt Y} leads to a problem: which one
+overrides the other?  The rule in {\stklos}, as in CLOS, 
+is that the superclasses listed earlier are more specific than those listed later. 
+So:
+\begin{quote}
+\begin{quote}
+{\bf Rule 2: For a given class, superclasses listed earlier are more
+        specific than those listed later.
+}
+\end{quote}
+\end{quote}
+
+These rules are used to compute a linear order for a class and all its
+superclasses, from most specific to least specific.  This order is called the
+``class precedence list'' of the class. Given those two rules, we can claim
+that the initial form for the {\tt x} slot of previous example is 2 since the
+class {\tt X} is placed before {\tt Y} in class precedence list of {\tt Z}.
+
+This two rules are not always enough to determine a unique order, however, but
+they give an idea of how things work. {\stklos} algorithm for calculating the
+precedence list is a little simpler than the CLOS one described in
+\cite{AMOP} for breaking ties. Consequently the calculated class precedence
+list could be different. Taking the {\tt F} class shown in Figure~1, the {\stklos} 
+calculated class precedence list is
+
+\begin{quote}
+{\tt
+(f d e a b c <object> <top>)
+}
+\end{quote}
+whereas it would be the following list with a CLOS-like algorithm:
+\begin{quote}
+{\tt
+(f d e a c b <object> <top>)
+}
+\end{quote}
+
+However, it is usually considered a bad idea for programmers to rely on
+exactly what the order is.  If the order for some superclasses is important,
+it can be expressed directly in the class definition.
+
+The precedence list of a class can be obtained by the function 
+\ide{class-precedence-list}. This function returns a ordered 
+list whose first element is the most specific class. For instance, 
+\begin{scheme}
+(class-precedence-list B) \lev (\sharpsign[<class> 12a248] \sharpsign[<class> 1074e8] \sharpsign[<class> 107498])
+\end{scheme}
+However, this result is not too much readable; using the function class-name
+yields a clearer result:
+\begin{scheme}
+(map class-name (class-precedence-list B)) \lev (b <object> <top>)
+\end{scheme}
+
+\section{Generic functions}
+
+\subsection{Generic functions and methods}
+
+\label{gf-n-methods}
+Neither {\stklos} nor CLOS use the message mechanism for methods as
+most Object Oriented language do. Instead, they use the notion of
+generic function.  A generic function can be seen as a methods
+``tanker''. When the evaluator requestd the application of a generic
+function, all the methods of this generic function will be grabbed and
+the most specific among them will be applied. We say that a method
+{\em M} is {\em more specific} than a method {\em M'} if the class of
+its parameters are more specific than the {\em M'} ones.  To be more
+precise, when a generic funtion must be ``called'' the system will
+
+\begin{enumerate}
+\item search among all the generic function those which are applicable
+\item sort the list of applicable methods in the ``most specific'' order
+\item call the most specific method of this list (i.e. the first method of 
+the sorted methods list).
+\end{enumerate}
+
+The definition of a generic function is done with the \ide{define-generic}
+macro. Definition of a new method is done with the \ide{define-method} macro.
+Note that \ide{define-method} automatically defines the generic function if it
+has not been defined before. Consequently, most of the time, the
+\ide{define-generic} needs not be used.
+
+Consider the following definitions:
+\begin{scheme}
+(define-generic M)
+(define-method M((a <integer>) b) 'integer)
+(define-method M((a <real>) b) 'real)
+(define-method M(a b) 'top)
+\end{scheme}
+
+The \ide{define-generic} call defines {\tt M} as a generic
+function. Note that the signature of the generic function is not given
+upon definition, contrarily to CLOS. This will permit methods with
+different signatures for a given generic function, as we shall see
+later. The three next lines define methods for the {\tt M} generic
+function. Each method uses a sequence of {\em parameter specializers}
+that specify when the given method is applicable. A specializer
+permits to indicate the class a parameter must belong to (directly or
+indirectly) to be applicable. If no speciliazer is given, the system
+defaults it to \ide{<top>}. Thus, the first method definition
+is equivalent to
+
+\begin{scheme}
+(define-method M((a <integer>) (b <top>)) 'integer)
+\end{scheme}
+
+Now, let us look at some possible calls to generic function {\tt M}:
+\begin{scheme}
+(M 2 3) \lev integer
+(M 2 \schtrue) \lev integer
+(M 1.2 'a) \lev real
+(M {\sharpsign}3 'a) \lev real
+(M {\schtrue} {\schfalse}) \lev top
+(M 1 2 3) \lev error (since no method exists for 3 parameters)
+\end{scheme}
+
+The preceding methods use only one specializer per parameter list. Of course, 
+each parameter can use a specializer. In this case, the parameter list is scanned 
+from left to right to determine the applicability of a method. Suppose we declare
+now
+\begin{scheme}
+(define-method M ((a <integer>) (b <number>)) 'integer-number)
+(define-method M ((a <integer>) (b <real>))   'integer-real)
+(define-method M (a (b <number>)) 'top-number)
+\end{scheme}
+
+In this case, 
+\begin{scheme}
+(M 1 2) \lev integer-integer
+(M 1 1.0) \lev integer-real
+(M 1 {\schtrue}) \lev integer
+(M 'a 1) \lev 'top-number
+\end{scheme}
+
+\subsection{Next-method}
+
+When a generic function is called, the list of applicable methods is built. As
+mentioned before, the most specific method of this list is applied
+(see~\ref{gf-n-methods}). This method may call the next method in
+the list of applicable methods. This is done by using the special form
+\ide{next-method}. Consider the following definitions
+\begin{scheme}
+(define-method Test((a <integer>))  (cons 'integer (next-method)))
+(define-method Test((a <number>))   (cons 'number  (next-method)))
+(define-method Test(a)		    (list 'top))
+\end{scheme}
+
+With those definitions,
+\begin{scheme}
+(Test 1) \lev (integer number top)
+(Test 1.0) \lev (number top)
+(Test \schtrue) \lev (top)
+\end{scheme}
+
+\subsection{Example} 
+
+In this section we shall continue to define operations on the {\tt <complex>}
+class defined in Figure~2. Suppose that we want to use it to implement 
+complex numbers completely. For instance a definition for the addition of 
+two complexes could be
+\begin{scheme}
+(define-method new-+ ((a <complex>) (b <complex>))
+  (make-rectangular (+ (real-part a) (real-part b))
+                    (+ (imag-part a) (imag-part b))))
+\end{scheme}
+
+To be sure that the {\tt +} used in the method {\tt new-+} is the standard
+addition we can do:
+\begin{scheme}
+(define-generic new-+)
+
+(let ((+ +))
+  (define-method new-+ ((a <complex>) (b <complex>))
+    (make-rectangular (+ (real-part a) (real-part b))
+                      (+ (imag-part a) (imag-part b)))))
+\end{scheme}
+
+The {\tt define-generic} ensures here that {\tt new-+} will be defined in the global
+environment. Once this is done, we can add methods to the generic function 
+{\tt new-+} which make a closure on the {\tt +} symbol.
+A complete writing of the {\tt new-+} methods is shown in Figure~3.
+
+\begin{figure}
+{\footnotesize
+\begin{quote}
+\begin{quote}
+\begin{verbatim}
+(define-generic new-+)
+
+(let ((+ +))
+
+  (define-method new-+ ((a <real>) (b <real>)) (+ a b))
+
+  (define-method new-+ ((a <real>) (b <complex>)) 
+    (make-rectangular (+ a (real-part b)) (imag-part b)))
+
+  (define-method new-+ ((a <complex>) (b <real>))
+    (make-rectangular (+ (real-part a) b) (imag-part a)))
+
+  (define-method new-+ ((a <complex>) (b <complex>))
+    (make-rectangular (+ (real-part a) (real-part b))
+                      (+ (imag-part a) (imag-part b))))
+
+  (define-method new-+ ((a <number>))  a)
+  
+  (define-method new-+ () 0)
+
+  (define-method new-+ args  (new-+ (car args) (apply new-+ (cdr args)))))
+
+(set! + new-+)
+\end{verbatim}
+\caption{\em Extending {\tt +} for dealing with complex numbers}
+\end{quote}
+\end{quote}
+}
+\end{figure}
+
+\bigskip
+We use here the fact that generic function are not obliged to have the same
+number of parameters, contrarily to CLOS.  The four first methods
+implement the dyadic addition. The fifth method says that the addition of a single
+element is this element itself. The sixth method says that using the addition with
+no parameter always return 0. The last method takes an arbitrary number of
+parameters\footnote{The third parameter of a define-method is a parameter list
+which follow the conventions used for lambda expressions. In particular it can
+use the dot notation or a symbol to denote an arbitrary number of parameters}.
+This method acts as a kind of {\tt reduce}: it calls the dyadic addition on
+the {\em car} of the list and on the result of applying it on its rest.  To
+finish, the {\tt set!} permits to redefine the {\tt + symbol} to our extended
+addition.
+
+\bigskip
+To terminate our implementation (integration?) of  complex numbers, we can 
+redefine standard Scheme predicates in the following manner:
+\begin{scheme}
+(define-method complex? (c <complex>) \schtrue)
+(define-method complex? (c)           \schfalse)
+
+(define-method number? (n <number>) \schtrue)
+(define-method number? (n)          \schfalse)
+...
+...
+\end{scheme}
+
+Standard primitives in which complex numbers are involved could also be redefined
+in the same manner.
+
+This ends this brief presentation of the {\stklos} extension.  

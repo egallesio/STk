@@ -1,0 +1,59 @@
+;;;;
+;;;; E x a m p l e 1 .  s t k
+;;;;
+;;;; Copyright (C) 1993,1994,1995 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
+;;;;    Creation date:  5-Aug-1994 11:11
+;;;; Last file update:  5-Aug-1994 16:41 
+
+
+(require "Canvas")
+
+;;;; Create canvas
+(define c (make <Canvas>))
+(pack c)
+
+;;;; Create items
+(define r1 (make <Rectangle> :parent c :coords '(  0   0  50  50) :fill "blue"))
+(define r2 (make <Rectangle> :parent c :coords '( 50  50 100 100) :fill "red"))
+(define o1 (make <Oval>      :parent c :coords '(100 100 150 150) :fill "blue"))
+(define o2 (make <Oval>      :parent c :coords '(150 150 200 200) :fill "red"))
+
+
+;;; Define some families
+(define rectangles (make <Canvas-group> :parent c))
+(define ovals      (make <Canvas-group> :parent c))
+(define blue	   (make <Canvas-group> :parent c))
+(define red	   (make <Canvas-group> :parent c))
+
+;;;; And add members of these families
+(add-to-group rectangles r1 r2)
+(add-to-group ovals      o1 o2)
+(add-to-group blue       r1 o1)
+(add-to-group red        r2 o2)
+
+;;;; Work with group
+(move rectangles 100 100)
+(move ovals -100 -100)
+(move blue 100 0)
+(destroy red)
+
+;;;; Find the items of a group
+(format #t "items of group blue ~s\n" (items-of-group blue))
+
+;;;; delete an item of a group
+(delete-from-group blue r1)
+(format #t "items of group blue ~s\n" (items-of-group blue))
+(destroy blue)
+
+;;; Only the blue square (r1) is alive....
+

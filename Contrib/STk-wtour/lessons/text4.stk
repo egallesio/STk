@@ -1,0 +1,15 @@
+;;;  A basic text widget, with basic text tagging
+
+(text '.text :yscrollcommand (lambda l (apply .scroll 'set l)) :wrap "word")
+(scrollbar '.scroll :relief "flat" :command (lambda l (apply l .text 'yview l)))
+
+(pack .scroll :side "right" :fill "y")
+(pack .text :expand #t :fill "both")
+
+(.text 'insert 'current 
+"This is a text widget, with some tagged text:\n\n\n\n
+Some tagged text.")
+
+(.text 'tag 'configure 'footag :relief "raised" :borderwidth 3 :background "white")
+(.text 'tag 'add 'footag "end-1l linestart" "end-1c")
+

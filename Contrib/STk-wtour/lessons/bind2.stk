@@ -1,0 +1,7 @@
+;; More event binding
+
+(entry '.e1 :relief "sunken")
+(pack .e1 :expand #t :fill "x")
+
+(bind .e1 "<Enter>" (lambda () (display "ENTERED\n")))
+(bind .e1 "<Leave>" (lambda () (display "EXITED\n")))
