@@ -1,0 +1,408 @@
+;;;;
+;;;; w i n s o c k e t . s t k l o s		-- Socket for Win32
+;;;;
+;;;; Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;
+;;;;           Author: Steve Pruitt [steve@pruitt.net]
+;;;;    Creation date: 13-Mar-1999 12:59
+;;;; Last file update: 23-Aug-1999 00:12
+;;;;
+;;;;  socket object class was provided to simulate stdio 
+;;;;  when i/o ports can not be assigned to sockets.
+;;;;
+;;;;  Limiting socket interface to these methods is more
+;;;;  portable than using standard i/o ports.
+;;;;
+;;;;
+
+(unless (symbol-bound? '<socket-port>)
+(require "stklos")
+
+;;;;***********************************************************************
+;;;;
+;;;; socket-port class definitions (adds port i/o facilities)
+;;;;
+;;;;***********************************************************************
+
+(define-class <socket-port> ()
+ ((socket        :accessor socket-of :init-keyword :socket :initform -1)
+  (buffer-size   :init-keyword :buffer-size :initform 1024)
+  (output-buf    :accessor buffer-of :initform 0)
+  (output-len    :initform 0)
+  (input-buf     :initform 0)
+  (input-loc     :initform 0)
+  (input-len     :initform 0)
+
+  ;; default recv-monitor (count number of bytes input from socket)
+  (bytes-input   :initform 0)
+  (recv-monitor  :init-keyword :recv-monitor :initform 
+	(lambda (self bytes-read)
+	 (let* ((bytes-input (slot-ref self 'bytes-input)))
+	  (slot-set! self 'bytes-input (+ bytes-input bytes-read))
+	)))
+
+  ;; default send-monitor (count number of bytes output to socket)
+  (bytes-output  :initform 0)
+  (send-monitor :init-keyword :send-monitor :initform 
+	(lambda (self bytes-written)
+	 (let* ((bytes-output (slot-ref self 'bytes-output)))
+	  (slot-set! self 'bytes-output (+ bytes-output bytes-written))
+	)))
+))
+
+;;;;
+;;;; Initialize socket
+;;;;
+(define-method initialize ((self <socket-port>) initargs)
+ (next-method)
+ (require "socket")
+ (if (not (socket? (socket-of self))) (slot-set! self 'buffer-size -1) 
+))
+
+;;;;
+;;;; handle-of (get socket-handle)
+;;;;
+(define-method handle-of ((self <socket-port>))
+ (socket-handle (socket-of self)))
+
+;;;;
+;;;; address-of (socket-local-address)
+;;;;
+(define-method address-of ((self <socket-port>))
+ (socket-local-address (socket-of self)))
+
+;;;;
+;;;; close-socket-port (socket-shutdown)
+;;;;
+(define-method close-socket-port ((self <socket-port>))
+ (if (> (slot-ref self 'buffer-size) 0)
+  (let* ((sock (socket-of self)))
+   (flush self)
+   (socket-shutdown sock)
+   (slot-set! self 'buffer-size -1)
+   (slot-set! self 'output-buf 0)
+   (slot-set! self 'input-buf 0)
+)))
+
+;;;;***********************************************************************
+;;;;
+;;;; client-socket class definition
+;;;;
+;;;;***********************************************************************
+(define-class <client-socket> (<socket-port>)
+ ((port        :init-keyword :port :accessor port)
+  (host        :init-keyword :host :accessor host)
+))
+
+;;;;
+;;;; Initialize client-socket (make <client-socket>)
+;;;;
+(define-method initialize ((self <client-socket>) initargs)
+ (let* ((port (get-keyword :port initargs 21))
+ 	(host (get-keyword :host initargs "not-specified")))
+  (require "socket")
+  (slot-set! self 'socket (initialize-client-socket host port))
+  (slot-set! self 'port port)
+  (slot-set! self 'host host)
+  (next-method)
+))
+
+;;;;***********************************************************************
+;;;;
+;;;; server-socket class definition
+;;;;
+;;;;***********************************************************************
+(define-class <server-socket> (<socket-port>)
+ ((connection  :accessor connection-of)
+  (port-number :init-keyword :port :accessor port-of)
+))
+
+;;;;
+;;;; Initialize (make server socket)
+;;;;
+(define-method initialize ((self <server-socket>) initargs)
+ (let* ((port (get-keyword :port initargs 0)))
+  (require "socket")
+  (slot-set! self 'socket (make-server-socket port))
+  (slot-set! self 'port-number (socket-port-number (socket-of self)))
+  (slot-set! self 'connection -1)
+  (next-method)
+))
+
+;;;;
+;;;; accept-server-connection (accept server connection)
+;;;;
+(define-method accept-server-connection ((self <server-socket>))
+ (let* ((sock (socket-of self)))
+  (slot-set! self 'connection (accept-connection sock))
+))
+
+;;;;
+;;;; handle-of (get server connection handle)
+;;;;
+(define-method handle-of ((self <server-socket>))
+ (slot-ref self 'connection))
+
+;;;;  
+;;;; close-server-connection (close server connection)
+;;;; 
+(define-method close-server-connection ((self <server-socket>))
+ (let* ((connection (slot-ref self 'connection)))
+  (if (not (= connection -1)) (close-connection connection))
+  (slot-set! self 'connection -1)
+)) 
+  
+;;;; 
+;;;; close-socket-port (close-server-connection and socket-shutdown) 
+;;;; 
+(define-method close-socket-port ((self <server-socket>)) 
+ (if (> (slot-ref self 'buffer-size) 0) 
+  (let* ((sock (socket-of self)))
+   (flush self) 
+   (close-server-connection self)
+   (socket-shutdown sock)
+   (slot-set! self 'buffer-size -1)
+   (slot-set! self 'output-buf 0)
+   (slot-set! self 'input-buf 0)
+)))
+
+;;;;***********************************************************************
+;;;;
+;;;; i/o utilities (commmon to all classes)
+;;;;
+;;;;***********************************************************************
+
+;;;;
+;;;; read-char
+;;;;
+(define-method read-char ((self <socket-port>))
+ (let* ((chr #\newline)
+	(loc (slot-ref self 'input-loc)))
+  (if (not (string? (slot-ref self 'input-buf)))
+
+   ;; initialize buffer
+   (let* ((size (slot-ref self 'buffer-size)))
+    (if (> size 0)
+	 (let* ((buffer (make-string size))
+		(len (socket-recv (handle-of self) buffer)))
+	  (set! loc 0)
+	  (slot-set! self 'input-buf buffer)
+	  (set! chr (string-ref buffer 0))
+	  (slot-set! self 'input-len 0)
+	  (if (eof-object? len) (set! chr len)
+	   (let* ((recv-monitor (slot-ref self 'recv-monitor)))
+		(slot-set! self 'input-len len)
+		(recv-monitor self len)
+	 )))
+   ))
+
+   ;; get next character in buffer
+   (if (< loc (slot-ref self 'input-len))
+	 (set! chr (string-ref (slot-ref self 'input-buf) loc))
+
+	 ;; buffer is empty, get another buffer from socket
+	 (let* ((size (slot-ref self 'buffer-size)))
+	  (if (> size 0)
+	   (let* ((buffer (make-string size))
+		  (len (socket-recv (handle-of self) buffer)))
+	    (set! loc 0)
+	    (slot-set! self 'input-buf buffer)
+	    (set! chr (string-ref buffer 0))
+	    (slot-set! self 'input-len 0)
+	    (if (eof-object? len) (set! chr len)
+	     (let* ((recv-monitor (slot-ref self 'recv-monitor)))
+		(slot-set! self 'input-len len)
+		(recv-monitor self len)
+	 )))))
+  )) 
+  (slot-set! self 'input-loc (+ loc 1))
+  chr
+))
+
+;;;;
+;;;; write-char
+;;;;
+(define-method write-char (chr (self <socket-port>))
+ (let* ((loc (slot-ref self 'output-len)))
+  (if (not (string? (slot-ref self 'output-buf)))
+
+   ;; initialize buffer
+   (if (> (slot-ref self 'buffer-size) 0)
+    (let* ((size (slot-ref self 'buffer-size)))
+	(slot-set! self 'output-buf (make-string size chr))
+	(set! loc 0)
+   ))
+ 
+   ;; add character to end of buffer
+   (if (< loc (slot-ref self 'buffer-size))
+	(string-set! (slot-ref self 'output-buf) loc chr)
+
+        ;; buffer is full, flush buffer
+	(if (> (slot-ref self 'buffer-size) 0)
+	 (let* ((send-monitor (slot-ref self 'send-monitor))
+		(handle (handle-of self)))
+	  (socket-send handle (slot-ref self 'output-buf) loc)
+	  (send-monitor self loc)
+	  (string-set! (slot-ref self 'output-buf) 0 chr)
+	  (set! loc 0)
+	))
+
+  ))
+  (slot-set! self 'output-len (+ loc 1))
+)) 
+
+;;;;
+;;;; flush
+;;;;
+(define-method flush ((self <socket-port>))
+ (let* ((len (slot-ref self 'output-len)))
+  (if (> len 0) 
+   (let* ((send-monitor (slot-ref self 'send-monitor)))
+    (socket-send (handle-of self) (buffer-of self) len)
+    (send-monitor self len)
+    (slot-set! self 'output-len 0)
+))))
+
+;;;;
+;;;; read-line
+;;;;
+(define-method read-line ((self <socket-port>))
+ (let* ((lst ()))
+  (do ((chr (read-char self) (read-char self)))
+	((or (eof-object? chr) (char=? chr #\newline)))
+    (set! lst (cons chr lst)))
+  (list->string (reverse lst))
+))
+
+;;;;
+;;;; write-line
+;;;;
+(define-method write-line ((self <socket-port>) line)
+ (let* ((handle (handle-of self))
+   	(send-monitor (slot-ref self 'send-monitor))
+	(len (+ (string-length line) 1))
+	(buf (string-append line "\n")))
+  (socket-send handle buf len)
+  (send-monitor self len)
+))
+
+;;;;
+;;;; copy-to-socket
+;;;;
+(define-method copy(from (self <socket-port>))
+ (let* ((chr (read-char from))
+	(count (slot-ref self 'output-len)))
+  (if (eof-object? chr) (flush self)
+   (let* ((num-chars (+ count 1)))
+    (write-char chr self)
+    (let* ((send-monitor (slot-ref self 'send-monitor))
+	   (buffer-size (slot-ref self 'buffer-size)))
+	(set! count 0)
+	(while (not (eof-object? chr))
+
+         ;; fill buffer with data
+	 (let* ((to (handle-of self)))
+	  (do ((i num-chars (+ i 1)))
+	    ((or (= i buffer-size) (eof-object? chr)))
+	   (set! num-chars (+ num-chars 1))
+           (set! chr (read-char from))
+           (if (eof-object? chr) (set! num-chars i)
+		(string-set! (buffer-of self) i chr)
+	  ))
+
+          ;; send buffer data to socket and flush
+	  (if (> num-chars 0) 
+		(socket-send to (buffer-of self) num-chars))
+  	  (send-monitor self num-chars)
+	  (set! count (+ count num-chars))
+	  (set! num-chars (- num-chars buffer-size))
+	))
+        (slot-set! self 'output-len 0)
+  )))
+  count
+))
+
+;;;;
+;;;; copy-from-socket
+;;;;
+(define-method copy((self <socket-port>) to)
+ (let* ((chr (read-char self)))
+  (if (eof-object? chr) 0
+   (let* ((buffer (slot-ref self 'input-buf))
+	  (recv-monitor (slot-ref self 'recv-monitor))
+	  (from (handle-of self))
+          (count 0))
+
+	 ;; flush first input buffer 
+	 (let* ((loc (- (slot-ref self 'input-loc) 1))
+		(len (slot-ref self 'input-len)))
+	  (set! count (- len loc))
+	  (do ((i loc (+ i 1))) ((= i len))
+	    (write-char (string-ref buffer i) to)
+	 ))
+
+	 ;; copy remaining buffers until no more left
+	 (do ((num-chars (socket-recv from buffer) 
+		(socket-recv from buffer))) ((eof-object? num-chars))
+	  (set! count (+ count num-chars))
+	  (recv-monitor self num-chars)
+	  (do ((i 0 (+ i 1))) ((= i num-chars))
+	   (write-char (string-ref buffer i) to)
+	 ))
+	 count
+))))
+
+;;;;
+;;;; copy-socket-to-socket
+;;;;
+(define-method copy((self <socket-port>) (output <socket-port>))
+ (let* ((chr (read-char self))
+        (count 0))
+  (if (not (eof-object? chr))
+   (let* ((buffer (slot-ref self 'input-buf))
+	  (recv-monitor (slot-ref self 'recv-monitor))
+	  (send-monitor (slot-ref self 'send-monitor))
+	  (loc (- (slot-ref self 'input-loc) 1))
+	  (len (slot-ref self 'input-len))
+	  (from (handle-of self))
+	  (to (handle-of output)))
+    (flush output)
+
+    ;; flush first input buffer 
+    (set! count (- len loc))
+    (socket-send to (substring buffer loc len) count)
+    (send-monitor self count)
+
+    ;; copy remaining buffers until no more left
+    (do ((num-chars (socket-recv from buffer) 
+		(socket-recv from buffer))) ((eof-object? num-chars))
+	(set! count (+ count num-chars))
+	(recv-monitor self num-chars)
+	(socket-send to buffer num-chars)
+  	(send-monitor self num-chars)
+   ))
+   count
+)))
+
+;;;;
+;;;; close-input-port
+;;;;
+(define-method close-input-port ((self <socket-port>)) 
+	(close-socket-port self))
+
+;;;;
+;;;; close-output-port
+;;;;
+(define-method close-output-port ((self <socket-port>)) 
+	(close-socket-port self))
+
+)

@@ -1,0 +1,420 @@
+;;;;
+;;;; T o o l b a r . s t k l o s  		-- Tool bar management
+;;;;
+;;;; Copyright © 1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, modify, distribute,and license this
+;;;; software and its documentation for any purpose is hereby granted,
+;;;; provided that existing copyright notices are retained in all
+;;;; copies and that this notice is included verbatim in any
+;;;; distributions.  No written agreement, license, or royalty fee is
+;;;; required for any of the authorized uses.
+;;;; This software is provided ``AS IS'' without express or implied
+;;;; warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 06-May-1999 15:08
+;;;; Last file update:  3-Sep-1999 20:15 (eg)
+;;;;
+
+
+(require "Basics")
+(require "palette")
+(require "balloon")
+
+(select-module STklos+Tk)
+
+(export make-toolbar default-release-toolbar toolbar-item)
+
+
+#| 
+   FIXME: ° resources are not taken into account. Why?
+|#
+
+;;;
+;;; Resources
+;;;
+;(option 'add "*ToolBar*Relief"  	       "ridge"       "widgetDefault")
+;(option 'add "*ToolBar*BorderWidth"  	       "1" 	     "widgetDefault")
+
+
+;;;
+;;; Tool-bar default bindings
+;;;
+(bind "ToolBar" "<Enter>" (lambda (|W|) (tk-set! |W| :relief "raised")))
+(bind "ToolBar" "<Leave>" (lambda (|W|) (tk-set! |W| :relief "flat")))
+
+;=============================================================================
+;
+; 				Class <Toolbar>
+;
+;=============================================================================
+(define-class <Toolbar> (<Frame>)
+  ((%handle          :init-form     #f)
+   (%float           :init-form     #f)
+   (%clone	     :init-form     #f)
+   (%components      :init-form     '())
+   (class             :init-keyword :class
+	              :init-form    "ToolBar")
+   (orientation       :init-form    "horizontal"
+		      :accessor     orientation
+		      :init-keyword :orientation)
+   (balloon-color     :init-keyword :balloon-color   ; Not settable by resources!!
+		      :init-form    "#ffffb0")
+   (press-command     :init-form    #f
+		      :accessor	    press-command
+		      :init-keyword :press-command)
+   (release-command   :init-form    #f
+		      :accessor	    release-command
+		      :init-keyword :release-command)))
+
+
+
+(define-method initialize ((self <Toolbar>) initargs)
+  (next-method)
+  ;; Create the handle to detach the tool bar
+  (let ((h (make <Label> :relief "ridge" :border-width 1 :parent self
+		 	 :width 5 :height 5
+		 	 :background (background self))))
+    (bind h "<ButtonPress-1>" (lambda (|X| |Y|) (clone-toolbar self |X| |Y|)))
+    (slot-set! self '%handle h)))
+
+;=============================================================================
+;
+; 			      <Toolbar> methods 
+;
+;============================================================================= 
+
+;;;;
+;;;;			==== Toolbar components constructors ====
+;;;;
+
+;;
+;; add-button
+;;
+(define-method add-button((self <Toolbar>) img balloon action)
+  (let* ((bg (slot-ref self 'background))
+	 (b  (make <Button> :parent self :image (make-image img) 
+		 :relief "flat" :command action :highlight-thickness 0
+		 :background bg :active-background bg)))
+    ;; Add help ballon
+    (add-balloon-help (Id b) balloon 1500 (slot-ref self 'balloon-color))
+    ;; Change button bindings to add a relief when entering it
+    (bindtags b (cons "ToolBar" (bindtags b)))
+    (slot-set! self '%components 
+	       (append (slot-ref self '%components) 
+		       (list (cons b (list img balloon action)))))
+    b))
+
+;;
+;; add-menubutton
+;;
+(define-method add-menubutton((self <Toolbar>) title)
+  (let* ((bg (slot-ref self 'background))
+	 (mb (make <Menu-button> :parent self :text title
+		   :background bg :active-background (make-lighter-color bg))))
+    (slot-set! self '%components 
+	       (append (slot-ref self '%components) (list (cons mb title))))
+    mb))
+
+
+;;
+;; add-space
+;;
+(define-method add-space ((self <Toolbar>) space)
+  (let ((f (make <Frame> :parent self :background (background self))))
+    ;; Add the new frame to the list of components of the menu bar 
+    (slot-set! self '%components 
+	       (append (slot-ref self '%components) (list (cons f space))))
+    f))
+
+;;
+;; toolbar-item
+;;
+(define-method toolbar-item ((self <Toolbar>) index)
+  (let ((l (slot-ref self '%components)))
+    (if (< index (length l))
+	(car (list-ref l index))
+	(error "toolbar-item: bad index ~S" index))))
+
+
+;=============================================================================
+
+;;;;
+;;;; 				==== map-toolbar ====
+;;;;
+;;;; This procedure is in charge of packing the components of the
+;;;; toolbar. The arrangement depends of the orientation of the toolbar.
+;;;;
+(define-method map-toolbar ((self <toolbar>) orientation)
+  (let ((handle     (slot-ref self '%handle))
+	(all        (slot-ref self '%components))
+	(vertical?  (equal? orientation "vertical"))
+	(set-width! (lambda (w size)
+		      (when (zero? size) 
+			; This is a filler (expand in x even if vertival)
+			(pack w :expand #t :fill 'x))
+		      (slot-set! w 'width size))))
+    (if vertical?
+	;; Arrangement is vertical
+	(begin
+	  (slot-set! handle 'image (make-image "tb_hborder.gif"))
+	  (pack handle :side 'top  :fill 'x)
+	  (for-each (lambda (x)
+		      (let ((w (car x)))
+			(pack w :side 'top :fill 'x)
+			(if (is-a? w <Frame>)
+			    (set-width! w (cdr x)))))
+		    all))
+	;; Arrangement is horizontal
+	(begin
+	  (slot-set! handle 'image (make-image "tb_vborder.gif"))
+	  (pack handle :side 'left  :fill 'y)
+	  (for-each (lambda (x)
+		      (let ((w (car x)))
+			(pack w :side 'left :fill 'y)
+			(if (is-a? w <Frame>)
+			    (set-width! w (cdr x)))))
+		    all)))))
+
+
+;=============================================================================
+
+;;;;
+;;;; 				==== clone-toolbar ====
+;;;;
+
+
+;;
+;; clone-widget method for toolbars
+;;
+(define-method clone-widget ((self <Toolbar>) new-parent)
+  (let ((my-clone (next-method)))
+    ;; Clone all the components of this original button bar
+    (slot-set! my-clone '%components '())
+    (for-each (lambda (x)
+		(let ((w (car x)))
+		  (cond 
+		     ((is-a? w <Button>)      (apply add-button my-clone (cdr x)))
+		     ((is-a? w <Menu-button>)
+		           (let ((new (add-menubutton my-clone (cdr x)))
+				 (m   (menu-of w)))
+			     ;; Clone the associated menu
+			     (slot-set! new 'menu (clone-widget m new))))
+		     ((is-a? w <Frame>)     
+		           (let ((new (add-space my-clone (cdr x))))
+			     (unless (null? (children w))
+			       (pack (clone-widget (car (children w)) new))))))))
+	      (slot-ref self '%components))
+    my-clone))
+
+
+;;
+;; clone-toolbar itself
+;;
+(define-method clone-toolbar ((self <Toolbar>) X Y)
+  ;;
+  ;; Create-floating-toolbar
+  ;;
+  (define (create-floating-toolbar tb)
+    (let* ((t      (make <Toplevel> :parent tb :border-width 2 :relief "solid"))
+	   (clone  (clone-widget tb t))
+	   (handle (slot-ref clone '%handle)))
+      (pack clone)
+      (make-transient t)
+      ;; Associate bindings to the toolbar handle 
+      (bind handle "<ButtonRelease-1>" 
+	    (lambda (|X| |Y|)
+	      (let ((action (slot-ref self 'release-command)))
+		(if (procedure? action)
+		    (let ((res (action self |X| |Y|)))
+		      (if res 
+			  ;;  Delete the  floating toolbar
+			  (wm 'withdraw t))))
+		(map-toolbar tb (slot-ref self 'orientation))
+		(grab 'release handle))))
+      
+      (bind handle "<ButtonPress-1>" 
+	    (lambda () (grab :global handle)))
+      
+      (bind handle "<Button1-Motion>"        
+	    (lambda (|X| |Y|)
+	      (wm 'geometry t (format #f "+~A+~A" (- |X| 3) (- |Y| 3)))))
+      
+      (slot-set! self '%float t)
+      (slot-set! self '%clone clone)
+      t))
+  ;;
+  ;; ==== clone-button-bar starts here ====
+  ;;
+  (let* ((action    (slot-ref self 'press-command))
+	 (do-action (if (procedure? action) (action self X Y) #t)))
+    (when do-action
+      (let ((ftb (or (slot-ref self '%float) (create-floating-toolbar self))))
+	(pack 'forget self)
+	(let ((handle (slot-ref (slot-ref self '%clone) '%handle)))
+	  (wm 'geometry ftb (format #f "+~A+~A" 
+				    (- (winfo 'pointerx handle) 3) 
+				    (- (winfo 'pointery handle) 3)))
+	  (map-toolbar (slot-ref self '%clone) (slot-ref self 'orientation))
+	  (deiconify ftb)
+	  (update)
+	  (grab :global handle))))))
+
+;=============================================================================
+
+;;;;
+;;;; 			     ==== Make-toolbar ====
+;;;;
+;;;; A simpler way to make toolbars: In fact this is intended to be
+;;;; the only entry point for end-users
+;;;;
+
+(define (make-toolbar parent l . options)
+  ;;
+  ;; Predicates for testing the type of the items of a description
+  ;;
+  (define (image? l) (and (list? l) (= (length l) 3) (procedure? (caddr l))))
+  (define space? integer?)
+  (define menu?  list?)
+ 
+  ;;
+  ;; make-submenu
+  ;;
+  (define (make-submenu tb mb items)
+    (let* ((bg (background tb))
+	   (m  (make <Menu> :parent mb :tear-off #f 
+		     	    :background bg :active-background bg)))
+      (for-each (lambda (item)
+		  (cond
+		     ;; Tear-off
+		     ((equal? (car item) "---")
+		      		(slot-set! m 'tear-off #t))
+		     ;; Separator
+		     ((equal? (car item) "")
+		      		(menu-add m 'separator))
+		     ;; Normal Menu
+		     ((and (= (length item) 2) (procedure? (cadr item)))
+		      		(menu-add m 'command :label (car item)
+						   :command (cadr item)))
+		     ;; Cascade menu
+		     ((and (>= (length item) 2) (list? (cadr item)))
+		      		(menu-add m 'cascade :label (car item)
+					  :menu (make-submenu tb m (cdr item))))
+		     (else (apply menu-add m item))))
+		items)
+      m))
+
+  ;;
+  ;; make-item
+  ;;
+  (define (make-item tb item)
+    (cond 
+       ((image?  item) (apply add-button tb item))
+       ((space? item)  (add-space tb item))
+       ((menu? l)      (let ((mb (add-menubutton tb (car item))))
+			 (make-submenu tb mb (cdr item))))
+       (else	       (error "make-toolbar: bad item specification ~S" item))))
+  
+  ;;
+  ;; code of make-toolbar starts here
+  ;;
+  (let ((tb (apply make <toolbar> :parent parent options)))
+    (for-each (lambda (x) (make-item tb x)) l) 		    ; Create the items
+    (map-toolbar tb (slot-ref tb 'orientation))		    ; map them and
+    tb))						    ; return the new toolbar
+
+
+
+;=============================================================================
+
+(define (default-release-toolbar master)
+  (lambda (toolbar x y)
+    (let* ((x1 (- (winfo 'rootx master) 20))
+	   (y1 (- (winfo 'rooty master) 20))
+	   (x2 (+ x1 (winfo 'width master) 40))
+	   (y2 (+ y1 (winfo 'height master) 40)))
+      (and (<= x1 x x2) 
+	   (<= y1 y y2)
+	   (cond 
+	       ((<= y1 y (+ y1 40)) ;; Place on top
+			      (slot-set! toolbar 'orientation "horizontal")
+	    		      (pack toolbar :before master :fill 'x :side 'top)
+			      #t)
+	       ((<= (- y2 40) y y2) ;; Place on bottom
+	    		      (slot-set! toolbar 'orientation "horizontal")
+	    		      (pack toolbar :before master :fill 'x :side 'bottom)
+			      #t)
+	       ((<= x1 x (+ x1 40))  ;; place on left
+	    		      (slot-set! toolbar 'orientation "vertical")
+			      (pack toolbar :before master :fill 'y :side 'left)
+			      #t)
+	       ((<= (- x2 40) x x2) ;; Place on right
+	    		      (slot-set! toolbar 'orientation "vertical")
+			      (pack toolbar :before master :fill 'y :side 'right)
+			      #t)
+	       (else 	      #f))))))
+
+
+#|
+  Example: This could seem rather complicated but I think it is fairly 
+  exhaustive of what is possible with floating toolbars
+
+  (define-macro (P x) ; A macro for printing traces (for this demo)
+    `(lambda () (display ,x) (newline)))
+
+  (define top (make <toplevel> :title "Toolbar Demo"))
+  (define st (make <Scroll-Text> :parent top :font '(Helvetica 18 bold)
+		   :width 48 :height 12
+		   :value (& "\n\n\n"
+			     "\tTo re-attach a detached toolbar, drag it on\n"
+			     "\tone of the 4 sides of this text editor")))
+  (define action (default-release-toolbar st))
+  
+  (define f1 
+    (make-toolbar *top-root*
+		  `(("File"
+		       ("---")			;; we want a tear-off
+		       ("Open" 	,(P "Open"))
+		       ("Close"	,(P "Close"))
+		       ("")			;; insert a  separator
+		       ("Exit"	,(lambda() (exit 0))))
+		    ("Edit"
+		       ("Cut" 	,(P "Cut"))
+		       ("Copy"  ,(P "Copy"))
+		       ("Paste" ,(P "Paste"))
+		       ("Submenu" 		;; a submenu without tear-off
+			  ("sub1"  ,(P "sub1"))
+			  ("sub2"  ,(P "sub2")))
+		       ;; a completely managed item
+		       (radiobutton :label "Foo" :foreground "blue3")
+		       (radiobutton :label "Bar" :foreground "blue3"))
+		    0
+		    ("Help"
+		       ("About"	,(P "About"))))		  
+		:parent top :background "Bisque3" :release-command action))
+
+  (define f2 
+    (make-toolbar *top-root*
+		`(("tb_console.gif"   "Open New Console"      ,(P 1))
+		  ("tb_edit.gif"      "Open New Editor"       ,(P 2))
+		  ("tb_customize.gif" "Customize Environment" ,(P 3))
+		  20 		; insert a 20 pixels wide space 
+		  ("tb_fileopen.gif"  "Load File"   	      ,(P 4)))
+		:parent top :background "Bisque4" :release-command action))
+
+  (define f3 
+    (make-toolbar *top-root*
+		`(("tb_copy.gif"  "Copy" 	    ,(P 5))
+		  ("tb_paste.gif" "Paste"           ,(P 6))
+		  ("tb_cut.gif"   "Cut" 	    ,(P 7))
+		  20
+		  ("tb_info.gif" "Help on Console"  , (P 8)))
+		:parent top :background "Wheat2" :release-command action
+		:orientation "vertical"))
+
+  (pack f1 f2 :side "top" :fill 'x)
+  (pack f3 :side "left" :fill 'y)
+  (pack st :fill 'both :expand #t :side "bottom")
+
+|#

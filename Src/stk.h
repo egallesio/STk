@@ -1,38 +1,38 @@
-/******************************************************************************
+/*****************************************************************-*- C -*-****
  *
  * s t k . h
  *
  * Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
- * Permission to use, copy, and/or distribute this software and its
- * documentation for any purpose and without fee is hereby granted, provided
- * that both the above copyright notice and this permission notice appear in
- * all copies and derived works.  Fees for distribution or use of this
- * software or derived works may only be charged with express written
- * permission of the copyright holder.  
- * This software is provided ``as is'' without express or implied warranty.
- *
- * This software is a derivative work of other copyrighted softwares; the
- * copyright notices of these softwares are placed in the file COPYRIGHTS
- *
- *  $Id: stk.h 1.29 Tue, 02 Feb 1999 15:29:27 +0100 eg $
+ * Permission to use, copy, modify, distribute,and license this
+ * software and its documentation for any purpose is hereby granted,
+ * provided that existing copyright notices are retained in all
+ * copies and that this notice is included verbatim in any
+ * distributions.  No written agreement, license, or royalty fee is
+ * required for any of the authorized uses.
+ * This software is provided ``AS IS'' without express or implied
+ * warranty.
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 12-May-1993 10:34
- * Last file update:  2-Feb-1999 13:44
+ * Last file update:  4-Sep-1999 12:38 (eg)
  *
  ******************************************************************************/
 
 #ifndef _STK_H
 #define _STK_H
 
+#include <stkvers.h>
+
+
 #ifdef WIN32
 #  define MACHINE "Ms-Win32"
-#  define STK_DEBUG			// FIXME
-#  define STK_VERSION "3.99.4"		// FIXME
 #  include <windows.h>			/* for the panic procedure */
 #endif
+
+#include <math.h>
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,7 +41,6 @@ extern "C" {
 #include <stdio.h>
 #include <setjmp.h>
 #include <assert.h>
-#include <math.h>
 #include <signal.h>
 #include <limits.h>
 #include <string.h>
@@ -57,15 +56,15 @@ extern "C" {
 #include <gmp.h>
   
 
-#ifdef WIN32			// FIXME
+#ifdef WIN32
 #  define USE_HASH
-//#define USE_SOCKET
+#  define USE_SOCKET
 #  define USE_REGEXP
-//#define USE_PROCESS
-//#define USE_POSIX
+#  define USE_PROCESS
+  /* #define USE_POSIX */
 #  define USE_HTML
 #  define USE_PIXMAP
-//#define USE_JPEG
+  /* #define USE_JPEG */
 #  define USE_BASE64
 #  define USE_LOCALE
 #endif
@@ -87,8 +86,13 @@ extern "C" {
 
 #define COMPACT_SMALL_CST			/* compact coding for small const */
 
-#define FALSE			0
-#define TRUE			1
+#ifndef FALSE
+#  define FALSE 0
+#endif
+#ifndef TRUE
+#  define TRUE (!FALSE)
+#endif
+
 
 #define TKBUFFERN 		1024		/* max size of a token */
 #define MAX_CHAR_CODE		255		/* Max code for a char */
@@ -280,6 +284,8 @@ typedef struct obj* PRIMITIVE;
 #define CLOSARITY(x)	((*x).cell_info)
 #define CLOSPARAMS(x)	(CAR(CLOSCODE(x)))
 #define CLOSBODY(x)	(CDR(CLOSCODE(x)))
+#define CELLINFO(x)	((*x).cell_info)
+
 
 #ifdef COMPACT_SMALL_CST
 #  define MAKE_SMALL_CST(x,type)  (((long) (x) << 8) |((type) << 1) | 1)
@@ -394,6 +400,7 @@ typedef struct obj* PRIMITIVE;
 
 #define CELL_INFO_C_VAR 	01	/* Symbol is a C variable */
 #define CELL_INFO_TRACED_VAR	02	/* Symbol is traced */
+#define CELL_INFO_UNINTERNED	04	/* Symbol is not interned */
 
 
 
@@ -425,6 +432,19 @@ PRIMITIVE STk_addressp(SCM address);
   ----
   ------------------------------------------------------------------------------
 */
+
+#if defined(WIN32) && defined(USE_DYNLOAD) && defined(MSC_VER)
+#  ifdef EXPORT_DLL_GLOBALS
+#    define extern __declspec( dllexport )
+#  else
+#    ifdef IMPORT_DLL_GLOBALS
+#      define extern __declspec( dllimport )
+#    else
+#      define extern extern
+#    endif
+#  endif
+#endif
+
 #ifdef USE_TK
 extern char *STk_arg_Xdisplay;
 extern char *STk_arg_geometry;
@@ -546,6 +566,7 @@ void STk_load_object_file(char *path);
 PRIMITIVE STk_call_external(SCM l, int len);
 PRIMITIVE STk_external_existsp(SCM entry_name, SCM library);
 PRIMITIVE STk_cstring2string(SCM pointer);
+PRIMITIVE STk_string2usymbol(SCM string);
 
 /*
   ------------------------------------------------------------------------------
@@ -668,13 +689,21 @@ PRIMITIVE STk_get_env_stack(void);
 
 SCM STk_eval(SCM x,SCM env);
 SCM STk_apply(SCM fct, SCM param);
+SCM STk_apply0(SCM fct);
+SCM STk_apply1(SCM fct, SCM param);
+SCM STk_apply2(SCM fct, SCM param1, SCM param2);
 
 PRIMITIVE STk_user_eval  (SCM expr, SCM env);
 PRIMITIVE STk_eval_string(SCM str, SCM env);
 
-#define Apply		  STk_apply
+
 #define EVAL(x)	  	  (STk_eval((x), env))
 #define EVALCAR(x)	  (SYMBOLP(CAR(x)) ? *STk_varlookup((x),env,1):EVAL(CAR(x)))
+
+#define Apply		  STk_apply
+#define Apply0		  STk_apply0
+#define Apply1		  STk_apply1
+#define Apply2		  STk_apply2
 
 #define add_frame(formals, actuals, env) Cons(STk_makeframe((formals), (actuals)),\
 					      (env))
@@ -945,6 +974,7 @@ PRIMITIVE STk_module_exports(SCM module);
 PRIMITIVE STk_module_env(SCM module);
 PRIMITIVE STk_module_symbols(SCM module);
 PRIMITIVE STk_get_selected_module(void);
+PRIMITIVE STk_all_modules(void);
 
 
 /*
@@ -1059,6 +1089,7 @@ struct port_descr {		/* Slot order is important (see sport_descr) */
 #define PORT_CLOSED 	01
 #define PIPE_PORT	02
 
+
 #define OUTP(p) 	(OPORTP(p) || OSPORTP(p) || OVPORTP(p))
 #define INP(p)  	(IPORTP(p) || ISPORTP(p) || IVPORTP(p))
 #define F_READ  	01
@@ -1078,6 +1109,8 @@ SCM 	  STk_redirect_error(SCM port, SCM thunk);
 
 PRIMITIVE STk_input_portp(SCM port);
 PRIMITIVE STk_output_portp(SCM port);
+PRIMITIVE STk_input_file_portp(SCM port);
+PRIMITIVE STk_output_file_portp(SCM port);
 PRIMITIVE STk_current_input_port(void);
 PRIMITIVE STk_current_output_port(void);
 PRIMITIVE STk_current_error_port(void);
@@ -1109,6 +1142,7 @@ PRIMITIVE STk_error(SCM l, int len);
 PRIMITIVE STk_try_load(SCM filename, SCM module);
 PRIMITIVE STk_open_file(SCM filename, SCM mode);
 PRIMITIVE STk_close_port(SCM port);
+PRIMITIVE STk_port_closedp(SCM expr);
 PRIMITIVE STk_read_line(SCM port);
 PRIMITIVE STk_copy_port(SCM in, SCM out);
 PRIMITIVE STk_flush(SCM porSTk_t);
@@ -1541,11 +1575,24 @@ void STk_user_cleanup(void);
   ----
   ------------------------------------------------------------------------------
 */
-
-#ifdef STK_MAIN
-#   define Extern
-#else
-#   define Extern extern
+#if defined(WIN32) && defined(USE_DYNLOAD) && defined(MSC_VER)  
+#  ifdef EXPORT_DLL_GLOBALS
+#    define Extern __declspec( dllexport )
+#    include <tkScale.h>
+#  else
+#    ifdef IMPORT_DLL_GLOBALS
+#      define Extern __declspec( dllimport )
+#    else
+#      define Extern extern
+#    endif
+#  endif
+#else 
+   /* Unix */
+#  ifdef STK_MAIN
+#     define Extern
+#  else
+#     define Extern extern
+#  endif
 #endif
 
 
@@ -1685,4 +1732,9 @@ void Debug(char *message, SCM obj);
 #ifdef __cplusplus
 };
 #endif
+
+#if defined(WIN32) && defined(USE_DYNLOAD) && defined(MSC_VER)
+#  undef extern
+#endif 
+
 #endif /* ifndef _STK_H */

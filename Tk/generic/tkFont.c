@@ -17,6 +17,12 @@
 #include "tkInt.h"
 #include "tkFont.h"
 
+#ifdef BGLK_CODE
+#  define STk_create_tcl_object 	SCM_CREATE_TCL_OBJECT
+#  define STk_convert_Tcl_string2list	SCM_tk_string_to_scm_list
+#  define STk_NewKeywordObj		SCM_KEYWORD_OBJ
+#endif
+
 /*
  * The following structure is used to keep track of all the fonts that
  * exist in the current application.  It must be stored in the
@@ -365,7 +371,7 @@ Tk_FontObjCmd(clientData, interp, objc, objv)
 	    }
 	    if ((objc < 3) || (objc - skip > 4)) {
 		Tcl_WrongNumArgs(interp, 2, objv,
-#ifdef STk_CODE
+#ifdef SCM_CODE
 			"font ?:displayof window? ?option?");
 #else
 			"font ?-displayof window? ?option?");
@@ -505,7 +511,7 @@ Tk_FontObjCmd(clientData, interp, objc, objv)
 		return TCL_ERROR;
 	    }
 	    if (objc - skip != 2) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		Tcl_WrongNumArgs(interp, 2, objv, "?:displayof window?");
 #else
 		Tcl_WrongNumArgs(interp, 2, objv, "?-displayof window?");
@@ -513,7 +519,7 @@ Tk_FontObjCmd(clientData, interp, objc, objv)
 		return TCL_ERROR;
 	    }
 	    TkpGetFontFamilies(interp, tkwin);
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    Tcl_SetObjResult(interp, 
 			     STk_create_tcl_object(
 			       STk_convert_Tcl_string2list(interp->result)));
@@ -531,7 +537,7 @@ Tk_FontObjCmd(clientData, interp, objc, objv)
 	    }
 	    if (objc - skip != 4) {
 		Tcl_WrongNumArgs(interp, 2, objv,
-#ifdef STk_CODE
+#ifdef SCM_CODE
 			"font ?:displayof window? text");
 #else
 			"font ?-displayof window? text");
@@ -562,7 +568,7 @@ Tk_FontObjCmd(clientData, interp, objc, objv)
 	    }
 	    if ((objc < 3) || ((objc - skip) > 4)) {
 		Tcl_WrongNumArgs(interp, 2, objv,
-#ifdef STk_CODE
+#ifdef SCM_CODE
 			"font ?:displayof window? ?option?");
 #else
 			"font ?-displayof window? ?option?");
@@ -577,7 +583,7 @@ Tk_FontObjCmd(clientData, interp, objc, objv)
 	    objv += skip;
 	    fmPtr = GetFontMetrics(tkfont);
 	    if (objc == 3) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		sprintf(buf, ":ascent %d :descent %d :linespace %d :fixed #%c",
 			fmPtr->ascent, fmPtr->descent,
 			fmPtr->ascent + fmPtr->descent,
@@ -606,7 +612,7 @@ Tk_FontObjCmd(clientData, interp, objc, objv)
 		    case 2: i = fmPtr->ascent + fmPtr->descent;	break;
 		    case 3: i = fmPtr->fixed;			break;
 		}
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		if (index == 3) 
 		  Tcl_SetBooleanObj(Tcl_GetObjResult(interp), i);
 		else
@@ -624,7 +630,7 @@ Tk_FontObjCmd(clientData, interp, objc, objv)
 	    Tcl_HashEntry *namedHashPtr;
 	    
 	    if (objc != 2) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		Tcl_WrongNumArgs(interp, 1, objv, "'names");
 #else
 		Tcl_WrongNumArgs(interp, 1, objv, "names");
@@ -2560,7 +2566,7 @@ GetAttributeInfoObj(interp, faPtr, objPtr)
 					 * all options. */
 {
     int i, index, start, end, num;
-#ifdef STk_CODE
+#ifdef SCM_CODE
     int bool;
 #endif
     char *str;
@@ -2581,7 +2587,7 @@ GetAttributeInfoObj(interp, faPtr, objPtr)
 	str = NULL;
 	num = 0;			/* Needed only to prevent compiler
 					 * warning. */
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	bool =-1;
 #endif
 	switch (i) {
@@ -2605,7 +2611,7 @@ GetAttributeInfoObj(interp, faPtr, objPtr)
 		break;
 
 	    case FONT_UNDERLINE:
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		bool = faPtr->underline;
 #else
 		num = faPtr->underline;
@@ -2613,7 +2619,7 @@ GetAttributeInfoObj(interp, faPtr, objPtr)
 		break;
 
 	    case FONT_OVERSTRIKE:
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		bool = faPtr->overstrike;
 #else
 		num = faPtr->overstrike;
@@ -2622,7 +2628,7 @@ GetAttributeInfoObj(interp, faPtr, objPtr)
 	}
 	if (objPtr == NULL) {
 	    Tcl_ListObjAppendElement(NULL, Tcl_GetObjResult(interp),
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		    STk_NewKeywordObj(fontOpt[i]));
 #else
 		    Tcl_NewStringObj(fontOpt[i], -1));
@@ -2630,7 +2636,7 @@ GetAttributeInfoObj(interp, faPtr, objPtr)
 	    if (str != NULL) {
 		newPtr = Tcl_NewStringObj(str, -1);
 	    } else {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	        newPtr = (bool < 0) ? Tcl_NewIntObj(num) : Tcl_NewBooleanObj(bool);
 #else
 		newPtr = Tcl_NewIntObj(num);
@@ -2642,7 +2648,7 @@ GetAttributeInfoObj(interp, faPtr, objPtr)
 	    if (str != NULL) {
 		Tcl_SetStringObj(Tcl_GetObjResult(interp), str, -1);
 	    } else {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	      if (bool >= 0)
 		Tcl_SetBooleanObj(Tcl_GetObjResult(interp), bool);
 	      else 

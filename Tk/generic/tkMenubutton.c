@@ -17,6 +17,11 @@
 #include "tkPort.h"
 #include "default.h"
 
+#ifdef BGLK_CODE
+#  define STk_tcl_getvar	SCM_tcl_getvar
+#  define STk_tcl_setvar	SCM_tcl_setvar
+#endif
+
 /*
  * Uids internal to menubuttons.
  */
@@ -97,7 +102,7 @@ static Tk_ConfigSpec configSpecs[] = {
     {TK_CONFIG_PIXELS, "-highlightthickness", "highlightThickness",
 	"HighlightThickness", DEF_MENUBUTTON_HIGHLIGHT_WIDTH,
 	Tk_Offset(TkMenuButton, highlightWidth), 0},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_IMAGE, "-image", "image", "Image",
 #else
     {TK_CONFIG_STRING, "-image", "image", "Image",
@@ -108,7 +113,7 @@ static Tk_ConfigSpec configSpecs[] = {
 	DEF_MENUBUTTON_INDICATOR, Tk_Offset(TkMenuButton, indicatorOn), 0},
     {TK_CONFIG_JUSTIFY, "-justify", "justify", "Justify",
 	DEF_MENUBUTTON_JUSTIFY, Tk_Offset(TkMenuButton, justify), 0},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_MENU, "-menu", "menu", "Menu",
 #else
     {TK_CONFIG_STRING, "-menu", "menu", "Menu",
@@ -263,7 +268,7 @@ Tk_MenubuttonCmd(clientData, interp, argc, argv)
     mbPtr->cursor = None;
     mbPtr->takeFocus = NULL;
     mbPtr->flags = 0;
-#ifdef STk_CODE
+#ifdef SCM_CODE
     mbPtr->env = NULL;
 #endif
     if (aboveUid == NULL) {
@@ -536,13 +541,13 @@ ConfigureMenuButton(interp, mbPtr, argc, argv, flags)
 
 	char *value;
 
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	value = STk_tcl_getvar(mbPtr->textVarName, mbPtr->env);
 #else
 	value = Tcl_GetVar(interp, mbPtr->textVarName, TCL_GLOBAL_ONLY);
 #endif
 	if (value == NULL) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    STk_tcl_setvar(mbPtr->textVarName, mbPtr->text, 0, mbPtr->env);
 #else
 	    Tcl_SetVar(interp, mbPtr->textVarName, mbPtr->text,
@@ -826,7 +831,7 @@ MenuButtonTextVarProc(clientData, interp, name1, name2, flags)
 
     if (flags & TCL_TRACE_UNSETS) {
 	if ((flags & TCL_TRACE_DESTROYED) && !(flags & TCL_INTERP_DESTROYED)) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    STk_tcl_setvar(mbPtr->textVarName, mbPtr->text, 0, mbPtr->env);
 #else
 	    Tcl_SetVar(interp, mbPtr->textVarName, mbPtr->text,
@@ -839,7 +844,7 @@ MenuButtonTextVarProc(clientData, interp, name1, name2, flags)
 	return (char *) NULL;
     }
 
-#ifdef STk_CODE
+#ifdef SCM_CODE
     value = STk_tcl_getvar(mbPtr->textVarName, mbPtr->env);
 #else
     value = Tcl_GetVar(interp, mbPtr->textVarName, TCL_GLOBAL_ONLY);

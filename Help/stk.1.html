@@ -63,19 +63,22 @@ also the amount of cells used when extending the heap. Default value is 20000.
 <P>
 <DT><A NAME="M15">{B-interactiveR}</A><DD>
 Tell the interpreter that it is used interactively (even if it doesn't
-think so).  
+think so). 
 <P>
 <DT><A NAME="M16">{B-helpR}</A><DD>
+Print the version of the system and abort execution.
+<P>
+<DT><A NAME="M17">{B-helpR}</A><DD>
 Print a summary of the command-line options and exit.
 <P>
-<DT><A NAME="M17">{B-|-R}</A><DD>
+<DT><A NAME="M18">{B-|-R}</A><DD>
 Pass all remaining arguments through to the script's <B>argv</B>
 variable without interpreting them.
 This provides a mechanism for passing arguments such as <B>-name</B>
 to a script instead of having <B>wish</B> interpret them.
 <P>
 </DL>
-<H3><A NAME="M18">DESCRIPTION</A></H3>
+<H3><A NAME="M19">DESCRIPTION</A></H3>
 <B>Stk</B> is a Scheme R4RS interpreter which provide a simple access to the
 X11 Tk toolkit. If the <B>-no-tk</B> option is provided to the interpreter,
 the Tk library is not initialized and no main window is created.  If
@@ -111,27 +114,27 @@ mode. In this mode, standard output and standard error are unbuffered.
 Use this option when you launch <B>stk</B> from <B>emacs</B>.
 
 
-<H3><A NAME="M19">VARIABLES</A></H3>
+<H3><A NAME="M20">VARIABLES</A></H3>
 Following Scheme variables are set when <B>Stk</B> starts:
 <P>
 <DL>
-<DT><A NAME="M20"><B>*argc*</B></A><DD>
+<DT><A NAME="M21"><B>*argc*</B></A><DD>
 Contains a count of the number of <I>arg</I> arguments (0 if none),
 not including the options described above.
 <P>
-<DT><A NAME="M21"><B>*argv*</B></A><DD>
+<DT><A NAME="M22"><B>*argv*</B></A><DD>
 Contains a Scheme list whose elements are the <I>arg</I> arguments (not
 including the options described above), in order, or an empty list
 if there are no <I>arg</I> arguments.
 <P>
-<DT><A NAME="M22"><B>*program-name*</B> Contains <I>fileName</I> if it was provided (in a</A><DD>
+<DT><A NAME="M23"><B>*program-name*</B> Contains <I>fileName</I> if it was provided (in a</A><DD>
 <B>-file</B> option or as first argument of the command line).
 Otherwise, contains the name by which the interpreter was invoked.
 
 
 <P>
 </DL>
-<H3><A NAME="M23">SCRIPT FILES</A></H3>
+<H3><A NAME="M24">SCRIPT FILES</A></H3>
 If you create a STk script in a file whose first line is
 <PRE><B>#!/usr/local/bin/stk -f</B></PRE>
 then you can invoke the script file directly from your shell if
@@ -142,25 +145,25 @@ then you'll have to modify the above line to match.
 Note that <B>-f</B> which was necessary with pre-4.0 versions of <B>STk</B>
 is no more necessary and can be omitted.
 
-<H3><A NAME="M24">ENVIRONMENT VARIABLES</A></H3>
+<H3><A NAME="M25">ENVIRONMENT VARIABLES</A></H3>
 <B>stk</B> uses the following shell variables:
 <P>
 <DL>
-<DT><A NAME="M25">{ISTK_LIBRARYR}</A><DD>
+<DT><A NAME="M26">{ISTK_LIBRARYR}</A><DD>
 This variable indicates where the library files are located. This variable
 allows to overload the default value of the Scheme variable <I>*stk-library*</I> 
 which is automatically calculated by the interpreter.(i.e. <I>stk</I> or <I>snow</I>).
 <P>
-<DT><A NAME="M26">{ISTK_LOAD_PATHR}</A><DD>
+<DT><A NAME="M27">{ISTK_LOAD_PATHR}</A><DD>
 This variable serves to initialize the <I>*load-path*</I> Scheme variable. This
 variable is a list of paths to try when in a load command. 
 <P>
-<DT><A NAME="M27">{ISTK_HELP_PATHR}</A><DD>
+<DT><A NAME="M28">{ISTK_HELP_PATHR}</A><DD>
 This variable serves to initialize the <I>*help-path*</I> Scheme variable. It 
 must contain a list of documentation directories. This variable is used by the help 
 procedure.
 <P>
-<DT><A NAME="M28">{ISTK_IMAGE_PATHR}</A><DD>
+<DT><A NAME="M29">{ISTK_IMAGE_PATHR}</A><DD>
 This variable serves to initialize the <I>*image-path*</I> Scheme variable. It 
 must contain a list of images directories. This variable is used by the make-image 
 procedure.
@@ -168,10 +171,10 @@ procedure.
 
 <P>
 </DL>
-<H3><A NAME="M29">FILES</A></H3>
+<H3><A NAME="M30">FILES</A></H3>
 <DL>
-<DT><A NAME="M30">{I./init.stkR}</A><DD>
-<DT><A NAME="M31">{I$STK_LIBRARY/STk/init.stkR}</A><DD>
+<DT><A NAME="M31">{I./init.stkR}</A><DD>
+<DT><A NAME="M32">{I$STK_LIBRARY/STk/init.stkR}</A><DD>
 When <B>stk</B> starts running, it tries to load the file <I>init.stk</I>
 in the current directory. If this file is not present, it tries to load 
 this file in the <B>STk_LIBRARY</B> directory (the value of <B>STk_LIBRARY</B>
@@ -179,14 +182,14 @@ is automatically computed to be in a sibling directory of the interpreter
 executable.
 
 <P>
-<DT><A NAME="M32">{I~/.stkrcR}</A><DD>
+<DT><A NAME="M33">{I~/.stkrcR}</A><DD>
 Standard <I>init.stk</I> file tries to load the file <I>~/.stkrc</I>. This file 
 can be used to store functions definitions or variables settings that you want
 to be executed at each interpreter invocation.
 
 <P>
 </DL>
-<H3><A NAME="M33">SEE ALSO</A></H3>
+<H3><A NAME="M34">SEE ALSO</A></H3>
 <B>wish(1)</B>
 <P><IMG ALIGN=TOP SRC="./Img/line-red.gif"><P>
 <A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookWhite.gif"> Back to the <B>STk</B> main page</A>

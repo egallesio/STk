@@ -299,9 +299,13 @@ Tk_PackCmd(clientData, interp, argc, argv)
 		    "\" isn't packed", (char *) NULL);
 	    return TCL_ERROR;
 	}
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	Tcl_AppendResult(interp, 
+#  ifdef STk_CODE
 			 ":in #.", Tk_PathName(slavePtr->masterPtr->tkwin), " ",
+#  else
+			 ":in \"", Tk_PathName(slavePtr->masterPtr->tkwin), "\" ",
+#  endif
 			 ":anchor \"", Tk_NameOfAnchor(slavePtr->anchor), "\" ",
 			 ":expand ",(slavePtr->flags & EXPAND) ? "#t" : "#f", " ",
 			 ":fill ",
@@ -316,7 +320,7 @@ Tk_PackCmd(clientData, interp, argc, argv)
 		(char *) NULL);
 #endif
 	switch (slavePtr->flags & (FILLX|FILLY)) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    case 0:
 		Tcl_AppendResult(interp, "\"none\"", (char *) NULL);
 		break;
@@ -344,14 +348,14 @@ Tk_PackCmd(clientData, interp, argc, argv)
 		break;
 #endif
 	}
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	sprintf(buffer, " :ipadx %d :ipady %d :padx %d :pady %d",
 #else
 	sprintf(buffer, " -ipadx %d -ipady %d -padx %d -pady %d",
 #endif
 		slavePtr->iPadX/2, slavePtr->iPadY/2, slavePtr->padX/2,
 		slavePtr->padY/2);
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	Tcl_AppendResult(interp, buffer, " :side \"",sideNames[slavePtr->side],"\"",
 #else
 	Tcl_AppendResult(interp, buffer, " -side ", sideNames[slavePtr->side],
@@ -373,7 +377,7 @@ Tk_PackCmd(clientData, interp, argc, argv)
 	}
 	masterPtr = GetPacker(master);
 	if (argc == 3) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	  interp->result = (masterPtr->flags & DONT_PROPAGATE) ? "#t" : "#f";
 #else
 	    if (masterPtr->flags & DONT_PROPAGATE) {
@@ -419,14 +423,14 @@ Tk_PackCmd(clientData, interp, argc, argv)
 	    return TCL_ERROR;
 	}
 	masterPtr = GetPacker(master);
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	Tcl_AppendResult(interp, "(", NULL);
 #endif
 	for (slavePtr = masterPtr->slavePtr; slavePtr != NULL;
 		slavePtr = slavePtr->nextPtr) {
 	    Tcl_AppendElement(interp, Tk_PathName(slavePtr->tkwin));
 	}
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	Tcl_AppendResult(interp, ")", NULL);
 #endif
     } else if ((c == 'u') && (strncmp(argv[1], "unpack", length) == 0)) {

@@ -1,22 +1,24 @@
 #!/bin/sh
 :;exec /usr/local/bin/stk -l "$0" "$@"
-;;
-;; show-vars w var var var ...
-;;
-;; Create a top-level window that displays a bunch of global variable values
-;; and keeps the display up-to-date even when the variables change value
-;;
-;; Arguments:
-;;    w -        Name to use for new top-level window.
-;;    var -      Name of variable to monitor.
-;;
-;;
-;; Note that this demo is run with the -l option (instead of the classical -f)
-;;
-;;
-;;           Author: Erick Gallesio [eg@unice.fr]
-;;    Creation date:  9-Aug-1993 22:06
-;; Last file update:  2-Mar-1998 00:25
+;;;;
+;;;; Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;;
+;;;; show-vars w var var var ...
+;;;;
+;;;; Create a top-level window that displays a bunch of global variable values
+;;;; and keeps the display up-to-date even when the variables change value
+;;;;
+;;;; Arguments:
+;;;;    w -        Name to use for new top-level window.
+;;;;    var -      Name of variable to monitor.
+;;;;
+;;;;
+;;;; Note that this demo is run with the -l option (instead of the classical -f)
+;;;;
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date:  9-Aug-1993 22:06
+;;;; Last file update:  3-Sep-1999 19:23 (eg)
 
 (define (show-vars w . args)
   (catch (destroy w))

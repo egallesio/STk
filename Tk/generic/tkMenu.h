@@ -182,8 +182,11 @@ typedef struct TkMenuEntry {
   				 * Depends on platform and menu type what
   				 * kind of options are in this structure.
   				 */
-#ifdef STk_CODE
+#ifdef SCM_CODE
     char *env;			/* -variable environment */
+#endif
+#ifdef BGLK_CODE
+    char *highlightthickness;	/* dummy biglook highlightthickness */
 #endif
 } TkMenuEntry;
 

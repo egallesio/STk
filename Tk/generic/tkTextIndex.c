@@ -301,7 +301,7 @@ TkTextGetIndex(interp, textPtr, string, indexPtr)
 	endOfBase = end;
 	goto gotBase; 
     }
-#ifdef STk_CODE
+#ifdef SCM_CODE
     if ((string[0] == '(' && isdigit(UCHAR(string[1]))) || (string[1] == '-')) {
 	int lineIndex, charIndex;
 
@@ -310,10 +310,20 @@ TkTextGetIndex(interp, textPtr, string, indexPtr)
 	 */
 
 	lineIndex = strtol(string+1, &end, 0) - 1;
+#ifdef STk_CODE
 	if ((end == string+1) || (strncmp(end, " . ", 3) != 0)) {
+#endif
+#ifdef BGLK_CODE
+	if ((end == string+1) || (end[ 0 ] != ' ')) {
+#endif
 	    goto error;
 	}
+#ifdef STk_CODE
 	p = end+3; string = 0;
+#endif
+#ifdef BGLK_CODE
+	p = end+1; string = 0;
+#endif
 	if ((*p == 'e')   && (strncmp(p, "end)", 4) == 0)) {
 	    charIndex = LAST_CHAR;
 	    endOfBase = p+4;
@@ -472,11 +482,17 @@ TkTextPrintIndex(indexPtr, string)
 				 * at least TK_POS_CHARS characters. */
 {
 #ifdef STk_CODE
-    sprintf(string, "(%d . %d)", TkBTreeLineIndex(indexPtr->linePtr) + 1,
+   sprintf(string, "(%d . %d)", TkBTreeLineIndex(indexPtr->linePtr) + 1,
+	   indexPtr->charIndex);
 #else
-    sprintf(string, "%d.%d", TkBTreeLineIndex(indexPtr->linePtr) + 1,
-#endif
+# ifdef BGLK_CODE
+    sprintf(string, "(%d %d)", TkBTreeLineIndex(indexPtr->linePtr) + 1,
 	    indexPtr->charIndex);
+# else
+    sprintf(string, "%d.%d", TkBTreeLineIndex(indexPtr->linePtr) + 1,
+	    indexPtr->charIndex);
+# endif
+#endif
 }
 
 /*

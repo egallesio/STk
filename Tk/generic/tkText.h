@@ -609,7 +609,7 @@ typedef struct TkText {
 				 * vertical scrollbar when view changes. */
     int flags;			/* Miscellaneous flags;  see below for
 				 * definitions. */
-#ifdef STk_CODE	 /*eg*/
+#ifdef SCM_CODE	 /*eg*/
     char *imageString;		/* Name of image to display (malloc'ed), or
 				 * NULL.  If non-NULL, bitmap, text, and
 				 * textVarName are ignored. */

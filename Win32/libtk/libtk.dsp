@@ -35,7 +35,7 @@ CPP=cl.exe
 # PROP Intermediate_Dir "Release"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
-# ADD CPP /nologo /W3 /GX /Z7 /Od /I "..\..\Mp\fgmp-1.0b5" /I "..\..\Src" /I "..\..\Tcl" /I "..\..\Tk\xlib" /I "..\..\Tk\generic" /I "..\..\Tk\win" /I "..\..\Tk\bitmaps" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "STk_CODE" /FR /FD /c
+# ADD CPP /nologo /W3 /GX /Z7 /Od /I "..\..\Mp\fgmp-1.0b5" /I "..\..\Src" /I "..\..\Tcl" /I "..\..\Tk\xlib" /I "..\..\Tk\generic" /I "..\..\Tk\win" /I "..\..\Tk\bitmaps" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "STk_CODE" /D "SCM_CODE" /FR /FD /c
 # SUBTRACT CPP /YX
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo

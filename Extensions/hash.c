@@ -2,25 +2,21 @@
  *
  * h a s h  . c			-- Hash Tables 
  *
- * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
- * Permission to use, copy, and/or distribute this software and its
- * documentation for any purpose and without fee is hereby granted, provided
- * that both the above copyright notice and this permission notice appear in
- * all copies and derived works.  Fees for distribution or use of this
- * software or derived works may only be charged with express written
- * permission of the copyright holder.  
- * This software is provided ``as is'' without express or implied warranty.
- *
- * This software is a derivative work of other copyrighted softwares; the
- * copyright notices of these softwares are placed in the file COPYRIGHTS
- *
- * $Id: hash.c 1.4 Mon, 28 Dec 1998 23:05:11 +0100 eg $
+ * Permission to use, copy, modify, distribute,and license this
+ * software and its documentation for any purpose is hereby granted,
+ * provided that existing copyright notices are retained in all
+ * copies and that this notice is included verbatim in any
+ * distributions.  No written agreement, license, or royalty fee is
+ * required for any of the authorized uses.
+ * This software is provided ``AS IS'' without express or implied
+ * warranty.
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 17-Jan-1994 17:49
- * Last file update: 27-Dec-1998 20:19
+ * Last file update:  3-Sep-1999 20:20 (eg)
  */
 
 #include <stk.h>
@@ -99,7 +95,14 @@ unsigned long sxhash(SCM obj)
     case tc_integer:	
     case tc_bignum:	return (unsigned long) STk_integer_value_no_overflow(obj);
     case tc_flonum:	return (unsigned long) FLONM(obj);
-    case tc_symbol:	return HashString(PNAME(obj));
+    case tc_symbol:	/* For some reasons 
+			 *      return (unsigned long) obj; 
+			 * which is correct, yiels worse results than the 
+			 * following code. Perhaps, we have a better 
+			 *repartion by using hashing on the chars. Weird!
+			 */
+      return HASH_WORD(0, (unsigned long) obj);
+      			return HashString(PNAME(obj));
     case tc_keyword:	return HashString(KEYVAL(obj));
     case tc_string:	return HashString(CHARS(obj));
     case tc_vector:	h = 0;
@@ -131,7 +134,7 @@ static SCM find_key(SCM obj, SCM alist, SCM comparison)
 
   for(l=alist; !NULLP(l); l=CDR(l)) {
     tmp = CAR(l);
-    if (STk_apply(comparison, LIST2(obj, CAR(tmp))) != Ntruth) return tmp;
+    if (Apply2(comparison, obj, CAR(tmp)) != Ntruth) return tmp;
   }
   return NULL;
 }
@@ -145,7 +148,7 @@ static SCM remove_key(SCM obj, SCM alist, SCM comparison)
   register SCM l;
 
   for(l=NIL; !NULLP(alist); alist=CDR(alist)) {
-    if (STk_apply(comparison, LIST2(obj, CAR(CAR(alist)))) == Ntruth) 
+    if (Apply2(comparison, obj, CAR(CAR(alist))) == Ntruth) 
       l = Cons(CAR(alist), l);
   }
   return l;
@@ -248,22 +251,22 @@ static PRIMITIVE hash_table_put(SCM ht, SCM key, SCM val)
 {
   Tcl_HashEntry *entry;
   SCM index;
-  int new;
+  int new_entry;
 
   if (!HASHP(ht)) Err("hash-table-put!: bad hash table", ht);
   
   switch (HASH_TYPE(ht)) {
     case hash_eq: 
-      entry = Tcl_CreateHashEntry(HASH_H(ht), (char *) key, &new);
+      entry = Tcl_CreateHashEntry(HASH_H(ht), (char *) key, &new_entry);
       Tcl_SetHashValue(entry, val);
       break;
     case hash_string:
       if (!STRINGP(key)) Err("hash-table-put!: bad string", key);
-      entry = Tcl_CreateHashEntry(HASH_H(ht), CHARS(key), &new);
+      entry = Tcl_CreateHashEntry(HASH_H(ht), CHARS(key), &new_entry);
       Tcl_SetHashValue(entry, val);
       break;
     case hash_comp:
-      index = Apply(HASH_SXHASH(ht), LIST1(key));
+      index = Apply1(HASH_SXHASH(ht), key);
       if ((entry=Tcl_FindHashEntry(HASH_H(ht), (char *) index)) != NULL) {
 	SCM old = (SCM) Tcl_GetHashValue(entry);	/* waz here */
 	SCM tmp = find_key(key, old, HASH_COMP(ht));
@@ -277,7 +280,7 @@ static PRIMITIVE hash_table_put(SCM ht, SCM key, SCM val)
       }
       else {						/* new bucket */
 	SCM tmp =  LIST1(Cons(key, val)); /* place it in tmp to avoid GC problems */
-	entry = Tcl_CreateHashEntry(HASH_H(ht), (char *) index, &new);
+	entry = Tcl_CreateHashEntry(HASH_H(ht), (char *) index, &new_entry);
 	Tcl_SetHashValue(entry, tmp);
       }
       break;
@@ -305,7 +308,7 @@ static PRIMITIVE hash_table_get(SCM ht, SCM key, SCM default_value)
 	return (SCM) Tcl_GetHashValue(entry);
       break;
     case hash_comp:
-      index = Apply(HASH_SXHASH(ht), LIST1(key));
+      index = Apply1(HASH_SXHASH(ht), key);
       if (entry=Tcl_FindHashEntry(HASH_H(ht), (char *) index)) {
 	SCM tmp, val = (SCM) Tcl_GetHashValue(entry);
 
@@ -340,7 +343,7 @@ static PRIMITIVE hash_table_remove(SCM ht, SCM key)
 	Tcl_DeleteHashEntry(entry);
       break;
     case hash_comp:
-      index = Apply(HASH_SXHASH(ht), LIST1(key));
+      index = Apply1(HASH_SXHASH(ht), key);
       if (entry=Tcl_FindHashEntry(HASH_H(ht), (char *) index)) {
 	SCM tmp, val = (SCM) Tcl_GetHashValue(entry);
 	
@@ -371,14 +374,14 @@ static PRIMITIVE hash_table_for_each(SCM ht, SCM proc)
 
     switch (HASH_TYPE(ht)) {
       case hash_eq:
-	Apply(proc, LIST2((SCM) Tcl_GetHashKey(HASH_H(ht), entry),
-			  (SCM) Tcl_GetHashValue(entry)));
+	Apply2(proc, (SCM) Tcl_GetHashKey(HASH_H(ht), entry),
+	             (SCM) Tcl_GetHashValue(entry));
 	break;
       case hash_string:
 	{ 
 	  char *s = Tcl_GetHashKey(HASH_H(ht), entry);
 	
-	  Apply(proc, LIST2(STk_makestring(s), (SCM) Tcl_GetHashValue(entry)));
+	  Apply2(proc, STk_makestring(s), (SCM) Tcl_GetHashValue(entry));
 	}
 	break;
       case hash_comp: 
@@ -386,7 +389,7 @@ static PRIMITIVE hash_table_for_each(SCM ht, SCM proc)
 	  SCM val;  
 	  
 	  for (val=(SCM) Tcl_GetHashValue(entry); !NULLP(val); val = CDR(val))
-	    Apply(proc, LIST2(CAR(CAR(val)), CDR(CAR(val))));
+	    Apply2(proc, CAR(CAR(val)), CDR(CAR(val)));
 	}
     }
   }
@@ -408,16 +411,16 @@ static PRIMITIVE hash_table_map(SCM ht, SCM proc)
     
     switch (HASH_TYPE(ht)) {
       case hash_eq:
-	result = Cons(Apply(proc, LIST2((SCM)Tcl_GetHashKey(HASH_H(ht), entry),
-					(SCM) Tcl_GetHashValue(entry))),
+	result = Cons(Apply2(proc, (SCM)Tcl_GetHashKey(HASH_H(ht), entry),
+			     	   (SCM) Tcl_GetHashValue(entry)),
 		      result);
 	break;
       case hash_string:
 	{ 
 	  char *s = Tcl_GetHashKey(HASH_H(ht), entry);
 	
-	  result = Cons(Apply(proc, LIST2(STk_makestring(s), 
-					  (SCM) Tcl_GetHashValue(entry))),
+	  result = Cons(Apply2(proc, STk_makestring(s), 
+			             (SCM) Tcl_GetHashValue(entry)),
 			result);
 	}
 	break;
@@ -426,7 +429,7 @@ static PRIMITIVE hash_table_map(SCM ht, SCM proc)
 	  SCM val;  
 	  
 	  for (val=(SCM) Tcl_GetHashValue(entry); !NULLP(val); val = CDR(val))
-	    result = Cons(Apply(proc, LIST2(CAR(CAR(val)), CDR(CAR(val)))), 
+	    result = Cons(Apply2(proc, CAR(CAR(val)), CDR(CAR(val))), 
 			  result);
 	}
     }

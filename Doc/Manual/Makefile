@@ -1,16 +1,17 @@
-# Copyright (C) 1993,1994,1995 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+# Copyright © 1994-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 # 
-# Permission to use, copy, and/or distribute this software and its
-# documentation for any purpose and without fee is hereby granted, provided
-# that both the above copyright notice and this permission notice appear in
-# all copies and derived works.  Fees for distribution or use of this
-# software or derived works may only be charged with express written
-# permission of the copyright holder.  
-# This software is provided ``as is'' without express or implied warranty.
+# Permission to use, copy, modify, distribute,and license this
+# software and its documentation for any purpose is hereby granted,
+# provided that existing copyright notices are retained in all
+# copies and that this notice is included verbatim in any
+# distributions.  No written agreement, license, or royalty fee is
+# required for any of the authorized uses.
+# This software is provided ``AS IS'' without express or implied
+# warranty.
 #
 #           Author: Erick Gallesio [eg@unice.fr]
 #    Creation date: 21-Oct-1994 11:25
-# Last file update: 20-Apr-1998 21:43
+# Last file update:  3-Sep-1999 21:19 (eg)
 
 
 include ../../config.make
@@ -64,7 +65,7 @@ install.man:
 #	../../Src/test-stk -no -file make-link $(MANN_DIR)
 
 clean:
-	rm -f *~
+	rm -f *~ man-pages.ps
 
 very-clean: clean
 	rm -f *.ps

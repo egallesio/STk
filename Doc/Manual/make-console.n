@@ -1,0 +1,52 @@
+'\" Color=Green
+'\"
+'\" Copyright © 1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+'\" 
+'\" Permission to use, copy, modify, distribute,and license this
+'\" software and its documentation for any purpose is hereby granted,
+'\" provided that existing copyright notices are retained in all
+'\" copies and that this notice is included verbatim in any
+'\" distributions.  No written agreement, license, or royalty fee is
+'\" required for any of the authorized uses.
+'\" This software is provided ``AS IS'' without express or implied
+'\" warranty.
+'\"
+'\"           Author: Erick Gallesio [eg@unice.fr]
+'\"    Creation date: 19-Jul-1996 15:21
+'\" Last file update:  3-Sep-1999 21:20 (eg)
+'\" 
+'\" 
+.so STk-man.macros
+.TH console n 4.0 STk "Tk Built-In Commands"
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+make-console \- Create a console
+.SH SYNOPSIS
+(\fBmake\-console\fR)
+.br
+(\fBmake\-console\fI  \fB:module\fR \fImodule\fR)
+
+.SH DESCRIPTION
+.PP
+The \fBmake\-console\fR procedure creates a new console in a new
+toplevel window. By default the interaction loop is placed in the
+current module (and changes if the current module is changed). If the
+console is created in a given module, thanks to the \fB:module\fR
+option, it is tied to this module. This second form of console
+creation is particularly useful in debugging phases to set or consult
+variables which are not exported in a module. 
+
+.LP
+.SH INITIALIZATION
+.PP
+Use \fB(require "console")\fR to load the console package.
+
+.LP
+.SH "DEFAULT BINDINGS"
+.PP
+The defaults bindings are identical to the \fBtext\fR bindings except  the 
+up and down arrow of on the prompt line which allow to scan the command history.
+
+.SH SEE ALSO
+text

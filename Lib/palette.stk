@@ -1,15 +1,16 @@
 ;;;;
 ;;;; Palette -- procedures that change the color palette used by Tk
 ;;;;
-;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
-;;;; Permission to use, copy, and/or distribute this software and its
-;;;; documentation for any purpose and without fee is hereby granted, provided
-;;;; that both the above copyright notice and this permission notice appear in
-;;;; all copies and derived works.  Fees for distribution or use of this
-;;;; software or derived works may only be charged with express written
-;;;; permission of the copyright holder.  
-;;;; This software is provided ``as is'' without express or implied warranty.
+;;;; Permission to use, copy, modify, distribute,and license this
+;;;; software and its documentation for any purpose is hereby granted,
+;;;; provided that existing copyright notices are retained in all
+;;;; copies and that this notice is included verbatim in any
+;;;; distributions.  No written agreement, license, or royalty fee is
+;;;; required for any of the authorized uses.
+;;;; This software is provided ``AS IS'' without express or implied
+;;;; warranty.
 ;;;;
 ;;;; This software is a derivative work of other copyrighted softwares; the
 ;;;; copyright notices of these softwares are placed in the file COPYRIGHTS
@@ -17,12 +18,61 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date:  4-Aug-1995 11:24
-;;;; Last file update: 24-Feb-1998 19:49
+;;;; Last file update:  3-Sep-1999 19:53 (eg)
 ;;;;
 
 (require "hash")
 
 (select-module Tk)
+
+
+;=============================================================================
+;
+; Utilities
+;
+;=============================================================================
+
+;;
+;; make-rgb-color
+;;
+(define (make-rgb-color r g b)
+  (let ((hexa (lambda (n) 
+		(string-append (number->string (quotient n 16) 16) 
+			       (number->string (modulo n 16) 16)))))
+    (string-append "#" (hexa (min (inexact->exact r) 255))
+		       (hexa (min (inexact->exact g) 255))
+		       (hexa (min (inexact->exact b) 255)))))
+
+;;
+;; make-lighter-color
+;;
+(define (make-lighter-color color)
+  ;; Make a lighter color: to do this, round each color component
+  ;; up by 15% or 1/3 of the way to full white, whichever is greater.
+  (let ((rgb   (winfo 'rgb *root* color))
+	(light (make-vector 3)))
+    (dotimes (i 3)
+      (let* ((c    (/ (list-ref rgb i) 256))
+	     (inc1 (* c 0.15))
+	     (inc2 (/ (- 255 c) 3)))
+	(set! c (+ c (max inc1 inc2)))
+	(vector-set! light i (min c 255))))
+    (make-rgb-color (vector-ref light 0) 
+		    (vector-ref light 1) 
+		    (vector-ref light 2))))
+
+;;
+;; make-darker-color
+;;
+(define (make-darker-color color)
+  (let ((rgb    (winfo 'rgb *root* color)))
+    (make-rgb-color (/ (* 9 (list-ref rgb 0)) 2560)
+		    (/ (* 9 (list-ref rgb 1)) 2560)
+		    (/ (* 9 (list-ref rgb 2)) 2560))))
+
+
+;=============================================================================
+
 
 ;; Tk:set-palette! --
 ;; Changes the default color scheme for a Tk application by setting
@@ -37,15 +87,7 @@
 
 (define Tk:set-palette!
   (let ((tk::palette #f))
-
-    (define (make-color r g b)
-      (let ((hexa (lambda (n) 
-		    (string-append (number->string (quotient n 16) 16) 
-				   (number->string (modulo n 16) 16)))))
-	(string-append "#" (hexa (min (inexact->exact r) 255))
-		           (hexa (min (inexact->exact g) 255))
-			   (hexa (min (inexact->exact b) 255)))))
-		   
+	   
     (define (Tk:recolor-tree w colors)
       (hash-table-for-each colors 
 			   (lambda (db-opt db-value)
@@ -80,13 +122,12 @@
       (unless (hash-table-get new "foreground" #f)
 	 (hash-table-put! new "foreground" "black"))
 
-      (let* ((back      (hash-table-get new "background"))
-	     (fore      (hash-table-get new "foreground"))
-	     (bg        (winfo 'rgb *root* back))
-	     (fg        (winfo 'rgb *root* fore))
-	     (darker-bg (make-color (/ (* 9 (list-ref bg 0)) 2560)
-				    (/ (* 9 (list-ref bg 1)) 2560)
-				    (/ (* 9 (list-ref bg 2)) 2560))))
+      (let* ((back       (hash-table-get new "background"))
+	     (fore       (hash-table-get new "foreground"))
+	     (bg         (winfo 'rgb *root* back))
+	     (fg         (winfo 'rgb *root* fore))
+	     (lighter-bg (make-lighter-color back))
+	     (darker-bg  (make-darker-color back)))
 	(for-each (lambda (x)
 		    (unless (hash-table-get new x #f)
 		       (hash-table-put! new x fore)))
@@ -96,32 +137,16 @@
 	(unless (hash-table-get new "disabledForeground" #f)
 	   (hash-table-put! new 
 			    "disabledForeground" 
-			    (make-color (+ (* 3 (car   bg)) (/ (car   fg) 1024))
-					(+ (* 3 (cadr  bg)) (/ (cadr  fg) 1024))
-					(+ (* 3 (caddr bg)) (/ (caddr fg) 1024)))))
+			    (make-rgb-color 
+			           (+ (* 3 (car   bg)) (/ (car   fg) 1024))
+				   (+ (* 3 (cadr  bg)) (/ (cadr  fg) 1024))
+				   (+ (* 3 (caddr bg)) (/ (caddr fg) 1024)))))
 
 	(unless (hash-table-get new "highlightBackground" #f)
 	   (hash-table-put! new "highlightBackground" back))
 
-
 	(unless (hash-table-get new "activeBackground" #f)
-	  ;; Pick a default active background that is lighter than the
-	  ;; normal background.  To do this, round each color component
-	  ;; up by 15% or 1/3 of the way to full white, whichever is
-	  ;; greater.
-
-	  (let ((light (make-vector 3)))
-	    (dotimes (i 3)
-	       (let* ((c    (/ (list-ref bg i) 256))
-		      (inc1 (* c 0.15))
-		      (inc2 (/ (- 255 c) 3)))
-		 (set! c (+ c (max inc1 inc2)))
-		 (vector-set! light i (min c 255))))
-	    (hash-table-put! new 
-			     "activeBackground" 
-			     (make-color (vector-ref light 0)
-					 (vector-ref light 1)
-					 (vector-ref light 2)))))
+	  (hash-table-put! new "activeBackground" lighter-bg))
 
 	(unless (hash-table-get new "selectBackground" #f)
 	   (hash-table-put! new "selectBackground" darker-bg))
@@ -205,3 +230,4 @@
 		   '("selectBackground" 	"#e6ceb1")
 		   '("selectForeground" 	"black")
 		   '("troughColor" 		"#cdb79e")))
+(provide "palette")

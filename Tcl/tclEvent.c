@@ -17,6 +17,10 @@
 #include "tclInt.h"
 #include "tclPort.h"
 
+#ifdef BGLK_CODE
+#  define STk_tcl_getvar SCM_tcl_getvar
+#endif
+
 /*
  * The data structure below is used to report background errors.  One
  * such structure is allocated for each error;  it holds information
@@ -79,7 +83,7 @@ static ExitHandler *firstExitPtr = NULL;
 
 char *tclMemDumpFileName = NULL;
 
-#ifndef STk_CODE
+#ifndef SCM_CODE
 /*
  * This variable is set to 1 when Tcl_Exit is called, and at the end of
  * its work, it is reset to 0. The variable is checked by TclInExit() to
@@ -97,7 +101,7 @@ static int tclInExit = 0;
 static void		BgErrorDeleteProc _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp));
 static void		HandleBgErrors _ANSI_ARGS_((ClientData clientData));
-#ifndef STk_CODE
+#ifndef SCM_CODE
 static char *		VwaitVarProc _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, char *name1, char *name2,
 			    int flags));
@@ -148,7 +152,7 @@ Tcl_BackgroundError(interp)
     errPtr->interp = interp;
     errPtr->errorMsg = (char *) ckalloc((unsigned) (strlen(errResult) + 1));
     strcpy(errPtr->errorMsg, errResult);
-#ifdef STk_CODE
+#ifdef SCM_CODE
     varValue = (char *) STk_tcl_getvar("*error-info*", "#f");
 #else
     varValue = Tcl_GetVar(interp, "errorInfo", TCL_GLOBAL_ONLY);
@@ -158,7 +162,7 @@ Tcl_BackgroundError(interp)
     }
     errPtr->errorInfo = (char *) ckalloc((unsigned) (strlen(varValue) + 1));
     strcpy(errPtr->errorInfo, varValue);
-#ifdef STk_CODE
+#ifdef SCM_CODE
     varValue = Tcl_GetVar(interp, "*error-code*", TCL_GLOBAL_ONLY);
 #else
     varValue = Tcl_GetVar(interp, "errorCode", TCL_GLOBAL_ONLY);
@@ -223,7 +227,7 @@ HandleBgErrors(clientData)
     int code;
     BgError *errPtr;
     ErrAssocData *assocPtr = (ErrAssocData *) clientData;
-#ifndef STk_CODE
+#ifndef SCM_CODE
     Tcl_Channel errChannel;
 #endif
 
@@ -240,7 +244,7 @@ HandleBgErrors(clientData)
 	 * the time the error occurred.
 	 */
 
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	Tcl_SetVar(interp, "*error-info*", assocPtr->firstBgPtr->errorInfo,
 		TCL_GLOBAL_ONLY);
 	Tcl_SetVar(interp, "*error-code*", assocPtr->firstBgPtr->errorCode,
@@ -257,8 +261,12 @@ HandleBgErrors(clientData)
 	 */
 
 	argv[0] = "bgerror";
-#ifdef STk_CODE
+#ifdef SCM_CODE
+#  ifdef STk_CODE
 	argv[1] = (char *) STk_stringify(assocPtr->firstBgPtr->errorMsg, 0);
+#  else
+	argv[1] = (char *) SCM_stringify(assocPtr->firstBgPtr->errorMsg, 0);
+#  endif
 #else
 	argv[1] = assocPtr->firstBgPtr->errorMsg;
 #endif
@@ -267,7 +275,7 @@ HandleBgErrors(clientData)
         Tcl_Preserve((ClientData) interp);
 	code = Tcl_GlobalEval(interp, command);
 	ckfree(command);
-#ifndef STk_CODE
+#ifndef SCM_CODE
 	if (code == TCL_ERROR) {
 
             /*
@@ -509,7 +517,7 @@ Tcl_Exit(status)
     int status;			/* Exit status for application;  typically
 				 * 0 for normal return, 1 for error return. */
 {
-#ifndef STk_CODE
+#ifndef SCM_CODE
     Tcl_Finalize();
 #endif
 #ifdef TCL_MEM_DEBUG
@@ -520,7 +528,7 @@ Tcl_Exit(status)
     TclPlatformExit(status);
 }
 
-#ifndef STk_CODE
+#ifndef SCM_CODE
 /*
  *----------------------------------------------------------------------
  *

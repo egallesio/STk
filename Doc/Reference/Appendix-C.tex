@@ -3,7 +3,7 @@
 %
 %           Author: Erick Gallesio [eg@unice.fr]
 %    Creation date: 22-May-1994 22:13
-% Last file update: 22-Apr-1998 11:04
+% Last file update:  5-Jun-1999 14:48
 %
 
 \section{Introduction}
@@ -608,11 +608,11 @@ addition.
 To terminate our implementation (integration?) of  complex numbers, we can 
 redefine standard Scheme predicates in the following manner:
 \begin{scheme}
-(define-method complex? (c <complex>) \schtrue)
-(define-method complex? (c)           \schfalse)
+(define-method complex? ((c <complex>)) \schtrue)
+(define-method complex? (c)             \schfalse)
 
-(define-method number? (n <number>) \schtrue)
-(define-method number? (n)          \schfalse)
+(define-method number? ((n <number>)) \schtrue)
+(define-method number? (n)            \schfalse)
 ...
 ...
 \end{scheme}

@@ -129,7 +129,7 @@ static Tk_ConfigSpec configSpecs[] = {
     {TK_CONFIG_UID, "-arrow", (char *) NULL, (char *) NULL,
 	"none", Tk_Offset(LineItem, arrow), TK_CONFIG_DONT_SET_DEFAULT},
     {TK_CONFIG_CUSTOM, "-arrowshape", (char *) NULL, (char *) NULL,
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	"(8 10 3)", Tk_Offset(LineItem, arrowShapeA),
 #else
 	"8 10 3", Tk_Offset(LineItem, arrowShapeA),
@@ -142,7 +142,7 @@ static Tk_ConfigSpec configSpecs[] = {
     {TK_CONFIG_JOIN_STYLE, "-joinstyle", (char *) NULL, (char *) NULL,
 	"round", Tk_Offset(LineItem, joinStyle), TK_CONFIG_DONT_SET_DEFAULT},
     {TK_CONFIG_BOOLEAN, "-smooth", (char *) NULL, (char *) NULL,
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	"#f", Tk_Offset(LineItem, smooth), TK_CONFIG_DONT_SET_DEFAULT},
 #else
 	"0", Tk_Offset(LineItem, smooth), TK_CONFIG_DONT_SET_DEFAULT},
@@ -1298,7 +1298,7 @@ PrintArrowShape(clientData, tkwin, recordPtr, offset, freeProcPtr)
     char *buffer;
 
     buffer = (char *) ckalloc(120);
-#ifdef STk_CODE
+#ifdef SCM_CODE
     sprintf(buffer, "(%.5g %.5g %.5g)", linePtr->arrowShapeA,
 	    linePtr->arrowShapeB, linePtr->arrowShapeC);
 #else

@@ -2,25 +2,21 @@
  *
  *  s t k l o s . c			-- STklos support
  *
- * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
- * Permission to use, copy, and/or distribute this software and its
- * documentation for any purpose and without fee is hereby granted, provided
- * that both the above copyright notice and this permission notice appear in
- * all copies and derived works.  Fees for distribution or use of this
- * software or derived works may only be charged with express written
- * permission of the copyright holder.  
- * This software is provided ``as is'' without express or implied warranty.
- *
- * This software is a derivative work of other copyrighted softwares; the
- * copyright notices of these softwares are placed in the file COPYRIGHTS
- *
- * $Id: stklos.c 1.17 Mon, 28 Dec 1998 23:05:11 +0100 eg $
+ * Permission to use, copy, modify, distribute,and license this
+ * software and its documentation for any purpose is hereby granted,
+ * provided that existing copyright notices are retained in all
+ * copies and that this notice is included verbatim in any
+ * distributions.  No written agreement, license, or royalty fee is
+ * required for any of the authorized uses.
+ * This software is provided ``AS IS'' without express or implied
+ * warranty.
  *
  *            Author: Erick Gallesio [eg@unice.fr]
  *    Creation date:  9-Feb-1994 15:56
- * Last file update: 20-Dec-1998 10:32 
+ * Last file update:  3-Sep-1999 20:58 (eg)
  */
 
 #ifdef USE_STKLOS
@@ -45,8 +41,8 @@
 				 STk_export_symbol(v, STklos);}
 #define GETVAR(v)		(*(STk_varlookup((v), MOD_ENV(STklos),FALSE)))
 
-#define CALL_GF1(name,a)	(Apply(GETVAR(Intern(name)), LIST1(a)))
-#define CALL_GF2(name,a,b)	(Apply(GETVAR(Intern(name)), LIST2(a, b)))
+#define CALL_GF1(name,a)	(Apply1(GETVAR(Intern(name)), a))
+#define CALL_GF2(name,a,b)	(Apply2(GETVAR(Intern(name)), a, b))
 #define CALL_GF3(name,a,b,c)	(Apply(GETVAR(Intern(name)), LIST3(a, b, c)))
 #define CALL_GF4(name,a,b,c,d)	(Apply(GETVAR(Intern(name)), LIST4(a, b, c, d)))
 
@@ -548,7 +544,7 @@ static void set_slot_value_if_unbound(SCM classe, SCM obj, SCM slot_name, SCM fo
   SCM old_val = get_slot_value(classe, obj, slot_name);
   
   if (old_val == UNBOUND)
-    set_slot_value(classe, obj, slot_name, Apply(form, NIL));
+    set_slot_value(classe, obj, slot_name, Apply0(form));
 }
 
 
@@ -775,6 +771,18 @@ SCM STk_apply_next_method(SCM next, SCM provided_args)
   }
 }
 
+static PRIMITIVE next_method_exists(SCM next)
+{
+  if (NTYPEP(next, tc_next_method))
+    Err("next-method-exists: bad next method'", next);
+  return NULLP(NXT_MTHD_METHODS(next))? Ntruth : Truth;
+}
+
+int STk_methodp(SCM obj)
+{
+  return METHODP(obj);
+}
+
 /******************************************************************************
  * 
  * Protocol for calling a generic fumction
@@ -864,7 +872,8 @@ static SCM sort_applicable_methods(SCM method_list, int size, SCM *targs)
       buffer[i]   = CAR(method_list);
       method_list = CDR(method_list);
     }
-    v = buffer;
+    vector = NIL;		/* for GCC */
+    v      = buffer;
   } 
   else {
     /* Too many elements in method_list to keep everything locally */
@@ -1187,7 +1196,6 @@ static void add_primitive(char *name, int type, void *fct_ptr)
   STk_export_symbol(Intern(name), STklos);
 }
 
-
 /*===========================================================================*/
 
 PRIMITIVE STk_init_STklos(void)
@@ -1238,6 +1246,7 @@ PRIMITIVE STk_init_STklos(void)
   STk_add_new_primitive("%method-more-specific?", tc_subr_3, user_more_specificp);
   STk_add_new_primitive("%fast-slot-ref",         tc_subr_2, fast_slot_ref);
   STk_add_new_primitive("%fast-slot-set!",        tc_subr_3, fast_slot_set);
+  STk_add_new_primitive("%next-method-exists?",   tc_subr_1, next_method_exists);
 
   /* Define classes for already defined extended type */
   define_extended_type_classes();

@@ -255,88 +255,88 @@ Tk_PlaceCmd(clientData, interp, argc, argv)
 	    return TCL_OK;
 	}
 	slavePtr = (Slave *) Tcl_GetHashValue(hPtr);
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	sprintf(buffer, ":x %d", slavePtr->x);
 #else
 	sprintf(buffer, "-x %d", slavePtr->x);
 #endif
 	Tcl_AppendResult(interp, buffer, (char *) NULL);
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	sprintf(buffer, " :relx %.4g", slavePtr->relX);
 #else
 	sprintf(buffer, " -relx %.4g", slavePtr->relX);
 #endif
 	Tcl_AppendResult(interp, buffer, (char *) NULL);
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	sprintf(buffer, " :y %d", slavePtr->y);
 #else
 	sprintf(buffer, " -y %d", slavePtr->y);
 #endif
 	Tcl_AppendResult(interp, buffer, (char *) NULL);
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	sprintf(buffer, " :rely %.4g", slavePtr->relY);
 #else
 	sprintf(buffer, " -rely %.4g", slavePtr->relY);
 #endif
 	Tcl_AppendResult(interp, buffer, (char *) NULL);
 	if (slavePtr->flags & CHILD_WIDTH) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    sprintf(buffer, " :width %d", slavePtr->width);
 #else
 	    sprintf(buffer, " -width %d", slavePtr->width);
 #endif
 	    Tcl_AppendResult(interp, buffer, (char *) NULL);
 	} else {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    Tcl_AppendResult(interp, " :width \"\"", (char *) NULL);
 #else
 	    Tcl_AppendResult(interp, " -width {}", (char *) NULL);
 #endif
 	}
 	if (slavePtr->flags & CHILD_REL_WIDTH) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    sprintf(buffer, " :relwidth %.4g", slavePtr->relWidth);
 #else
 	    sprintf(buffer, " -relwidth %.4g", slavePtr->relWidth);
 #endif
 	    Tcl_AppendResult(interp, buffer, (char *) NULL);
 	} else {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    Tcl_AppendResult(interp, " :relwidth \"\"", (char *) NULL);
 #else
 	    Tcl_AppendResult(interp, " -relwidth {}", (char *) NULL);
 #endif
 	}
 	if (slavePtr->flags & CHILD_HEIGHT) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    sprintf(buffer, " :height %d", slavePtr->height);
 #else
 	    sprintf(buffer, " -height %d", slavePtr->height);
 #endif
 	    Tcl_AppendResult(interp, buffer, (char *) NULL);
 	} else {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    Tcl_AppendResult(interp, " :height \"\"", (char *) NULL);
 #else
 	    Tcl_AppendResult(interp, " -height {}", (char *) NULL);
 #endif
 	}
 	if (slavePtr->flags & CHILD_REL_HEIGHT) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    sprintf(buffer, " :relheight %.4g", slavePtr->relHeight);
 #else
 	    sprintf(buffer, " -relheight %.4g", slavePtr->relHeight);
 #endif
 	    Tcl_AppendResult(interp, buffer, (char *) NULL);
 	} else {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    Tcl_AppendResult(interp, " :relheight \"\"", (char *) NULL);
 #else
 	    Tcl_AppendResult(interp, " -relheight {}", (char *) NULL);
 #endif
 	}
 
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	Tcl_AppendResult(interp, 
 			 " :anchor \"", Tk_NameOfAnchor(slavePtr->anchor), "\"",
 #else
@@ -344,13 +344,13 @@ Tk_PlaceCmd(clientData, interp, argc, argv)
 #endif
 		(char *) NULL);
 	if (slavePtr->borderMode == BM_OUTSIDE) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    Tcl_AppendResult(interp, " :bordermode \"outside\"", (char *) NULL);
 #else
 	    Tcl_AppendResult(interp, " -bordermode outside", (char *) NULL);
 #endif
 	} else if (slavePtr->borderMode == BM_IGNORE) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    Tcl_AppendResult(interp, " :bordermode \"ignore\"", (char *) NULL);
 #else
 	    Tcl_AppendResult(interp, " -bordermode ignore", (char *) NULL);
@@ -358,8 +358,12 @@ Tk_PlaceCmd(clientData, interp, argc, argv)
 	}
 	if ((slavePtr->masterPtr != NULL)
 		&& (slavePtr->masterPtr->tkwin != Tk_Parent(slavePtr->tkwin))) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
+#  ifdef STk_CODE
 	    Tcl_AppendResult(interp, " :in #.",
+#  else
+	    Tcl_AppendResult(interp, " :in ",
+#  endif
 		    Tk_PathName(slavePtr->masterPtr->tkwin), (char *) NULL);
 #else
 	    Tcl_AppendResult(interp, " -in ",
@@ -373,7 +377,7 @@ Tk_PlaceCmd(clientData, interp, argc, argv)
 	    return TCL_ERROR;
 	}
 	hPtr = Tcl_FindHashEntry(&masterTable, (char *) tkwin);
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	Tcl_AppendElement(interp, "(");
 #endif
 	if (hPtr != NULL) {
@@ -383,10 +387,10 @@ Tk_PlaceCmd(clientData, interp, argc, argv)
 		    slavePtr = slavePtr->nextPtr) {
 		Tcl_AppendElement(interp, Tk_PathName(slavePtr->tkwin));
 	    }
-#ifdef STk_CODE
+	}
+#ifdef SCM_CODE
 	Tcl_AppendElement(interp, ")");
 #endif
-	}
     } else {
 	Tcl_AppendResult(interp, "unknown or ambiguous option \"", argv[1],
 		"\": must be configure, forget, info, or slaves",

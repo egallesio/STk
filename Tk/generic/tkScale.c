@@ -23,7 +23,7 @@
 #include "tkPort.h"
 #include "default.h"
 #include "tkInt.h"
-#ifdef STk_CODE
+#ifdef SCM_CODE
 #  include <math.h>
 #else
 #  include "tclMath.h"
@@ -51,7 +51,7 @@ static Tk_ConfigSpec configSpecs[] = {
 	(char *) NULL, 0, 0},
     {TK_CONFIG_PIXELS, "-borderwidth", "borderWidth", "BorderWidth",
 	DEF_SCALE_BORDER_WIDTH, Tk_Offset(TkScale, borderWidth), 0},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_CLOSURE, "-command", "command", "Command",
 #else
     {TK_CONFIG_STRING, "-command", "command", "Command",
@@ -109,7 +109,7 @@ static Tk_ConfigSpec configSpecs[] = {
 	TK_CONFIG_DONT_SET_DEFAULT},
     {TK_CONFIG_UID, "-state", "state", "State",
 	DEF_SCALE_STATE, Tk_Offset(TkScale, state), 0},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_CLOSURE, "-takefocus", "takeFocus", "TakeFocus",
 #else
     {TK_CONFIG_STRING, "-takefocus", "takeFocus", "TakeFocus",
@@ -280,6 +280,10 @@ Tk_ScaleCmd(clientData, interp, argc, argv)
 	goto error;
     }
 
+#ifdef SCM_CODE
+    scalePtr->oldRoundValue = scalePtr->fromValue;
+#endif
+
 #ifdef STk_CODE
     STk_sharp_dot_result(interp, Tk_PathName(scalePtr->tkwin));
 #else
@@ -413,7 +417,7 @@ ScaleWidgetCmd(clientData, interp, argc, argv)
 	}
 	thing = TkpScaleElement(scalePtr, x,y);
 	switch (thing) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    case TROUGH1:	interp->result = "\"trough1\"";	break;
 	    case SLIDER:	interp->result = "\"slider\"";	break;
 	    case TROUGH2:	interp->result = "\"trough2\"";	break;
@@ -560,12 +564,20 @@ ConfigureScale(interp, scalePtr, argc, argv, flags)
 #ifdef STk_CODE
 	stringValue = STk_tcl_getvar(scalePtr->varName, scalePtr->env);
 #else
+#  ifdef BGLK_CODE
+	stringValue = SCM_tcl_getvar(scalePtr->varName, 0);
+#  else
 	stringValue = Tcl_GetVar(interp, scalePtr->varName, TCL_GLOBAL_ONLY);
+#  endif
 #endif
 	if (stringValue != NULL) {
 	    value = strtod(stringValue, &end);
 	    if ((end != stringValue) && (*end == 0)) {
+#ifdef SCM_CODE
+		scalePtr->value = TkRoundToValueResolution(scalePtr, value);
+#else
 		scalePtr->value = TkRoundToResolution(scalePtr, value);
+#endif
 	    }
 	}
 	Tcl_TraceVar(interp, scalePtr->varName,
@@ -1093,6 +1105,53 @@ TkRoundToResolution(scalePtr, value)
     }
     return new;
 }
+#ifdef SCM_CODE
+
+/*
+ *--------------------------------------------------------------
+ *
+ * TkRoundToValueResolution --
+ *
+ *	Round a given floating-point value to the nearest multiple
+ *	of the scale's resolution.
+ *
+ * Results:
+ *	The return value is the rounded result.
+ *
+ * Side effects:
+ *	None.
+ *
+ *--------------------------------------------------------------
+ */
+
+double
+TkRoundToValueResolution(scalePtr, value)
+    TkScale *scalePtr;		/* Information about scale widget. */
+    double value;		/* Value to round. */
+{
+    double rem, new;
+
+    if( fabs(scalePtr->oldRoundValue - value) <= (scalePtr->resolution/2) )
+       return scalePtr->oldRoundValue;
+    
+    if (scalePtr->resolution <= 0) {
+	return value;
+    }
+    new = scalePtr->resolution * floor(value/scalePtr->resolution);
+    rem = value - new;
+    if (rem < 0) {
+	if (rem <= -scalePtr->resolution/2) {
+	    new -= scalePtr->resolution;
+	}
+    } else {
+	if (rem >= scalePtr->resolution/2) {
+	    new += scalePtr->resolution;
+	}
+    }
+    scalePtr->oldRoundValue = new;
+    return new;
+}
+#endif
 
 /*
  *----------------------------------------------------------------------
@@ -1155,14 +1214,22 @@ ScaleVarProc(clientData, interp, name1, name2, flags)
 #ifdef STk_CODE
     stringValue = STk_tcl_getvar(scalePtr->varName, scalePtr->env);
 #else
+# ifdef BGLK_CODE
+    stringValue = SCM_tcl_getvar(scalePtr->varName, 0);
+# else
     stringValue = Tcl_GetVar(interp, scalePtr->varName, TCL_GLOBAL_ONLY);
+# endif
 #endif
     if (stringValue != NULL) {
 	value = strtod(stringValue, &end);
 	if ((end == stringValue) || (*end != 0)) {
 	    result = "can't assign non-numeric value to scale variable";
 	} else {
+#ifdef SCM_CODE
+	    scalePtr->value = TkRoundToValueResolution(scalePtr, value);
+#else
 	    scalePtr->value = TkRoundToResolution(scalePtr, value);
+#endif
 	}
 
 	/*

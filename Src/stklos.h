@@ -2,24 +2,21 @@
  *
  *  s t k l o s . h			-- STklos support
  *
- * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
- * Permission to use, copy, and/or distribute this software and its
- * documentation for any purpose and without fee is hereby granted, provded
- * that both the above copyright notice and this permission notice appear in
- * all copies and derived works.  Fees for distribution or use of this
- * software or derived works may only be charged with express written
- * permission of the copyright holder.  
- * This software is provided ``as is'' without express or implied warranty.
- *
- * This software is a derivative work of other copyrighted softwares; the
- * copyright notices of these softwares are placed in the file COPYRIGHTS
- *
+ * Permission to use, copy, modify, distribute,and license this
+ * software and its documentation for any purpose is hereby granted,
+ * provided that existing copyright notices are retained in all
+ * copies and that this notice is included verbatim in any
+ * distributions.  No written agreement, license, or royalty fee is
+ * required for any of the authorized uses.
+ * This software is provided ``AS IS'' without express or implied
+ * warranty.
  *
  *            Author: Erick Gallesio [eg@unice.fr]
  *    Creation date:  9-Feb-1994 15:56
- * Last file update: 16-Jan-1998 22:05 
+ * Last file update:  3-Sep-1999 20:58 (eg)
  */
 
 #define STKLOS_VERSION	STK_VERSION /* Keep STklos version in sync with STk now */
@@ -96,4 +93,5 @@ PRIMITIVE STk_class_of(SCM obj);
 SCM STk_compute_applicable_methods(SCM gf, SCM args, int len, int find_method);
 SCM STk_apply_user_generic(SCM gf, SCM args);
 SCM STk_apply_next_method(SCM next, SCM provided_args);
+int STk_methodp(SCM obj);
 

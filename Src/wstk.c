@@ -2,27 +2,37 @@
  *
  * w s t k . c
  *
- * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
- * Permission to use, copy, and/or distribute this software and its
- * documentation for any purpose and without fee is hereby granted, provided
- * that both the above copyright notice and this permission notice appear in
- * all copies and derived works.  Fees for distribution or use of this
- * software or derived works may only be charged with express written
- * permission of the copyright holder.  
- * This software is provided ``as is'' without express or implied warranty.
- *
- * This software is a derivative work of other copyrighted softwares; the
- * copyright notices of these softwares are placed in the file COPYRIGHTS
+ * Permission to use, copy, modify, distribute,and license this
+ * software and its documentation for any purpose is hereby granted,
+ * provided that existing copyright notices are retained in all
+ * copies and that this notice is included verbatim in any
+ * distributions.  No written agreement, license, or royalty fee is
+ * required for any of the authorized uses.
+ * This software is provided ``AS IS'' without express or implied
+ * warranty.
  *
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 12-May-1993 10:34
- * Last file update: 10-Oct-1998 12:30
+ * Last file update:  3-Sep-1999 21:03 (eg)
+ *
+ * Modification for Win32 DLL support by Steve Pruitt <steve@pruitt.net>
+ *  - Defined IMPORT_DLL_GLOBALS instead of STK_MAIN
+ *  - Conditionally remove TclWinGetTclInstance() and tclInstance.
+ *    These are defined in dllmain within tclWin32Dll.c
  *
  ******************************************************************************/
-#define STK_MAIN
+
+/* Import DLL globals from library */ 
+#if (defined(USE_DYNLOAD) && defined(MSC_VER) && !defined(CYGWIN32))
+  #define IMPORT_DLL_GLOBALS
+#else
+  #define STK_MAIN
+#endif
+
 
 #ifndef CYGWIN32
 #  include <dos.h>
@@ -153,6 +163,7 @@ setargv(argcPtr, argvPtr)
 }
 
 
+#if (!defined(USE_DYNLOAD) || defined(CYGWIN32))
 /*=============================================================================*/
 static HINSTANCE tclInstance;
 
@@ -160,6 +171,7 @@ HINSTANCE TclWinGetTclInstance()
 {
     return tclInstance;
 }
+#endif
 
 /*=============================================================================*/
 
@@ -173,7 +185,9 @@ int APIENTRY WinMain(HINSTANCE hInstance,
   int argc;
   char buffer[MAX_PATH_LENGTH];
 
+#if (!defined(USE_DYNLOAD) || defined(CYGWIN32))
   tclInstance = hInstance;
+#endif
 
   /*
    * Set up the default locale to be standard "C" locale so parsing

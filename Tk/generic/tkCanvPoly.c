@@ -58,7 +58,7 @@ static Tk_ConfigSpec configSpecs[] = {
     {TK_CONFIG_COLOR, "-outline", (char *) NULL, (char *) NULL,
 	(char *) NULL, Tk_Offset(PolygonItem, outlineColor), TK_CONFIG_NULL_OK},
     {TK_CONFIG_BOOLEAN, "-smooth", (char *) NULL, (char *) NULL,
-#ifdef STk_CODE
+#ifdef SCM_CODE
        "#f", Tk_Offset(PolygonItem, smooth), TK_CONFIG_DONT_SET_DEFAULT},
 #else
 	"0", Tk_Offset(PolygonItem, smooth), TK_CONFIG_DONT_SET_DEFAULT},

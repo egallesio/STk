@@ -1,13 +1,14 @@
 ;;;;
-;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
-;;;; Permission to use, copy, and/or distribute this software and its
-;;;; documentation for any purpose and without fee is hereby granted, provided
-;;;; that both the above copyright notice and this permission notice appear in
-;;;; all copies and derived works.  Fees for distribution or use of this
-;;;; software or derived works may only be charged with express written
-;;;; permission of the copyright holder.  
-;;;; This software is provided ``as is'' without express or implied warranty.
+;;;; Permission to use, copy, modify, distribute,and license this
+;;;; software and its documentation for any purpose is hereby granted,
+;;;; provided that existing copyright notices are retained in all
+;;;; copies and that this notice is included verbatim in any
+;;;; distributions.  No written agreement, license, or royalty fee is
+;;;; required for any of the authorized uses.
+;;;; This software is provided ``AS IS'' without express or implied
+;;;; warranty.
 ;;;;
 ;;;; This software is a derivative work of other copyrighted softwares; the
 ;;;; copyright notices of these softwares are placed in the file COPYRIGHTS
@@ -15,7 +16,7 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 17-May-1993 12:35
-;;;; Last file update: 27-Sep-1998 12:14
+;;;; Last file update:  3-Sep-1999 19:53 (eg)
 ;;;;
 
 (select-module Tk)
@@ -140,13 +141,13 @@
     (unless (string=? m "NotifyUngrab")
       (when (eqv? (os-kind) 'Unix)
 	(Tk:menu-set-focus |W|))))
-  (Tk:menu-motion |W| x y s))
+  (Tk:menu-motion |W| x y s #f))
 
 (define-binding "Menu" "<Leave>" (|W| |X| |Y|)
   (Tk:menu-leave |W| |X| |Y|))
 
 (define-binding "Menu" "<Motion>" (|W| x y s)
-  (Tk:menu-motion |W| x y s))
+  (Tk:menu-motion |W| x y s #t))
 
 (define-binding "Menu" "<ButtonPress>" (|W|)
   (Tk:menu-button-down |W|))
@@ -334,7 +335,7 @@
 	(when tearoff
 	  (focus menu)
 	  (Tk:save-grab-info w)
-	  (grab w))))))			;; Tcl/Tk grab is :global here.
+	  (grab :global w))))))
 
 
 ;; Tk:menu-unpost --
@@ -444,7 +445,7 @@
 ;;
 (define (Tk:menu-button-button-up w)
   (let ((tearoff (or (eqv? (os-kind) 'Unix) 
-		     (string=? (tk-get (tk-get w menu) :type) "tearoff"))))
+		     (string=? (tk-get (tk-get w :menu) :type) "tearoff"))))
 
     (if (and tearoff (equal? tk::posted-mb w) (equal? tk::in-menu-button w))
 	(Tk:menu-first-entry (tk-get tk::posted-mb :menu))
@@ -463,8 +464,9 @@
 ;; x -			The x position of the mouse.
 ;; y -			The y position of the mouse.
 ;; state -		Modifier state (tells whether buttons are down).
+;; motion - 		If false then originated from an <Enter>
 
-(define (Tk:menu-motion menu x y state)
+(define (Tk:menu-motion menu x y state motion)
   (if (equal? menu tk::window)
       (if (string=? (tk-get menu :type) "menubar")
 	  (unless (equal? tk::focus menu)
@@ -475,7 +477,8 @@
 	    (event 'generate menu "<<MenuSelect>>"))))
 
   ;; We want to test if state & 0x1f00
-  (unless (=  (modulo (quotient state #x100) #x100) 0)
+  (when (and motion
+	     (not (= (modulo (quotient state #x100) #x100) 0)))
     (menu 'postcascade 'active)))
 
 ;; Tk:menu-button-down --
@@ -494,7 +497,7 @@
 (define (Tk:menu-button-down menu)
   (menu 'postcascade 'active)
   (if tk::posted-mb 
-      (grab tk::posted-mb)		;; Tcl/Tk use :global here
+      (grab :global tk::posted-mb)
       (begin
 	(while (and (not (string=? (tk-get menu :type) "menubar"))
 		    (wm 'overrideredirect menu)
@@ -517,7 +520,7 @@
 	; Must re-grab even if the grab window hasn't changed, in order
 	; to release the implicit grab from the button press.
 	(when (equal? (os-kind) 'Unix)
-	  (grab menu)))))		;; Tcl/Tk use a :global here
+	  (grab :global menu)))))
 
 ;; Tk:menu-leave --
 ;; This procedure is invoked to handle Leave events for a menu.  It
@@ -557,7 +560,7 @@
 			(w 'activate 'none)
 			(event 'generate w "<<MenuSelect>>")
 			(Tk:menu-unpost w))
-     ((equal? (w 'type 'active) "cascade")
+     ((and tk::menubar (equal? (w 'type 'active) "cascade"))
 			(w 'postcascade 'active)
 			(Tk:menu-first-entry (w 'entrycget 'active :menu)))
      ((equal? (w 'type 'active) "tearoff")
@@ -568,8 +571,10 @@
 			(w 'activate 'none)
 			(event 'generate w "<<MenuSelect>>")
 			(Tk:menu-unpost w))
-     (else		(Tk:menu-unpost w)
-			(w 'invoke 'active))))
+     (else 		(Tk:menu-unpost w)
+			(w 'invoke 'active)))
+  ;; This is a last minute addition before 4.0 It doesn't seem to hurt.
+  (grab 'release w))
 
 
 ;; Tk:menu-escape --
@@ -585,7 +590,7 @@
 	    (begin
 	      (Tk:menu-unpost menu)
 	      (Tk:restore-old-grab))
-	    (Tk:next-menu menu 'left)))))
+	    (Tk:menu-next-menu menu 'left)))))
 
 ;; The following routines handle arrow keys. Arrow keys behave
 ;; differently depending on whether the menu is a menu bar or not.
@@ -672,7 +677,7 @@
 			 (not (equal? ((tk-get mb :menu) 'index 'last) "none")))
 		    (eq? mb tk::posted-mb))
 		;; found a menu to post
-		(begin 
+		(begin
 		  (Tk:menu-button-post mb)
 		  (Tk:menu-first-entry (tk-get mb :menu)))
 		;; no menu, search another one, if possible
@@ -736,7 +741,6 @@
 (define (Tk:menu-find w char)
   (let ((char        (string-lower char))
 	(window-list (winfo 'child w)))
-    ; FIXME: (DEBUG " Tk:menu-find (à debugger) ~S ~S" w char)
     (call/cc
      (lambda (exit)
        (for-each (lambda (child)
@@ -746,7 +750,7 @@
 			   (exit child)
 			   (let ((last (child 'index 'last)))
 			     (dotimes (i (+ last 1))
-			       (let* ((index (child 'entrycget i :under))
+			       (let* ((index (child 'entrycget i :underline))
 				      (txt   (child 'entrycget i :label))
 				      (char2 (if (= index -1)
 						 "" 
@@ -776,6 +780,7 @@
        (exit "")))))
 
 ;; Tk:traverse-to-menu --
+;;
 ;; This procedure implements keyboard traversal of menus.  Given an
 ;; ASCII character "char", it looks for a menubutton with that character
 ;; underlined.  If one is found, it posts the menubutton's menu
@@ -800,13 +805,13 @@
       
       (when continue
 	(let ((w (Tk:menu-find (winfo 'toplevel w) char)))
-	  (unless (string=? w "")
+	  (unless (equal? w "")
 	    (if (string=? (winfo 'class w) "Menu")
 		(begin
-		  (Tk-menu-set-focus w)
+		  (Tk:menu-set-focus w)
 		  (set! tk::window w)
 		  (Tk:save-grab-info w)
-		  (grab w)		;; in Tcl/Tk grab was :global 
+		  (grab :global w)
 		  (Tk:traverse-within-menu w char))
 		(begin
 		  (Tk:menu-button-post w)
@@ -821,13 +826,13 @@
 
 (define (Tk:first-menu w)
   (let ((w (Tk:menu-find (winfo 'toplevel w) "")))
-    (unless (string=? w "")
+    (unless (equal? w "")
       (if (string=? (winfo 'class w) "Menu")
 	  (begin
 	    (Tk:menu-set-focus w)
 	    (set! tk::window w)
 	    (Tk:save-grab-info w)
-	    (grab w)			;; in Tcl/Tk grab was :global 
+	    (grab :global w)
 	    (Tk:menu-first-entry w))
 	  (begin   
 	    (Tk:menu-button-post w)
@@ -995,9 +1000,10 @@
 
   (when (equal? (os-kind) 'Unix)
     (Tk:save-grab-info menu)
-    (grab menu)			;; In Tcl/Tk, grab was :global
+    (grab :global menu)
     (set! tk::popup menu)
     (Tk:menu-set-focus menu)))
+
 
 
 ;; Tk:tear-off-menu  --

@@ -16,7 +16,7 @@
 
 #include <stdio.h>
 #ifdef NO_STDLIB_H
-#  ifdef STk_CODE
+#  ifdef SCM_CODE
 #     include "compat/stdlib.h"
 #  else
 #     include "../compat/stdlib.h"

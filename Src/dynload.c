@@ -6,22 +6,24 @@
  * Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
- * Permission to use, copy, and/or distribute this software and its
- * documentation for any purpose and without fee is hereby granted, provided
- * that both the above copyright notice and this permission notice appear in
- * all copies and derived works.  Fees for distribution or use of this
- * software or derived works may only be charged with express written
- * permission of the copyright holder.  
- * This software is provided ``as is'' without express or implied warranty.
- *
- * This software is a derivative work of other copyrighted softwares; the
- * copyright notices of these softwares are placed in the file COPYRIGHTS
- *
- * $Id: dynload.c 1.10 Mon, 01 Feb 1999 15:18:22 +0100 eg $
+ * Permission to use, copy, modify, distribute,and license this
+ * software and its documentation for any purpose is hereby granted,
+ * provided that existing copyright notices are retained in all
+ * copies and that this notice is included verbatim in any
+ * distributions.  No written agreement, license, or royalty fee is
+ * required for any of the authorized uses.
+ * This software is provided ``AS IS'' without express or implied
+ * warranty.
  * 
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 23-Jan-1994 19:09
- * Last file update: 22-Jan-1999 16:34
+ * Last file update:  3-Sep-1999 20:19 (eg)
+ *
+ * Win32 DLL support by Steve Pruitt <steve@pruitt.net>
+ *
+ * 	- Added load_and_call functions for dynload for Win32 DLL support
+ * 	- Added check for *shared-prefix* in load_object_file
+ *
  */
 
 /* Support for HPUX is due to Dipankar Gupta <dg@hplb.hpl.hp.com> */
@@ -76,12 +78,99 @@
 
 /*----------------------------------------------------------------------------*/
 
-#include "stk.h"
+#if (defined(WIN32) && !defined(CYGWIN32) && defined(MSC_VER))
+ #include <windows.h>
+ #include "stk.h"
+ #include "tclInt.h"
+ #include "tclPort.h"
+#else
+ #include "stk.h"
+ #ifdef USE_DYNLOAD
+  #include <libstack.h>
+ #endif
+#endif
+
 
 #ifdef USE_DYNLOAD
-#include <libstack.h>
-
 static SCM cache_files = NULL;
+
+#if (defined(WIN32) && !defined(CYGWIN32) && defined(MSC_VER))
+
+#include <libstack-Win32.h>
+
+#define dlerror() "error unknown" 
+
+#define MAKE_STAT_PTR(p) (STk_make_Cpointer(ANONYMOUS_STAT_PTR_ID, (p), TRUE))
+#define MAKE_DYN_PTR(p)  (STk_make_Cpointer(ANONYMOUS_DYN_PTR_ID,  (p), FALSE))
+
+HINSTANCE TclWinLoadLibrary(char *path);
+
+HINSTANCE tclInstance;
+
+static void initialize_dynload(void)
+{
+  void *handle;
+  
+  handle = (void *) TclWinGetTclInstance();
+  cache_files = LIST2(STk_makestring(""), MAKE_STAT_PTR(handle));
+  STk_gc_protect(&cache_files);
+}
+
+
+static void *find_function(char *path, char *fname, int error_if_absent)
+{
+  void *handle, *fct;
+  SCM l, str = STk_makestring(path);
+
+  ENTER_SCM("dynload");
+
+  if (cache_files == NULL) initialize_dynload();
+
+  if ((l = STk_member(str, cache_files)) != Ntruth) {
+    /* This file has already been loaded. Find its handle */
+    handle = EXTDATA(CAR(CDR(l)));
+  }
+  else {
+    /* Dynamically load the file and enter its handle in cache */
+    if ((handle = (void *) TclWinLoadLibrary(path)) == NULL)
+      fprintf(stderr, "find_function: cannot open object file : %s", dlerror());
+    cache_files = Cons(str, Cons(MAKE_STAT_PTR(handle), cache_files));
+  }
+  
+  if ((fct = (void *) GetProcAddress(handle, fname)) == NULL && error_if_absent) {
+    char msg[MAX_PATH_LENGTH];
+    
+    sprintf(msg, "cannot find symbol ``%s'' in object file", fname);
+    Serror(msg, str);
+  }
+  
+  return fct;
+}
+
+
+static void load_and_call(char *path, char *fct_name)
+{
+  void (*init_fct)();
+  SCM str = STk_makestring(path);
+
+  ENTER_SCM("dynload");
+
+  /* Test if fct_name is already defined in the core interpreter */
+  tclInstance = TclWinGetTclInstance();
+  if ((init_fct = (void (*)()) GetProcAddress(tclInstance, fct_name)) != NULL)
+    Serror("module is already (statically) loaded", str);
+
+  if (cache_files == NULL) initialize_dynload();
+  if (STk_member(str, cache_files) != Ntruth) {
+    Serror("module is already (dynamically) loaded", str);
+  }
+  
+  init_fct = find_function(path, fct_name, TRUE);
+  (*init_fct)();
+}
+
+#endif /* MSC_VER WIN32 */
+
 
 #if defined(SUNOS4) || defined(SUNOS5) || defined(NETBSD1) || defined(FREEBSD) || defined(IRIX5) || defined(OSF1) ||defined(LINUX_ELF)
 
@@ -271,7 +360,7 @@ void STk_load_object_file(char *path)
   for (p = path, slash = p-1; *p; p++)		/* Find position of last '/' */
     if (*p == '/') slash = p;
 
-#if defined(NETBSD1) || defined(FREEBSD)
+#if defined(NETBSD1)
   sprintf(fct_name, "_STk_init_%s", slash + 1);
 #else
   sprintf(fct_name, "STk_init_%s", slash + 1);
@@ -291,20 +380,21 @@ void STk_load_object_file(char *path)
 
 static void initialize_dynload(void)
 {
-  /* FIXME: */
-  Err("dynload: cannot initialize dynload.", STk_makestring(dlerror())); /* CYGWIN32 */
+  /* CYGWIN32 */
+  Err("dynload: cannot initialize dynload.", STk_makestring(dlerror())); 
 }
 
 
 static void load_and_call(char *path, char *fct_name)
 {
-  /* FIXME */
-  Err("load-and-call: not yet implemented\n", NIL); /* CYGWIN32 */
+  /* CYGWIN32 */
+  Err("load-and-call: not yet implemented\n", NIL);
 }
 
 static void *find_function(char *path, char *fname, int error_if_absent)
 {
-  Err("find-function: not yet implemented\n", NIL); /* CYGWIN32 */
+  /* CYGWIN32 */
+  Err("find-function: not yet implemented\n", NIL);
   return NULL;
 }
 
@@ -362,6 +452,8 @@ static void push_argument(char *proc_name, SCM value, SCM name, int type)
     		       break;
 		     }
   		     goto Error;
+    case EXT_BOOLEAN:res = push_int(value == STk_ntruth ? 0 : 1);
+  		     break;
     case EXT_INT:    if (INTP(value)) {
                        res = push_int((int) STk_integer2long(value));
     		       break;
@@ -401,16 +493,18 @@ static void push_argument(char *proc_name, SCM value, SCM name, int type)
     case EXT_DYN_PTR: if (CPOINTERP(value)) {
       			res = push_ptr(EXTDATA(value));
 			break;
-    		      }
-		      if (STRINGP(value)) {
+    		      } else if (STRINGP(value)) {
 			res = push_string(CHARS(value));
 			break;
-    		      }
+    		      } else if (value == Ntruth) {
+			res = push_ptr(NULL);
+			break;
+		      }
 		      goto Error;
   }
   /* Verify that the value has been properly pushed */
   if (res == -1) {
-    Serror("too much values pushed on the stack", NIL);
+    Serror("too many values pushed on the stack", NIL);
   }
   return;
 Error: 
@@ -561,7 +655,7 @@ PRIMITIVE STk_cstring2string(SCM pointer)
 
 #else
 /* Unknown architecture: no FFI */
-static *msg = "FFI support for this architecture does not exist yet. Sorry!";
+static char *msg = "FFI support for this architecture does not exist yet. Sorry!";
 
 PRIMITIVE STk_call_external(SCM l, int len)
 {
@@ -585,7 +679,7 @@ PRIMITIVE STk_cstring2string(SCM pointer)
 
 
 #else /* not DYNLOAD */
-static *msg = "FFI support for this architecture does not exist yet. Sorry!";
+static char *msg = "FFI support for this architecture does not exist yet. Sorry!";
 
 void STk_load_object_file(char *path)
 {

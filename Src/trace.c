@@ -2,6 +2,19 @@
  *
  * t r a c e . c 				-- Variable Tracing
  * 
+ * Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * 
+ *
+ * Permission to use, copy, modify, distribute,and license this
+ * software and its documentation for any purpose is hereby granted,
+ * provided that existing copyright notices are retained in all
+ * copies and that this notice is included verbatim in any
+ * distributions.  No written agreement, license, or royalty fee is
+ * required for any of the authorized uses.
+ * This software is provided ``AS IS'' without express or implied
+ * warranty.
+ *
+ *
  * Variable tracing is important in Tk since some widgets intensively use this
  * mechanism. For instance, a check-button has a variable associated to it.
  * When the button is clicked, the variable is set and when the variable is 
@@ -18,24 +31,10 @@
  * Note:
  *    - Implementation use Tcl hash tables to see if a variable is traced.
  *
- * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
- * 
- *
- * Permission to use, copy, and/or distribute this software and its
- * documentation for any purpose and without fee is hereby granted, provided
- * that both the above copyright notice and this permission notice appear in
- * all copies and derived works.  Fees for distribution or use of this
- * software or derived works may only be charged with express written
- * permission of the copyright holder.  
- * This software is provided ``as is'' without express or implied warranty.
- *
- * This software is a derivative work of other copyrighted softwares; the
- * copyright notices of these softwares are placed in the file COPYRIGHTS
- *
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 24-Feb-1993 13:07
- * Last file update: 19-Dec-1998 16:24
+ * Last file update:  3-Sep-1999 21:02 (eg)
  *
  */
 
@@ -122,6 +121,7 @@ static void UntraceVar(SCM var, int flags, Tcl_VarTraceProc *proc,
 	prev->nextPtr = p->nextPtr;
       ckfree(p);
     }
+    var->cell_info &= (short) ~CELL_INFO_TRACED_VAR;
   }
 }
 
@@ -133,7 +133,7 @@ static char *TraceVarFct(ClientData clientData, Tcl_Interp *interp,
    * ClientData is the only field which of interest here. It contains the
    * thunk to call
    */
-  STk_apply((SCM) clientData, NIL);
+  Apply0((SCM) clientData);
 
   return NULL; /* to make the compiler happy */
 }

@@ -25,6 +25,14 @@
 #define DInfo TkDInfo
 #endif
 
+#ifdef BGLK_CODE
+#  define STk_stringify_result	SCM_stringify_result
+#  define STk_stringify		SCM_stringify
+#  define STk_tcl_setvar	SCM_tcl_setvar
+#  define STk_tcl_getvar	SCM_tcl_getvar
+#endif
+
+
 #include "tkText.h"
 
 /*
@@ -116,7 +124,7 @@ static Tk_ConfigSpec configSpecs[] = {
 	DEF_TEXT_STATE, Tk_Offset(TkText, state), 0},
     {TK_CONFIG_STRING, "-tabs", "tabs", "Tabs",
 	DEF_TEXT_TABS, Tk_Offset(TkText, tabOptionString), TK_CONFIG_NULL_OK},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_CLOSURE, "-takefocus", "takeFocus", "TakeFocus",
 #else
     {TK_CONFIG_STRING, "-takefocus", "takeFocus", "TakeFocus",
@@ -127,14 +135,14 @@ static Tk_ConfigSpec configSpecs[] = {
 	DEF_TEXT_WIDTH, Tk_Offset(TkText, width), 0},
     {TK_CONFIG_UID, "-wrap", "wrap", "Wrap",
 	DEF_TEXT_WRAP, Tk_Offset(TkText, wrapMode), 0},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_CLOSURE, "-xscrollcommand", "xScrollCommand", "ScrollCommand",
 #else
     {TK_CONFIG_STRING, "-xscrollcommand", "xScrollCommand", "ScrollCommand",
 #endif
 	DEF_TEXT_XSCROLL_COMMAND, Tk_Offset(TkText, xScrollCmd),
 	TK_CONFIG_NULL_OK},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_CLOSURE, "-yscrollcommand", "yScrollCommand", "ScrollCommand",
 #else
     {TK_CONFIG_STRING, "-yscrollcommand", "yScrollCommand", "ScrollCommand",
@@ -475,7 +483,7 @@ TextWidgetCmd(clientData, interp, argc, argv)
 	} else {
 	    goto compareError;
 	}
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	interp->result = (value) ? "#t" : "#f";
 #else
 	interp->result = (value) ? "1" : "0";
@@ -501,7 +509,7 @@ TextWidgetCmd(clientData, interp, argc, argv)
 	    goto done;
 	}
 	if (argc == 2) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    interp->result = (tkBTreeDebug) ? "#t" : "#f";
 #else
 	    interp->result = (tkBTreeDebug) ? "1" : "0";
@@ -564,7 +572,7 @@ TextWidgetCmd(clientData, interp, argc, argv)
 	    goto done;
 	}
 	if (TkTextIndexCmp(&index1, &index2) >= 0) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    interp->result = "\"\"";
 #endif
 	    goto done;
@@ -595,7 +603,7 @@ TextWidgetCmd(clientData, interp, argc, argv)
 	    }
 	    TkTextIndexForwChars(&index1, last-offset, &index1);
 	}
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	STk_stringify_result(interp, interp->result);
 #endif
     } else if ((c == 'i') && (strncmp(argv[1], "index", length) == 0)
@@ -1589,7 +1597,7 @@ TextSearchCmd(textPtr, interp, argc, argv)
     int code, matchLength, matchChar, passes, stopLine, searchWholeText;
     int patLength;
     char *arg, *pattern, *varName, *p, *startOfLine;
-#ifdef STk_CODE
+#ifdef SCM_CODE
     char *env;
 #endif
     char buffer[20];
@@ -1608,7 +1616,7 @@ TextSearchCmd(textPtr, interp, argc, argv)
     backwards = 0;
     noCase = 0;
     varName = NULL;
-#ifdef STk_CODE
+#ifdef SCM_CODE
     env = "";
 #endif
     for (i = 2; i < argc; i++) {
@@ -1620,7 +1628,7 @@ TextSearchCmd(textPtr, interp, argc, argv)
 	if (length < 2) {
 	    badSwitch:
 	    Tcl_AppendResult(interp, "bad switch \"", arg,
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		    "\": must be :forward, :backward, :exact, :regexp, ",
 		    ":nocase, :count, or ::", (char *) NULL);
 #else
@@ -1634,7 +1642,7 @@ TextSearchCmd(textPtr, interp, argc, argv)
 	    backwards = 1;
 	} else if ((c == 'c') && (strncmp(argv[i], "-count", length) == 0)) {
 	    if (i >= (argc-1)) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		interp->result = "no value given for \":count\" option";
 #else
 		interp->result = "no value given for \"-count\" option";
@@ -1910,7 +1918,7 @@ TextSearchCmd(textPtr, interp, argc, argv)
 	    }
 	    if (varName != NULL) {
 		sprintf(buffer, "%d", matchLength);
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		if (STk_tcl_setvar(varName, buffer, 0, env) == NULL) {
 #else
 		if (Tcl_SetVar(interp, varName, buffer, TCL_LEAVE_ERR_MSG)
@@ -1951,7 +1959,7 @@ TextSearchCmd(textPtr, interp, argc, argv)
 	Tcl_DStringSetLength(&line, 0);
     }
     done:
-#ifdef STk_CODE
+#ifdef SCM_CODE
     if (*interp->result == '\0') {
       /* No match ==> return #f */
       interp->result = "#f";
@@ -2136,7 +2144,7 @@ TextDumpCmd(textPtr, interp, argc, argv)
 	} else if (strncmp("-command", argv[arg], len) == 0) {
 	    arg++;
 	    if (arg >= argc) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		Tcl_AppendResult(interp, "Usage: ", argv[0], " dump ?:all :image :text :mark :tag :window? ?:command script? index ?index2?", NULL);
 #else
 		Tcl_AppendResult(interp, "Usage: ", argv[0], " dump ?-all -image -text -mark -tag -window? ?-command script? index ?index2?", NULL);
@@ -2145,7 +2153,7 @@ TextDumpCmd(textPtr, interp, argc, argv)
 	    }
 	    command = argv[arg];
 	} else {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    Tcl_AppendResult(interp, "Usage: ", argv[0], " dump ?:all :image :text :mark :tag :window? ?:command script? index ?index2?", NULL);
 #else
 	    Tcl_AppendResult(interp, "Usage: ", argv[0], " dump ?-all -image -text -mark -tag -window? ?-command script? index ?index2?", NULL);
@@ -2154,7 +2162,7 @@ TextDumpCmd(textPtr, interp, argc, argv)
 	}
     }
     if (arg >= argc) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	Tcl_AppendResult(interp, "Usage: ", argv[0], " dump ?:all :image :text :mark :tag :window? ?:command script? index ?index2?", NULL);
 #else
 	Tcl_AppendResult(interp, "Usage: ", argv[0], " dump ?-all -image -text -mark -tag -window? ?-command script? index ?index2?", NULL);
@@ -2320,7 +2328,7 @@ DumpSegment(interp, key, value, command, lineno, offset, what)
     int offset;			/* Character position */
     int what;			/* Look for TK_DUMP_INDEX bit */
 {
-#ifdef STk_CODE
+#ifdef SCM_CODE
     char buffer[50], *s;
     sprintf(buffer, "(%d . %d)", lineno, offset);
     if (command == (char *) NULL) {

@@ -1,29 +1,26 @@
 ;;;;
 ;;;; u n i x  . s t k			-- Some unix stuff
 ;;;;
-;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
-;;;; Permission to use, copy, and/or distribute this software and its
-;;;; documentation for any purpose and without fee is hereby granted, provided
-;;;; that both the above copyright notice and this permission notice appear in
-;;;; all copies and derived works.  Fees for distribution or use of this
-;;;; software or derived works may only be charged with express written
-;;;; permission of the copyright holder.  
-;;;; This software is provided ``as is'' without express or implied warranty.
+;;;; Permission to use, copy, modify, distribute,and license this
+;;;; software and its documentation for any purpose is hereby granted,
+;;;; provided that existing copyright notices are retained in all
+;;;; copies and that this notice is included verbatim in any
+;;;; distributions.  No written agreement, license, or royalty fee is
+;;;; required for any of the authorized uses.
+;;;; This software is provided ``AS IS'' without express or implied
+;;;; warranty.
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;    Creation date: 29-Mar-1994 17:36
-;;;; Last file update:  7-Nov-1995 10:51
+;;;; Last file update:  3-Sep-1999 19:55 (eg)
 ;;;;
 
 ;;;; This file implements
 ;;;;	(basename f)		
 ;;;;    (dirname f)
-;;;;	(decompose-file-name f)		return f expoded in a list
-;;;;	(file-is-directory?  f)
-;;;;	(file-is-regular?    f)
-;;;;	(file-is-readable?   f)
-;;;;	(file-is-writable?   f)
+;;;;	(decompose-file-name f)		return f exploded in a list
 
 
 (define basename 	    '())
@@ -31,30 +28,31 @@
 (define decompose-file-name '())
 
 
-(let ()
+(let* ((slash (if (eqv? (os-kind) 'Unix) #\/ #\\))
+       (sslash (string slash)))
   (define (delete-trailing-slashes s)
     (let ((pos (- (string-length s) 1)))
-      (while (and (>= pos 0) (char=? (string-ref s pos) #\/)) 
+      (while (and (>= pos 0) (char=? (string-ref s pos) slash)) 
 	     (set! pos (- pos 1)))
       (if (= pos -1)
-	  "/"
+	  sslash
 	  (substring s 0 (+ pos 1)))))
 
   (define (decompose name)
-    (if (equal? name "/")
-	(cons "/" "")
+    (if (equal? name sslash)
+	(cons sslash "")
 	(begin
 	  (let* ((f    (delete-trailing-slashes name))
 	    	 (len  (string-length f))
 		 (pos  (- len 1)))		 
 	    
 	    ;; find last slash
-	    (while (and (>= pos 0) (not (char=? (string-ref f pos) #\/)))
+	    (while (and (>= pos 0) (not (char=? (string-ref f pos) slash)))
 		   (set! pos (- pos 1)))
 
 	    (case pos
 	      (-1   (cons "." (substring f 0 len)))
-	      (0    (cons "/" (substring f 1 len)))
+	      (0    (cons sslash (substring f 1 len)))
 	      (else (cons (delete-trailing-slashes (substring f 0 pos))
 			  (substring f (+ pos 1) len))))))))
 
@@ -63,7 +61,7 @@
   (set! dirname  	    (lambda (file) (car (decompose file))))
   (set! decompose-file-name (lambda (file) 
 			      (letrec ((decomp (lambda (file res)
-						 (if (or (equal? file "/")
+						 (if (or (equal? file sslash)
 							 (equal? file "."))
 						     (cons file res)
 						     (let ((r (decompose file)))
@@ -71,5 +69,27 @@
 							       (cons (cdr r)
 								      res)))))))
 				(decomp file '())))))
+
+
+#|
+
+This is another version which uses regexp. decompose-file-name is more 
+consistent than the above version (but could yiel compatibility problems)
+
+(require "regexp")
+
+(define (decompose-file-name str)
+  (cons (if (and (> (string-length str) 0) 
+		 (char=? (string-ref str 0) #\/))
+	    "/"
+	    ".")
+	(split-string str "/")))
+
+(define (dirname str)
+  (regexp-replace "^(.*)/(.+)$" str "\\1"))
+
+(define (basename str)
+  (regexp-replace "^(.*)/(.*)$" str "\\2"))
+|#
 
 (provide "unix")

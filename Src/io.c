@@ -1,25 +1,21 @@
 /*
  * i o . c					-- Low level I/O
  * 
- * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
- * Permission to use, copy, and/or distribute this software and its
- * documentation for any purpose and without fee is hereby granted, provided
- * that both the above copyright notice and this permission notice appear in
- * all copies and derived works.  Fees for distribution or use of this
- * software or derived works may only be charged with express written
- * permission of the copyright holder.	
- * This software is provided ``as is'' without express or implied warranty.
- *
- * This software is a derivative work of other copyrighted softwares; the
- * copyright notices of these softwares are placed in the file COPYRIGHTS
- * 
- * $Id: io.c 1.11 Sat, 26 Dec 1998 21:34:30 +0100 eg $
+ * Permission to use, copy, modify, distribute,and license this
+ * software and its documentation for any purpose is hereby granted,
+ * provided that existing copyright notices are retained in all
+ * copies and that this notice is included verbatim in any
+ * distributions.  No written agreement, license, or royalty fee is
+ * required for any of the authorized uses.
+ * This software is provided ``AS IS'' without express or implied
+ * warranty.
  *
  *	     Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: ????
- * Last file update: 26-Dec-1998 21:21
+ * Last file update:  3-Sep-1999 20:20 (eg)
  */
 
 #ifdef WIN32
@@ -93,6 +89,7 @@ void STk_StdinProc()
 {
   buffer = static_buffer;
   for ( ; ; ) {
+    errno = 0;
     SYSTEM(count = read(fileno(PORT_FILE(STk_stdin)), buffer, BUFFER_SIZE););
     if (count != -1 || errno != EINTR) break;
   }
@@ -160,6 +157,7 @@ int STk_getc(SCM port)
   /* Otherwise */
   switch (TYPE(port)) {
     case tc_iport : for ( ; ; ) {
+ 		      errno = 0; /* OSF does not set errno to 0 before a read ! */
 		      SYSTEM(result=getc(PORT_FILE(port)));
 		      if (result != EOF || errno != EINTR) break;
 		    }
@@ -171,16 +169,26 @@ int STk_getc(SCM port)
 		      return (--(f->cnt)>=0? ((int)*f->ptr++): EOF);
 		    }
     case tc_ivport: {
-		      register struct virtual_iob *f;
-		      SCM res, proc;
+      		      register struct virtual_iob *f;
+		      SCM proc_eof, proc_getc, res;
 
-		      f = (struct virtual_iob *) PORT_FILE(port);
-		      proc = f->getc;
-		      if (proc == Ntruth) /* No getc function: return EOF */
+		      f    = (struct virtual_iob *) PORT_FILE(port);
+
+		      proc_eof  = f->eofp;
+		      proc_getc = f->getc;
+
+		      if (proc_eof == Ntruth || proc_getc == Ntruth) {
+			/* No eof or getc_procedure => always EOF */
 			return EOF;
-		      else {
-			res = STk_apply(proc, NIL);
+		      } 
+
+		      if (Apply1(proc_eof, port) == Ntruth) {
+			/* Not eof */
+			res = Apply1(proc_getc, port);
 			return (res == STk_eof_object) ? EOF:  CHAR(res);
+		      } else {
+			/* eof procedure says we have an eof */
+			return EOF;
 		      }
 		    }
     default:        Err("INTERNAL ERROR in STk_getc", NIL); 
@@ -229,7 +237,7 @@ int STk_putc(int c, SCM port)
 		      if (proc == Ntruth) /* No putc function: return EOF */
 			return EOF;
 		      else {
-			res = STk_apply(proc, LIST1(STk_makechar(c)));
+			res = Apply2(proc, STk_makechar(c), port);
 			if (res == STk_eof_object) Serror("write error", NIL);
 		      }
     		    }
@@ -276,7 +284,7 @@ int STk_puts(char *s, SCM port)
 		      if (proc == Ntruth) /* No putc function: return EOF */
 			return EOF;
 		      else {
-			res = STk_apply(proc, LIST1(STk_makestring(s)));
+			res = Apply2(proc, STk_makestring(s), port);
 			if (res ==STk_eof_object) Serror("write error", NIL);
 		      }
 		    }
@@ -305,7 +313,7 @@ int STk_eof(SCM port)
 
 		      f    = (struct virtual_iob *) PORT_FILE(port);
 		      proc = f->eofp;
-		      return (proc == Ntruth) ? 1 : (STk_apply(proc, NIL)!=Ntruth);
+		      return (proc == Ntruth) ? 1 : (Apply1(proc, port) != Ntruth);
 		    }
     default:        return 1; /* always EOF on output files */
   }
@@ -325,7 +333,7 @@ int STk_internal_flush(SCM port)
 
 		      f    = (struct virtual_iob *) PORT_FILE(port);
 		      proc = f->flush;
-		      return (proc == Ntruth) ? 0 : (STk_apply(proc, NIL)!=Ntruth);
+		      return (proc == Ntruth) ? 0 : (Apply1(proc, port) != Ntruth);
 		    }
     default:        return 0; /* i.e. always works on other ports */
   }
@@ -371,7 +379,7 @@ int STk_internal_char_readyp(SCM port)
 
 		      f    = (struct virtual_iob *) PORT_FILE(port);
 		      proc = f->readyp;
-		      return (proc == Ntruth) ? 1 : (STk_apply(proc, NIL)!=Ntruth);
+		      return (proc == Ntruth) ? 1 : (Apply1(proc, port) != Ntruth);
 		    }
     default:        return 1; /* always EOF on output files */
   }
@@ -395,7 +403,7 @@ void STk_close(SCM port)
 
 		      f    = (struct virtual_iob *) PORT_FILE(port);
 		      proc = f->close;
-		      if (proc != Ntruth) STk_apply(proc, NIL);
+		      if (proc != Ntruth) Apply1(proc, port);
     		    }
   }
   PORT_FLAGS(port) |= PORT_CLOSED;

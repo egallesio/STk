@@ -16,6 +16,11 @@
 #include "tkPort.h"
 #include "tkInt.h"
 
+#ifdef BGLk_CODE
+#  define STk_add_callback SCM_add_callback
+#endif
+
+
 /*
  * File structure:
  *
@@ -905,6 +910,21 @@ Tk_DeleteBindingTable(bindingTable)
  *--------------------------------------------------------------
  */
 
+#ifdef SCM_CODE
+unsigned long
+Tk_CreateBinding(interp, bindingTable, object, eventString, command, key1, key3)
+    Tcl_Interp *interp;		/* Used for error reporting. */
+    Tk_BindingTable bindingTable;
+				/* Table in which to create binding. */
+    ClientData object;		/* Token for object with which binding is
+				 * associated. */
+    char *eventString;		/* String describing event sequence that
+				 * triggers binding. */
+    char *command;		/* Contains Tcl command to execute when
+				 * binding triggers. */
+    char *key1;                 /* Widget's name */
+    char *key3;                 /* Inset ID */
+#else
 unsigned long
 Tk_CreateBinding(interp, bindingTable, object, eventString, command, append)
     Tcl_Interp *interp;		/* Used for error reporting. */
@@ -922,20 +942,27 @@ Tk_CreateBinding(interp, bindingTable, object, eventString, command, append)
 				 * callback function and not a Tcl command
 				 * string, the existing binding will always be
 				 * replaced. */
+#endif
 {
     BindingTable *bindPtr = (BindingTable *) bindingTable;
     PatSeq *psPtr;
     unsigned long eventMask;
     char *new, *old;
-#ifdef STk_CODE
+#ifdef SCM_CODE
     SCM p;
 
+# ifdef STk_CODE
     if (!STk_valid_callback(command, &p) || (p == NULL)) {
+# else
+    if (!SCM_valid_callback(command, &p) || (p == NULL)) {
+# endif
        BadSpec:	
          Tcl_AppendResult(interp, "bad closure specification \"",
 			           command, "\"", (char *) NULL);
 	 return TCL_ERROR;
     }
+#endif
+#ifdef STk_CODE
     if (p != NULL) {
       /* 
        * Modify the binding to tranform it in a call with parameters set.
@@ -980,10 +1007,13 @@ Tk_CreateBinding(interp, bindingTable, object, eventString, command, append)
 	    (*psPtr->freeProc)(psPtr->clientData);
 	}
 	psPtr->clientData = NULL;
+#ifndef SCM_CODE
 	append = 0;
+#endif
     }
 
     old = (char *) psPtr->clientData;
+#ifndef SCM_CODE
     if ((append != 0) && (old != NULL)) {
 	int length;
 
@@ -991,17 +1021,21 @@ Tk_CreateBinding(interp, bindingTable, object, eventString, command, append)
 	new = (char *) ckalloc((unsigned) length);
 	sprintf(new, "%s\n%s", old, command);
     } else {
+#endif
 	new = (char *) ckalloc((unsigned) strlen(command) + 1);
 	strcpy(new, command);
+#ifndef SCM_CODE
     }
+#endif
     if (old != NULL) {
 	ckfree(old);
     }
     psPtr->eventProc = EvalTclBinding;
     psPtr->freeProc = FreeTclBinding;
     psPtr->clientData = (ClientData) new;
-#ifdef STk_CODE
-     if (eventMask) STk_add_callback(new, "", "", p);
+#ifdef SCM_CODE
+    if( p )
+       if (eventMask) STk_add_callback(key1, eventString, key3, p);
 #endif
     return eventMask;
 }
@@ -1227,7 +1261,7 @@ Tk_GetBinding(interp, bindingTable, object, eventString)
     if (psPtr->eventProc == EvalTclBinding) {
       	return (char *) psPtr->clientData;
     }
-#ifdef STk_CODE
+#ifdef SCM_CODE
     return "#f";
 #else
     return "";
@@ -1273,7 +1307,7 @@ Tk_GetAllBindings(interp, bindingTable, object)
 	return;
     }
     Tcl_DStringInit(&ds);
-#ifdef STk_CODE
+#ifdef SCM_CODE
     Tcl_AppendResult(interp, "(", NULL);
 #endif
     for (psPtr = (PatSeq *) Tcl_GetHashValue(hPtr); psPtr != NULL;
@@ -1287,7 +1321,7 @@ Tk_GetAllBindings(interp, bindingTable, object)
 	GetPatternString(psPtr, &ds);
 	Tcl_AppendElement(interp, Tcl_DStringValue(&ds));
     }
-#ifdef STk_CODE
+#ifdef SCM_CODE
     Tcl_AppendResult(interp, ")", NULL);
 #endif
     Tcl_DStringFree(&ds);
@@ -2235,7 +2269,7 @@ ExpandPercents(winPtr, before, eventPtr, keySym, dsPtr)
     Tcl_DString *dsPtr;		/* Dynamic string in which to append new
 				 * command. */
 {
-#ifdef STk_CODE
+#ifdef SCM_CODE
     int number, flags;
 #else
     int spaceNeeded, cvtFlags;	/* Used to substitute string as proper Tcl
@@ -2252,7 +2286,7 @@ ExpandPercents(winPtr, before, eventPtr, keySym, dsPtr)
     } else {
 	flags = 0;
     }
-#ifdef STk_CODE
+#ifdef SCM_CODE
     /* 
      * Binding is something like "(#p123abc x y)" or "(#p123abc)"
      * Skip the function "name"
@@ -2267,7 +2301,7 @@ ExpandPercents(winPtr, before, eventPtr, keySym, dsPtr)
 #endif
 
     while (1) {
-#ifndef STk_CODE
+#ifndef SCM_CODE
 	/*
 	 * Find everything up to the next % character and append it
 	 * to the result string.
@@ -2292,7 +2326,7 @@ ExpandPercents(winPtr, before, eventPtr, keySym, dsPtr)
 
 	number = 0;
 	string = "??";
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	switch (before[0]) {
 #else
 	switch (before[1]) {
@@ -2323,7 +2357,7 @@ ExpandPercents(winPtr, before, eventPtr, keySym, dsPtr)
 		}
 		goto doString;
 	    case 'f':
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	        string = (eventPtr->xcrossing.focus) ? "#t" : "#f";
 	        goto doSymbol;
 #else
@@ -2358,7 +2392,7 @@ ExpandPercents(winPtr, before, eventPtr, keySym, dsPtr)
 		} else if (flags & CONFIG) {
 		    number = eventPtr->xconfigure.override_redirect;
 		}
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		string = number ? "#t" : "#f";
 		goto doSymbol;
 #else
@@ -2496,13 +2530,17 @@ ExpandPercents(winPtr, before, eventPtr, keySym, dsPtr)
 			eventPtr->xany.window);
 		if (tkwin != NULL) {
 		    string = Tk_PathName(tkwin);
+#ifdef BGLK_CODE
+		    string = SCM_procedure_to_tk_string(
+		               tcl_lookup_command( Tk_PathName(tkwin) ) );
+#endif
 #ifdef STk_CODE
 		    if (string[1] == '\0') string = "*root*";
 #endif
 		} else {
 		    string = "??";
 		}
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		goto doSymbol;
 #else
 		goto doString;
@@ -2537,7 +2575,7 @@ ExpandPercents(winPtr, before, eventPtr, keySym, dsPtr)
 		goto doNumber;
 	    }
 	    default:
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	        /* Just append the current character in the result string */
 		Tcl_DStringAppend(dsPtr, before, 1);
 		before += 1;
@@ -2549,7 +2587,7 @@ ExpandPercents(winPtr, before, eventPtr, keySym, dsPtr)
 		goto doString;
 #endif
 	}
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	doSymbol:
 	{
 	  Tcl_DStringAppend(dsPtr, string, -1);
@@ -2560,9 +2598,15 @@ ExpandPercents(winPtr, before, eventPtr, keySym, dsPtr)
 	{
 	  char *s;
 
+#  ifdef STk_CODE
 	  s = STk_stringify(string, 0);
+#  else
+	  s = SCM_stringify(string, 0);
+#  endif
 	  Tcl_DStringAppend(dsPtr, s, -1);
-	  free(s);
+#  ifndef BGLK_CODE
+	  ckfree(s);
+#  endif
 	  before += 1;
 	  continue;
 	}
@@ -2572,6 +2616,12 @@ ExpandPercents(winPtr, before, eventPtr, keySym, dsPtr)
 	  Tcl_DStringAppend(dsPtr, numStorage, -1);
 	  before += 1;
 	}
+	/* skip the characters after the first character of the 
+	 * variable name (i.e. only the fisrt character is significant 
+	 * This is not pretty but we cannot do much here since this 
+	 * is void function.
+	 */
+	while (*before && *before != ' ' && *before !=')') before++;	  
 #else
 	doNumber:
 	sprintf(numStorage, "%d", number);
@@ -2618,12 +2668,14 @@ ChangeScreen(interp, dispName, screenIndex)
     char *dispName;			/* Name of new display. */
     int screenIndex;			/* Index of new screen. */
 {
-#ifdef STk_CODE
+#ifdef SCM_CODE
+# ifdef STk_CODE
     char command[200];
     int code;
 
     sprintf(command, "(Tk-screen-changed \"%s.%d\")", dispName, screenIndex);
     code = Tcl_GlobalEval(interp, command);
+# endif
 #else
     Tcl_DString cmd;
     int code;
@@ -2637,11 +2689,14 @@ ChangeScreen(interp, dispName, screenIndex)
 
     code = Tcl_GlobalEval(interp, Tcl_DStringValue(&cmd));
 #endif
+
+#ifndef BGLK_CODE
     if (code != TCL_OK) {
 	Tcl_AddErrorInfo(interp,
 		"\n    (changing screen in event binding)");
 	Tcl_BackgroundError(interp);
     }
+#endif
 }
 
 
@@ -3178,13 +3233,13 @@ GetAllVirtualEvents(interp, vetPtr)
     hPtr = Tcl_FirstHashEntry(&vetPtr->nameTable, &search);
     for ( ; hPtr != NULL; hPtr = Tcl_NextHashEntry(&search)) {
 	Tcl_DStringSetLength(&ds, 0);	
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	Tcl_DStringAppend(&ds, "\"<<", 3);
 #else
 	Tcl_DStringAppend(&ds, "<<", 2);
 #endif
 	Tcl_DStringAppend(&ds, Tcl_GetHashKey(hPtr->tablePtr, hPtr), -1);
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	Tcl_DStringAppend(&ds, ">>\"", 3);
 #else
 	Tcl_DStringAppend(&ds, ">>", 2);
@@ -4250,13 +4305,13 @@ GetPatternString(psPtr, dsPtr)
 	 */
 
 	if (patPtr->eventType == VirtualEvent) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    Tcl_DStringAppend(dsPtr, "\"<<", 3);
 #else
 	    Tcl_DStringAppend(dsPtr, "<<", 2);
 #endif
 	    Tcl_DStringAppend(dsPtr, patPtr->detail.name, -1);
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    Tcl_DStringAppend(dsPtr, ">>\"", 3);
 #else
 	    Tcl_DStringAppend(dsPtr, ">>", 2);
@@ -4270,7 +4325,7 @@ GetPatternString(psPtr, dsPtr)
 	 * then keysym or button detail.
 	 */
 
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	Tcl_DStringAppend(dsPtr, "\"<", 2);
 #else
 	Tcl_DStringAppend(dsPtr, "<", 1);
@@ -4321,7 +4376,7 @@ GetPatternString(psPtr, dsPtr)
 		Tcl_DStringAppend(dsPtr, buffer, -1);
 	    }
 	}
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	Tcl_DStringAppend(dsPtr, ">\"", 2);
 #else
 	Tcl_DStringAppend(dsPtr, ">", 1);
@@ -4565,8 +4620,12 @@ static void
 FreeTclBinding(clientData)
     ClientData clientData;
 {
-#ifdef STk_CODE
+#ifdef SCM_CODE
+#  ifdef STk_CODE
     STk_delete_callback((char*) clientData);
+#  else
+    SCM_delete_callback((char*) clientData);
+#  endif
 #endif
     ckfree((char *) clientData);
 }
@@ -4669,6 +4728,9 @@ TkCopyAndGlobalEval(interp, script)
 					 * script. */
     char *script;			/* Script to evaluate. */
 {
+#ifdef BGLK_CODE
+   return Tcl_GlobalEval(interp, script);
+#else   
     Tcl_DString buffer;
     int code;
 
@@ -4677,4 +4739,5 @@ TkCopyAndGlobalEval(interp, script)
     code = Tcl_GlobalEval(interp, Tcl_DStringValue(&buffer));
     Tcl_DStringFree(&buffer);
     return code;
+#endif
 }

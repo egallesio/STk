@@ -46,7 +46,7 @@ static Tk_CustomOption tagsOption = {Tk_CanvasTagsParseProc,
 static Tk_ConfigSpec configSpecs[] = {
     {TK_CONFIG_ANCHOR, "-anchor", (char *) NULL, (char *) NULL,
 	"center", Tk_Offset(ImageItem, anchor), TK_CONFIG_DONT_SET_DEFAULT},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_IMAGE, "-image", (char *) NULL, (char *) NULL,
 #else
     {TK_CONFIG_STRING, "-image", (char *) NULL, (char *) NULL,

@@ -3,19 +3,18 @@
 ;;;;
 ;;;; Copyright © 1998-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
-;;;; Permission to use, copy, and/or distribute this software and its
-;;;; documentation for any purpose and without fee is hereby granted, provided
-;;;; that both the above copyright notice and this permission notice appear in
-;;;; all copies and derived works.  Fees for distribution or use of this
-;;;; software or derived works may only be charged with express written
-;;;; permission of the copyright holder.  
-;;;; This software is provided ``as is'' without express or implied warranty.
-;;;;
-;;;; $Id: balloon.stk 1.2 Tue, 02 Feb 1999 09:04:21 +0100 eg $
+;;;; Permission to use, copy, modify, distribute,and license this
+;;;; software and its documentation for any purpose is hereby granted,
+;;;; provided that existing copyright notices are retained in all
+;;;; copies and that this notice is included verbatim in any
+;;;; distributions.  No written agreement, license, or royalty fee is
+;;;; required for any of the authorized uses.
+;;;; This software is provided ``AS IS'' without express or implied
+;;;; warranty.
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 11-Dec-1998 18:00
-;;;; Last file update: 22-Jan-1999 12:00
+;;;; Last file update:  3-Sep-1999 19:48 (eg)
 
 (select-module Tk)
 (export add-balloon-help activate-balloons deactivate-balloons find-balloon-help)
@@ -85,17 +84,30 @@
       (set! *balloon-handler*
 	    (after delay
 		   (lambda ()
-		     (let* ((height (winfo 'height w))
-			    (pos-y  (winfo 'rooty  w)))
-		       (*balloon-label* 'conf :text txt :bg bg)
-		       ;; place the balloon just outside the widget
-		       (wm 'geometry *balloon-top* 
-			   (format #f "+~A+~A" 
-				   (winfo 'pointerx w) (+ pos-y height 2)))
-		       ;; Deiconify
-		       (wm 'deiconify *balloon-top*)
-		       (raise *balloon-top*))))))))
-  
+		     (when (winfo 'exists w)
+		       (let* ((height (winfo 'height w))
+			      (pos-y  (winfo 'rooty  w)))
+			 (*balloon-label* 'conf :text txt :bg bg)
+			 ;; place the balloon just outside the widget
+			 (wm 'geometry *balloon-top* 
+			     (format #f "+~A+~A" 
+				     (winfo 'pointerx w) (+ pos-y height 2)))
+			 ;; required for windows, otherwise it appears at top left
+			 (update)
+			 ;; Deiconify
+			 (wm 'deiconify *balloon-top*)
+			 (raise *balloon-top*)
+			 (eventually-delete-ballon-help w)))))))))
+
+(define (eventually-delete-ballon-help w)
+  ;; Delete the ballon if the window to which the balloon is assocaited does not
+  ;; Exist anymore.
+  (if (winfo 'exists w)
+      (set! *balloon-handler*
+	    (after 800 (lambda () (eventually-delete-ballon-help w))))
+      (delete-balloon-help w)))
+
+
 (define (delete-balloon-help w)
   (wm 'withdraw *balloon-top*)
   (after 'cancel  *balloon-handler*))

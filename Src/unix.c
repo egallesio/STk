@@ -5,22 +5,18 @@
  * Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
- * Permission to use, copy, and/or distribute this software and its
- * documentation for any purpose and without fee is hereby granted, provided
- * that both the above copyright notice and this permission notice appear in
- * all copies and derived works.  Fees for distribution or use of this
- * software or derived works may only be charged with express written
- * permission of the copyright holder.  
- * This software is provided ``as is'' without express or implied warranty.
- *
- * This software is a derivative work of other copyrighted softwares; the
- * copyright notices of these softwares are placed in the file COPYRIGHTS
- *
- * $Id: unix.c 1.9 Fri, 22 Jan 1999 14:44:12 +0100 eg $
+ * Permission to use, copy, modify, distribute,and license this
+ * software and its documentation for any purpose is hereby granted,
+ * provided that existing copyright notices are retained in all
+ * copies and that this notice is included verbatim in any
+ * distributions.  No written agreement, license, or royalty fee is
+ * required for any of the authorized uses.
+ * This software is provided ``AS IS'' without express or implied
+ * warranty.
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 29-Mar-1994 10:57
- * Last file update: 15-Jan-1999 09:55
+ * Last file update:  3-Sep-1999 21:02 (eg)
  */
 #ifndef WIN32
 #  include <unistd.h>
@@ -89,22 +85,28 @@ static char *my_getcwd(char *path, int size)
 
 static char *tilde_expand(char *name, char *result)
 {
-#ifndef WIN32
-   char *dir, *p;
-
   if (name[0] != '~') {
     strcpy(result, name);
     return name;
   }
-
+  
+#ifdef WIN32
+  if ((name[1] == '/') || (name[1] == '\\') || (name[1] == '\0')) {
+#else
   if ((name[1] == '/') || (name[1] == '\0')) {
-    dir = getenv("HOME");
-    if (dir == NULL)
-      Err("couldn't find HOME environment for expanding ", STk_makestring(name));
+#endif
+    char *dir = getenv("HOME");
     
+    if (dir == NULL)
+      Err("couldn't find HOME in environment when expanding", STk_makestring(name));
+
     sprintf(result, "%s%s", dir, name+1);
   } 
   else {
+#ifdef WIN32
+    Err("Form '~user' not allowed on Win32", STk_makestring(name));
+#else
+    char *p;
     struct passwd *pwPtr;
     register int len;
     for (p=&name[1]; (*p != 0) && (*p != '/'); p++) {
@@ -121,12 +123,9 @@ static char *tilde_expand(char *name, char *result)
     }
     sprintf(result, "%s%s", pwPtr->pw_dir, p);
     endpwent();
+#endif
   }
   return result;
-#else
-  strcpy(result, name);
-  return name;
-#endif
 }
 
 /*
@@ -135,17 +134,22 @@ static char *tilde_expand(char *name, char *result)
  */
 static void absolute(char *s, char *pathname)	
 {
-// FIXME !!!!!  Quick hack to have a running version asap.
-#ifndef WIN32
   char *p = pathname;
   char *t;
 
   if (!ISABSOLUTE(s)) {
     getcwd(pathname, MAX_PATH_LENGTH);
     p = &pathname[strlen(pathname)];     /* place p at end of pathname */ 
+#ifdef WIN32 
+    *p = DIRSEP;
+#endif
   }
+#ifdef WIN32
+  else *p = *s++;
+#else
   *p = DIRSEP;
-
+#endif
+  
   for ( ; *s; s++) {
     t = s;
     switch (*s) {
@@ -189,8 +193,11 @@ static void absolute(char *s, char *pathname)
   /* Place a \0 at end. If path ends with a "/", delete it */
   if (p == pathname || !ISDIRSEP(*p)) p++;
   *p = '\0';
-#else
-  strcpy(pathname, s);
+
+#ifdef WIN32
+  /* Replace all "/" by "\" */
+  for (p = pathname; *p; p++) 
+    if (*p == '/') *p = '\\';
 #endif
 }
 
@@ -389,7 +396,7 @@ static SCM fileglob(char *dir, char *rem, SCM result)
     handle = FindFirstFile(Tcl_DStringValue(&msvcname), &wfd);
     if (handle == INVALID_HANDLE_VALUE) {
       Tcl_DStringFree(&msvcname);
-      Err("Cannot find files, error = ", STk_makestring(GetLastError()));
+      Err("Cannot find files, error = ", STk_makestring((char *) GetLastError()));
     }
    
     savedChar = *p;
@@ -575,7 +582,11 @@ PRIMITIVE STk_expand_file_name(SCM s)
 PRIMITIVE STk_canonical_path(SCM str)
 {
   if (NSTRINGP(str)) Err("canonical-path: not a string", str);
+#ifdef WIN32
+  return str;
+#else
   return STk_resolve_link(CHARS(str), 0);
+#endif
 }
 
 PRIMITIVE STk_getcwd(void)

@@ -1,0 +1,120 @@
+;;;;
+;;;; Scrollframe.stklos 			-- Scroll Frame Widget
+;;;;
+;;;; Copyright © 1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, modify, distribute,and license this
+;;;; software and its documentation for any purpose is hereby granted,
+;;;; provided that existing copyright notices are retained in all
+;;;; copies and that this notice is included verbatim in any
+;;;; distributions.  No written agreement, license, or royalty fee is
+;;;; required for any of the authorized uses.
+;;;; This software is provided ``AS IS'' without express or implied
+;;;; warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date:  8-Feb-1999 11:52
+;;;; Last file update:  3-Sep-1999 20:14 (eg)
+
+(require "Basics")
+(select-module STklos+Tk)
+
+;=============================================================================
+;
+; 			< S c r o l l - f r a m e >
+;
+;=============================================================================
+
+;;;;
+;;;; Resources
+;;;;
+
+
+;;;;
+;;;; Class definition
+;;;;
+
+(define-class <Scroll-Frame> (<Tk-composite-widget> <Frame>)
+  (scrollbar canvas iframe	; internal widgets for internal use only
+   (class	  :init-keyword :class
+		  :init-form    "ScrollFrame")
+   (scroll-side   :accessor     scroll-side
+		  :allocation   :virtual
+		  :init-keyword :scroll-side
+		  :slot-ref     (lambda (o)
+				  (STk:v-scroll-side (slot-ref o 'scrollbar)))
+		  :slot-set!    (lambda (o v)
+				  (STk:v-scroll-side-set! 
+				      (slot-ref o 'scrollbar) v)))
+   
+   ;; Non allocated slots
+   (background   :accessor     background
+		 :init-keyword :background
+		 :allocation   :propagated
+		 :propagate-to (frame iframe scrollbar))
+   (width 	 :accessor     width 
+		 :allocation   :propagated
+		 :init-keyword :width
+		 :propagate-to (canvas))
+   (height 	 :accessor     height 
+		 :allocation   :propagated
+		 :init-keyword :height
+		 :propagate-to (canvas))
+   (relief	 :accessor     relief
+		 :init-keyword :relief
+		 :allocation   :propagated
+		 :propagate-to (frame))))
+
+;;;;
+;;;;  <Scroll-frame> methods
+;;;;
+
+(define-method initialize-composite-widget ((self <Scroll-frame>) initargs parent)
+  (let* ((s (make <Scrollbar> :parent parent :orientation "vertical"))
+	 (c (make <Canvas>    :parent parent))
+	 (f (make <Frame>     :parent c)))
+
+    ;; Set internal true slots 
+    (slot-set! self 'Id	          (slot-ref f 'Id))
+    (slot-set! self 'scrollbar    s)
+    (slot-set! self 'canvas       c)
+    (slot-set! self 'iframe       f)
+
+    ;; Place internal widgets (do as if we had a horizontal scroll to 
+    ;; reuse functions of other scrollable windows). 
+    (grid c :row 1 :column 1 :sticky "nswe")
+    (grid s :row 1 :column 2 :sticky "ns")
+    (grid 'rowconf    parent 1 :weight 1)
+    (grid 'columnconf parent 1 :weight 1)
+
+    ;; Attach command to scrollbar and canvas
+    (slot-set! c 'y-scroll-command (lambda l (apply (slot-ref s 'Id) 'set l)))
+    (slot-set! s 'command (lambda args (apply (slot-ref c 'Id) 'yview args)))
+
+    ;; Add a binding to the frame such as adding widget to it will reconfigure 
+    ;; the canvas (and hence the scrollbar)
+    ((Id c) 'create 'window 0 0 :anchor 'nw :window f :tag "window")
+    (bind f "<Configure>" 
+	  (lambda () 
+	    ;(update 'idle)
+	    (slot-set! c 'scroll-region 
+		       (list 0 0 (winfo 'width f) (winfo 'height f)))))
+    
+    (bind c "<Configure>"
+	  (lambda () ((Id c) 'itemconf "window" :width (winfo 'width c))))))
+
+
+
+(provide "Scrollframe")
+
+#|
+ Example 
+
+    (define f (make <Scroll-Frame>))
+    (pack (make <button> :parent f :side "top" :text "Title"))
+    (dotimes (i 40)
+      (pack (make <Button> :text i :parent f) :fill 'both :anchor 'e))
+    (define x (make <Text> :background "lightblue" :parent f :width 40 :height 10))
+    (pack x :fill 'both :expand #t)
+    (pack f :expand #t :fill "both")
+|#

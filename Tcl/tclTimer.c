@@ -85,7 +85,7 @@ typedef struct AfterAssocData {
 				 * NULL if none. */
 } AfterAssocData;
 
-#ifdef STk_CODE
+#ifdef SCM_CODE
 static AfterAssocData After_list;
 #endif
 
@@ -118,7 +118,7 @@ static int idleGeneration;	/* Used to fill in the "generation" fields
  * Prototypes for procedures referenced only in this file:
  */
 
-#ifndef STk_CODE
+#ifndef SCM_CODE
 static void		AfterCleanupProc _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp));
 #endif
@@ -738,9 +738,9 @@ Tcl_AfterCmd(clientData, interp, argc, argv)
     static int nextId = 1;
     int ms;
     AfterInfo *afterPtr;
-#ifdef STk_CODE
+#ifdef SCM_CODE
     static int initialized = 0;
-    void *closure;
+    void *closure = (void *)-1;
     AfterAssocData *assocPtr = &After_list;
 #else
     AfterAssocData *assocPtr = (AfterAssocData *) clientData;
@@ -753,7 +753,7 @@ Tcl_AfterCmd(clientData, interp, argc, argv)
 		argv[0], " option ?arg arg ...?\"", (char *) NULL);
 	return TCL_ERROR;
     }
-#ifdef STk_CODE
+#ifdef SCM_CODE
     if (!initialized) {
       After_list.interp = interp; 	/* really useless !!!! */ 
       After_list.firstAfterPtr = NULL; 
@@ -801,8 +801,12 @@ Tcl_AfterCmd(clientData, interp, argc, argv)
 	afterPtr = (AfterInfo *) ckalloc((unsigned) (sizeof(AfterInfo)));
 	afterPtr->assocPtr = assocPtr;
 	if (argc == 3) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
+#  ifdef STk_CODE
 	    if (!STk_valid_callback(argv[2], &closure)) {
+#  else
+	    if (!SCM_valid_callback(argv[2], &closure)) {
+#  endif
 	        Tcl_AppendResult(interp, "bad closure specification \"",
 				         argv[2], "\"", (char *) NULL);
 		return TCL_ERROR;
@@ -812,7 +816,7 @@ Tcl_AfterCmd(clientData, interp, argc, argv)
 		    (strlen(argv[2]) + 1));
 	    strcpy(afterPtr->command, argv[2]);
 	} else {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    Tcl_AppendResult(interp, "wrong # args: should be \"",
 		    argv[0], " ms [script]\"", (char *) NULL);
 	    return TCL_ERROR;
@@ -826,11 +830,19 @@ Tcl_AfterCmd(clientData, interp, argc, argv)
 		(ClientData) afterPtr);
 	afterPtr->nextPtr = assocPtr->firstAfterPtr;
 	assocPtr->firstAfterPtr = afterPtr;
+#ifdef BGLK_CODE
+	sprintf(interp->result, "after.%d", afterPtr->id);
+#else
 	sprintf(interp->result, "after#%d", afterPtr->id);
-#ifdef STk_CODE
+#endif
+#ifdef SCM_CODE
 	if (closure != NULL)
 	  /* Register the callback to prevent it to be GC'ed */
+#  ifdef STk_CODE
 	  STk_add_callback(interp->result, "", "", closure);
+#  else
+	  SCM_add_callback(interp->result, "", "", closure);
+#  endif
 #endif
     } else if (strncmp(argv[1], "cancel", length) == 0) {
 	char *arg;
@@ -840,13 +852,15 @@ Tcl_AfterCmd(clientData, interp, argc, argv)
 		    argv[0], " cancel id|command\"", (char *) NULL);
 	    return TCL_ERROR;
 	}
+#ifdef SCM_CODE
+	arg = argv[2];
+#else
 	if (argc == 3) {
 	    arg = argv[2];
-#ifndef STk_CODE
 	} else {
 	    arg = Tcl_Concat(argc-2, argv+2);
-#endif
 	}
+#endif
 	for (afterPtr = assocPtr->firstAfterPtr; afterPtr != NULL;
 		afterPtr = afterPtr->nextPtr) {
 	    if (strcmp(afterPtr->command, arg) == 0) {
@@ -856,7 +870,7 @@ Tcl_AfterCmd(clientData, interp, argc, argv)
 	if (afterPtr == NULL) {
 	    afterPtr = GetAfterEvent(assocPtr, arg);
 	}
-#ifndef STk_CODE
+#ifndef SCM_CODE
 	if (arg != argv[2]) {
 	    ckfree(arg);
 	}
@@ -871,13 +885,17 @@ Tcl_AfterCmd(clientData, interp, argc, argv)
 	}
     } else if ((strncmp(argv[1], "idle", length) == 0)
 	     && (length >= 2)) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	if (argc != 3) {
 	    Tcl_AppendResult(interp, "wrong # args: should be \"",
 		    argv[0], " idle script\"", (char *) NULL);
 	    return TCL_ERROR;
 	}
+#  ifdef STk_CODE
 	if (!STk_valid_callback(argv[2], &closure)) {
+#  else
+	if (!SCM_valid_callback(argv[2], &closure)) {
+#  endif
 	  Tcl_AppendResult(interp, "bad closure specification \"",
 			   argv[2], "\"", (char *) NULL);
 	  return TCL_ERROR;
@@ -891,7 +909,7 @@ Tcl_AfterCmd(clientData, interp, argc, argv)
 #endif
 	afterPtr = (AfterInfo *) ckalloc((unsigned) (sizeof(AfterInfo)));
 	afterPtr->assocPtr = assocPtr;
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	afterPtr->command = (char *) ckalloc((unsigned) (strlen(argv[2]) + 1));
 	strcpy(afterPtr->command, argv[2]);
 #else
@@ -909,28 +927,40 @@ Tcl_AfterCmd(clientData, interp, argc, argv)
 	afterPtr->nextPtr = assocPtr->firstAfterPtr;
 	assocPtr->firstAfterPtr = afterPtr;
 	Tcl_DoWhenIdle(AfterProc, (ClientData) afterPtr);
+#ifdef BGLK_CODE
+	sprintf(interp->result, "after.%d", afterPtr->id);
+#else
 	sprintf(interp->result, "after#%d", afterPtr->id);
-#ifdef STk_CODE
+#endif
+#ifdef SCM_CODE
 	if (closure != NULL)
 	  /* Register the callback to prevent it to be GC'ed */
+#  ifdef STk_CODE
 	  STk_add_callback(interp->result, "", "", closure);
+#  else
+	  SCM_add_callback(interp->result, "", "", closure);
+#  endif
 #endif
     } else if ((strncmp(argv[1], "info", length) == 0)
 	     && (length >= 2)) {
 	if (argc == 2) {
 	    char buffer[30];
 
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    Tcl_AppendResult(interp, "(", NULL);
 #endif	    
 	    for (afterPtr = assocPtr->firstAfterPtr; afterPtr != NULL;
 		    afterPtr = afterPtr->nextPtr) {
 		if (assocPtr->interp == interp) {
+#ifdef BGLK_CODE
+		    sprintf(buffer, "after.%d", afterPtr->id);
+#else
 		    sprintf(buffer, "after#%d", afterPtr->id);
+#endif
 		    Tcl_AppendElement(interp, buffer);
 		}
 	    }
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    Tcl_AppendResult(interp, ")", NULL);
 #endif
 	    return TCL_OK;
@@ -988,7 +1018,11 @@ GetAfterEvent(assocPtr, string)
     int id;
     char *end;
 
+#ifdef BGLK_CODE
+    if (strncmp(string, "after.", 6) != 0) {
+#else
     if (strncmp(string, "after#", 6) != 0) {
+#endif
 	return NULL;
     }
     string += 6;
@@ -1064,13 +1098,17 @@ AfterProc(clientData)
     }
     Tcl_Release((ClientData) interp);
 
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {
       /* Delete the call back stored in the gloal table */
       char key[20];
-      
+#  ifdef STk_CODE      
       sprintf(key, "after#%d", afterPtr->id);
       STk_delete_callback(key);
+#  else 
+      sprintf(key, "after.%d", afterPtr->id);
+      SCM_delete_callback(key);
+#  endif
     }
 #endif
     
@@ -1117,20 +1155,24 @@ FreeAfterPtr(afterPtr)
 	}
 	prevPtr->nextPtr = afterPtr->nextPtr;
     }
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {
       /* Delete the call back stored in the gloal table */
       char key[20];
-      
+#  ifdef STk_CODE      
       sprintf(key, "after#%d", afterPtr->id);
       STk_delete_callback(key);
+#  else
+      sprintf(key, "after#%d", afterPtr->id);
+      SCM_delete_callback(key);
+#  endif
     }
 #endif
     ckfree(afterPtr->command);
     ckfree((char *) afterPtr);
 }
 
-#ifndef STk_CODE
+#ifndef SCM_CODE
 /*
  *----------------------------------------------------------------------
  *

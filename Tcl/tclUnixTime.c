@@ -78,7 +78,7 @@ TclpGetClicks()
     return now;
 }
 
-#ifndef STk_CODE
+#ifndef SCM_CODE
 /*
  *----------------------------------------------------------------------
  *

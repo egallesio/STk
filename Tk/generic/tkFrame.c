@@ -140,7 +140,11 @@ static Tk_ConfigSpec configSpecs[] = {
     {TK_CONFIG_PIXELS, "-highlightthickness", "highlightThickness",
 	"HighlightThickness",
 	DEF_FRAME_HIGHLIGHT_WIDTH, Tk_Offset(Frame, highlightWidth), BOTH},
+#ifdef SCM_CODE
+    {TK_CONFIG_MENU,   "-menu", "menu", "Menu",
+#else
     {TK_CONFIG_STRING, "-menu", "menu", "Menu",
+#endif
 	DEF_TOPLEVEL_MENU, Tk_Offset(Frame, menuName),
 	TOPLEVEL|TK_CONFIG_NULL_OK},
     {TK_CONFIG_RELIEF, "-relief", "relief", "Relief",
@@ -148,7 +152,7 @@ static Tk_ConfigSpec configSpecs[] = {
     {TK_CONFIG_STRING, "-screen", "screen", "Screen",
 	DEF_TOPLEVEL_SCREEN, Tk_Offset(Frame, screenName),
 	TOPLEVEL|TK_CONFIG_NULL_OK},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_CLOSURE, "-takefocus", "takeFocus", "TakeFocus",
 #else
     {TK_CONFIG_STRING, "-takefocus", "takeFocus", "TakeFocus",
@@ -293,6 +297,9 @@ TkCreateFrame(clientData, interp, argc, argv, toplevel, appName)
 	    className = argv[i+1];
 	} else if ((c == 'c')
 		&& (strncmp(arg, "-colormap", strlen(arg)) == 0)) {
+#ifdef SCM_CODE
+	  if (*argv[i+1])
+#endif
 	    colormapName = argv[i+1];
 	} else if ((c == 's') && toplevel
 		&& (strncmp(arg, "-screen", strlen(arg)) == 0)) {
@@ -633,7 +640,11 @@ ConfigureFrame(interp, framePtr, argc, argv, flags)
     if (framePtr->menuName == NULL) {
     	oldMenuName = NULL;
     } else {
+#ifdef BGLK_CODE
+    	oldMenuName = ckalloc_atomic(strlen(framePtr->menuName) + 1);
+#else
     	oldMenuName = ckalloc(strlen(framePtr->menuName) + 1);
+#endif
     	strcpy(oldMenuName, framePtr->menuName);
     }
     

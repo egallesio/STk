@@ -422,7 +422,7 @@ typedef char *(Tcl_VarTraceProc) _ANSI_ARGS_((ClientData clientData,
  */
 
 typedef struct Tcl_ObjType {
-#ifdef STk_CODE
+#ifdef SCM_CODE
   void *dumb;			/* for AIX */
 #else
     char *name;			/* Name of the type, e.g. "int". */
@@ -490,7 +490,7 @@ typedef struct Tcl_Obj {
  * "obj" twice. This means that you should avoid calling it with an
  * expression that is expensive to compute or has side effects.
  */
-#ifdef STk_CODE
+#ifdef SCM_CODE
 #  define Tcl_IncrRefCount(objPtr)
 #  define Tcl_DecrRefCount(objPtr)
 #else
@@ -723,7 +723,7 @@ typedef struct Tcl_DString {
 #define TCL_INTERP_DESTROYED	 0x100
 #define TCL_LEAVE_ERR_MSG	 0x200
 #define TCL_PARSE_PART1		 0x400
-#ifdef STk_CODE
+#ifdef SCM_CODE
 #  define STk_STRINGIFY		 0x800	/* tells Tcl_SetVar to stringify value */
 #endif
 
@@ -747,7 +747,20 @@ EXTERN char *		Tcl_Alloc _ANSI_ARGS_((unsigned int size));
 EXTERN void		Tcl_Free _ANSI_ARGS_((char *ptr));
 EXTERN char *		Tcl_Realloc _ANSI_ARGS_((char *ptr,
 			    unsigned int size));
-
+#ifdef BGLK_CODE
+extern void GC_free();
+#  define ckalloc(x) (char *)GC_malloc(x)
+#  define ckalloc_atomic(x) (char *)GC_malloc_atomic(x)
+#  define ckfree(x) GC_free(x)
+#  define ckrealloc(x,y) (char *)GC_realloc(x,y)
+#  define Tcl_Preserve(x)
+#  define Tcl_Release(x)
+#  define Tcl_EventuallyFree(x, y)
+/* #  define ckalloc(x) (char *)malloc(x)                               */
+/* #  define ckalloc_atomic(x) (char *)malloc(x)                        */
+/* #  define ckfree(x) free(x)                                          */
+/* #  define ckrealloc(x,y) (char *)realloc(x,y)                        */
+#else
 #ifdef TCL_MEM_DEBUG
 
 #  define Tcl_Alloc(x) Tcl_DbCkalloc(x, __FILE__, __LINE__)
@@ -776,6 +789,7 @@ EXTERN void		Tcl_ValidateAllMemory _ANSI_ARGS_((char *file,
 #  define Tcl_ValidateAllMemory(x,y)
 
 #endif /* TCL_MEM_DEBUG */
+#endif
 
 /*
  * Forward declaration of Tcl_HashTable.  Needed by some C++ compilers
@@ -1063,8 +1077,13 @@ typedef enum Tcl_PathType {
  * Exported Tcl procedures:
  */
 
-EXTERN void		Tcl_AddErrorInfo _ANSI_ARGS_((Tcl_Interp *interp,
+
+#ifdef BGLK_CODE
+    EXTERN in           Tcl_AddErrorInfo();
+#else
+    EXTERN void		Tcl_AddErrorInfo _ANSI_ARGS_((Tcl_Interp *interp,
 			    char *message));
+#endif
 EXTERN void		Tcl_AddObjErrorInfo _ANSI_ARGS_((Tcl_Interp *interp,
 			    char *message, int length));
 EXTERN void		Tcl_AllowExceptions _ANSI_ARGS_((Tcl_Interp *interp));
@@ -1268,7 +1287,7 @@ EXTERN Tcl_HashEntry *	Tcl_FirstHashEntry _ANSI_ARGS_((
 			    Tcl_HashTable *tablePtr,
 			    Tcl_HashSearch *searchPtr));
 EXTERN int		Tcl_Flush _ANSI_ARGS_((Tcl_Channel chan));
-#ifdef STk_CODE
+#ifdef SCM_CODE
 #  define TclFreeObj(objPtr)
 #else
    EXTERN void		TclFreeObj _ANSI_ARGS_((Tcl_Obj *objPtr));
@@ -1366,7 +1385,11 @@ EXTERN void		Tcl_InitMemory _ANSI_ARGS_((Tcl_Interp *interp));
 EXTERN int		Tcl_InputBlocked _ANSI_ARGS_((Tcl_Channel chan));
 EXTERN int		Tcl_InputBuffered _ANSI_ARGS_((Tcl_Channel chan));
 EXTERN int		Tcl_InterpDeleted _ANSI_ARGS_((Tcl_Interp *interp));
-EXTERN int		Tcl_IsSafe _ANSI_ARGS_((Tcl_Interp *interp));
+#ifdef BGLK_CODE
+   EXTERN int		Tcl_IsSafe();
+#else
+   EXTERN int		Tcl_IsSafe _ANSI_ARGS_((Tcl_Interp *interp));
+#endif
 EXTERN void		Tcl_InvalidateStringRep _ANSI_ARGS_((
 			    Tcl_Obj *objPtr));
 EXTERN char *		Tcl_JoinPath _ANSI_ARGS_((int argc, char **argv,
@@ -1427,7 +1450,11 @@ EXTERN int		Tcl_PkgProvide _ANSI_ARGS_((Tcl_Interp *interp,
 			    char *name, char *version));
 EXTERN char *		Tcl_PkgRequire _ANSI_ARGS_((Tcl_Interp *interp,
 			    char *name, char *version, int exact));
-EXTERN char *		Tcl_PosixError _ANSI_ARGS_((Tcl_Interp *interp));
+#ifdef BGLK_CODE
+   EXTERN char *	Tcl_PosixError (int);
+#else
+   EXTERN char *	Tcl_PosixError _ANSI_ARGS_((Tcl_Interp *interp));
+#endif
 EXTERN void		Tcl_Preserve _ANSI_ARGS_((ClientData data));
 EXTERN void		Tcl_PrintDouble _ANSI_ARGS_((Tcl_Interp *interp,
 			    double value, char *dst));
@@ -1582,6 +1609,11 @@ EXTERN void		Tcl_WrongNumArgs _ANSI_ARGS_((Tcl_Interp *interp,
 #undef TCL_STORAGE_CLASS
 #define TCL_STORAGE_CLASS DLLIMPORT
 
+#if( defined( BGLK_CODE ) )
+   /* Don't include the following code when compiling the interpreter */
+#  include <bigloo.h>
+#  include <tclglue.h>
+#endif
 #ifdef STk_CODE
    /* Don't include the following code when compiling the interpreter */
 #  ifndef _STK_H

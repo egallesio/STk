@@ -1,25 +1,21 @@
 /*
  * p r i n t . c				-- writing stuff
  *
- * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
- * Permission to use, copy, and/or distribute this software and its
- * documentation for any purpose and without fee is hereby granted, provided
- * that both the above copyright notice and this permission notice appear in
- * all copies and derived works.  Fees for distribution or use of this
- * software or derived works may only be charged with express written
- * permission of the copyright holder.  
- * This software is provided ``as is'' without express or implied warranty.
- *
- * This software is a derivative work of other copyrighted softwares; the
- * copyright notices of these softwares are placed in the file COPYRIGHTS
- *
- * $Id: print.c 1.10 Fri, 22 Jan 1999 14:44:12 +0100 eg $
+ * Permission to use, copy, modify, distribute,and license this
+ * software and its documentation for any purpose is hereby granted,
+ * provided that existing copyright notices are retained in all
+ * copies and that this notice is included verbatim in any
+ * distributions.  No written agreement, license, or royalty fee is
+ * required for any of the authorized uses.
+ * This software is provided ``AS IS'' without express or implied
+ * warranty.
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: ??-Oct-1993 ??:?? 
- * Last file update: 18-Nov-1998 13:52
+ * Last file update:  3-Sep-1999 20:22 (eg)
  *
  */
 
@@ -115,7 +111,7 @@ static void internal_display_instance(SCM instance, SCM port)
 
 static void display_instance(SCM instance, SCM port, int type)
 {
-  char *fct_name;
+  char *fct_name = ""; 			/* for GCC !! */
   SCM fct;
 
   switch (type) {
@@ -129,7 +125,7 @@ static void display_instance(SCM instance, SCM port, int type)
   if (fct == UNBOUND)
     internal_display_instance(instance, port);
   else 
-    Apply(fct, LIST2(instance, port));
+    Apply2(fct, instance, port);
 }
 #endif
 
@@ -263,7 +259,7 @@ SCM STk_print(SCM exp, SCM port, int mode)
       Puts(STk_tkbuffer, port);
       break;
     case tc_localvar:
-      sprintf(STk_tkbuffer,"#[local %s @%d,%d)]",
+      sprintf(STk_tkbuffer,"#[local %s @%d,%d]",
 	      PNAME(exp->storage_as.localvar.symbol),
 	      exp->storage_as.localvar.level, 
 	      exp->storage_as.localvar.position);
@@ -442,6 +438,7 @@ static void printlist_star(SCM exp, SCM port)
 {
   SCM value, tmp;
 
+  tmp = NIL;			/* for GCC */
   Putc('(', port);
 
   for ( ; ; ) {

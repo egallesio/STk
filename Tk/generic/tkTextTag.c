@@ -28,7 +28,7 @@ static Tk_ConfigSpec tagConfigSpecs[] = {
 	(char *) NULL, Tk_Offset(TkTextTag, border), TK_CONFIG_NULL_OK},
     {TK_CONFIG_BITMAP, "-bgstipple", (char *) NULL, (char *) NULL,
 	(char *) NULL, Tk_Offset(TkTextTag, bgStipple), TK_CONFIG_NULL_OK},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_SINT, "-borderwidth", (char *) NULL, (char *) NULL,
 #else
     {TK_CONFIG_STRING, "-borderwidth", (char *) NULL, (char *) NULL,
@@ -43,25 +43,25 @@ static Tk_ConfigSpec tagConfigSpecs[] = {
 	(char *) NULL, Tk_Offset(TkTextTag, fgColor), TK_CONFIG_NULL_OK},
     {TK_CONFIG_STRING, "-justify", (char *) NULL, (char *) NULL,
 	(char *) NULL, Tk_Offset(TkTextTag, justifyString), TK_CONFIG_NULL_OK},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_SINT, "-lmargin1", (char *) NULL, (char *) NULL,
 #else
     {TK_CONFIG_STRING, "-lmargin1", (char *) NULL, (char *) NULL,
 #endif
 	(char *) NULL, Tk_Offset(TkTextTag, lMargin1String), TK_CONFIG_NULL_OK},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_SINT, "-lmargin2", (char *) NULL, (char *) NULL,
 #else
     {TK_CONFIG_STRING, "-lmargin2", (char *) NULL, (char *) NULL,
 #endif
 	(char *) NULL, Tk_Offset(TkTextTag, lMargin2String), TK_CONFIG_NULL_OK},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_SINT, "-offset", (char *) NULL, (char *) NULL,
 #else
     {TK_CONFIG_STRING, "-offset", (char *) NULL, (char *) NULL,
 #endif
 	(char *) NULL, Tk_Offset(TkTextTag, offsetString), TK_CONFIG_NULL_OK},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_SBOOLEAN, "-overstrike", (char *) NULL, (char *) NULL,
 #else
     {TK_CONFIG_STRING, "-overstrike", (char *) NULL, (char *) NULL,
@@ -70,25 +70,25 @@ static Tk_ConfigSpec tagConfigSpecs[] = {
 	TK_CONFIG_NULL_OK},
     {TK_CONFIG_STRING, "-relief", (char *) NULL, (char *) NULL,
 	(char *) NULL, Tk_Offset(TkTextTag, reliefString), TK_CONFIG_NULL_OK},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_SINT, "-rmargin", (char *) NULL, (char *) NULL,
 #else
     {TK_CONFIG_STRING, "-rmargin", (char *) NULL, (char *) NULL,
 #endif
 	(char *) NULL, Tk_Offset(TkTextTag, rMarginString), TK_CONFIG_NULL_OK},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_SINT, "-spacing1", (char *) NULL, (char *) NULL,
 #else
     {TK_CONFIG_STRING, "-spacing1", (char *) NULL, (char *) NULL,
 #endif
 	(char *) NULL, Tk_Offset(TkTextTag, spacing1String), TK_CONFIG_NULL_OK},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_SINT, "-spacing2", (char *) NULL, (char *) NULL,
 #else
     {TK_CONFIG_STRING, "-spacing2", (char *) NULL, (char *) NULL,
 #endif
 	(char *) NULL, Tk_Offset(TkTextTag, spacing2String), TK_CONFIG_NULL_OK},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_SINT, "-spacing3", (char *) NULL, (char *) NULL,
 #else
     {TK_CONFIG_STRING, "-spacing3", (char *) NULL, (char *) NULL,
@@ -96,7 +96,7 @@ static Tk_ConfigSpec tagConfigSpecs[] = {
 	(char *) NULL, Tk_Offset(TkTextTag, spacing3String), TK_CONFIG_NULL_OK},
     {TK_CONFIG_STRING, "-tabs", (char *) NULL, (char *) NULL,
 	(char *) NULL, Tk_Offset(TkTextTag, tabString), TK_CONFIG_NULL_OK},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_SBOOLEAN, "-underline", (char *) NULL, (char *) NULL,
 #else
     {TK_CONFIG_STRING, "-underline", (char *) NULL, (char *) NULL,
@@ -247,14 +247,19 @@ TkTextTagCmd(textPtr, interp, argc, argv)
 		return Tk_DeleteBinding(interp, textPtr->bindingTable,
 			(ClientData) tagPtr, argv[4]);
 	    }
-#ifndef STk_CODE
+#ifndef SCM_CODE
 	    if (argv[5][0] == '+') {
 		argv[5]++;
 		append = 1;
 	    }
 #endif
+#ifndef SCM_CODE
 	    mask = Tk_CreateBinding(interp, textPtr->bindingTable,
 		    (ClientData) tagPtr, argv[4], argv[5], append);
+#else
+	    mask = Tk_CreateBinding(interp, textPtr->bindingTable,
+		    (ClientData) tagPtr, argv[4], argv[5], argv[0], argv[3]);
+#endif
 	    if (mask == 0) {
 		return TCL_ERROR;
 	    }
@@ -571,7 +576,7 @@ TkTextTagCmd(textPtr, interp, argc, argv)
 	    }
 	}
 	SortTags(arraySize, arrayPtr);
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	Tcl_AppendResult(interp, "(", NULL);
 	for (i = 0; i < arraySize; i++) {
 	    tagPtr = arrayPtr[i];

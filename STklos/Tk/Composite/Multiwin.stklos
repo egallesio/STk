@@ -1,15 +1,16 @@
 ;;;;
 ;;;; <Multiple-window> and <Inner-Window> classes 
 ;;;;
-;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
-;;;; Permission to use, copy, and/or distribute this software and its
-;;;; documentation for any purpose and without fee is hereby granted, provided
-;;;; that both the above copyright notice and this permission notice appear in
-;;;; all copies and derived works.  Fees for distribution or use of this
-;;;; software or derived works may only be charged with express written
-;;;; permission of the copyright holder.  
-;;;; This software is provided ``as is'' without express or implied warranty.
+;;;; Permission to use, copy, modify, distribute,and license this
+;;;; software and its documentation for any purpose is hereby granted,
+;;;; provided that existing copyright notices are retained in all
+;;;; copies and that this notice is included verbatim in any
+;;;; distributions.  No written agreement, license, or royalty fee is
+;;;; required for any of the authorized uses.
+;;;; This software is provided ``AS IS'' without express or implied
+;;;; warranty.
 ;;;;
 ;;;;
 ;;;; Idea of multiples windows comes from a Tcl package called mdw_lib.tk
@@ -20,11 +21,10 @@
 ;;;; Original package is GPL'ed. However, code and way to implement
 ;;;; multiple windows and mdw_lib are completely different.
 ;;;;
-;;;; $Id: Multiwin.stklos 1.8 Sat, 26 Sep 1998 19:19:52 +0200 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date:  5-Apr-1996 18:04
-;;;; Last file update: 25-Sep-1998 12:42
+;;;; Last file update:  3-Sep-1999 21:34 (eg)
 
 (require "Basics")
 (select-module STklos+Tk)
@@ -64,6 +64,7 @@ static unsigned char min_bits[] = {
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (define-class <Multiple-window> (<Frame>)
   (bottom-bar bottom-bar-title
+   (class	         :init-keyword :class :init-form "MultipleWindow")
    (current		 :initform #f)
    (children		 :initform '())
    (child-selected-col	 :initform '("white"    . "RoyalBlue1"))

@@ -3,25 +3,21 @@
  * t c l - l i b . c 		- A library remplacement for simulating 
  *				  a Tcl interpreter in Scheme
  *
- * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
- * Permission to use, copy, and/or distribute this software and its
- * documentation for any purpose and without fee is hereby granted, provided
- * that both the above copyright notice and this permission notice appear in
- * all copies and derived works.  Fees for distribution or use of this
- * software or derived works may only be charged with express written
- * permission of the copyright holder.  
- * This software is provided ``as is'' without express or implied warranty.
- *
- * This software is a derivative work of other copyrighted softwares; the
- * copyright notices of these softwares are placed in the file COPYRIGHTS
- *
- * $Id: tcl-lib.c 1.9 Mon, 28 Dec 1998 23:05:11 +0100 eg $
+ * Permission to use, copy, modify, distribute,and license this
+ * software and its documentation for any purpose is hereby granted,
+ * provided that existing copyright notices are retained in all
+ * copies and that this notice is included verbatim in any
+ * distributions.  No written agreement, license, or royalty fee is
+ * required for any of the authorized uses.
+ * This software is provided ``AS IS'' without express or implied
+ * warranty.
  *
  *            Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 19-Feb-1993 22:15
- * Last file update: 27-Dec-1998 20:46
+ * Last file update:  3-Sep-1999 20:59 (eg)
  *
  */
 
@@ -53,7 +49,7 @@ int Tcl_GlobalEval(interp, s)
   SCM result;
 
   /* 
-   * If the callback is nor surrounded by parenthesis, add them. We
+   * If the callback is not surrounded by parenthesis, add them. We
    * don't have parenthesis when the callback is a closure. In this
    * case, the callback is simply #p12345. Note that this allow Tk to
    * add some parameters to the callback when needed (on bindings, or
@@ -165,7 +161,7 @@ char *Tcl_GetVar(interp, var, flags)
      char *var;
      int flags;
 {
-//FIXME  Debug("Usage of Tcl_GetVar for ", STk_makestring(var));
+  /*FIXME  Debug("Usage of Tcl_GetVar for ", STk_makestring(var)); */
   return STk_tcl_getvar(var, "#f");
 }
 
@@ -174,7 +170,7 @@ char *Tcl_GetVar2(interp, name1, name2, flags)
      char *name1, *name2;
      int flags;
 {
-//FIXME  Debug("Usage of Tcl_GetVar2 for ", STk_makestring(name1));
+  /*FIXME  Debug("Usage of Tcl_GetVar2 for ", STk_makestring(name1)); */
   return STk_tcl_getvar2(name1, name2, "#f");
 
 }
@@ -184,7 +180,7 @@ char *Tcl_SetVar(interp, var, val, flags)
      char *var, *val;
      int flags;
 {
-//FIXME  Debug("Usage of Tcl_SetVar for ", STk_makestring(var));
+  /*FIXME  Debug("Usage of Tcl_SetVar for ", STk_makestring(var)); */
   return STk_tcl_setvar(var, val, flags, "#f");
 }
 
@@ -193,7 +189,7 @@ char *Tcl_SetVar2(interp, name1, name2, val, flags)
      char *name1, *name2, *val;
      int flags;
 { 
-//FIXME  Debug("Usage of Tcl_SetVar for ", STk_makestring(name1));
+  /*FIXME  Debug("Usage of Tcl_SetVar for ", STk_makestring(name1)); */
   return STk_tcl_setvar2(name1, name2, val, flags, "#f");
 }
 
@@ -332,11 +328,11 @@ Tcl_CreateCommand(interp, cmdName, proc, clientData, deleteProc)
   strcpy(W->Id, cmdName);
 
   /* Register the command in the Tcl command hash table */
-  hPtr = Tcl_CreateHashEntry(&iPtr->globalNsPtr->cmdTable, cmdName, &new);
-  if (!new) {
+  if (Tcl_FindHashEntry(&iPtr->globalNsPtr->cmdTable, cmdName)) {
     /* Command already exists: delete the old one */
     Tcl_DeleteCommand(interp, cmdName); /* not efficient but safer */
   }
+  hPtr = Tcl_CreateHashEntry(&iPtr->globalNsPtr->cmdTable, cmdName, &new);
   Tcl_SetHashValue(hPtr, W);
 
   /* Define a Tk-command cell for this new command */
@@ -446,6 +442,7 @@ Tcl_Interp *Tcl_CreateInterp()
   iPtr->appendResult	 = NULL;
   iPtr->appendAvl	 = 0;
   iPtr->appendUsed	 = 0;
+  iPtr->flags 		 = 0;
 
   /* strcpy(iPtr->pdFormat, "%g"); No more needed for 8.0 */
 

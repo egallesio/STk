@@ -120,7 +120,7 @@ static TkCmd commands[] = {
     {"selection",	Tk_SelectionCmd,	NULL,			0},
     {"tk",		NULL,			Tk_TkObjCmd,		0},
     {"tkwait",		Tk_TkwaitCmd,		NULL,			1},
-#ifdef STk_CODE
+#ifdef SCM_CODE
 #  ifdef WIN32
     /* Native support */
     {"tk:choose-color", Tk_ChooseColorCmd,	NULL,			0},
@@ -167,7 +167,7 @@ static TkCmd commands[] = {
     {(char *) NULL,	(int (*) _ANSI_ARGS_((ClientData, Tcl_Interp *, int, char **))) NULL, NULL, 0}
 };
 
-#ifndef STk_CODE    
+#ifndef SCM_CODE    
 /*
  * The variables and table below are used to parse arguments from
  * the "argv" variable in Tk_Init.
@@ -214,7 +214,7 @@ static void		DeleteWindowsExitProc _ANSI_ARGS_((
 			    ClientData clientData));
 static TkDisplay *	GetScreen _ANSI_ARGS_((Tcl_Interp *interp,
 			    char *screenName, int *screenPtr));
-#ifndef STk_CODE
+#ifndef SCM_CODE
 static int		Initialize _ANSI_ARGS_((Tcl_Interp *interp));
 #endif
 static int		NameWindow _ANSI_ARGS_((Tcl_Interp *interp,
@@ -755,7 +755,7 @@ TkCreateMainWindow(interp, screenName, baseName)
     mainPtr->optionRootPtr = NULL;
     Tcl_InitHashTable(&mainPtr->imageTable, TCL_STRING_KEYS);
     mainPtr->strictMotif = 0;
-#ifndef STk_CODE
+#ifndef SCM_CODE
     if (Tcl_LinkVar(interp, "tk_strictMotif", (char *) &mainPtr->strictMotif,
 	    TCL_LINK_BOOLEAN) != TCL_OK) {
 	Tcl_ResetResult(interp);
@@ -808,7 +808,11 @@ TkCreateMainWindow(interp, screenName, baseName)
      * Set variables for the intepreter.
      */
 
-#ifdef STk_CODE
+#ifdef SCM_CODE
+# ifdef BGLK_CODE
+    SCM_tk_makevar("*tk-patch-level*");
+    SCM_tk_makevar("*tk-version*");
+# endif
     STk_tcl_setvar("*tk-patch-level*", TK_PATCH_LEVEL, STk_STRINGIFY, "");
     STk_tcl_setvar("*tk-version*",     TK_VERSION,     STk_STRINGIFY, "");
 #else
@@ -979,7 +983,7 @@ Tk_CreateWindowFromPath(interp, tkwin, pathName, screenName)
 	return NULL;
     } else if (((TkWindow *) parent)->flags & TK_CONTAINER) {
 	Tcl_AppendResult(interp, 
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    "can't create window: its parent has :container = #t",
 #else
 	    "can't create window: its parent has -container = yes",
@@ -1242,7 +1246,7 @@ Tk_DestroyWindow(tkwin)
                 Tcl_CreateCommand(winPtr->mainPtr->interp, "send",
                         TkDeadAppCmd, (ClientData) NULL, 
                         (void (*) _ANSI_ARGS_((ClientData))) NULL);
-#ifndef STk_CODE
+#ifndef SCM_CODE
                 Tcl_UnlinkVar(winPtr->mainPtr->interp, "tk_strictMotif");
 #endif
             }
@@ -2539,7 +2543,7 @@ DeleteWindowsExitProc(clientData)
  *
  *----------------------------------------------------------------------
  */
-#ifndef STk_CODE
+#ifndef SCM_CODE
 int
 Tk_Init(interp)
     Tcl_Interp *interp;		/* Interpreter to initialize. */

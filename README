@@ -1,6 +1,6 @@
 
-		    This is the release 3.99 of STk
-		   ---------------------------------
+		    This is the release 4.0 of STk
+		   -------------------------------
 
 
 (Latest release is always available from <ftp://kaolin.unice.fr/pub/STk> )
@@ -17,7 +17,7 @@ This release runs on majors Unix versions (Linux, Solaris, OSF, ...)
 
 This version also runs on Win32. Consider this port as beta.
 
-Version 3.99 uses the Tk 8.0.3 package for the graphical widgets.
+Version 4.0 uses the Tk 8.0.3 package for the graphical widgets.
 
 
 DIFFERENCE PREVIOUS RELEASE
@@ -49,6 +49,9 @@ distribution main directory for more informations.
    * Runs on Win32 platforms
    * New option -console to run STk in a windowed environment 
      (with indentation and fontification).
+   * define-syntax
+   * SRFI-{0,2,6,8}
+   * New License Policy (request for commercial apps no more needed).
    * ...
 
 
@@ -121,9 +124,9 @@ For now, STk is known to run on the following machine/systems
 	- ...
 
 
-Version 3.1.1 is also known to run on Windows 95 (and probably Windows NT).
-The version 3.99.4 has also been ported on this environment. Consider this port 
-as beta. 
+Version 3.1.1 was also known to run on Windows 95 (and probably Windows NT).
+The version 4.0 has also been ported on this environment and should be more 
+stable than previous versions.
 
 
 If you install it on another architecture/system, please let me now the

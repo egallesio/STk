@@ -34,7 +34,7 @@
       `(command :label ,mess :background ,mess
 		:command ,(lambda () (format #t "You invoked ~S\n" mess))))
     
-    (define f (make-menubar w 
+    (define f (make-toolbar w 
 	`(("File" 
 	     ("Open ..." 	,(lambda () (mess "Open ...")))
 	     ("New"	 	,(lambda () (mess "New")))
@@ -59,16 +59,16 @@
 	     ,(print-hello-goodbye "Hello" "a") 
 	     ,(print-hello-goodbye "Goodbye" "b")
 	     ("Check buttons"
-	         ((check :label "Oil checked" :variable oil)
+	         (check :label "Oil checked" :variable oil)
 		  (check :label "Transmission checked" :variable trans)
 		  (check :label "Brakes checked" :variable brakes)
 		  (check :label "Lights checked" :variable lights)
 		  ("")
 		  ("Show current values" 
 		   		,(lambda () 
-				   (show-variables w '(oil trans brakes lights))))))
+				   (show-variables w '(oil trans brakes lights)))))
 	     ("Radio buttons"
-	         ((radio :label "10 point" :variable point-size :value 10)
+	         (radio :label "10 point" :variable point-size :value 10)
 		  (radio :label "14 point" :variable point-size :value 14)
 		  (radio :label "18 point" :variable point-size :value 18)
 		  (radio :label "24 point" :variable point-size :value 24)
@@ -79,7 +79,7 @@
 		  (radio :label "Italic" :variable style :value "italic")
 		  ("")
 		  ("Show current values" 
-		         ,(lambda () (show-variables w '(style point-size)))))))
+		         ,(lambda () (show-variables w '(style point-size))))))
 	  ("Icons"
   	     (command :bitmap ,(string-append "@" *stk-images* "/pattern")
 		      :command ,(lambda ()
@@ -106,10 +106,10 @@
 
     (slot-set! f 'border-width 3)
     (slot-set! f 'relief "raised")
-    (pack f 
-	  (make <Label> :parent w 
+    (let ((lab (make <Label> :parent w 
 			:wrap-length 	"4i" 
 			:justify 	"left"
 			:font		demo-font
-			:text txt)
-	  :expand #t :fill "x")))
+			:text txt)))
+      (pack f lab :expand #t :fill "x")
+      (set! (release-command f) (default-release-toolbar lab)))))

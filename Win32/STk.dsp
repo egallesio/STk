@@ -38,7 +38,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
-# ADD CPP /nologo /W3 /GX /Z7 /Od /I "..\Mp\fgmp-1.0b5" /I "..\Tcl" /I "..\Src" /I "..\Tk\generic" /I "..\Tk\xlib" /I "..\Tk\win" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "USE_TK" /D "STk_CODE" /D "USE_STKLOS" /FR /FD /c
+# ADD CPP /nologo /W3 /GX /Z7 /Od /I "..\Mp\fgmp-1.0b5" /I "..\Tcl" /I "..\Src" /I "..\Tk\generic" /I "..\Tk\xlib" /I "..\Tk\win" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "USE_TK" /D "STk_CODE" /D "SCM_CODE" /D "USE_STKLOS" /FR /FD /c
 # SUBTRACT CPP /YX
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /o NUL /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /o NUL /win32
@@ -49,7 +49,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /machine:I386
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib libtcl.lib libtk.lib libgmp.lib /nologo /subsystem:windows /debug /machine:I386 /libpath:"Win32libs"
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib Wsock32.lib libtcl.lib libtk.lib libgmp.lib /nologo /subsystem:windows /debug /machine:I386 /libpath:"Win32libs"
 # Begin Target
 
 # Name "STk - Win32 Release"
@@ -183,6 +183,10 @@ SOURCE=..\Src\proc.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\Extensions\process.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\Src\promise.c
 # End Source File
 # Begin Source File
@@ -196,6 +200,10 @@ SOURCE=..\Src\signal.c
 # Begin Source File
 
 SOURCE=..\Src\slib.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\Extensions\socket.c
 # End Source File
 # Begin Source File
 

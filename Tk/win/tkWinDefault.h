@@ -29,7 +29,7 @@
 #define WHITE		"White"
 
 #ifdef STk_CODE
-#   define CTL_FONT	"Arial 8"		//FIXME
+#   define CTL_FONT	"Arial 8"		/*FIXME*/
 #else
 #   define CTL_FONT	"{MS Sans Serif} 8"
 #endif

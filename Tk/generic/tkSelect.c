@@ -17,6 +17,12 @@
 #include "tkInt.h"
 #include "tkSelect.h"
 
+#ifdef BGLK_CODE
+#  define STk_stringify_result	SCM_stringify_result
+#  define STk_get_NIL_value	SCM_NIL
+#  define STk_add_callback	SCM_add_callback
+#endif
+
 /*
  * When a selection handler is set up by invoking "selection handle",
  * one of the following data structures is set up to hold information
@@ -711,7 +717,7 @@ Tk_SelectionCmd(clientData, interp, argc, argv)
 	result = Tk_GetSelection(interp, tkwin, selection, target, SelGetProc,
 		(ClientData) &selBytes);
 	if (result == TCL_OK) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    STk_stringify_result(interp, Tcl_DStringValue(&selBytes));
 	    /* DString re-initialization not useful here */
 #else
@@ -767,21 +773,21 @@ Tk_SelectionCmd(clientData, interp, argc, argv)
 	    selection = Tk_InternAtom(tkwin, selName);
 	} else {
 	    selection = XA_PRIMARY;
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    selName = "XA_PRIMARY";
 #endif
 	}
 	    
 	if (count > 2) {
 	    target = Tk_InternAtom(tkwin, args[2]);
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    targetName = args[2];
 #endif
 	} else if (targetName != NULL) {
 	    target = Tk_InternAtom(tkwin, targetName);
 	} else {
 	    target = XA_STRING;
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    targetName = "XA_STRING";
 #endif
 	}
@@ -793,7 +799,7 @@ Tk_SelectionCmd(clientData, interp, argc, argv)
 	    format = XA_STRING;
 	}
 	cmdLength = strlen(args[1]);
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	if (cmdLength == 0 || strcmp(args[1], "()") == 0) {
 	    Tk_DeleteSelHandler(tkwin, selection, target);
 	    /* Delete old callback from callback table */
@@ -828,7 +834,7 @@ Tk_SelectionCmd(clientData, interp, argc, argv)
 	register LostCommand *lostPtr;
 	char *script = NULL;
 	int cmdLength;
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	SCM p;
 #endif
 
@@ -867,7 +873,7 @@ Tk_SelectionCmd(clientData, interp, argc, argv)
 	    selection = Tk_InternAtom(tkwin, selName);
 	} else {
 	    selection = XA_PRIMARY;
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    selName = "XA_PRIMARY";
 #endif
 	}
@@ -899,7 +905,7 @@ Tk_SelectionCmd(clientData, interp, argc, argv)
 		interp->result = Tk_PathName(infoPtr->owner);
 #endif
 	    }
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    else interp->result = "#f";
 #endif
 	    return TCL_OK;

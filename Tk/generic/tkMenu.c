@@ -71,6 +71,12 @@
 #include "tkPort.h"
 #include "tkMenu.h"
 
+#ifdef BGLK_CODE
+#  define STk_tcl_setvar	SCM_tcl_setvar
+#  define STk_tcl_getvar 	SCM_tcl_getvar
+#  define STk_NewSymbolObj 	SCM_NewSymbolObj
+#endif
+
 #define MENU_HASH_KEY "tkMenus"
 
 static int menusInitialized;	/* Whether or not the hash tables, etc., have
@@ -105,7 +111,7 @@ Tk_ConfigSpec tkMenuEntryConfigSpecs[] = {
     {TK_CONFIG_BOOLEAN, "-columnbreak", (char *) NULL, (char *) NULL,
 	DEF_MENU_ENTRY_COLUMN_BREAK, Tk_Offset(TkMenuEntry, columnBreak),
 	COMMAND_MASK|CHECK_BUTTON_MASK|RADIO_BUTTON_MASK|CASCADE_MASK},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_CLOSURE, "-command", (char *) NULL, (char *) NULL,
 #else
     {TK_CONFIG_STRING, "-command", (char *) NULL, (char *) NULL,
@@ -130,7 +136,12 @@ Tk_ConfigSpec tkMenuEntryConfigSpecs[] = {
 	DEF_MENU_ENTRY_HIDE_MARGIN, Tk_Offset(TkMenuEntry, hideMargin),
 	COMMAND_MASK|CHECK_BUTTON_MASK|RADIO_BUTTON_MASK|CASCADE_MASK
 	|SEPARATOR_MASK|TEAROFF_MASK},
-#ifdef STk_CODE
+#ifdef BGLK_CODE
+    {TK_CONFIG_INT, "-highlightthickness", "highlightthickness", "Highlightthickness",
+        0, Tk_Offset(TkMenuEntry, highlightthickness), 
+        COMMAND_MASK|CHECK_BUTTON_MASK|RADIO_BUTTON_MASK|CASCADE_MASK},
+#endif
+#ifdef SCM_CODE
     {TK_CONFIG_IMAGE, "-image", (char *) NULL, (char *) NULL,
 #else
     {TK_CONFIG_STRING, "-image", (char *) NULL, (char *) NULL,
@@ -144,7 +155,7 @@ Tk_ConfigSpec tkMenuEntryConfigSpecs[] = {
     {TK_CONFIG_STRING, "-label", (char *) NULL, (char *) NULL,
 	DEF_MENU_ENTRY_LABEL, Tk_Offset(TkMenuEntry, label),
 	COMMAND_MASK|CHECK_BUTTON_MASK|RADIO_BUTTON_MASK|CASCADE_MASK},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_MENU, "-menu", (char *) NULL, (char *) NULL,
 #else
     {TK_CONFIG_STRING, "-menu", (char *) NULL, (char *) NULL,
@@ -229,7 +240,7 @@ Tk_ConfigSpec tkMenuConfigSpecs[] = {
 	DEF_MENU_FONT, Tk_Offset(TkMenu, tkfont), 0},
     {TK_CONFIG_COLOR, "-foreground", "foreground", "Foreground",
 	DEF_MENU_FG, Tk_Offset(TkMenu, fg), 0},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_CLOSURE, "-postcommand", "postCommand", "Command",
 #else
     {TK_CONFIG_STRING, "-postcommand", "postCommand", "Command",
@@ -244,7 +255,7 @@ Tk_ConfigSpec tkMenuConfigSpecs[] = {
     {TK_CONFIG_COLOR, "-selectcolor", "selectColor", "Background",
 	DEF_MENU_SELECT_MONO, Tk_Offset(TkMenu, indicatorFg),
 	TK_CONFIG_MONO_ONLY},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_CLOSURE, "-takefocus", "takeFocus", "TakeFocus",
 #else
     {TK_CONFIG_STRING, "-takefocus", "takeFocus", "TakeFocus",
@@ -252,7 +263,7 @@ Tk_ConfigSpec tkMenuConfigSpecs[] = {
 	DEF_MENU_TAKE_FOCUS, Tk_Offset(TkMenu, takeFocus), TK_CONFIG_NULL_OK},
     {TK_CONFIG_BOOLEAN, "-tearoff", "tearOff", "TearOff",
 	DEF_MENU_TEAROFF, Tk_Offset(TkMenu, tearOff), 0},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_CLOSURE, "-tearoffcommand", "tearOffCommand", "TearOffCommand",
 #else
     {TK_CONFIG_STRING, "-tearoffcommand", "tearOffCommand", "TearOffCommand",
@@ -736,6 +747,10 @@ MenuWidgetCmd(clientData, interp, argc, argv)
 	    	    TK_CONFIG_ARGV_ONLY | COMMAND_MASK << mePtr->type);
 	}
 	Tcl_Release((ClientData) mePtr);
+    } else if ((c == 'h')
+	    && (strncmp(argv[1], "highlightthickness", length) == 0)) {
+	if (argc == 2)
+	   interp->result = "0";
     } else if ((c == 'i') && (strncmp(argv[1], "index", length) == 0)
 	    && (length >= 3)) {
 	int index;
@@ -749,7 +764,7 @@ MenuWidgetCmd(clientData, interp, argc, argv)
 	    goto error;
 	}
 	if (index < 0) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    interp->result = "\"none\"";
 #else
 	    interp->result = "none";
@@ -841,7 +856,7 @@ MenuWidgetCmd(clientData, interp, argc, argv)
 	}
 	mePtr = menuPtr->entries[index];
 	switch (mePtr->type) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    case COMMAND_ENTRY:
 		interp->result = "\"command\"";
 		break;
@@ -954,13 +969,17 @@ TkInvokeMenu(interp, menuPtr, index)
     	Tcl_DString commandDString;
     	
     	Tcl_DStringInit(&commandDString);
+#ifdef STk_CODE
+    	Tcl_DStringAppendElement(&commandDString, "Tk:tear-off-menu");
+#else
     	Tcl_DStringAppendElement(&commandDString, "tkTearOffMenu");
+#endif
     	Tcl_DStringAppendElement(&commandDString, Tk_PathName(menuPtr->tkwin));
     	result = Tcl_Eval(interp, Tcl_DStringValue(&commandDString));
     	Tcl_DStringFree(&commandDString);
     } else if (mePtr->type == CHECK_BUTTON_ENTRY) {
 	if (mePtr->entryFlags & ENTRY_SELECTED) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    if (STk_tcl_setvar(mePtr->name, mePtr->offValue, 0, 
 			       mePtr->env) == NULL) {
 #else
@@ -970,7 +989,7 @@ TkInvokeMenu(interp, menuPtr, index)
 		result = TCL_ERROR;
 	    }
 	} else {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    if (STk_tcl_setvar(mePtr->name, mePtr->onValue, 0,
 			       mePtr->env) == NULL) {
 #else
@@ -981,7 +1000,7 @@ TkInvokeMenu(interp, menuPtr, index)
 	    }
 	}
     } else if (mePtr->type == RADIO_BUTTON_ENTRY) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	if (STk_tcl_setvar(mePtr->name, mePtr->onValue, 0, 
 			   mePtr->env) == NULL) {
 #else
@@ -1507,7 +1526,9 @@ ConfigureMenuEntry(mePtr, argc, argv, flags)
     }
     
     if (menuPtr->tkwin != NULL) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
+      int Tk_Menu_ConfigureWidget();
+
       if (Tk_Menu_ConfigureWidget(menuPtr->interp, &menuPtr->entries[index], 
 				  menuPtr->tkwin,
 #else	
@@ -1631,7 +1652,7 @@ ConfigureMenuEntry(mePtr, argc, argv, flags)
 	 * changes to its value.
 	 */
 
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	value = STk_tcl_getvar(mePtr->name, mePtr->env);
 #else
 	value = Tcl_GetVar(menuPtr->interp, mePtr->name, TCL_GLOBAL_ONLY);
@@ -1642,7 +1663,7 @@ ConfigureMenuEntry(mePtr, argc, argv, flags)
 		mePtr->entryFlags |= ENTRY_SELECTED;
 	    }
 	} else {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    STk_tcl_setvar(mePtr->name,
 		    (mePtr->type == CHECK_BUTTON_ENTRY) ? mePtr->offValue : "#f",
 		    0,
@@ -2008,7 +2029,7 @@ MenuNewEntry(menuPtr, index, type)
     mePtr->entryFlags = 0;
     mePtr->index = index;
     mePtr->nextCascadePtr = NULL;
-#ifdef STk_CODE
+#ifdef SCM_CODE
     mePtr->env = NULL;
 #endif
     TkMenuInitializeEntryDrawingFields(mePtr);
@@ -2229,7 +2250,7 @@ MenuVarProc(clientData, interp, name1, name2, flags)
      * the menu entry.
      */
 
-#ifdef STk_CODE
+#ifdef SCM_CODE
     value = STk_tcl_getvar(mePtr->name, mePtr->env);
 #else
     value = Tcl_GetVar(interp, mePtr->name, TCL_GLOBAL_ONLY);
@@ -2395,19 +2416,28 @@ CloneMenu(menuPtr, newMenuName, newMenuTypeString)
     	}
     }
 
+#ifdef BGLK_CODE
+    tk_menu_dup( Tk_PathName(menuPtr->tkwin),
+		 newMenuName,
+		 (((newMenuTypeString == NULL) ||
+		   (newMenuTypeString[0] == '\0')) ?
+		  "normal" :
+		  newMenuTypeString) );
+    returnResult = TCL_OK;
+#else    
     commandObjPtr = Tcl_NewListObj(0, (Tcl_Obj **) NULL);
     Tcl_ListObjAppendElement(menuPtr->interp, commandObjPtr,
-#ifdef STk_CODE
+#  ifdef STk_CODE
     	    STk_NewSymbolObj("tk:menu-dup"));
-#else
+#  else
     	    Tcl_NewStringObj("tkMenuDup", -1));
-#endif
+#  endif
     Tcl_ListObjAppendElement(menuPtr->interp, commandObjPtr,
-#ifdef STk_CODE
+#  ifdef STk_CODE
     	    STk_NewSymbolObj(Tk_PathName(menuPtr->tkwin)));
-#else
+#  else
     	    Tcl_NewStringObj(Tk_PathName(menuPtr->tkwin), -1));
-#endif
+#  endif
     Tcl_ListObjAppendElement(menuPtr->interp, commandObjPtr,
     	    Tcl_NewStringObj(newMenuName, -1));
     if ((newMenuTypeString == NULL) || (newMenuTypeString[0] == '\0')) {
@@ -2418,10 +2448,12 @@ CloneMenu(menuPtr, newMenuName, newMenuTypeString)
     		Tcl_NewStringObj(newMenuTypeString, -1));
     }
     Tcl_IncrRefCount(commandObjPtr);
+#  ifndef BGLK_CODE
     Tcl_Preserve((ClientData) menuPtr);
+#  endif
     returnResult = Tcl_EvalObj(menuPtr->interp, commandObjPtr);
     Tcl_DecrRefCount(commandObjPtr);
-
+#endif
     /*
      * Make sure the tcl command actually created the clone.
      */
@@ -2525,7 +2557,9 @@ CloneMenu(menuPtr, newMenuName, newMenuTypeString)
     } else {
     	returnResult = TCL_ERROR;
     }
+#ifndef BGLK_CODE
     Tcl_Release((ClientData) menuPtr);
+#endif
     return returnResult;
 }
 
@@ -2711,8 +2745,12 @@ TkNewMenuName(interp, parentName, menuPtr)
     for (destString = Tcl_DStringValue(&childDString);
     	    *destString != '\0'; destString++) {
     	if (*destString == '.') {
+#ifdef BGLK_CODE
+    	    *destString = '!';
+#else
     	    *destString = '#';
     	}
+#endif
     }
     
     offset = 0;
@@ -2999,6 +3037,16 @@ TkCreateMenuReferences(interp, pathName)
     int newEntry;
     Tcl_HashTable *menuTablePtr = TkGetMenuHashTable(interp);
 
+#ifdef SCM_CODE
+    /* Horrible hack to get around STk's problems.  A menu's widget
+       name can have a "#." prepended.  If so, chop it off so that we
+       have a consistent interface to the hash table. 
+       Patch provided by Sarah Calvo <sarah@grammatech.com>
+    */
+    if (pathName[0] == '#' && pathName[1] == '.')
+	pathName += 2;
+#endif
+
     hashEntryPtr = Tcl_CreateHashEntry(menuTablePtr, pathName, &newEntry);
     if (newEntry) {
     	menuRefPtr = (TkMenuReferences *) ckalloc(sizeof(TkMenuReferences));
@@ -3042,6 +3090,11 @@ TkFindMenuReferences(interp, pathName)
     TkMenuReferences *menuRefPtr = NULL;
     Tcl_HashTable *menuTablePtr;
 
+#ifdef SCM_CODE
+    /* See comment in TkCreateMenuReferences above */
+    if (pathName[0] == '#' && pathName[1] == '.')
+	pathName += 2;
+#endif
     menuTablePtr = TkGetMenuHashTable(interp);
     hashEntryPtr = Tcl_FindHashEntry(menuTablePtr, pathName);
     if (hashEntryPtr != NULL) {

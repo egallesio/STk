@@ -530,8 +530,12 @@ Tk_OptionCmd(clientData, interp, argc, argv)
 	}
 	value = Tk_GetOption(window, argv[3], argv[4]);
 	if (value != NULL) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
+#  ifdef STk_CODE
 	    STk_stringify_result(interp, value);
+#  else
+	    SCM_stringify_result(interp, value);
+#  endif
 #else
 	    interp->result = value;
 #endif
@@ -945,7 +949,11 @@ ReadOptionFile(interp, tkwin, fileName, priority)
 	return TCL_ERROR;
 
     }
+#ifdef BGLK_CODE
+    buffer = (char *) ckalloc_atomic((unsigned) bufferSize+1);
+#else
     buffer = (char *) ckalloc((unsigned) bufferSize+1);
+#endif
     bufferSize = Tcl_Read(chan, buffer, bufferSize);
     if (bufferSize < 0) {
 	Tcl_AppendResult(interp, "error reading file \"", fileName, "\":",

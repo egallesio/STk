@@ -1,0 +1,213 @@
+;;;;
+;;;; Combobox.stklos 				-- A Combobox Implementation
+;;;;
+;;;; Copyright © 1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, modify, distribute,and license this
+;;;; software and its documentation for any purpose is hereby granted,
+;;;; provided that existing copyright notices are retained in all
+;;;; copies and that this notice is included verbatim in any
+;;;; distributions.  No written agreement, license, or royalty fee is
+;;;; required for any of the authorized uses.
+;;;; This software is provided ``AS IS'' without express or implied
+;;;; warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date:  5-Apr-1999 11:22
+;;;; Last file update:  3-Sep-1999 20:12 (eg)
+
+(require "Basics")
+
+(select-module STklos+Tk)
+
+;=============================================================================
+;
+; 		     < C o m b o b o x >
+;
+;=============================================================================
+
+;;;;
+;;;; Resources
+;;;;
+
+(option 'add "*Combobox.Entry.Background"  	"white"      "widgetDefault")
+;(option 'add "*Combobox.Entry.Font"	       '(Courier-12) "widgetDefault")
+
+
+;;;;
+;;;; Globals
+;;;; 
+
+(define *max-item-in-combo* 8)
+(define *combo-down-arrow*  (make-image "down_arrow_8.bm"))
+(define *combo-up-arrow*    (make-image "up_arrow_8.bm"))
+(define *combo-focus*	    #f)
+;;;;
+;;;; Class definition
+;;;;
+
+(define-class <Combobox> (<Tk-composite-widget> <Entry>)
+  ((%visible		:init-form 	#f)
+   (entry   		:accessor	entry-of)
+   (button  		:accessor 	button-of)
+   (toplevel		:accessor 	toplevel-of)
+   (listbox 		:accessor 	listbox-of)
+   (class		:init-keyword 	:class
+			:init-form    	"Combobox")
+   (command		:init-keyword	:command
+			:init-form	""
+			:accessor	command)
+   ;; Virtual slots
+   (values  		:accessor 	values
+	    		:init-keyword	:values
+			:allocation 	:propagated
+			:propagate-to 	((listbox value)))
+   (background		:accessor	background
+			:init-keyword	:background
+			:allocation	:propagated
+			:propagate-to	(frame button listbox))
+   (relief		:accessor	relief
+			:init-keyword	:relief
+			:allocation	:propagated
+			:propagate-to	(frame))
+   (text-background 	:accessor	text-background
+			:init-keyword	:text-background
+			:allocation	:propagated
+			:propagate-to	((entry background)))))
+   
+
+(define-method initialize-composite-widget ((self <Combobox>) initargs parent)
+  (let* ((t (make <Toplevel> :highlight-thickness 0 :border-width 0))
+	 (l (make <Scroll-Listbox> :parent t :highlight-thickness 0 
+		  :border-width 0))
+	 (e (make <Entry> :parent parent :highlight-thickness 0 :relief 'flat))
+	 (b (make <Button> :parent parent :highlight-thickness 0 
+		  :image *combo-down-arrow* :border-width 1 
+		  :command (lambda () (show/hide-combo-list self )))))
+    (next-method)
+
+    ; Change the relief of parent to sunken
+    (set! (border-width parent) 2)
+    (set! (relief parent) 'ridge)
+
+    ;; Make a thin scrollbar (default value makes too much fat scrollbar)
+    (set! (width (slot-ref l 'v-scrollbar)) 10)
+
+    ;; Pack the visible parts
+    (pack e :expand #t :fill 'x :side 'left)
+    (pack b :expand #f :fill 'y :side 'left :ipadx 2)
+
+    ; Pack the listbox and make it transient
+    (pack l :expand #t :fill "both")
+    (make-transient t)
+
+    ;; Initialize true slots
+    (slot-set! self 'Id	      (slot-ref e 'Id))
+    (slot-set! self 'entry    e)
+    (slot-set! self 'button   b)
+    (slot-set! self 'toplevel t)
+    (slot-set! self 'listbox  l)))
+
+
+;;;;
+;;;; THE all-in-one function which deals with opening and closing the 
+;;;; associated listbox
+;;;; 
+(define (show/hide-combo-list self)
+  (let ((visible (slot-ref self '%visible))
+	(top     (toplevel-of self)))
+    (if visible
+	;; Close the listbox window
+	(begin
+	  (withdraw top)
+	  (set! (image-of (button-of self)) *combo-down-arrow*))
+	
+	;; Open it
+	(let* ((f	 (frame-of self))
+	       (l	 (listbox-of self))
+	       (posx     (winfo 'rootx f))
+	       (posy     (winfo 'rooty f))
+	       (height   (winfo 'height f))
+	       (width    (winfo 'width f))
+	       (card	 (length (values self)))
+	       (nbitems  0))
+			
+	  ;; Set geometry and width/height of the toplevel window
+	  (if (> card *max-item-in-combo*)
+	      (begin
+		;; Too much item in the listbox. Use a scrollbar
+		(set! (height l) (- *max-item-in-combo* 1))
+		(set! (v-scroll-side l) "right"))
+	      (begin
+		;; Use a listbox which is just the good size and no scrollbar
+		(set! (height l) card)
+		(set! (v-scroll-side l) #f)))
+	  
+	  (update) ; to have a correct height for l (Tk problem)!!!
+	  (wm 'geometry top (format #f "~Ax~A+~A+~A"  
+				    width (winfo 'height l) posx (+ posy height)))
+
+	  ;; Display the listbox
+	  (wm 'deiconify top)
+	  (raise top)
+
+	  ;; Associate all the bindings
+	  (let* ((do-action (lambda ()
+			      (let ((command (command self)))
+				;; If the user has specified a command, do it
+				(when (procedure? command) (command (value self)))
+				;; Release the grab set on the toplevel
+				(grab 'release top)
+				(focus (or *combo-focus* 
+					   (winfo 'toplevel self)))
+			       ;; Close the associated toplevel
+				(show/hide-combo-list self))))
+		 (select   (lambda ()
+			     (let ((v "")
+				   (s (state self)))
+			       (unless (catch (set! v (selection 'get)))
+				 (set! (state self) "normal")
+				 (slot-set! self 'value v)
+				 (set! (state self) s)
+				 (do-action))))))
+			     
+	    (bind top "<Leave>"
+		  (lambda () (bind top "<Any-ButtonRelease>" do-action)))
+
+	    (bind top "<Enter>" 
+		  (lambda ()
+		    (let ((lb (listbox-of l)))
+		      (bind top "<Any-ButtonRelease>" "")
+		      (set! *combo-focus* (focus :displayof top))
+		      (focus lb)
+		      (bind lb "<Any-ButtonRelease>" select)
+		      (bind lb "<Return>" select)))))
+
+	  ;; We need a global grab (otherwise displacement of the
+	  ;; entry with the wm lets the listbox in place...
+	  (grab :global top)
+
+	  ;; Change the bitmap of the menu button to an up arrow
+	  (set! (image-of (button-of self)) *combo-up-arrow*)))
+	
+    (slot-set! self '%visible (not visible))))
+
+(provide "Combobox")
+
+#|
+  Example
+
+    (let* ((fonts (sort (font 'families) string<?))
+	   (c1    (make <Combobox> :value (car fonts) :values fonts 
+				   :state "disabled"))
+	   (c2    (make <Combobox> :value 10 :values '(8 10 12 14 16 20 24 36)
+				   :width 3 :string-value #f
+				   :command (lambda (x)
+					      (format #t "Value: ~S\n" x)))))
+						 
+      (pack (make <Label> :text "Font:") :side 'left)
+      (pack c1 :expand #f :fill 'x :padx 3 :pady 3 :side 'left)
+      (pack (make <Label> :text "Size:") :side 'left)
+      (pack c2 :expand #f :fill 'x :padx 3 :pady 3 :side 'left))
+
+|#

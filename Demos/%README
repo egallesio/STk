@@ -112,12 +112,22 @@ Running demonstration programs in the STk web browser
 
 1.5 Misc
 
+   * console-demo.stk
+     This is a simple demo showing a repl loop in a console.
+     Run with: ../Src/test-stk -f console.stk
+     Comment: This demo is useful for Unix users only, since under Win32 STk
+     is started with such a console.
+
    * colormap.stk
      This is a simple color palette written in STk.
      Run with: ../Src/test-stk -f colormap.stk
      Comment: Note that this program is no more really useful since STk
      offers now the function Tk:choose-color which allow to choose a color
      by name or by value.
+
+   * stkfontsel.stk
+     This is a simple program which uses the STk font chooser.
+     Run with: ../Src/test-stk -f stkfontsel.stk
 
    * small-ed.stk
      A small editor to create enhanced text
@@ -182,6 +192,9 @@ Running demonstration programs in the STk web browser
      Comment: Here again, what is interesting in this demo is not what it
      does, nothing specially fancy, but how it is easy to program, IMHO.
 
+   * classbrowse.stklos This demo shows the STklos class browser.
+     Run with: ../Src/test-stk -f classbrowse.stklos
+
 2.2 STklos widgets
 
    * widget.stklos
@@ -241,6 +254,6 @@ Running demonstration programs in the STk web browser
      lines.
      Run with: ../Src/test-stk -f S-scape.stklos
 
-  ------------------------------------------------------------------------
+
 Erick Gallesio
-Last modified: Mon Mar 9 19:15:46 CET 1998
+Last modified: Sun Aug 22 21:16:13 CEST 1999

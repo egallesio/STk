@@ -2,26 +2,25 @@
 # Toplevel Makefile for STk
 #
 # 
-# Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+# Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 # 
-# Permission to use, copy, and/or distribute this software and its
-# documentation for any purpose and without fee is hereby granted, provided
-# that both the above copyright notice and this permission notice appear in
-# all copies and derived works.  Fees for distribution or use of this
-# software or derived works may only be charged with express written
-# permission of the copyright holder.  
-# This software is provided ``as is'' without express or implied warranty.
-#
-# $Id: Makefile.in 1.3.1.11 Mon, 28 Dec 1998 23:12:55 +0100 eg $
+# Permission to use, copy, modify, distribute,and license this
+# software and its documentation for any purpose is hereby granted,
+# provided that existing copyright notices are retained in all
+# copies and that this notice is included verbatim in any
+# distributions.  No written agreement, license, or royalty fee is
+# required for any of the authorized uses.
+# This software is provided ``AS IS'' without express or implied
+# warranty.
 #
 #           Author: Erick Gallesio [eg@unice.fr]
 #    Creation date: ??-Sep-1993 ??:??
-# Last file update: 28-Dec-1998 23:12
+# Last file update:  3-Sep-1999 20:03 (eg)
 #
-
 
 SHELL		= /bin/sh
 CP		= /bin/cp
+STRIP		= strip
 RANLIB 		= @RANLIB@
 MACHTYPE	= @MACHINE@
 MP		= @MP@.a
@@ -48,7 +47,6 @@ start:
 	@echo "MACHTYPE		= $(MACHTYPE)"			>> config.make
 	@echo "prefix		= $(prefix)"			>> config.make
 	@cat ./paths 						>> config.make
-	@echo "VERS-OPT		= -DSTK_VERSION=\\\"$(VERSION)\\\"">> config.make
 	@echo "MACHINE		= -DMACHINE=\\\"$(MACHTYPE)\\\"" >> config.make
 	@echo "CC		= @CC@"				>> config.make
 	@echo "STKCFLAGS	= @STKCFLAGS@"			>> config.make
@@ -102,33 +100,40 @@ dvi:
 demos:
 	/bin/sh -c "(cd Demos; ../Src/test-stk -f S-scape README.html)"
 
-install: all clean-before
-	(cd Tcl;     	$(MAKE) install)
-	(cd Tk;      	$(MAKE) install)
-	(cd Mp;		$(MAKE) install)
-	(cd Src;     	$(MAKE) install.stk)
-	(cd Snow;     	$(MAKE) install.snow)
-	(cd Lib;     	$(MAKE) install)
-	(cd STklos;  	$(MAKE) install)
-	(cd Extensions; $(MAKE) install)
-	(cd Demos;   	$(MAKE) install)
-	(cd Help;	$(MAKE) install)
-	(cd Doc;	$(MAKE) install)
+install: install-no-strip
+	@echo "Stripping executables ..."
+	$(STRIP) $(root)$(execdir)/stk
+	$(STRIP) $(root)$(execdir)/snow
 	@echo ""
 	@echo "Installation completed."
 
+install-no-strip: clean-before
+	(cd Tcl;     	$(MAKE) install prefix=$(root)$(prefix))
+	(cd Tk;      	$(MAKE) install INSTALL_ROOT=$(root))
+	(cd Mp;		$(MAKE) install prefix=$(root)$(prefix))
+	(cd Src;     	$(MAKE) install.stk root=$(root))
+	(cd Snow;     	$(MAKE) install.snow root=$(root))
+	(cd Lib;     	$(MAKE) install root=$(root))
+	(cd STklos;  	$(MAKE) install prefix=$(root)$(prefix))
+	(cd Extensions; $(MAKE) install prefix=$(root)$(prefix))
+	(cd Demos;   	$(MAKE) install root=$(root))
+	(cd Help;	$(MAKE) install prefix=$(root)$(prefix))
+	(cd Doc;	$(MAKE) install prefix=$(root)$(prefix))
+	(cd Stack;	$(MAKE) install prefix=$(root)$(prefix))
+
 install.libs:
-	-if [ ! -d $(confdir) ] ; then mkdir -p $(confdir); fi
-	$(CP) config.make $(confdir)
-	-if [ ! -d $(incdir) ] ; then mkdir -p $(incdir); fi
-	/bin/rm -f $(stkdir)/include
-	(cd $(stkdir) ; ln -s $(VERSION)/include ./include)
-	(cd Tcl;     	$(MAKE) install.libs)
-	(cd Tk;      	$(MAKE) install.libs)
-	(cd Mp;		$(MAKE) install.libs)
-	(cd Src;     	$(MAKE) install.stk.libs)
-	(cd Snow;     	$(MAKE) install.snow.libs)
-	chmod 0755 $(confdir) $(ardir) $(confdir)/* $(ardir)/*
+	-if [ ! -d $(root)$(confdir) ] ; then mkdir -p $(root)$(confdir); fi
+	$(CP) config.make $(root)$(confdir)
+	-if [ ! -d $(root)$(incdir) ] ; then mkdir -p $(root)$(incdir); fi
+	/bin/rm -f $(root)$(stkdir)/include
+	(cd $(root)$(stkdir) ; ln -s $(VERSION)/include ./include)
+	(cd Tcl;     	$(MAKE) install.libs prefix=$(root)$(prefix))
+	(cd Tk;      	$(MAKE) install.libs prefix=$(root)$(prefix))
+	(cd Mp;		$(MAKE) install.libs prefix=$(root)$(prefix))
+	(cd Src;     	$(MAKE) install.stk.libs root=$(root))
+	(cd Snow;     	$(MAKE) install.snow.libs root=$(root))
+	(cd Stack;	$(MAKE) install.libs root=$(root))
+	chmod 0755 $(root)$(confdir) $(root)$(ardir) $(root)$(confdir)/* $(root)$(ardir)/*
 	@echo ""
 	@echo "Full installation completed."
 
@@ -152,7 +157,7 @@ common-release:
 	@echo "Terminé. Le fichier est dans /tmp/STk-$(VERSION)-common.tar.gz"
 
 clean-before:
-	@if [ -d $(prefix)/lib/stk ]; \
+	@if [ -d $(root)$(prefix)/lib/stk ]; \
 	then \
 	  echo "*** WARNING:"; \
 	  echo "*** A previous version of STk has already been installed in"; \
@@ -164,7 +169,7 @@ clean-before:
 	  echo "*** (Waiting 10s) " ; \
 	  sleep 10;\
 	fi
-	@if [ -d $(prefix)/lib/stk/$(VERSION) ]; \
+	@if [ -d $(root)$(prefix)/lib/stk/$(VERSION) ]; \
 	then \
 	  echo "*** WARNING:"; \
 	  echo "*** This STk version ($(VERSION)) has already been installed "; \

@@ -1,0 +1,47 @@
+'\" Color=Green
+'\"
+'\" Copyright © 1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+'\" 
+'\" Permission to use, copy, modify, distribute,and license this
+'\" software and its documentation for any purpose is hereby granted,
+'\" provided that existing copyright notices are retained in all
+'\" copies and that this notice is included verbatim in any
+'\" distributions.  No written agreement, license, or royalty fee is
+'\" required for any of the authorized uses.
+'\" This software is provided ``AS IS'' without express or implied
+'\" warranty.
+'\"
+'\"           Author: Erick Gallesio [eg@unice.fr]
+'\"    Creation date: 19-Jul-1996 15:21
+'\" Last file update:  3-Sep-1999 21:20 (eg)
+'\" 
+'\" 
+.so STk-man.macros
+.TH ed n 4.0 STk "Tk Built-In Commands"
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+ed \- Launch an editor
+.SH SYNOPSIS
+(\fBed\fR)
+.br
+(\fBed\fI  \fIfilename\fR)
+
+.SH DESCRIPTION
+.PP
+The \fBed\fR procedure creates a new Scheme editor in a toplevel
+window. If a filename is provided, its content is displayed in the
+editor window. 
+
+.LP
+.SH "DEFAULT BINDINGS"
+.PP
+The defaults bindings are identical to the \fBtext\fR
+bindings. Furthermore, if a the interpreter uses a console to interact
+with the user (by default on Windows, or by using the \fB\-console\fR
+option of \fBstk\fR on Unix), the Enter key of the numerical keyboard
+or the sequence Control-Return sends the previous complete sexpr to
+the interpreter.
+
+.SH SEE ALSO
+text

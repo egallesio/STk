@@ -44,7 +44,7 @@ Tk_ConfigSpec tkpScrollbarConfigSpecs[] = {
 	(char *) NULL, 0, 0},
     {TK_CONFIG_PIXELS, "-borderwidth", "borderWidth", "BorderWidth",
 	DEF_SCROLLBAR_BORDER_WIDTH, Tk_Offset(TkScrollbar, borderWidth), 0},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_CLOSURE, "-command", "command", "Command",
 #else
     {TK_CONFIG_STRING, "-command", "command", "Command",
@@ -75,7 +75,7 @@ Tk_ConfigSpec tkpScrollbarConfigSpecs[] = {
 	DEF_SCROLLBAR_REPEAT_DELAY, Tk_Offset(TkScrollbar, repeatDelay), 0},
     {TK_CONFIG_INT, "-repeatinterval", "repeatInterval", "RepeatInterval",
 	DEF_SCROLLBAR_REPEAT_INTERVAL, Tk_Offset(TkScrollbar, repeatInterval), 0},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_CLOSURE, "-takefocus", "takeFocus", "TakeFocus",
 #else
     {TK_CONFIG_STRING, "-takefocus", "takeFocus", "TakeFocus",
@@ -252,7 +252,7 @@ ScrollbarWidgetCmd(clientData, interp, argc, argv)
 	int oldActiveField;
 	if (argc == 2) {
 	    switch (scrollPtr->activeField) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		case TOP_ARROW:		interp->result = "\"arrow1\"";	break;
 		case SLIDER:		interp->result = "\"slider\"";	break;
 		case BOTTOM_ARROW:	interp->result = "\"arrow2\"";	break;
@@ -401,7 +401,7 @@ ScrollbarWidgetCmd(clientData, interp, argc, argv)
 	thing = TkpScrollbarPosition(scrollPtr, x,y);
 
 	switch (thing) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    case TOP_ARROW:	interp->result = "\"arrow1\"";	break;
 	    case TOP_GAP:	interp->result = "\"trough1\"";	break;
 	    case SLIDER:	interp->result = "\"slider\"";	break;

@@ -18,6 +18,11 @@
 #include "tkButton.h"
 #include "default.h"
 
+#ifdef BGLK_CODE
+#  define STk_tcl_setvar SCM_tcl_setvar
+#  define STk_tcl_getvar SCM_tcl_getvar
+#  define STk_STRINGIFY SCM_STRINGIFY
+#endif
 /*
  * Class names for buttons, indexed by one of the type values above.
  */
@@ -71,7 +76,7 @@ Tk_ConfigSpec tkpButtonConfigSpecs[] = {
 	ALL_MASK|TK_CONFIG_NULL_OK},
     {TK_CONFIG_PIXELS, "-borderwidth", "borderWidth", "BorderWidth",
 	DEF_BUTTON_BORDER_WIDTH, Tk_Offset(TkButton, borderWidth), ALL_MASK},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_CLOSURE, "-command", "command", "Command",
 #else
     {TK_CONFIG_STRING, "-command", "command", "Command",
@@ -106,7 +111,7 @@ Tk_ConfigSpec tkpButtonConfigSpecs[] = {
     {TK_CONFIG_COLOR, "-foreground", "foreground", "Foreground",
 	DEF_CHKRAD_FG, Tk_Offset(TkButton, normalFg), CHECK_BUTTON_MASK
 	|RADIO_BUTTON_MASK},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_SINT, "-height", "height", "Height",
 #else
     {TK_CONFIG_STRING, "-height", "height", "Height",
@@ -126,7 +131,7 @@ Tk_ConfigSpec tkpButtonConfigSpecs[] = {
 	"HighlightThickness",
 	DEF_BUTTON_HIGHLIGHT_WIDTH, Tk_Offset(TkButton, highlightWidth),
 	BUTTON_MASK|CHECK_BUTTON_MASK|RADIO_BUTTON_MASK},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_IMAGE, "-image", "image", "Image",
 #else
     {TK_CONFIG_STRING, "-image", "image", "Image",
@@ -138,14 +143,14 @@ Tk_ConfigSpec tkpButtonConfigSpecs[] = {
 	CHECK_BUTTON_MASK|RADIO_BUTTON_MASK},
     {TK_CONFIG_JUSTIFY, "-justify", "justify", "Justify",
 	DEF_BUTTON_JUSTIFY, Tk_Offset(TkButton, justify), ALL_MASK},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_BSTRING, "-offvalue", "offValue", "Value",
 #else
     {TK_CONFIG_STRING, "-offvalue", "offValue", "Value",
 #endif
 	DEF_BUTTON_OFF_VALUE, Tk_Offset(TkButton, offValue),
 	CHECK_BUTTON_MASK},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_BSTRING, "-onvalue", "onValue", "Value",
 #else
     {TK_CONFIG_STRING, "-onvalue", "onValue", "Value",
@@ -181,19 +186,19 @@ Tk_ConfigSpec tkpButtonConfigSpecs[] = {
     {TK_CONFIG_UID, "-state", "state", "State",
 	DEF_BUTTON_STATE, Tk_Offset(TkButton, state),
 	BUTTON_MASK|CHECK_BUTTON_MASK|RADIO_BUTTON_MASK},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_BOOLEAN, "-stringvalue", "stringvalue", "StringValue",
 	"#f", Tk_Offset(TkButton, string),
 	BUTTON_MASK|CHECK_BUTTON_MASK|RADIO_BUTTON_MASK},
 #endif
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_CLOSURE, "-takefocus", "takeFocus", "TakeFocus",
 #else
     {TK_CONFIG_STRING, "-takefocus", "takeFocus", "TakeFocus",
 #endif
 	DEF_LABEL_TAKE_FOCUS, Tk_Offset(TkButton, takeFocus),
 	LABEL_MASK|TK_CONFIG_NULL_OK},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_CLOSURE, "-takefocus", "takeFocus", "TakeFocus",
 #else
     {TK_CONFIG_STRING, "-takefocus", "takeFocus", "TakeFocus",
@@ -207,7 +212,7 @@ Tk_ConfigSpec tkpButtonConfigSpecs[] = {
 	ALL_MASK|TK_CONFIG_NULL_OK},
     {TK_CONFIG_INT, "-underline", "underline", "Underline",
 	DEF_BUTTON_UNDERLINE, Tk_Offset(TkButton, underline), ALL_MASK},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_BSTRING, "-value", "value", "Value",
 #else
     {TK_CONFIG_STRING, "-value", "value", "Value",
@@ -220,7 +225,7 @@ Tk_ConfigSpec tkpButtonConfigSpecs[] = {
     {TK_CONFIG_STRING, "-variable", "variable", "Variable",
 	DEF_CHECKBUTTON_VARIABLE, Tk_Offset(TkButton, selVarName),
 	CHECK_BUTTON_MASK|TK_CONFIG_NULL_OK},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_SINT, "-width", "width", "Width",
 #else
     {TK_CONFIG_STRING, "-width", "width", "Width",
@@ -449,7 +454,7 @@ ButtonCreate(clientData, interp, argc, argv, type)
     butPtr->command = NULL;
     butPtr->takeFocus = NULL;
     butPtr->flags = 0;
-#ifdef STk_CODE
+#ifdef SCM_CODE
     butPtr->env    = NULL;
     butPtr->string = 0;
 #endif
@@ -501,7 +506,7 @@ ButtonWidgetCmd(clientData, interp, argc, argv)
     int result = TCL_OK;
     size_t length;
     int c;
-#ifdef STk_CODE
+#ifdef SCM_CODE
     int flag;
 #endif
 
@@ -547,11 +552,11 @@ ButtonWidgetCmd(clientData, interp, argc, argv)
 		    argv[0]);
 	    goto error;
 	}
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	flag = (butPtr->string)? STk_STRINGIFY : 0;
 #endif
 	if (butPtr->type == TYPE_CHECK_BUTTON) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    if (STk_tcl_setvar(butPtr->selVarName, butPtr->offValue,
 			       flag, butPtr->env) == NULL) {
 #else
@@ -561,7 +566,7 @@ ButtonWidgetCmd(clientData, interp, argc, argv)
 		result = TCL_ERROR;
 	    }
 	} else if (butPtr->flags & SELECTED) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    if (STk_tcl_setvar(butPtr->selVarName, "#t", 
 			       flag, butPtr->env) == NULL) {
 #else
@@ -620,7 +625,7 @@ ButtonWidgetCmd(clientData, interp, argc, argv)
 		    argv[0]);
 	    goto error;
 	}
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	if (STk_tcl_setvar(butPtr->selVarName, butPtr->onValue,
 			   ((butPtr->string)? STk_STRINGIFY:0), 
 			   butPtr->env) == NULL) {
@@ -640,7 +645,7 @@ ButtonWidgetCmd(clientData, interp, argc, argv)
 	    goto error;
 	}
 	if (butPtr->flags & SELECTED) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    if (STk_tcl_setvar(butPtr->selVarName, butPtr->offValue,
 			       ((butPtr->string)? STk_STRINGIFY:0),
 			       butPtr->env) == NULL) {
@@ -651,7 +656,7 @@ ButtonWidgetCmd(clientData, interp, argc, argv)
 		result = TCL_ERROR;
 	    }
 	} else {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    if (STk_tcl_setvar(butPtr->selVarName, butPtr->onValue,
 			       ((butPtr->string)? STk_STRINGIFY:0),
 			       butPtr->env) == NULL) {
@@ -839,8 +844,12 @@ ConfigureButton(interp, butPtr, argc, argv, flags)
 	char *value;
 
 	if (butPtr->selVarName == NULL) {
+#ifdef BGLK_CODE
+	    butPtr->selVarName = (char *) ckalloc_atomic((unsigned)
+#else
 	    butPtr->selVarName = (char *) ckalloc((unsigned)
 		    (strlen(Tk_Name(butPtr->tkwin)) + 1));
+#endif
 	    strcpy(butPtr->selVarName, Tk_Name(butPtr->tkwin));
 	}
 
@@ -851,7 +860,7 @@ ConfigureButton(interp, butPtr, argc, argv, flags)
 	 * changes to its value.
 	 */
 
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	value = STk_tcl_getvar(butPtr->selVarName, butPtr->env);
 #else
 	value = Tcl_GetVar(interp, butPtr->selVarName, TCL_GLOBAL_ONLY);
@@ -862,7 +871,7 @@ ConfigureButton(interp, butPtr, argc, argv, flags)
 		butPtr->flags |= SELECTED;
 	    }
 	} else {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    if (STk_tcl_setvar(butPtr->selVarName,
 		    (butPtr->type == TYPE_CHECK_BUTTON) ? butPtr->offValue : "#f",
 		    ((butPtr->string)? STk_STRINGIFY:0), butPtr->env) == NULL) {
@@ -923,13 +932,13 @@ ConfigureButton(interp, butPtr, argc, argv, flags)
 
 	char *value;
 
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	value = STk_tcl_getvar(butPtr->textVarName, butPtr->env);
 #else
 	value = Tcl_GetVar(interp, butPtr->textVarName, TCL_GLOBAL_ONLY);
 #endif
 	if (value == NULL) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    if (STk_tcl_setvar(butPtr->textVarName, butPtr->text,
 			       ((butPtr->string)? STk_STRINGIFY:0),
 			       butPtr->env) == NULL) {
@@ -943,7 +952,11 @@ ConfigureButton(interp, butPtr, argc, argv, flags)
 	    if (butPtr->text != NULL) {
 		ckfree(butPtr->text);
 	    }
+#ifdef BGLK_CODE
+	    butPtr->text = (char *) ckalloc_atomic((unsigned) (strlen(value) + 1));
+#else
 	    butPtr->text = (char *) ckalloc((unsigned) (strlen(value) + 1));
+#endif
 	    strcpy(butPtr->text, value);
 	}
 	Tcl_TraceVar(interp, butPtr->textVarName,
@@ -1213,13 +1226,13 @@ int
 TkInvokeButton(butPtr)
     register TkButton *butPtr;		/* Information about button. */
 {
-#ifdef STk_CODE
+#ifdef SCM_CODE
   int flag = (butPtr->string? STk_STRINGIFY : 0)|TCL_GLOBAL_ONLY|TCL_LEAVE_ERR_MSG;
 #endif
 
     if (butPtr->type == TYPE_CHECK_BUTTON) {
 	if (butPtr->flags & SELECTED) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    if (STk_tcl_setvar(butPtr->selVarName, butPtr->offValue,
 			       flag, butPtr->env) == NULL) {
 #else
@@ -1229,7 +1242,7 @@ TkInvokeButton(butPtr)
 		return TCL_ERROR;
 	    }
 	} else {
-#ifdef STk_CODE
+#ifdef SCM_CODE
     if (STk_tcl_setvar(butPtr->selVarName, butPtr->onValue,
 		    flag, butPtr->env) == NULL) {
 #else
@@ -1240,7 +1253,7 @@ TkInvokeButton(butPtr)
 	    }
 	}
     } else if (butPtr->type == TYPE_RADIO_BUTTON) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	if (STk_tcl_setvar(butPtr->selVarName, butPtr->onValue,
 		flag, butPtr->env) == NULL) {
 #else
@@ -1307,7 +1320,7 @@ ButtonVarProc(clientData, interp, name1, name2, flags)
      * the button.
      */
 
-#ifdef STk_CODE
+#ifdef SCM_CODE
     value = STk_tcl_getvar(butPtr->selVarName, butPtr->env);
 #else
     value = Tcl_GetVar(interp, butPtr->selVarName, TCL_GLOBAL_ONLY);
@@ -1372,7 +1385,7 @@ ButtonTextVarProc(clientData, interp, name1, name2, flags)
 
     if (flags & TCL_TRACE_UNSETS) {
 	if ((flags & TCL_TRACE_DESTROYED) && !(flags & TCL_INTERP_DESTROYED)) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    STk_tcl_setvar(butPtr->textVarName, butPtr->text,
 		   (butPtr->string? STk_STRINGIFY: 0), butPtr->env); 
 #else
@@ -1387,7 +1400,7 @@ ButtonTextVarProc(clientData, interp, name1, name2, flags)
 	return (char *) NULL;
     }
 
-#ifdef STk_CODE
+#ifdef SCM_CODE
     value = STk_tcl_getvar(butPtr->textVarName, butPtr->env);
 #else
     value = Tcl_GetVar(interp, butPtr->textVarName, TCL_GLOBAL_ONLY);
@@ -1398,7 +1411,11 @@ ButtonTextVarProc(clientData, interp, name1, name2, flags)
     if (butPtr->text != NULL) {
 	ckfree(butPtr->text);
     }
+#ifdef BGLK_CODE
+    butPtr->text = (char *) ckalloc_atomic((unsigned) (strlen(value) + 1));
+#else
     butPtr->text = (char *) ckalloc((unsigned) (strlen(value) + 1));
+#endif
     strcpy(butPtr->text, value);
     TkpComputeButtonGeometry(butPtr);
 

@@ -4,41 +4,59 @@
  *
  * Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
- *
- * Permission to use, copy, and/or distribute this software and its
- * documentation for any purpose and without fee is hereby granted, provided
- * that both the above copyright notice and this permission notice appear in
- * all copies and derived works.  Fees for distribution or use of this
- * software or derived works may only be charged with express written
- * permission of the copyright holder.	
- * This software is provided ``as is'' without express or implied warranty.
- *
- * This software is a derivative work of other copyrighted softwares; the
- * copyright notices of these softwares are placed in the file COPYRIGHTS
- *
- * $Id: toplevel.c 1.16 Fri, 22 Jan 1999 14:44:12 +0100 eg $
+ * Permission to use, copy, modify, distribute,and license this
+ * software and its documentation for any purpose is hereby granted,
+ * provided that existing copyright notices are retained in all
+ * copies and that this notice is included verbatim in any
+ * distributions.  No written agreement, license, or royalty fee is
+ * required for any of the authorized uses.
+ * This software is provided ``AS IS'' without express or implied
+ * warranty.
  *
  *	     Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date:  6-Apr-1994 14:46
- * Last file update: 15-Jan-1999 09:51
+ * Last file update:  3-Sep-1999 21:01 (eg)
+ *
+ * Modifications made by Steve Pruitt <steve@pruitt.net> fot Win32
+ * To maintain compatability with Tcl Library paths and
+ * For Win32 support the following changes were made:
+ *     - Defined IMPORT_DLL_GLOBALS for dll support
+ *     - Copyright symbol changed to (c)
  */
+
+/* Import DLL globals from library */ 
+#if defined(WIN32) && defined(USE_DYNLOAD) && defined(MSC_VER) && !defined(CYGWIN32)
+#  define IMPORT_DLL_GLOBALS
+#endif
 
 #include "stk.h"
 #include "gc.h"
 #include "module.h"
 
-
+#ifndef WIN32
 struct error_handler *STk_err_handler;    /* Current error handler pointer */ 
+#else
+#  if (defined(USE_DYNLOAD) && defined(MSC_VER) && !defined(CYGWIN32))
+     __declspec( dllimport ) struct error_handler *STk_err_handler;
+#  else
+     struct error_handler *STk_err_handler;
+#  endif
+#endif
 
 
-static struct obj VNIL	   = {0, tc_nil}; /* The cell representing NIL */
+static struct obj VNIL	   = {{NULL}, 0, tc_nil}; /* The cell representing NIL */
 
 static void print_banner(void)
 {
   if (STk_lookup_variable(PRINT_BANNER, NIL) != Ntruth){
     Fprintf(STk_curr_eport, "Welcome to the STk interpreter version %s [%s]\n", 
 	    STK_VERSION, MACHINE);
+#ifdef WIN32
+    /* the copyright symbol does not work on WIN32 system */
+    Fprintf(STk_curr_eport, "Copyright (c) 1993-1999 Erick Gallesio - ");
+#else
     Fprintf(STk_curr_eport, "Copyright © 1993-1999 Erick Gallesio - ");
+#endif
     Fprintf(STk_curr_eport, "I3S - CNRS / ESSI <eg@unice.fr>\n");
   }
 }
@@ -55,6 +73,7 @@ static void no_display(char *argv0)
 }
 #endif
 
+
 static void load_init_file(void)
 {
   /* Try to load init.stk in "." and, if not present, in $STK_LIBRARY/STk */
@@ -68,6 +87,7 @@ static void load_init_file(void)
   if (STk_load_file(file, FALSE, STk_selected_module) == Ntruth)
     weird_dirs(STk_Argv0);
 }
+
 
 static void load_user_init_file(void)
 {
@@ -84,6 +104,7 @@ static void load_user_init_file(void)
     STk_load_file(file, FALSE, STk_selected_module);
   }
 }
+
 
 static void init_library_path(char *argv0)
 {
@@ -258,7 +279,10 @@ static void finish_initialisation(void)
       panic("Cannot open file \"%s\".", STk_arg_file);
 
 #ifdef USE_TK
-    if (Tk_initialized) Tk_MainLoop();
+    if (Tk_initialized){
+      STk_internal_eval_string("(tk-set-error-handler!)", 0, NIL); /* Do it late */
+      Tk_MainLoop();
+    }
 #endif
     exit(0);
   }

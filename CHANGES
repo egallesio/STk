@@ -1,9 +1,25 @@
+09/03/99 Release 4.0.0
+----------------------
+Mains changes/modifications since 4.0 are:
+
+      * Lot of Win32 fixes 
+
+      * <Scroll-Frame>, <Toolbar> STklos classes.
+      
+      * Integration of some finals SRFI (0, 2, 6, 8)
+      
+      * define-syntax (but not let-syntax and let-syntax*)
+      
+      * Lot of bug fixes.
+      
+      * New License Policy (request for commercial apps no more needed).
+
 02/02/99 Release 3.99.4
 -----------------------
 Mains changes/modifications since 3.99.3 are:
 
 	* Works on Windows too (need some more testing, since this is
-	far form perfect)
+	far from perfect)
 
 	* A console mode (which is used by default on Windows, but can
 	  be used with the -console option on Unix)

@@ -220,7 +220,7 @@ Tcl_GetDouble(interp, string, doublePtr)
     }
     if (errno != 0) {
         if (interp != (Tcl_Interp *) NULL) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
             Tcl_AppendResult(interp, "incorrect floating-point \"",
 			     string, "\"", (char *) NULL);
 #else
@@ -301,7 +301,7 @@ Tcl_GetBoolean(interp, string, boolPtr)
 
     length = strlen(lowerCase);
     c = lowerCase[0];
-#ifdef STk_CODE
+#ifdef SCM_CODE
     if (c == '#') {
       if ((lowerCase[1] == 'f' && lowerCase[2] == '\0')) {
 	*boolPtr = 0;

@@ -1,3 +1,508 @@
+1999-09-05  Erick Gallesio  <eg@unice.fr>
+
+	* Release 4.0.0
+		
+	* STk.prj: Added the file Combobox.stklos
+
+1999-09-04  Erick Gallesio  <eg@unice.fr>
+
+	* Demos/server.stk : Set the process in a variable to avoid the
+ 	socket be closed when a GC occurs.
+
+	* Win32: some minor corrections
+
+1999-09-03  Erick Gallesio  <eg@unice.fr>
+	      
+	* First package named 4.0 (Let's pray).
+	
+	* New Copyright applied to all the files which need it. The new
+ 	copyright deletes the restriction on commercial applocations.
+
+	* Tk/generic/tkConfig.c (DoConfig): Correction of a long standing
+ 	bug signalled by Brian Denheyer <briand@deldotd.com>about the
+ 	environments which were garbaged on checkbutton menu entry. 
+	
+	* configure.in : Modifications for RPM 3.0 packaging
+
+1999-09-01  Erick Gallesio  <eg@unice.fr>
+
+	* Src/syntax.c (syntax_let_family): Bug correction in named let:
+ 	the scope of the name of a * named let encloses only the body of
+ 	the let and not the * initialization values of the bound
+ 	variables. That means that
+	   (let ((f -)) (let f ((n (f 1))) n)) => -1 
+	rather than 1. This (apparently very common) bug was signaled in
+ 	comp.lang.scheme.
+
+	* Src/print.c (STk_print): Deleted an extra close parenthesis when
+ 	printing a local var.
+
+1999-08-31  Erick Gallesio  <eg@unice.fr>
+
+	* Lib/srfi-7.stk: New file for SRFI-7 (PROGRAM)
+
+	* Src/syntax.c (STk_syntax_begin): Accepts now the form "(begin)" 
+	without complaining about a null body
+	
+	* Src/port.c : slight modification to input-port? primtive: it
+ 	returns #t for all the input port (i.e. file, string and virtual
+ 	port) instead of the file port only. A new primitive as been
+ 	added: input-file-port? for testing explicitly if an object is an
+ 	input port. Of course, the same applies also for output. This
+ 	change was needed to be conform to SRFI-6.
+
+1999-08-30  Erick Gallesio  <eg@unice.fr>
+
+	* Lib/defsyntax.stk : R4RS define-syntax. This is the Macro By
+ 	Example implementation from Dorai Sitaram <dorai@cs.rice.edu>
+ 	adapted for STk.
+
+	* Lib/srfi-0.stk: New file implementing srfi-0
+
+	* Lib/srfi-2.stk: New file implementing srfi-2	
+
+1999-08-24  Erick Gallesio  <eg@unice.fr>
+
+	* Demos/widget.stk (show-code): Changed the way the code file is
+ 	read to work under Win32 too.
+
+1999-08-23  Erick Gallesio  <eg@unice.fr>
+
+	* Lib/init.stk (STk): Changed the time where the autoload of the
+ 	graphical error routine is done, so that an error during the
+ 	reading of initialization file doesn't pop this weird black empty
+ 	window on the screen.
+
+	* Src/port.c (STk_close_file_port): closing a closed file with
+ 	fclose on glibc2.1.1 dumps core. fclose has been replaced by a
+ 	fflush and a close. 
+
+	* Lib/winsocket.stklos : New file which implements sockets for
+ 	Win32.  This file is a contribution of Steve Pruitt 
+	<steve@pruitt.net>
+
+1999-08-22  Erick Gallesio  <eg@unice.fr>
+
+	* Demos/console-demo.stk: New (simple) demo showing the console in
+ 	action.
+
+	* Makefile.in (install-no-strip): New entry to install the
+ 	executable without stripping them. This was needed by Brian
+ 	Denheyer <briand@deldotd.com>
+
+	* Lib/console.stk : Added scrollbar in the list of modules when
+ 	choosing a new console
+
+1999-08-19  Erick Gallesio  <eg@unice.fr>
+
+	* STklos/Tk/Composite/Paned.stklos (): Made the fraction of a
+ 	paned an active slot. This was requested by Andrew Dorrell 
+	<andrewd@mountains.net.au>
+
+1999-08-18  Erick Gallesio  <eg@unice.fr>
+
+	* Demos/widget.stk :Changed the Quit button by a new toolbar for
+ 	the widget Demo.
+
+1999-08-16  Erick Gallesio  <eg@unice.fr>
+
+	* Doc/Reference/Reference*.tex: Big documentation update.
+
+	* Src/io.c (STk_internal_flush): Changed the implementation of
+ 	virtual port and make some cleanups. everything is documented now.
+
+1999-08-15  Erick Gallesio  <eg@unice.fr>
+
+	* Lib/console.stk : Clos console menu didn't exit the interpreter
+ 	on the main console.
+
+	* Lib/help.stk: Modified the help function to deiconify the 
+	browser if it already exists
+ 	
+	* Src/stk.h: Conditionally define TRUE and FALSE as requested by
+ 	Shiro Kawai <shiro@squareusa.com> 
+
+	* Lib/console.stk : New menu in
+ 	console to allow to open a new console in a given module.
+
+	* Src/module.c (STk_all_modules): New primitive "all-modules"
+ 	which returns the list of all the living modules.
+
+1999-08-12  Erick Gallesio  <eg@unice.fr>
+
+	* Lib/www-url.stk (merge-paths): modified to take into account Win32
+
+	* Lib/fs.stk: * Lib/win32.stk: fs.stk is the file which will load
+ 	either unix.stk or win32.stk depending of the running system.
+
+	* Lib/image.stk : Changed the images are searched. It didn't work
+ 	for Win32
+	
+
+1999-08-04  Erick Gallesio  <eg@unice.fr>
+
+	* Lib/console.stk (console-splash-screen): compute geometry with
+ 	quotient rather than "/" (useful for people with odd
+ 	resolutions. Yes it exists!)
+
+1999-08-03  Erick Gallesio  <eg@unice.fr>
+
+	* Src/unix.c: Modifications to parse correctly DOS filenames.
+  	This is probably not completely correct (DOS guys are really
+ 	crazy).
+
+	* Lib/www-url.stk (url-regexp): Changed the regexp for parsing
+ 	correctly DOS filename (C:\\A was seen as the path \\A for the
+ 	service "C")
+
+1999-07-02  Erick Gallesio  <eg@unice.fr>
+
+	* Src/error.c (STk_err): the assignment of the two global is done
+ 	now in STk_err to have it even in the context of a CATCH. Patch
+ 	provided by Ian Wild <ian.wild@eurocontrol.be>.
+
+	* Lib/balloon.stk ((display-balloon-help w)): Correction of a bug
+ 	which apperas when the window to which a ballon is associated does
+ 	not exists anymore.
+
+	* Lib/dialog.stk:
+	* Lib/error.stk:
+	* STklos/Tk/Composite/Msgbox.stklos (): Added more colorful icons
+ 	for the standard message boxes
+
+1999-07-01  Erick Gallesio  <eg@unice.fr>
+
+	* STklos/stklos.stk:
+	* Src/stklos.c (next_method_exists): New primitive in STklos:
+	next-methods-exists?
+
+1999-06-30  Erick Gallesio  <eg@unice.fr>
+
+	* Src/symbol.c: New primitive string->uninterned-symbol.
+
+	* Lib/init.stk (gensym): gensym now use an uninterned symbol.
+
+1999-06-21  Erick Gallesio  <eg@unice.fr>
+
+	* install.bat: Added the installation of libraries for Win32 as
+ 	requested by Jonathan Berry <berryj@elon.edu>
+
+1999-06-19  Erick Gallesio  <eg@unice.fr>
+
+	* Src/hash.c (hash_table_put): 
+	* Src/tk-glue.c (STk_add_callback): Changed the variable new to
+ 	new_entry to be more C++ friendly as requested by Jonathan Berry
+ 	<berryj@elon.edu>
+
+1999-06-06  Erick Gallesio  <eg@unice.fr>
+
+	* Use a coherent scheme for toolbars. All the pixmaps have been
+ 	modified.
+
+1999-06-05  Erick Gallesio  <eg@unice.fr>
+
+	* Doc/Reference/Appendix-C.tex (subsection{Example}): Typo error
+ 	signalled by Ben L. Di Vito <bld@air57.larc.nasa.gov>
+
+1999-06-04  Erick Gallesio  <eg@unice.fr>
+
+	* Src/proc.c (STk_procedurep): Bug corrcetion: procedure? was
+ 	returning #t for all STklos instance, it returns #t for
+ 	next-methods and descendants of methods now.
+	(STk_is_thunk): ditto.
+
+	* Tcl/tclInt.h: The Tcl List type is now hidden (since it is not
+ 	used by STk) . It is a request from Jonathan Berry
+ 	<berryj@elon.edu> 
+	
+1999-05-28  Erick Gallesio  <eg@unice.fr>
+
+	* Tk/generic/tkCanvLine.c: Added the option :centerarrow for
+ 	lines.  The implementation was provided by Sarah Calvo
+ 	<sarah@grammatech.com>
+
+	* STklos/Tk/Canvitem.stklos (<Line>): Added the center-arrow slot
+ 	to the <Line> class to take into account the new:centerarrow
+ 	option
+
+	
+1999-05-26  Erick Gallesio  <eg@unice.fr>
+
+	****** All the stuff below has been provided by people at Grammatech 
+	****** <sarah@grammatech.com> & <paul@grammatech.com>
+
+	* Tk/generic/tkFrame.c: Declare the menu option of a frame as 
+	a TK_CONFIG_MENU rathere than a TK_CONFIG_STRING.
+
+	* Src/tcl-lib.c (Tcl_CreateInterp): flags field was not
+ 	initialized.
+
+	* Src/stk.h: Added #define USE_PROCESS for Win32 
+
+	* Src/eval.c: Two new functions for applying 1 or 2 arguments only.
+
+	* Src/io.c (STk_StdinProc): initializing errno to 0 before a read
+ 	system call.
+
+	* Src/dynload.c: Type declaration was uncorrect for a message
+	issued on architectures without FFI.
+
+	* Src/cont.c (STk_throw): On some architecture, the thunk to be
+ 	executed on restauration of a continuation should be in a global
+ 	rather than a local variable.
+
+	* Lib/unix.stk: Win32 adaptations
+
+	* Lib/menu.stk: Typos and motion.
+
+	* Lib/init.stk: Win32 fixes
+
+	* Lib/console.stk (console-invoke): fix of STk Error if there were
+ 	multiple regions with "input" tag.
+
+	((init-console module std-console?)): color missing on HPUX
+ 	replaced by its value.
+
+	* configure.in: the --prefix option was not correctly propagated 
+	to Tk and Tcl configure scripts.
+
+	* Stack/Makefile.in: new entry install.libs
+
+1999-05-21  Erick Gallesio  <eg@unice.fr>
+
+	* Src/dynload.c: 
+	* Src/number.c:
+	* Src/port.c: 
+	* Src/env.c: Some typo errors signalled by David Fox.
+
+	* Src/tcl-lib.c (Tcl_CreateCommand): bug correction suggested by 
+	David Fox <dsfox@cogsci.ucsd.edu>
+
+1999-05-20  Erick Gallesio  <eg@unice.fr>
+
+	* STklos/Tk/Composite/Filebox.stklos: When the filebox was first
+ 	invoked the "all" button was NOT checked, but the filebox displays
+ 	all of the files, i.e., the button doesn't match functionality.
+	Bug signaled and corrected by Brian Denheyer <briand@deldotd.com>.
+
+	* STklos/describe.stklos (describe): Extended types were described
+ 	as unknown types, whereas a class is automatically defined for
+ 	them.
+
+	* Lib/init.stk (STk): added the function repl-write which is used
+ 	by the repl-display-result to display results at the toplevel. It
+ 	was write*, but it doesn't seem to be appreciated. The new value
+ 	is a function which use write or write* for list and write* for
+ 	other object. Of course it can be changed by just setting the 
+	repl-write result.
+
+	* STklos/Tk/Composite/Hierarchy.stklos: Added the remove-item!
+ 	method.
+
+	* STklos/Tk/Composite/Toolbar.stklos: Modification of the toolbar
+ 	code to allow the inclusion of any widget in a toolbar
+
+1999-05-19  Erick Gallesio  <eg@unice.fr>
+
+	* Lib/www-browser.stklos (WWW:browser): 
+	* Demos/Widget/Wmenu.stklos (demo-menu): 
+	* Demos/amib.stklos (build-interface): Use the new toolbar widget
+	instead of simple menu as before.
+
+	* Demos/stklos-widgets.stklos: Added the font-chooser demo.
+
+1999-05-18  Erick Gallesio  <eg@unice.fr>
+
+	* STklos/Tk/Composite/Toolbar.stklos (map-toolbar): Added the
+ 	convention that spaces of length 0 in a toolbar correspond to a
+ 	space which takes all the spaces (i.e. it sets the :expand option
+ 	of the packer to #t)
+	
+	* Lib/menu.stk (Tk:menu-escape menu): code was incorrect when
+ 	using the Escape key on a cascade menu.
+
+	* STklos/Tk/Composite/*.stklos: Added a class to all the composite
+ 	widgets, so that it can be initialized from resources.
+
+	* STklos/Tk/Composite/Scrollframe.stklos: Modification to take
+ 	into account the width and the height of a Scroll frame.
+
+	* STklos/Tk/Font.stklos: New <Font> class which allow to
+ 	manipulate fonts as widgets.
+
+1999-05-16  Erick Gallesio  <eg@unice.fr>
+
+	* Src/dynload.c (push_argument): New convention: #f is now
+ 	accepted for speicfing a NULL value for a string or a pointer.
+  	This was already the case for returned values but not for
+ 	parameters. thsi was requested by terry jones
+ 	<terry@cliffs.ucsd.edu>
+
+	* STklos/Tk/Composite/Notepad.stklos (initialize): Set the
+ 	highlight thickness of tabs to 0, Otherwise the effect was bad
+ 	(unluckily this was the defaut value I set in my .Xdefaults)
+
+	* Lib/font-chooser.stklos (pretty): The weight of the font was
+ 	missing.
+
+1999-05-13  Erick Gallesio  <eg@unice.fr>
+
+	* STklos/Examples/E3.stklos: Use a require "Tk-classes" instead of
+ 	"Canvas", otherwise *top-root* is improperly initialized
+
+1999-05-11  Erick Gallesio  <eg@unice.fr>
+
+	* STk.prj: Integration of floating toolbars
+
+	* STklos/Tk/Tk-classes.stklos: Integration of toolbars
+
+	* STklos/Tk/Composite/Toolbar.stklos: New file which implements
+ 	the floating toolbar abstraction. This was really a pain to write
+ 	(even if it does not seem complicate afterwards :-<). This is not 
+	complete, but it's time to release...
+
+	* STklos/Tk/Menu.stklos: Special clone-widget methods for <menu>
+ 	and <menu-button>. This was necessary when cloning a toolbar which
+ 	contains a menu.
+
+1999-05-10  Erick Gallesio  <eg@unice.fr>
+
+	* STk.prj: A pseudo-stable version.
+
+	* Src/tcl-obj.c (Tcl_EvalObj): Added code for evaluating a Tcl_obj
+ 	expression. I forgot to write the code when new handlers were
+ 	introduced for 3.99.4 :-<. Bug signalled by many, really many,
+ 	users.
+
+	* Lib/palette.stk: New functions: make-rgb-color, make-darker-color
+	make-lighter-color
+
+	* STklos/Tk/Basics.stklos (clone-widget): New generic function.
+  	It allows the creation of a clone of the given widget in another
+ 	place in the hierarchy.
+
+1999-05-06  Erick Gallesio  <eg@unice.fr>
+
+	* Tk/generic/tkFrame.c (TkCreateFrame): Small modification to
+ 	allow the specification of a :colormap which is the empty string
+ 	for Frames and toplevels. This is needed for cloning frames.
+
+1999-05-02  Erick Gallesio  <eg@unice.fr>
+
+	* Lib/menu.stk: Some global grabs in the Tcl file were reported as
+ 	local grab in STk.
+
+	* STklos/Tk/Composite/Combobox.stklos (show/hide-combo-list):
+ 	Changed the focus policy for combo boxes
+	  
+
+1999-05-01  Erick Gallesio  <eg@unice.fr>
+
+	* Tk/generic/tkPlace.c: Typo error detected in Biglook and which
+ 	seems not harmful in STk. 
+
+	* Src/vector.c (STk_sort): When sorting a list, there was an
+ 	unnecessary copy vector which was allocated. Thanks to Manuel for
+ 	signalling this bug.
+
+1999-04-25  Erick Gallesio  <eg@unice.fr>
+
+	* Demos/stkfontsel.stk: New demo. 
+
+	* Lib/font-chooser.stklos (): When the user exits the widget 
+	without selecting a font, the old font remains the default one.
+	
+1999-04-24  Erick Gallesio  <eg@unice.fr>
+
+	* Lib/font-chooser.stklos: The font chooser has been completely
+ 	rewritten. Now it only use one global variable (instead of 6) and
+ 	is cleaner than the older one. The chooser also use the Combobox
+ 	composite widget. 
+
+1999-04-17  Erick Gallesio  <eg@unice.fr>
+
+	* STklos/Tk/Text.stklos (text-see): typo error signalled by 
+	Brian Denheyer <briand@deldotd.com>
+
+	* Src/argv.c: Added the -version option to stk. This options just
+ 	prints the version number and exit the interpreter.
+
+1999-04-06  Erick Gallesio  <eg@unice.fr>
+
+	* STklos/Tk/Composite/Combobox.stklos: New Composite widget.
+
+	* STklos/Tk/Tk-classes.stklos (STklos+Tk): Adaptation for the new
+ 	composite widget.
+
+1999-04-01  Erick Gallesio  <eg@unice.fr>
+
+	* Lib/trace.stk (Trace): Correction of a bug which deals with
+ 	environments. Bug signaled by Jacques Chazarain <jmch@unice.fr>.
+
+	* Src/boolean.c (STk_eqv): Now environment can be compared with
+ 	eqv?.  Consequently, (eqv? (the-environment) (the-environment))
+ 	returns now #t.
+
+1999-03-26  Erick Gallesio  <eg@unice.fr>
+
+	* STklos/describe.stklos (describe): Used ~W instead of ~S in some
+ 	format to avoid infinite loops when describing circular structures.
+
+1999-03-24  Erick Gallesio  <eg@unice.fr>
+
+	* Src/dynload.c (push_argument): Forgot to implement the boolean case 
+	Patch provided by David Fox <dsfox@cogsci.ucsd.edu>.
+	
+	* configure.in: Application of corrections for FreeBSD provided by
+ 	"F. Heinrichmeyer" <fritz.heinrichmeyer@FernUni-Hagen.de>
+
+	* STk.prj: Various bug corrections
+
+	* STklos/Tk/Image.stklos (initialize): New method: Pixmap
+ 	extension need that the :file or :data be passed when the  image
+ 	is created => we use a new initialize method rather than the 
+ 	initialize-image scheme used for bitmaps and photos.
+	Bug signaled by Brian Denheyer <briand@deldotd.com>
+	
+
+1999-03-13  Erick Gallesio  <eg@unice.fr>
+
+	* Src/io.c (STk_getc): Correction of a bug on Alpha (OSF does not
+ 	seem to set errno to 0 before a read!). Bug signaled by Vincent
+ 	Granet <vg@unice.fr>
+
+1999-03-11  Erick Gallesio  <eg@unice.fr>
+
+	* Tk/generic/tkBind.c: patch to make significant only the first
+ 	character of a parameter in a binding lambda (i.e. x1 is now
+ 	equivalent to x). Strange behaviour signalled by Brian Denheyer
+ 	<briand@deldotd.com>.
+
+	* Src/primitives.c: New primitive port-closed?.
+
+1999-02-13  Erick Gallesio  <eg@unice.fr>
+
+	* Demos/widget.stk: Modification of the path for accessing source
+ 	in the widget demo. Thanks to Daniel Ortmann <ortmann@us.ibm.com>
+
+1999-02-10  Erick Gallesio  <eg@unice.fr>
+
+	* Tk/win/tkWinDialog.c (ProcessCDError): compound options for
+ 	standard dialog have now a dash (-initialfile => :initial-file, ...)
+	to be consistent with Unix.
+
+	* Tk/win/tkWinFont.c (WinFontFamilyEnumProc): Modified to
+ 	transform font-name into strings rather than symbols.
+
+	* Lib/menu.stk (Tk:menu-button-button-up): Typo correction (thanks
+ 	to Eric Fintzel <tpfintz@fr.ibm.com>)
+
+	* STklos/Tk/Composite/Scrollframe.stklos: Rewritten
+
+1999-02-08  Erick Gallesio  <eg@unice.fr>
+
+	* STklos/Tk/Composite/Scrollframe.stklos: New widget <Scroll-Frame>.
+
 1999-02-02  Erick Gallesio  <eg@unice.fr>
 
 	* Release 3.99.4: This is the last pre 4.0 version. Code for Win32

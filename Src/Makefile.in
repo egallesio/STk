@@ -1,26 +1,25 @@
 #
 # Makefile for STk
 # 
-# Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+# Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 # 
-# Permission to use, copy, and/or distribute this software and its
-# documentation for any purpose and without fee is hereby granted, provided
-# that both the above copyright notice and this permission notice appear in
-# all copies and derived works.  Fees for distribution or use of this
-# software or derived works may only be charged with express written
-# permission of the copyright holder.  
-# This software is provided ``as is'' without express or implied warranty.
-#
-# $Id: Makefile.in 1.10 Wed, 18 Nov 1998 16:16:26 +0100 eg $
+# Permission to use, copy, modify, distribute,and license this
+# software and its documentation for any purpose is hereby granted,
+# provided that existing copyright notices are retained in all
+# copies and that this notice is included verbatim in any
+# distributions.  No written agreement, license, or royalty fee is
+# required for any of the authorized uses.
+# This software is provided ``AS IS'' without express or implied
+# warranty.
 #
 #           Author: Erick Gallesio [eg@unice.fr]
 #    Creation date: ??-Sep-1993 ??:??
-# Last file update:  4-Nov-1998 18:57
+# Last file update:  3-Sep-1999 20:17 (eg)
 #
 
 include ../config.make
 
-CFLAGS		= $(STKCFLAGS) $(VERS-OPT) $(MACHINE) $(DYNLOAD) $(TK) $(DFLGS) \
+CFLAGS		= $(STKCFLAGS) $(MACHINE) $(DYNLOAD) $(TK) $(DFLGS) \
 		  $(OPTS) @DEFS@ \
 		  -I. -I../Tk/generic -I../Tk/$(FLAVOR) -I../Tcl -I../Mp \
 		  -I../Stack $(XINCLUDES)
@@ -109,41 +108,39 @@ install:
 	@echo "You must specify 'install.stk' or "install.snow'"
 
 install.stk: stk
-	-if [ ! -d $(bindir) ] ; then mkdir -p $(bindir); fi
-	/bin/rm -f $(bindir)/stk $(bindir)/stk-$(VERSION) 
-	ln -s $(execdir)/stk $(bindir)/stk-$(VERSION) 
-	ln -s $(execdir)/stk $(bindir)/stk 
-	-if [ ! -d $(execdir) ] ; then mkdir -p $(execdir); fi
-	$(CP) stk $(execdir)
-	$(STRIP) $(execdir)/stk
-	chmod 0755 $(bindir)/stk-$(VERSION) $(bindir)/stk $(execdir)/stk
+	-if [ ! -d $(root)$(bindir) ] ; then mkdir -p $(root)$(bindir); fi
+	/bin/rm -f $(root)$(bindir)/stk $(root)$(bindir)/stk-$(VERSION) 
+	ln -s $(execdir)/stk $(root)$(bindir)/stk-$(VERSION) 
+	ln -s $(execdir)/stk $(root)$(bindir)/stk 
+	-if [ ! -d $(root)$(execdir) ] ; then mkdir -p $(root)$(execdir); fi
+	$(CP) stk $(root)$(execdir)
+	chmod 0755 $(root)$(execdir)/stk
 
 install.stk.libs:
-	-if [ ! -d $(ardir) ] ; then mkdir -p $(ardir); fi
-	$(CP) libstk.a $(ardir)
-	$(RANLIB) $(ardir)/libstk.a
-	-if [ ! -d $(incdir) ] ; then mkdir -p $(incdir); fi
-	$(CP) stk.h tk-glue.h tcl-glue.h $(incdir)
+	-if [ ! -d $(root)$(ardir) ] ; then mkdir -p $(root)$(ardir); fi
+	$(CP) libstk.a $(root)$(ardir)
+	$(RANLIB) $(root)$(ardir)/libstk.a
+	-if [ ! -d $(root)$(incdir) ] ; then mkdir -p $(root)$(incdir); fi
+	$(CP) stk.h stkvers.h tk-glue.h tcl-glue.h $(root)$(incdir)
 
 install.snow: snow
-	-if [ ! -d $(bindir) ] ; then mkdir -p $(bindir); fi
-	/bin/rm -f $(bindir)/snow-$(VERSION) $(bindir)/snow
-	ln -s $(execdir)/snow $(bindir)/snow-$(VERSION) 
-	ln -s $(execdir)/snow $(bindir)/snow 
-	-if [ ! -d $(execdir) ] ; then mkdir -p $(execdir); fi
-	$(CP) snow $(execdir)
-	$(STRIP) $(execdir)/snow
-	chmod 0755 $(bindir)/snow-$(VERSION) $(bindir)/snow $(execdir)/snow
+	-if [ ! -d $(root)$(bindir) ] ; then mkdir -p $(root)$(bindir); fi
+	/bin/rm -f $(root)$(bindir)/snow-$(VERSION) $(root)$(bindir)/snow
+	ln -s $(execdir)/snow $(root)$(bindir)/snow-$(VERSION) 
+	ln -s $(execdir)/snow $(root)$(bindir)/snow 
+	-if [ ! -d $(root)$(execdir) ] ; then mkdir -p $(root)$(execdir); fi
+	$(CP) snow $(root)$(execdir)
+	chmod 0755 $(root)$(execdir)/snow
 
 install.snow.libs:
-	-if [ ! -d $(ardir) ] ; then mkdir -p $(ardir); fi
-	$(CP) libsnow.a $(ardir)
-	$(RANLIB) $(ardir)/libsnow.a	
-	-if [ ! -d $(incdir) ] ; then mkdir -p $(incdir); fi
-	$(CP) stk.h tcl-glue.h $(incdir)
+	-if [ ! -d $(root)$(ardir) ] ; then mkdir -p $(root)$(ardir); fi
+	$(CP) libsnow.a $(root)$(ardir)
+	$(RANLIB) $(root)$(ardir)/libsnow.a	
+	-if [ ! -d $(root)$(incdir) ] ; then mkdir -p $(root)$(incdir); fi
+	$(CP) stk.h stkvers.h tcl-glue.h $(root)$(incdir)
 
 
 clean: 
-	@/bin/rm -f  core *.o core config.* \
+	@/bin/rm -f  core *.o core config.* Makefile \
 		     stk  libstk.a  stk  run-stk \
 		     snow libsnow.a snow run-snow

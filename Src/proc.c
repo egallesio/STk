@@ -2,39 +2,38 @@
  *
  * p r o c . c			-- 
  *
- * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
- * Permission to use, copy, and/or distribute this software and its
- * documentation for any purpose and without fee is hereby granted, provided
- * that both the above copyright notice and this permission notice appear in
- * all copies and derived works.  Fees for distribution or use of this
- * software or derived works may only be charged with express written
- * permission of the copyright holder.  
- * This software is provided ``as is'' without express or implied warranty.
- *
- * This software is a derivative work of other copyrighted softwares; the
- * copyright notices of these softwares are placed in the file COPYRIGHTS
- *
- * $Id: proc.c 1.4 Thu, 10 Sep 1998 23:44:28 +0200 eg $
+ * Permission to use, copy, modify, distribute,and license this
+ * software and its documentation for any purpose is hereby granted,
+ * provided that existing copyright notices are retained in all
+ * copies and that this notice is included verbatim in any
+ * distributions.  No written agreement, license, or royalty fee is
+ * required for any of the authorized uses.
+ * This software is provided ``AS IS'' without express or implied
+ * warranty.
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 15-Nov-1993 22:02
- * Last file update: 10-Sep-1998 12:15
+ * Last file update:  3-Sep-1999 20:22 (eg)
  */
 
 #include "stk.h"
 #include "extend.h"
+#ifdef USE_STKLOS
+#  include "stklos.h"
+#endif
 
 /**** Section 6.9 ****/
 
 int STk_is_thunk(SCM obj)
 {
   switch (TYPE(obj)) {
-    case tc_closure:	/* We can be more clever here.... */
 #ifdef USE_STKLOS
-    case tc_instance:
+    case tc_instance: return STk_methodp(obj);
 #endif
+    case tc_closure:	/* We can be more clever here.... */
     case tc_lsubr:
     case tc_subr_0:
     case tc_subr_0_or_1: return TRUE;
@@ -78,15 +77,14 @@ PRIMITIVE STk_procedurep(SCM obj)
     case tc_cont:
     case tc_apply:
     case tc_call_cc:
-    case tc_dynwind: 
+    case tc_dynwind:    return Truth;
 #ifdef USE_STKLOS
-    case tc_instance:
-    case tc_next_method:
+    case tc_instance:   return STk_methodp(obj) ? Truth: Ntruth;
+    case tc_next_method:return Truth;
 #endif
 #ifdef USE_TK
-    case tc_tkcommand:
+    case tc_tkcommand:  return Truth;
 #endif
-			return Truth;
     default: 		if (EXTENDEDP(obj))
       			  return STk_extended_procedurep(obj) ? Truth : Ntruth;
 			else 

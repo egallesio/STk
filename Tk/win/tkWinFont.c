@@ -284,7 +284,11 @@ WinFontFamilyEnumProc(elfPtr, ntmPtr, fontType, lParam)
     Tcl_Interp *interp;
 
     interp = (Tcl_Interp *) lParam;
+#ifdef STk_CODE
+    Tcl_AppendResult(interp, " \"", elfPtr->elfLogFont.lfFaceName, "\"", NULL);
+#else
     Tcl_AppendElement(interp, elfPtr->elfLogFont.lfFaceName);
+#endif
     return 1;
 }
 

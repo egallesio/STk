@@ -91,6 +91,13 @@
 #    include <tk-glue.h>
 #  endif
 #endif
+#ifdef BGLK_CODE
+   /* Don't include the following code when compiling the interpreter */
+#  ifndef _STK_H
+#    define SCM void *	/* Tk code never manipulate SCM object directly */
+#    include <tclglue.h>
+#  endif
+#endif
 
 /*
  * Decide whether or not to use input methods.
@@ -244,7 +251,7 @@ typedef struct Tk_ConfigSpec {
 #define TK_CONFIG_MM		19
 #define TK_CONFIG_WINDOW	20
 #define TK_CONFIG_CUSTOM	21
-#ifdef STk_CODE
+#ifdef SCM_CODE
 #  define TK_CONFIG_CLOSURE	22
 #  define TK_CONFIG_SINT	23 /* value is an int but default is a string */
 #  define TK_CONFIG_SBOOLEAN	24 /* value is a boolean but default is a string */
@@ -1148,9 +1155,16 @@ EXTERN Tk_TextLayout	Tk_ComputeTextLayout _ANSI_ARGS_((Tk_Font font,
 			    int *heightPtr));
 EXTERN Tk_Window	Tk_CoordsToWindow _ANSI_ARGS_((int rootX, int rootY,
 			    Tk_Window tkwin));
-EXTERN unsigned long	Tk_CreateBinding _ANSI_ARGS_((Tcl_Interp *interp,
+#ifdef SCM_CODE
+  EXTERN unsigned long	Tk_CreateBinding _ANSI_ARGS_((Tcl_Interp *interp,
+			    Tk_BindingTable bindingTable, ClientData object,
+			    char *eventString, char *command, char *key1,
+			    char *key3));
+#else
+  EXTERN unsigned long	Tk_CreateBinding _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tk_BindingTable bindingTable, ClientData object,
 			    char *eventString, char *command, int append));
+#endif
 EXTERN Tk_BindingTable	Tk_CreateBindingTable _ANSI_ARGS_((Tcl_Interp *interp));
 EXTERN Tk_ErrorHandler	Tk_CreateErrorHandler _ANSI_ARGS_((Display *display,
 			    int errNum, int request, int minorCode,

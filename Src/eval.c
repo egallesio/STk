@@ -2,25 +2,21 @@
  *
  * e v a l . c				-- The evaluator
  *
- * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
- * Permission to use, copy, and/or distribute this software and its
- * documentation for any purpose and without fee is hereby granted, provided
- * that both the above copyright notice and this permission notice appear in
- * all copies and derived works.  Fees for distribution or use of this
- * software or derived works may only be charged with express written
- * permission of the copyright holder.  
- * This software is provided ``as is'' without express or implied warranty.
- *
- * This software is a derivative work of other copyrighted softwares; the
- * copyright notices of these softwares are placed in the file COPYRIGHTS
- *
- * $Id: eval.c 1.16 Sat, 26 Dec 1998 21:46:25 +0100 eg $
+ * Permission to use, copy, modify, distribute,and license this
+ * software and its documentation for any purpose is hereby granted,
+ * provided that existing copyright notices are retained in all
+ * copies and that this notice is included verbatim in any
+ * distributions.  No written agreement, license, or royalty fee is
+ * required for any of the authorized uses.
+ * This software is provided ``AS IS'' without express or implied
+ * warranty.
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 23-Oct-1993 21:37
- * Last file update: 26-Dec-1998 21:43
+ * Last file update:  3-Sep-1999 20:19 (eg)
  */
 
 #include "stk.h"
@@ -107,7 +103,7 @@ static SCM eval_cond(SCM *pform, SCM env)
       if (EQ(CAR(tmp), Sym_imply)) {
 	/* Clause is ((condition) => function) */
 	if (STk_llength(tmp) != 2) Err("cond: malformed `=>'", tmp);
-	SYNTAX_RETURN(Apply(EVALCAR(CDR(tmp)), LIST1(res)), Ntruth);
+	SYNTAX_RETURN(Apply1(EVALCAR(CDR(tmp)), res), Ntruth);
       }
       else {
 	for( ; NNULLP(CDR(tmp)); tmp=CDR(tmp))
@@ -252,7 +248,7 @@ static SCM handle_eval_hook(SCM x, SCM env)
   eval_hook_stack   = &info;
 
   /* Call user code */
-  res = STk_apply(info.previous->hook, LIST2(x, STk_makeenv(env, 0)));
+  res = Apply2(info.previous->hook, x, STk_makeenv(env, 0));
   
   /* If we are here, everything was correct */
   eval_hook_stack = info.previous;
@@ -424,7 +420,7 @@ Top:
 		  SCM methods;
 		  
 		  if (NULLP(THE_SLOT_OF(fct, S_methods)))
-		    Apply(STk_STklos_value(Intern("no-method")), LIST2(fct, tmp));
+		    Apply2(STk_STklos_value(Intern("no-method")), fct, tmp);
 
 		  methods = STk_compute_applicable_methods(fct, tmp, len, FALSE);
 		  /* methods is the list of applicable methods. Apply the
@@ -606,7 +602,7 @@ Error:
 
 SCM STk_apply(SCM fct, SCM param)
 {
-Top:
+ Top:
   switch TYPE(fct) {
     case tc_subr_0:
          if (NULLP(param)) return SUBR0(fct)();
@@ -677,6 +673,148 @@ Top:
   Err("apply: bad number of arguments to apply", Cons(fct,param));
   return UNDEFINED; /* never reached */
 }
+
+/* 
+ * same as STk_apply, except that there is no parameter
+ * than a list 
+*/
+SCM STk_apply0(SCM fct)
+{
+  switch TYPE(fct) {
+    case tc_subr_0: 	   return SUBRF(fct)(UNBOUND);
+    case tc_subr_1: 	   break;
+    case tc_subr_2: 	   break;
+    case tc_subr_3: 	   break;
+    case tc_subr_0_or_1:   return SUBRF(fct)(UNBOUND);
+    case tc_subr_1_or_2:   break;
+    case tc_subr_2_or_3:   break;
+    case tc_ssubr:	   return SUBRF(fct)(NIL, NIL, 0);
+    case tc_lsubr:	   return SUBRF(fct)(NIL, 0);
+    case tc_cont:	   STk_throw(fct, NIL);
+    case tc_closure:       {
+      			     register SCM code;
+			     register SCM env = extend_env(fct, NIL, fct, 0);
+			     SCM tmp = NIL;
+
+			     for(code=CLOSBODY(fct); NNULLP(code); code=CDR(code))
+			       tmp = EVALCAR(code);
+			     return tmp;
+    			   }
+#ifdef USE_STKLOS
+    case tc_instance:      return STk_apply_generic(fct, NIL);
+    case tc_next_method:   return STk_apply_next_method(fct, NIL);
+#endif
+#ifdef USE_TK
+    case tc_tkcommand:     return STk_execute_Tcl_lib_cmd(fct, NIL, NIL,0);
+#endif
+    case tc_apply:         return STk_apply(fct, NIL);
+    default:               if (EXTENDEDP(fct))
+      			     if (STk_extended_procedurep(fct)) 
+			       return STk_extended_apply(fct, NIL, UNBOUND);
+			   Err("apply: bad procedure", fct);
+    }
+    
+    Err("apply: bad number of arguments to apply", LIST1(fct));
+    return UNDEFINED; /* never reached */
+}
+
+
+/* 
+ * same as STk_apply, except that param is a single SCM value rather 
+ * than a list 
+*/
+SCM STk_apply1(SCM fct, SCM param)
+{
+    switch TYPE(fct) {
+    case tc_subr_0: 	   break;
+    case tc_subr_1: 	   return SUBRF(fct)(param);
+    case tc_subr_2: 	   break;
+    case tc_subr_3: 	   break;
+    case tc_subr_0_or_1:   return SUBRF(fct)(param);
+    case tc_subr_1_or_2:   return SUBRF(fct)(param, UNBOUND);
+    case tc_subr_2_or_3:   break;
+    case tc_ssubr:	   return SUBRF(fct)(LIST1(param), NIL, 1);
+    case tc_lsubr:	   return SUBRF(fct)(LIST1(param), 1);
+    case tc_cont:	   STk_throw(fct, LIST1(param));
+    case tc_closure:       { 
+      			     register SCM code;
+			     register SCM env = extend_env(fct, LIST1(param), 
+							   fct, 1);
+			     for(code=CLOSBODY(fct); NNULLP(code); code=CDR(code))
+			       param = EVALCAR(code);
+			     return param;
+    			   }
+#ifdef USE_STKLOS
+    case tc_instance:      return STk_apply_generic(fct, LIST1(param));
+    case tc_next_method:   return STk_apply_next_method(fct, LIST1(param));
+#endif
+#ifdef USE_TK
+    case tc_tkcommand:     return STk_execute_Tcl_lib_cmd(fct, LIST1(param),NIL,0);
+#endif
+    case tc_apply:         return STk_apply(fct, LIST1(param));
+    default:               if (EXTENDEDP(fct)) 
+      			     if (STk_extended_procedurep(fct)) 
+			       return STk_extended_apply(fct, LIST1(param), 
+							 UNBOUND);
+			   Err("apply: bad procedure", fct);
+    }
+    
+    Err("apply: bad number of arguments to apply", LIST2(fct, param));
+    return UNDEFINED; /* never reached */
+}
+
+
+/* 
+ * same as STk_apply, except that there are two arguments given explictly,
+ * rather than a list 
+*/
+SCM STk_apply2(SCM fct, SCM param1, SCM param2)
+{
+    switch TYPE(fct) {
+      case tc_subr_0:	   
+      case tc_subr_1:      break;
+      case tc_subr_2:      return SUBRF(fct)(param1, param2);
+      case tc_subr_3:      
+      case tc_subr_0_or_1: break;
+      case tc_subr_1_or_2: return SUBRF(fct)(param1, param2);
+      case tc_subr_2_or_3: return SUBRF(fct)(param1, param2, UNBOUND);
+      case tc_ssubr:	   return SUBRF(fct)(LIST2(param1, param2), NIL, 2);
+      case tc_lsubr:	   return SUBRF(fct)(LIST2(param1, param2), 2);
+      case tc_cont:        STk_throw(fct, LIST2(param1, param2));
+      case tc_closure:     {
+			     register SCM code;	
+			     register SCM env = extend_env(fct, 
+							   LIST2(param1, param2), 
+							   fct, 2);
+			     for(code=CLOSBODY(fct); NNULLP(code); code=CDR(code))
+			       param1 = EVALCAR(code);
+			     return param1;
+       			   }
+#ifdef USE_STKLOS
+      case tc_instance:    return STk_apply_generic(fct, LIST2(param1, param2));
+      case tc_next_method: return STk_apply_next_method(fct, LIST2(param1, param2));
+#endif
+#ifdef USE_TK
+      case tc_tkcommand:   return STk_execute_Tcl_lib_cmd(fct, 
+							  LIST2(param1, param2), 
+							  NIL, 0);
+#endif
+      case tc_apply:        return STk_apply(fct, LIST2(param1, param2));
+      default:  	    if (EXTENDEDP(fct)) 
+			      if (STk_extended_procedurep(fct)) 
+				return STk_extended_apply(fct, 
+							  LIST2(param1, param2), 
+							  UNBOUND);
+			    Err("apply: bad procedure", fct);
+    }
+    
+    Err("apply: bad number of arguments to apply", LIST3(fct, param1, param2));
+    return UNDEFINED; /* never reached */
+}
+
+
+/*=============================================================================*/
+
 
 PRIMITIVE STk_user_eval(SCM expr, SCM env)
 {

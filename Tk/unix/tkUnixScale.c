@@ -692,7 +692,11 @@ TkpSetScaleValue(scalePtr, value, setVar, invokeCommand)
 {
     char string[PRINT_CHARS];
 
+#ifdef SCM_CODE
+    value = TkRoundToValueResolution(scalePtr, value);
+#else
     value = TkRoundToResolution(scalePtr, value);
+#endif
     if ((value < scalePtr->fromValue)
 	    ^ (scalePtr->toValue < scalePtr->fromValue)) {
 	value = scalePtr->fromValue;
@@ -718,8 +722,12 @@ TkpSetScaleValue(scalePtr, value, setVar, invokeCommand)
 #ifdef STk_CODE
 	STk_tcl_setvar(scalePtr->varName, string, 0, scalePtr->env);
 #else
+#   ifdef BGLK_CODE
+	SCM_tcl_setvar(scalePtr->varName, string, 0, 0);
+#   else
 	Tcl_SetVar(scalePtr->interp, scalePtr->varName, string,
 	       TCL_GLOBAL_ONLY);
+#   endif
 #endif
 	scalePtr->flags &= ~SETTING_VAR;
     }
@@ -781,7 +789,11 @@ TkpPixelToValue(scalePtr, x, y)
     }
     value = scalePtr->fromValue +
 		value * (scalePtr->toValue - scalePtr->fromValue);
+#ifdef SCM_CODE
+    return TkRoundToValueResolution(scalePtr, value);
+#else
     return TkRoundToResolution(scalePtr, value);
+#endif
 }
 
 /*

@@ -134,7 +134,7 @@ TkTextMarkCmd(textPtr, interp, argc, argv)
 	markPtr = (TkTextSegment *) Tcl_GetHashValue(hPtr);
 	if (argc == 4) {
 	    if (markPtr->typePtr == &tkTextRightMarkType) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		interp->result = "\"right\"";
 	    } else {
 		interp->result = "\"left\"";

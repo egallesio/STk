@@ -3,22 +3,20 @@
 ;;;; m c - s e r v e r  . s t k		-- A simple server which accept
 ;;;;					   multiple client connections
 ;;;;
-;;;; Copyright © 1993-1997 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
-;;;; Permission to use, copy, and/or distribute this software and its
-;;;; documentation for any purpose and without fee is hereby granted, provided
-;;;; that both the above copyright notice and this permission notice appear in
-;;;; all copies and derived works.  Fees for distribution or use of this
-;;;; software or derived works may only be charged with express written
-;;;; permission of the copyright holder.  
-;;;; This software is provided ``as is'' without express or implied warranty.
-;;;;
-;;;; This software is a derivative work of other copyrighted softwares; the
-;;;; copyright notices of these softwares are placed in the file COPYRIGHTS
+;;;; Permission to use, copy, modify, distribute,and license this
+;;;; software and its documentation for any purpose is hereby granted,
+;;;; provided that existing copyright notices are retained in all
+;;;; copies and that this notice is included verbatim in any
+;;;; distributions.  No written agreement, license, or royalty fee is
+;;;; required for any of the authorized uses.
+;;;; This software is provided ``AS IS'' without express or implied
+;;;; warranty.
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;    Creation date: 23-Jul-1996 09:00
-;;;; Last file update: 11-Oct-1997 10:14
+;;;; Last file update:  3-Sep-1999 18:58 (eg)
 
 (require "posix")
 (require "socket")
@@ -43,7 +41,7 @@
 	(flush out)
 
 	;; Signal new connection on standard output
-	(format #t  "New connection detected from ~A (~A)\n" who addr)
+	(format #t  "New connection (#~S) detected from ~A (~A)\n" cnt who addr)
 
 	;; Create a handler for reading inputs from this new connection
 	(when-port-readable in 
@@ -55,7 +53,8 @@
 			(begin
 			  (when-port-readable in #f)
 			  (socket-shutdown s)
-			  (set! sockets (remove s sockets)))
+			  (set! sockets (remove s sockets))
+			  (format #t "Connection #~S closed.\n" cnt))
 			;; Just write the line read on the socket
 			(begin
 			  (format out "On connection #~S I've read --> ~A\n" cnt l)

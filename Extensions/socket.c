@@ -9,31 +9,47 @@
  * 
  * Win32 support by Caleb Deupree <cdeupree@erinet.com>
  *
- * Last file update: 20-Dec-1998 10:34
+ *      Modified on: 27-Apr-1999 12:54 (Steve Pruitt <steve@pruitt.net>)
+ * Last file update:  3-Sep-1999 19:46 (eg)
+ *
+ * For Win32 support the following changes were made:
+ *
+ *    1) re-arraged includes to remove define errors
+ *
+ *    2) added define for CLOSESOCKET      
+ *
+ *    3) Removed calls tcl_DeleteFileHandler and tclDeleteFileHandler
+ *
+ *    4) added new portable primitives: initialize-client-socket,
+ *            accept-connection, close-connection, socket-handle, 
+ *            socket-recv, socket-send and socket-peek
  */
 
 
 #ifdef WIN32
-#  include <fcntl.h>
-#  include <tclWinPort.h>
-#  define BAD_SOCKET(s) ((s) == INVALID_SOCKET)
-#  ifndef _O_WRONLY
-#    define _O_WRONLY O_WRONLY
-#  endif
-#  ifndef _O_RDONLY
-#    define _O_RDONLY O_RDONLY
-#  endif 
+#    define CLOSESOCKET  closesocket
+#    include <fcntl.h>
+#    include "stk.h"
+#    include "stk.h"
+#    define BAD_SOCKET(s) ((s) == INVALID_SOCKET)
+#    ifndef _O_WRONLY
+#      define _O_WRONLY O_WRONLY
+#    endif
+#    ifndef _O_RDONLY
+#      define _O_RDONLY O_RDONLY
+#    endif 
 #else 
+#  define CLOSESOCKET  close
 #  include <sys/types.h>
 #  include <sys/socket.h>
 #  include <netinet/in.h>
 #  include <arpa/inet.h>
 #  include <netdb.h>
 #  include <memory.h>
+#  include "stk.h"
 #  define BAD_SOCKET(s) ((s) < 0)
 #endif
 
-#include "stk.h"
 #include <errno.h>
 
 struct socket_type {
@@ -78,7 +94,7 @@ static void set_socket_io_ports(int s, SCM sock, char *who)
   int t, port;
   size_t len;
   char *hostname, *fname;
-  FILE *fs, *ft;
+  FILE *fs= NULL, *ft = NULL;  /* initialization for GCC! */
   char buffer[200];
 
 #ifdef WIN32
@@ -129,8 +145,23 @@ static void set_socket_io_ports(int s, SCM sock, char *who)
  *   m a k e - c l i e n t - s o c k e t
  *
  ******************************************************************************/
-
+#ifdef WIN32
+/* initialize_client_socket is identical to make_client_socket */
+/* except that it does not call "set_socket_io_ports" */
+static PRIMITIVE initialize_client_socket(SCM hostname, SCM port);
+    
+static PRIMITIVE make_client_socket(SCM hostname, SCM port) 
+{ 
+ SCM sock;
+ sock = initialize_client_socket(hostname, port);
+ set_socket_io_ports(SOCKET(sock)->fd, sock, "make-client-socket");
+ return sock;
+}
+  
+static PRIMITIVE initialize_client_socket(SCM hostname, SCM port)
+#else
 static PRIMITIVE make_client_socket(SCM hostname, SCM port)
+#endif
 {
   char str[] = "make-client-socket";
   struct hostent *hp;
@@ -160,7 +191,7 @@ static PRIMITIVE make_client_socket(SCM hostname, SCM port)
 
   /* Try to connect */
   if (connect(s, (struct sockaddr *) &server, sizeof(server)) < 0) {
-    close(s);
+    CLOSESOCKET(s);
     system_error(str);
   }
 
@@ -176,8 +207,9 @@ static PRIMITIVE make_client_socket(SCM hostname, SCM port)
   SOCKET(z)->input 	 = Ntruth;
   SOCKET(z)->output 	 = Ntruth;
   SOCKET(z)->ready_event = Ntruth;
-
+#ifndef WIN32
   set_socket_io_ports(s, z, str);
+#endif
   return z;
 }
 
@@ -208,20 +240,20 @@ static PRIMITIVE make_server_socket(SCM port)
   sin.sin_addr.s_addr = INADDR_ANY;
 
   if (bind(s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
-    close(s);
+    CLOSESOCKET(s);
     system_error(msg);
   }
 
   /* Query the socket name (permits to get the true socket number if 0 was given */
   len = sizeof(sin);
   if (getsockname(s, (struct sockaddr *) &sin, (int *) &len) < 0) {
-    close(s);
+    CLOSESOCKET(s);
     system_error(msg);
   }
 
   /* Indicate that we are ready to listen */
   if (listen(s, 5) < 0) {
-    close(s);
+    CLOSESOCKET(s);
     system_error(msg);
   }
 
@@ -245,8 +277,24 @@ static PRIMITIVE make_server_socket(SCM port)
  *   s o c k e t - a c c e p t - c o n n e c t i o n
  *
  ******************************************************************************/
-
-static PRIMITIVE socket_accept_connection(SCM sock)
+#ifdef WIN32
+/* accept_connection is identical to socket_accept_connection */
+/* except that it does not call "set_socket_io_ports" and */
+/* it also returns the accepted socket as a SCM integer */
+static PRIMITIVE accept_connection(SCM sock);
+  
+static PRIMITIVE socket_accept_connection(SCM sock) 
+{ 
+ int new_s;
+ new_s = INTEGER(accept_connection(sock));
+ set_socket_io_ports(new_s , sock, "socket-accept-connection");
+ return UNDEFINED;
+}
+  
+static PRIMITIVE accept_connection(SCM sock)
+#else
+static PRIMITIVE socket_accept_connection(SCM sock) 
+#endif
 {
   char *s;
   char str[]= "socket-accept-connection";
@@ -268,8 +316,12 @@ static PRIMITIVE socket_accept_connection(SCM sock)
   SOCKET(sock)->hostip   = STk_makestring(s);
   SOCKET(sock)->hostname = STk_makestring(host? (char*) (host->h_name): s);
 
+#ifdef WIN32
+  return STk_makeinteger(new_s);
+#else
   set_socket_io_ports(new_s, sock, str);
   return UNDEFINED;
+#endif
 }
 
 /******************************************************************************
@@ -277,9 +329,19 @@ static PRIMITIVE socket_accept_connection(SCM sock)
  *   w h e n - s o c k e t - r e a d y 
  *
  ******************************************************************************/
+#ifdef WIN32
+static PRIMITIVE when_socket_ready(SCM s, SCM closure)
+{
+  /* Removal of tcl_DeleteFileHandler and tclDeleteFileHandler */ 
+  /* in Tcl/Tk 8.0 make when_socket_ready impossible on Win32. */
+  /* Will be available again in Tcl/Tk version 8.1    FIXME    */
+  Err("when-socket-ready: cannot be used with Win32", NIL);
+  return UNDEFINED;
+}
+#else
 static void apply_socket_closure(SCM closure)
 {
-  Apply(closure, NIL);
+  Apply0(closure);
 }
  
 static PRIMITIVE when_socket_ready(SCM s, SCM closure)
@@ -310,6 +372,7 @@ static PRIMITIVE when_socket_ready(SCM s, SCM closure)
   }
   return UNDEFINED;
 }
+#endif
 
 static PRIMITIVE buggy_handler(SCM s, SCM closure)
 {
@@ -333,12 +396,15 @@ static PRIMITIVE socket_shutdown(SCM sock, SCM close_socket)
   if (close_socket == Truth && SOCKET(sock)->fd > 0) {
     int fd = SOCKET(sock)->fd;
 
+#ifndef WIN32
     if (!STk_snow_is_running)
       /* We cannot use #ifdef USE_TK here to have the same socket.so
        * for both snow and stk. So we have to test if we are running 
        * snow dynamically
        */
       Tcl_DeleteFileHandler(fd);
+#endif
+
     /* close(fd); */
     shutdown(fd, 2);
     SOCKET(sock)->fd = -1;
@@ -500,6 +566,69 @@ static STk_extended_scheme_type socket_type = {
   NULL			/* compare function */
 };
 
+#ifdef WIN32
+/*******************************************************************************
+ *
+ * These primitives allow WIN32 apps to work when the 
+ * socket io-ports are not available. By adding Primitives
+ * to winsock functions "send" and "recv", sockets can be
+ * operated on directly. 
+ *
+ ******************************************************************************/
+
+static PRIMITIVE close_connection(SCM connection)
+{
+  if (NINTEGERP(connection)) 
+	Err("close_connection: bad connection", connection);
+  CLOSESOCKET(INTEGER(connection));
+  return UNDEFINED;
+}
+
+/******************************************************************************/
+
+static PRIMITIVE socket_handle(SCM sock)
+{
+  if (NSOCKETP(sock)) Err("socket-handle: bad socket", sock);
+  return STk_makeinteger(SOCKET(sock)->fd);
+}
+
+/******************************************************************************/
+
+static PRIMITIVE socket_peek(SCM fd, SCM num_chars) {
+ int i, len;
+ SCM chars;
+ char *s;
+ len = INTEGER(num_chars);
+ chars = STk_makestrg(len+1, NULL);
+ s = chars->storage_as.string.data;
+ i = recv(INTEGER(fd), s, len, MSG_PEEK);
+ return chars;
+}
+
+/******************************************************************************/
+
+static PRIMITIVE socket_recv(SCM fd, SCM buffer) {
+ int len, result;
+ char *s;
+ s = buffer->storage_as.string.data;
+ len = buffer->storage_as.string.dim - 1;
+ result = recv(INTEGER(fd), s, len, 0);
+ if (result <= 0) return STk_eof_object;
+ return STk_makeinteger(result);
+}
+
+/******************************************************************************/
+
+static PRIMITIVE socket_send(SCM fd, SCM buffer, SCM num_chars) {
+ int len, result;
+ char *s;
+ len = INTEGER(num_chars);
+ s = buffer->storage_as.string.data;
+ result = send(INTEGER(fd), s, len, 0);
+ return STk_makeinteger(result);
+}
+#endif
+
 /******************************************************************************/
 
 PRIMITIVE STk_init_socket(void)
@@ -520,6 +649,16 @@ PRIMITIVE STk_init_socket(void)
     Err("Synchronous socket option setting failed", 
 	STk_makeinteger(WSAGetLastError()));
   }
+
+  /* new primitives for send and recv without using stdio */
+  STk_add_new_primitive("accept-connection", tc_subr_1, accept_connection);
+  STk_add_new_primitive("close-connection", tc_subr_1, close_connection);
+  STk_add_new_primitive("socket-handle", tc_subr_1, socket_handle);
+  STk_add_new_primitive("socket-peek", tc_subr_2, socket_peek);
+  STk_add_new_primitive("socket-recv", tc_subr_2, socket_recv);
+  STk_add_new_primitive("socket-send", tc_subr_3, socket_send);
+  STk_add_new_primitive("initialize-client-socket", tc_subr_2, 
+					initialize_client_socket);
 #endif
 
   tc_socket = STk_add_new_type(&socket_type);

@@ -22,6 +22,10 @@
  * Tcl_Preserve calls that are still in effect.  It grows as needed
  * to accommodate any number of calls in effect.
  */
+#if( defined(SCM_CODE) && \
+     !defined( Tcl_Preserve ) &&  \
+     !defined( Tcl_Release ) &&   \
+     !defined( Tcl_EventuallyFree ) )
 
 typedef struct {
     ClientData clientData;	/* Address of preserved block. */
@@ -95,7 +99,6 @@ PreserveExitProc(clientData)
  *
  *----------------------------------------------------------------------
  */
-
 void
 Tcl_Preserve(clientData)
     ClientData clientData;	/* Pointer to malloc'ed block of memory. */
@@ -269,9 +272,14 @@ Tcl_EventuallyFree(clientData, freeProc)
      */
 
     if ((freeProc == TCL_DYNAMIC)
+#ifdef BGLK_CODE
+	    || (freeProc == (Tcl_FreeProc *) GC_free)) {
+#else
 	    || (freeProc == (Tcl_FreeProc *) free)) {
+#endif
 	ckfree((char *) clientData);
     } else {
 	(*freeProc)((char *)clientData);
     }
 }
+#endif

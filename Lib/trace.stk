@@ -1,21 +1,20 @@
 ;;;;
 ;;;; t r a c e . s t k			
 ;;;;
-;;;; Copyright © 1997-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1997-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
-;;;; Permission to use, copy, and/or distribute this software and its
-;;;; documentation for any purpose and without fee is hereby granted, provided
-;;;; that both the above copyright notice and this permission notice appear in
-;;;; all copies and derived works.  Fees for distribution or use of this
-;;;; software or derived works may only be charged with express written
-;;;; permission of the copyright holder.  
-;;;; This software is provided ``as is'' without express or implied warranty.
-;;;;
-;;;; $Id: trace.stk 1.3 Tue, 19 May 1998 12:44:58 +0200 eg $
+;;;; Permission to use, copy, modify, distribute,and license this
+;;;; software and its documentation for any purpose is hereby granted,
+;;;; provided that existing copyright notices are retained in all
+;;;; copies and that this notice is included verbatim in any
+;;;; distributions.  No written agreement, license, or royalty fee is
+;;;; required for any of the authorized uses.
+;;;; This software is provided ``AS IS'' without express or implied
+;;;; warranty.
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 26-Apr-1997 16:02
-;;;; Last file update: 15-May-1998 09:15
+;;;; Last file update:  3-Sep-1999 19:55 (eg)
 
 
 (require "hash")
@@ -23,7 +22,7 @@
 (define-module Trace
   (import Scheme STklos)
   
-  (define *traced-symbols* (make-hash-table))
+  (define *traced-symbols* (make-hash-table equal?))
   (define *indentation*    0)
   (define *err-port*	   (current-error-port))
   (define indent	   (lambda () (make-string *indentation* #\.)))
@@ -80,10 +79,10 @@
   ;;
   ;; Trace-symbol
   ;;
-  (define (trace-symbol symbol proc)
+  (define (trace-symbol symbol proc env)
     (unless (symbol? symbol) (error "trace: bad symbol: ~S" symbol))
     ; Verify if symbol is already traced
-    (let ((entry (hash-table-get *traced-symbols* symbol #f)))
+    (let ((entry (hash-table-get *traced-symbols* (cons symbol env) #f)))
       (when entry
 	; (car entry) contains the traced proc and (cdr entry) the untraced one
 	(let ((old (car entry)))
@@ -95,18 +94,20 @@
 			 ((primitive? proc)(trace-primitive symbol proc))
 			 ((procedure? proc)(trace-closure   symbol proc))
 			 (else		   (error "trace: cannot trace ~S" proc)))))
-      (hash-table-put! *traced-symbols* symbol (cons traced-proc proc))
+      (hash-table-put! *traced-symbols* (cons symbol env) (cons traced-proc proc))
       traced-proc))
   
   ;;
   ;; Untrace-symbol
   ;; 
-  (define (untrace-symbol symbol)
+  (define (untrace-symbol symbol env)
     (unless (symbol? symbol) (error "untrace: bad symbol: ~S" symbol))
     ;; Verify if symbol is already traced
-     (let ((entry (hash-table-get *traced-symbols* symbol #f)))
+     (let ((entry (hash-table-get *traced-symbols* (cons symbol env) #f)))
        (if entry
-	   (begin (hash-table-remove! *traced-symbols* symbol) (cdr entry))
+	   (begin 
+	     (hash-table-remove! *traced-symbols* (cons symbol env))
+	     (cdr entry))
 	   (error "untrace: ~S is not traced" symbol))))
 
 
@@ -133,14 +134,18 @@
 	(error "trace: no argument")
 	`(begin
 	   ,@(map (lambda (x) 
-		    `(set! ,x ((with-module Trace trace-symbol) ',x ,x))) args))))
+		    `(set! ,x ((with-module Trace trace-symbol) ',x ,x
+			       (the-environment))))
+		  args))))
   
   (define-macro (untrace . args)
     (if (null? args)
 	(error "untrace: no argument")
 	`(begin
 	   ,@(map (lambda (x) 
-		    `(set! ,x ((with-module Trace untrace-symbol) ',x))) args))))
+		    `(set! ,x ((with-module Trace untrace-symbol) ',x
+			   (the-environment))))
+		  args))))
 )
 
 ;; Trace and untrace were defined as autoload in the STk module and

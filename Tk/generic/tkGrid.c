@@ -12,11 +12,16 @@
  */
 
 #include "tkInt.h"
-#ifdef STk_CODE
+#ifdef SCM_CODE
 #  undef Tcl_Alloc
 #  undef Tcl_Free
-#  define Tcl_Alloc(n) malloc(n)
-#  define Tcl_Free(p)  free(p)
+#  ifdef STk_CODE
+#    define Tcl_Alloc(n) malloc(n)
+#    define Tcl_Free(p)  free(p)
+#  else 
+#    define Tcl_Alloc(n) ckalloc(n)
+#    define Tcl_Free(p)  ckfree(p)
+#  endif
 #endif
 
 /*
@@ -479,13 +484,13 @@ Tk_GridCmd(clientData, interp, argc, argv)
 	    return TCL_OK;
 	}
     
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	Tcl_AppendElement(interp, ":in");
 #else
 	Tcl_AppendElement(interp, "-in");
 #endif
 	Tcl_AppendElement(interp, Tk_PathName(slavePtr->masterPtr->tkwin));
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	sprintf(buffer, " :column %d :row %d :columnspan %d :rowspan %d",
 #else
 	sprintf(buffer, " -column %d -row %d -columnspan %d -rowspan %d",
@@ -493,7 +498,7 @@ Tk_GridCmd(clientData, interp, argc, argv)
 		slavePtr->column, slavePtr->row,
 		slavePtr->numCols, slavePtr->numRows);
 	Tcl_AppendResult(interp, buffer, (char *) NULL);
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	sprintf(buffer, " :ipadx %d :ipady %d :padx %d :pady %d",
 #else
 	sprintf(buffer, " -ipadx %d -ipady %d -padx %d -pady %d",
@@ -502,7 +507,7 @@ Tk_GridCmd(clientData, interp, argc, argv)
 		slavePtr->padY/2);
 	Tcl_AppendResult(interp, buffer, (char *) NULL);
 	StickyToString(slavePtr->sticky,buffer);
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	Tcl_AppendResult(interp, " :sticky ", buffer, (char *) NULL);
 #else
 	Tcl_AppendResult(interp, " -sticky ", buffer, (char *) NULL);
@@ -590,7 +595,7 @@ Tk_GridCmd(clientData, interp, argc, argv)
 	}
 	masterPtr = GetGrid(master);
 	if (argc == 3) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    interp->result = (masterPtr->flags & DONT_PROPAGATE) ? "#f" : "#t";
 #else
 	    interp->result = (masterPtr->flags & DONT_PROPAGATE) ? "0" : "1";
@@ -678,7 +683,7 @@ Tk_GridCmd(clientData, interp, argc, argv)
 	    } else {
 		Tcl_AppendResult(interp, argv[i],
 			" is an invalid option: should be \"",
-#ifdef STk_CODE
+#ifdef SCM_CODE
 			":row, :column\"",
 #else
 			"-row, -column\"",
@@ -693,7 +698,7 @@ Tk_GridCmd(clientData, interp, argc, argv)
 	}
 	masterPtr = GetGrid(master);
 
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	Tcl_AppendResult(interp, "(", NULL);
 #endif
 	for (slavePtr = masterPtr->slavePtr; slavePtr != NULL;
@@ -708,7 +713,7 @@ Tk_GridCmd(clientData, interp, argc, argv)
 	    }
 	    Tcl_AppendElement(interp, Tk_PathName(slavePtr->tkwin));
 	}
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	Tcl_AppendResult(interp, ")", NULL);
 #endif
 
@@ -2593,7 +2598,7 @@ StickyToString(flags, result)
     char *result;	/* where to put the result */
 {
     int count = 0;
-#ifdef STk_CODE
+#ifdef SCM_CODE
     result[count++]='"';
 #endif
     if (flags&STICK_NORTH) {
@@ -2608,7 +2613,7 @@ StickyToString(flags, result)
     if (flags&STICK_WEST) {
     	result[count++] = 'w';
     }
-#ifdef STk_CODE
+#ifdef SCM_CODE
     result[count++]= '"';
     result[count]  = '\0';
 #else

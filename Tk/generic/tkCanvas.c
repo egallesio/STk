@@ -111,7 +111,7 @@ static Tk_ConfigSpec configSpecs[] = {
     {TK_CONFIG_COLOR, "-selectforeground", "selectForeground", "Background",
 	DEF_CANVAS_SELECT_FG_MONO, Tk_Offset(TkCanvas, textInfo.selFgColorPtr),
 	TK_CONFIG_MONO_ONLY},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_CLOSURE, "-takefocus", "takeFocus", "TakeFocus",
 #else
     {TK_CONFIG_STRING, "-takefocus", "takeFocus", "TakeFocus",
@@ -120,7 +120,7 @@ static Tk_ConfigSpec configSpecs[] = {
 	TK_CONFIG_NULL_OK},
     {TK_CONFIG_PIXELS, "-width", "width", "Width",
 	DEF_CANVAS_WIDTH, Tk_Offset(TkCanvas, width), 0},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_CLOSURE, "-xscrollcommand", "xScrollCommand", "ScrollCommand",
 #else
     {TK_CONFIG_STRING, "-xscrollcommand", "xScrollCommand", "ScrollCommand",
@@ -131,7 +131,7 @@ static Tk_ConfigSpec configSpecs[] = {
 	"ScrollIncrement",
 	DEF_CANVAS_X_SCROLL_INCREMENT, Tk_Offset(TkCanvas, xScrollIncrement),
 	0},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_CLOSURE, "-yscrollcommand", "yScrollCommand", "ScrollCommand",
 #else
     {TK_CONFIG_STRING, "-yscrollcommand", "yScrollCommand", "ScrollCommand",
@@ -542,7 +542,9 @@ CanvasWidgetCmd(clientData, interp, argc, argv)
 	}
 
 	if (argc == 5) {
+#ifndef SCM_CODE
 	    int append = 0;
+#endif
 	    unsigned long mask;
 
 	    if (argv[4][0] == 0) {
@@ -551,14 +553,19 @@ CanvasWidgetCmd(clientData, interp, argc, argv)
 		goto done;
 	    }
 
-#ifndef STk_CODE
+#ifndef SCM_CODE
 	    if (argv[4][0] == '+') {
 		argv[4]++;
 		append = 1;
 	    }
 #endif
+#ifndef SCM_CODE
 	    mask = Tk_CreateBinding(interp, canvasPtr->bindingTable,
 		    object, argv[3], argv[4], append);
+#else
+	    mask = Tk_CreateBinding(interp, canvasPtr->bindingTable,
+		    object, argv[3], argv[4], argv[0], argv[2]);
+#endif
 	    if (mask == 0) {
 		goto error;
 	    }
@@ -907,7 +914,7 @@ CanvasWidgetCmd(clientData, interp, argc, argv)
 	itemPtr = StartTagSearch(canvasPtr, argv[2], &search);
 	if (itemPtr != NULL) {
 	    int i;
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    Tcl_AppendElement(interp, "(");
 	    for (i = 0; i < itemPtr->numTags; i++) {
 	      Tcl_AppendResult(interp, " \"", (char *) itemPtr->tagPtr[i], 
@@ -1108,11 +1115,15 @@ CanvasWidgetCmd(clientData, interp, argc, argv)
 	}
     } else if ((c == 'p') && (strncmp(argv[1], "postscript", length) == 0)) {
 	result = TkCanvPostscriptCmd(canvasPtr, interp, argc, argv);
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	/* Return the content of interp->result as a string since newlines
 	 * and case are significant in PostScript.
 	 */
+#  ifdef STk_CODE
 	STk_stringify_result(interp, interp->result);
+#  else
+	SCM_stringify_result(interp, interp->result);
+#  endif
 #endif
     } else if ((c == 'r') && (strncmp(argv[1], "raise", length) == 0)) {
 	Tk_Item *prevPtr;
@@ -2522,14 +2533,14 @@ FindItems(interp, canvasPtr, argc, argv, newTag, cmdName, option)
 	    return TCL_ERROR;
 	}
 
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	if (!uid) Tcl_AppendElement(interp, "(");
 #endif
 	for (itemPtr = canvasPtr->firstItemPtr; itemPtr != NULL;
 		itemPtr = itemPtr->nextPtr) {
 	    DoItem(interp, itemPtr, uid);
 	}
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	if (!uid) Tcl_AppendElement(interp, ")");
 #endif
     } else if ((c == 'b') && (strncmp(argv[0], "below", length) == 0)) {
@@ -2667,14 +2678,14 @@ FindItems(interp, canvasPtr, argc, argv, newTag, cmdName, option)
 		    cmdName, option, " withtag tagOrId", (char *) NULL);
 	    return TCL_ERROR;
 	}
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	if (!uid) Tcl_AppendElement(interp, "(");
 #endif
 	for (itemPtr = StartTagSearch(canvasPtr, argv[1], &search);
 		itemPtr != NULL; itemPtr = NextItem(&search)) {
 	    DoItem(interp, itemPtr, uid);
 	}
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	if (!uid) Tcl_AppendElement(interp, ")");
 #endif
     } else  {
@@ -2752,7 +2763,7 @@ FindArea(interp, canvasPtr, argv, uid, enclosed)
      * Use an integer bounding box for a quick test, to avoid
      * calling item-specific code except for items that are close.
      */
-#ifdef STk_CODE
+#ifdef SCM_CODE
     if (!uid) Tcl_AppendElement(interp, "(");
 #endif
     x1 = (int) (rect[0]-1.0);
@@ -2770,7 +2781,7 @@ FindArea(interp, canvasPtr, argv, uid, enclosed)
 	    DoItem(interp, itemPtr, uid);
 	}
     }
-#ifdef STk_CODE
+#ifdef SCM_CODE
     if (!uid) Tcl_AppendElement(interp, ")");
 #endif
     return TCL_OK;

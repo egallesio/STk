@@ -2,25 +2,20 @@
  *
  * v e c t o r . c 			-- vectors management
  *
- * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
- * Permission to use, copy, and/or distribute this software and its
- * documentation for any purpose and without fee is hereby granted, provided
- * that both the above copyright notice and this permission notice appear in
- * all copies and derived works.  Fees for distribution or use of this
- * software or derived works may only be charged with express written
- * permission of the copyright holder.  
- * This software is provided ``as is'' without express or implied warranty.
- *
- * This software is a derivative work of other copyrighted softwares; the
- * copyright notices of these softwares are placed in the file COPYRIGHTS
- *
- * $Id: vector.c 1.3 Mon, 28 Dec 1998 23:05:11 +0100 eg $
- *
+ * Permission to use, copy, modify, distribute,and license this
+ * software and its documentation for any purpose is hereby granted,
+ * provided that existing copyright notices are retained in all
+ * copies and that this notice is included verbatim in any
+ * distributions.  No written agreement, license, or royalty fee is
+ * required for any of the authorized uses.
+ * This software is provided ``AS IS'' without express or implied
+ * warranty.
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: ???
- * Last file update: 27-Dec-1998 20:42
+ * Last file update:  3-Sep-1999 21:02 (eg)
  */
 
 #include <string.h>
@@ -106,7 +101,7 @@ PRIMITIVE STk_vector2list(SCM v)
   if (NVECTORP(v)) Err("vector->list: not a vector", v);
     
   len = v->storage_as.vector.dim;
-  z   = NIL;
+  tmp = z = NIL;
 
   for (j=0; j<len; j++) {
     if (j == 0)
@@ -179,16 +174,16 @@ PRIMITIVE STk_vector_resize(SCM vect, SCM size)
 PRIMITIVE STk_sort(SCM obj, SCM test)
 {
   SCM *v;
-  int list = 0;
   register int i, j, incr, n;
+  int list = 0;
 
-  if (CONSP(obj) || NULLP(obj)) { list = 1; obj = STk_list2vector(obj); }
-  if (NVECTORP(obj)) Err("sort: bad object to sort", obj);
+  if (NULLP(obj))        { return NIL; } 
+  else if (CONSP(obj))   { obj  = STk_list2vector(obj); list = 1; } 
+  else if (VECTORP(obj)) { obj  = STk_vector_copy(obj); 	  } 
+  else 			 { Err("sort: bad object to sort", obj);  }
   
-  obj = STk_vector_copy(obj);
- 
   /* 
-   * Use a shell sort. It has good performance on small arrays
+   * Use a shell sort. It has good performance on small arrays 
    * This sort should have better performances than a cleverer one 
    * for the sorts we'll have to do in STklos (which are always small
    * arrays).
@@ -200,7 +195,7 @@ PRIMITIVE STk_sort(SCM obj, SCM test)
   for (incr = n / 2; incr; incr /= 2) {
     for (i = incr; i < n; i++) {
       for (j = i-incr; j >= 0; j -= incr) {
-	if (Apply(test, LIST2(v[j], v[j+incr])) != Ntruth) 
+	if (Apply2(test, v[j], v[j+incr]) != Ntruth)
 	  break;
 	else {
 	  SCM tmp   = v[j+incr];

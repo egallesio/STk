@@ -1,25 +1,24 @@
 ;;;;
 ;;;; P a n e d . s t k 	  	      --  HPaned and VPaned composite widgets
 ;;;;
-;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
-;;;; Permission to use, copy, and/or distribute this software and its
-;;;; documentation for any purpose and without fee is hereby granted, provided
-;;;; that both the above copyright notice and this permission notice appear in
-;;;; all copies and derived works.  Fees for distribution or use of this
-;;;; software or derived works may only be charged with express written
-;;;; permission of the copyright holder.  
-;;;; This software is provided ``as is'' without express or implied warranty.
+;;;; Permission to use, copy, modify, distribute,and license this
+;;;; software and its documentation for any purpose is hereby granted,
+;;;; provided that existing copyright notices are retained in all
+;;;; copies and that this notice is included verbatim in any
+;;;; distributions.  No written agreement, license, or royalty fee is
+;;;; required for any of the authorized uses.
+;;;; This software is provided ``AS IS'' without express or implied
+;;;; warranty.
 ;;;;
 ;;;; Idea of this implementation was found in comp.lang.tcl. 
 ;;;; Original author seems to be James Noble and the version from which this 
 ;;;; stuff is derivated is from Jay Schmidgall (shmdgljd@ghostwind.rchland.ibm.com).
 ;;;;
-;;;; $Id: Paned.stklos 1.3 Mon, 27 Jul 1998 16:55:11 +0200 eg $
-;;;;
 ;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;    Creation date: 22-Mar-1994 13:05
-;;;; Last file update: 26-Jul-1998 12:57
+;;;; Last file update:  3-Sep-1999 20:14 (eg)
 
 (require "Basics")
 
@@ -63,7 +62,11 @@
    (bottom-frame    :accessor     bottom-frame-of)
    (grip	    :accessor     grip-of)
    (separator	    :accessor     separator-of)
-   (fraction        :init-keyword :fraction)
+   (fraction        :accessor	  fraction
+ 		    :init-keyword :fraction
+ 		    :allocation   :active
+ 		    :after-slot-set! (lambda(o v) (place-grip o)))
+
    ;; Fictives slot
    (background      :accessor     background
 		    :init-keyword :background
@@ -91,7 +94,8 @@
    (height	    :accessor     height
 		    :init-keyword :height
 		    :allocation   :propagated
-		    :propagate-to (frame))))
+		    :propagate-to (frame)))
+  :metaclass <Tk-active-and-propagated-metaclass>)
 
 (define-method initialize-composite-widget ((self <HPaned>) initargs frame)
   (let ((grip  (make <Frame> :parent frame :class "Grip"))
@@ -183,7 +187,10 @@
    (right-frame  :accessor     right-frame-of)
    (grip	 :accessor     grip-of)
    (separator	 :accessor     separator-of)
-   (fraction     :init-keyword :fraction)
+   (fraction        :accessor	  fraction
+ 		    :init-keyword :fraction
+ 		    :allocation   :active
+ 		    :after-slot-set! (lambda(o v) (place-grip o)))
    ;; Fictives slots
    (background      :accessor     background
 		    :init-keyword :background
@@ -211,7 +218,8 @@
    (height	    :accessor     height
 		    :init-keyword :height
 		    :allocation   :propagated
-		    :propagate-to (frame))))
+		    :propagate-to (frame)))
+  :metaclass <Tk-active-and-propagated-metaclass>)
 
 (define-method initialize-composite-widget ((self <VPaned>) initargs frame)
   (let ((grip  (make <Frame> :parent frame :class "Grip"))

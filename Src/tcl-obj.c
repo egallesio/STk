@@ -3,31 +3,28 @@
  * t c l - o b j . c 		- Implementation of the (crazy) Tcl_obj functions
  *				  in the Scheme interpreeter
  *
- * Copyright © 1997-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1997-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
- * Permission to use, copy, and/or distribute this software and its
- * documentation for any purpose and without fee is hereby granted, provided
- * that both the above copyright notice and this permission notice appear in
- * all copies and derived works.  Fees for distribution or use of this
- * software or derived works may only be charged with express written
- * permission of the copyright holder.  
- * This software is provided ``as is'' without express or implied warranty.
- *
- * This software is a derivative work of other copyrighted softwares; the
- * copyright notices of these softwares are placed in the file COPYRIGHTS
- *
- * $Id: tcl-obj.c 1.8 Mon, 28 Dec 1998 23:05:11 +0100 eg $
+ * Permission to use, copy, modify, distribute,and license this
+ * software and its documentation for any purpose is hereby granted,
+ * provided that existing copyright notices are retained in all
+ * copies and that this notice is included verbatim in any
+ * distributions.  No written agreement, license, or royalty fee is
+ * required for any of the authorized uses.
+ * This software is provided ``AS IS'' without express or implied
+ * warranty.
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date:  8-Jul-1997 10:33
- * Last file update: 27-Dec-1998 20:47
+ * Last file update:  3-Sep-1999 20:59 (eg)
  *
  */
 
 #include "stk.h"
 #ifdef USE_TK
 #  include "tk-glue.h"
+#  include "module.h"
 #else
 #  include "tcl-glue.h"
 #endif
@@ -720,41 +717,22 @@ Tcl_EvalObj(interp, objPtr)
 					 * commands to execute. */
 {
   SCM cmd =  TCLOBJDATA((SCM) objPtr);
+  int res;
 
-  panic("ON est dans TclEvalObj");
-  getchar();
-#ifdef FIXME_FIXME
-  if (cmd) {
-    SCM expr		 = STk_convert_tcl_list_to_scheme(cmd);
-    Jmp_Buf jb, *prev_jb = Top_jmp_buf;
-    long prev_context    = Error_context;
-    SCM result;
-    int k;
-
-    /* save normal error jmpbuf  so that eval error don't lead to toplevel */
-    /* If in a "catch", keep the ERR_IGNORED bit set */
-    if ((k = setjmp(jb.j)) == 0) {
-      Top_jmp_buf   = &jb;
-      Error_context = (Error_context & ERR_IGNORED) | ERR_TCL_BACKGROUND;
-      result        = STk_eval(expr, NIL);
+  PUSH_ERROR_HANDLER
+    {
+       SCM expr = STk_convert_tcl_list_to_scheme(cmd);
+       
+       /* Do as if we had a catch around the expression */
+       STk_err_handler->context |= ERR_IGNORED;
+       STk_eval(expr, MOD_ENV(STk_Tk_module));
+       res = TCL_OK;
     }
-    
-    Top_jmp_buf   = prev_jb;;e
-    Error_context = prev_context;
- 
-    if (k == 0) {
-      Tcl_SetObjResult(interp, STk_create_tcl_object(result));
-      return TCL_OK;
+  WHEN_ERROR 
+    {
+      res = TCL_ERROR;
     }
-    /* if we are here, an error has occured during the string reading 
-     * Two cases:
-     *    - we are in a catch. Do a longjump to the catch to signal it a fail
-     *    - otherwise error has already signaled, just return EVAL_ERROR
-     */
-    if (Error_context & ERR_IGNORED) longjmp(Top_jmp_buf->j, k);
-    return TCL_ERROR;
-  }
-#endif  
-  return TCL_OK;
+  POP_ERROR_HANDLER;
+  return res;
 }
 #endif

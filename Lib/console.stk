@@ -3,19 +3,18 @@
 ;;;;
 ;;;; Copyright © 1998-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
-;;;; Permission to use, copy, and/or distribute this software and its
-;;;; documentation for any purpose and without fee is hereby granted, provided
-;;;; that both the above copyright notice and this permission notice appear in
-;;;; all copies and derived works.  Fees for distribution or use of this
-;;;; software or derived works may only be charged with express written
-;;;; permission of the copyright holder.  
-;;;; This software is provided ``as is'' without express or implied warranty.
-;;;;
-;;;; $Id: console.stk 1.9 Mon, 01 Feb 1999 15:18:22 +0100 eg $
+;;;; Permission to use, copy, modify, distribute,and license this
+;;;; software and its documentation for any purpose is hereby granted,
+;;;; provided that existing copyright notices are retained in all
+;;;; copies and that this notice is included verbatim in any
+;;;; distributions.  No written agreement, license, or royalty fee is
+;;;; required for any of the authorized uses.
+;;;; This software is provided ``AS IS'' without express or implied
+;;;; warranty.
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 29-Oct-1998 18:51
-;;;; Last file update:  1-Feb-1999 14:18
+;;;; Last file update:  3-Sep-1999 19:50 (eg)
 
 (require "font-lock")
 (require "butbar")
@@ -144,7 +143,8 @@
 		   (catch (delete-image "STk-big-logo.gif"))
 		   (destroy top))))
     (wm 'over top #t)
-    (wm 'geometry top (format #f "+~A+~A" (/ (- w 400) 2) (/ (- h 300) 2)))
+    (wm 'geometry top (format #f "+~A+~A" (quotient (- w 400) 2) 
+			                  (quotient (- h 300) 2)))
     (pack 'propagate top #f)
     (pack lab m)
     (bind top "<1>" kill) 	;; for the impatients
@@ -176,11 +176,16 @@
 ;;
 
 (define (console-invoke console module stdin stdout stderr)
-  (let* ((ranges   (console 'tag 'ranges "input"))
-	 (cmd      (apply console 'get ranges))
+  (let* ((cmd      "")
 	 (mod      (or module (%get-selected-module)))
 	 (env      (module-environment mod))
 	 (stdcons? (eq? stdin (current-input-port))))
+    
+    ;; Set cmd to be the concatenation of all ranges of text with tag "input"
+    (let ((hd (console 'tag 'ranges "input")))
+      (while (not (null? hd))
+	 (set! cmd (string-append cmd (console 'get (car hd) (cadr hd))))
+	 (set! hd (cddr hd))))
 
     (if (complete-sexpr? cmd)
 	(begin
@@ -445,15 +450,15 @@
 		      (current-input-port)
 		      (open-input-virtual bad-port bad-port bad-port bad-port)))
 	 (stdout  (open-output-virtual 
-		     (lambda (c) (console-output console (string c) "stdout"))
-		     (lambda (s) (console-output console s "stdout")(update 'idle))
-		     #f
-		     #f))
+		    (lambda (c p) (console-output console (string c) "stdout"))
+		    (lambda (s p) (console-output console s "stdout")(update 'idle))
+		    #f
+		    #f))
 	 (stderr  (open-output-virtual 
-		     (lambda (c) (console-output console (string c) "stderr"))
-		     (lambda (s) (console-output console s "stderr")(update 'idle))
-		     #f
-		     #f)))
+		    (lambda (c p) (console-output console (string c) "stderr"))
+		    (lambda (s p) (console-output console s "stderr")(update 'idle))
+		    #f
+		    #f)))
 
     ;; Associate the scrollbar commands
     (tk-set! sb :command      (lambda l (apply console 'yview l)))
@@ -469,11 +474,13 @@
 		       (format #f "Console (~A)" (module-name module))
 		       "STk console"))
     (if std-console?
-        (wm 'protocol top "WM_DELETE_WINDOW" (lambda () (exit 0))))
+	(let ((exit (lambda () (exit 0))))
+	  (wm 'protocol top "WM_DELETE_WINDOW" exit)
+	  (bind console "<Destroy>" 	       exit)))
 
     (console 'tag 'configure "stdin"  :foreground "black")
     (console 'tag 'configure "stdout" :foreground "midnightblue")
-    (console 'tag 'configure "stderr" :foreground "DarkRed")
+    (console 'tag 'configure "stderr" :foreground "#ff2e2f") ;; i.e. "DarkRed"
 
     (console 'mark 'set "output" (console 'index "end - 1 char"))
     (set-cursor console "end")
@@ -496,34 +503,74 @@
   (let* ((f (frame (& parent ".butbar") :relief "ridge" :bd 1)))
     (make-button-bar f 
       (list 5
-	    (list "console.gif"
+	    (list "tb_console.gif"
 		  "Open New Console"
 		  make-console)
-	    (list "edit.gif"
+	    (list "tb_edit.gif"
 		  "Open New Editor"
 		  ed)
-	    (list "customize.gif"
+	    (list "tb_customize.gif"
 		  "Customize Environment"
 		  (lambda () (console-customize))) ; delayed to avoid autoload
-	    (list "diropen.gif"
+	    (list "tb_fileopen.gif"
 		  "Load File"  
 		  console-load)
 	    20
-	    (list "copy.gif"
+	    (list "tb_copy.gif"
 		  "Copy"
 		  (lambda () (event 'gen txt "<<Copy>>")))
-	    (list "clipboard.gif"
+	    (list "tb_paste.gif"
 		  "Paste"
 		  (lambda () (event 'gen txt "<<Paste>>")))
-	    (list "cut.gif"
+	    (list "tb_cut.gif"
 		  "Cut"
 		  (lambda () (event 'gen txt "<<Cut>>")))
 	    20
-	    (list "qmark.gif"
+	    (list "tb_info.gif"
 		  "Help on Console"
-		  (lambda () (help "console")))))
+		  (lambda () (help "make-console")))))
     f))
 
+
+(define (make-console-in)
+  (define name ".__cons_module_chooser")
+
+  (define (create)
+    (catch 
+      (make-console :module (string->symbol (selection 'get)))
+      (after 'idle (lambda () (destroy name)))))
+
+  ;;;;
+  ;;;; make-console-in starts here
+  ;;;;
+  (destroy name)
+  (let* ((all  (sort (map module-name (all-modules))
+		     (lambda (x y)
+		       (string<? (symbol->string x) (symbol->string y)))))
+	 (top  (toplevel name))
+	 (lab  (label (& top ".lab") :text "Choose a module for new console"))
+	 (f0   (frame (& top ".f0")))
+	 (lb   (listbox (& f0 ".lb") :bg "white" :fg "RoyalBlue" :width 50))
+	 (sb   (scrollbar (& f0 ".sb") :width 10))
+	 (f1   (frame (& top ".f1") :relief "ridge" :bd 2))
+	 (doit (button (& f1 ".doit") :text "Create console" :command create))
+	 (quit (button (& f1 ".quit") :text "Cancel"
+		       :command (lambda () (destroy top)))))
+    (wm 'title top "Choose module")
+    ;; Fill in the listbox
+    (apply lb 'insert 0 all)
+    ;; Pack everybody
+    (pack lab :expand #f :pady 10 :padx 20 :anchor 'w)
+    (pack lb :fill 'both :side 'left :expand #t)
+    (pack sb :fill 'y :side 'right)
+    (pack f0 :padx 20 :pady 10 :expand #t :fill 'both)
+    (pack doit quit :side 'left :padx 3 :pady 3)
+    (pack f1 :expand #f :fill 'x)
+    ;; Add command to connect the scrollbar
+    (tk-set! lb :yscrollcom (lambda l (apply sb 'set l)))
+    (tk-set! sb :command    (lambda l (apply lb 'yview l)))
+    ;; Add binding such as double click on the list create a console
+    (bind lb "<Double-ButtonRelease-1>" create)))
 
 
 (define (console-make-menubar top console)
@@ -539,6 +586,7 @@
       (m 'add 'command :label "Load ..." :command console-load)
       (m 'add 'separator)
       (m 'add 'command :label "New Console" :command make-console)
+      (m 'add 'command :label "New Console in ..." :command make-console-in)
       (m 'add 'separator)
       (m 'add 'command :label "Hide Console" :command (lambda () (wm 'iconify top)))
       (m 'add 'command :label "Close Console" :command (lambda () (destroy top)))
@@ -575,7 +623,7 @@
       (m 'add 'command :label "STk"   :command (lambda ()  ; Indirect to avoid 
 						 (help)))  ; autoloads
       (m 'add 'command :label "Console" :command (lambda ()
-						   (help "console")))
+						   (help "make-console")))
       (m 'add 'separator)
       (m 'add 'command :label "About" :command console-about)
       (tk-set! hlp :menu m)
@@ -598,7 +646,9 @@
     (init-console module #f)))
 	  
 (define (%make-standard-console)
-  (try-load "~/.stkvars")
+  ;; Don't use try-load because ~ can yiel an error on Windows if HOME is
+  ;; unset (and console is unproperly initialized in this case).
+  (catch (load "~/.stkvars"))
   (init-console #f #t))
 
 (provide "console")

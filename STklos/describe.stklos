@@ -1,19 +1,20 @@
 ;;;;
 ;;;; The DESCRIBE method (partly stolen fom Elk lib)
 ;;;;
-;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
-;;;; Permission to use, copy, and/or distribute this software and its
-;;;; documentation for any purpose and without fee is hereby granted, provided
-;;;; that both the above copyright notice and this permission notice appear in
-;;;; all copies and derived works.  Fees for distribution or use of this
-;;;; software or derived works may only be charged with express written
-;;;; permission of the copyright holder.  
-;;;; This software is provided ``as is'' without express or implied warranty.
+;;;; Permission to use, copy, modify, distribute,and license this
+;;;; software and its documentation for any purpose is hereby granted,
+;;;; provided that existing copyright notices are retained in all
+;;;; copies and that this notice is included verbatim in any
+;;;; distributions.  No written agreement, license, or royalty fee is
+;;;; required for any of the authorized uses.
+;;;; This software is provided ``AS IS'' without express or implied
+;;;; warranty.
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 21-Mar-1993 14:33
-;;;; Last file update: 16-Jan-1998 21:22
+;;;; Last file update:  3-Sep-1999 20:05 (eg)
 ;;;;
 
 (require "stklos")
@@ -25,7 +26,7 @@
 ;;; describe for simple objects
 ;;;
 (define-method describe ((x <top>))
-  (format #t "~s is " x)
+  (format #t "~W is " x)
   (cond
      ((integer? x)      (format #t "an integer"))
      ((real?    x)      (format #t "a real"))
@@ -44,7 +45,8 @@
      ((procedure? x)	(format #t "a procedure"))
      ((environment? x)	(format #t "an environment"))
      ((eof-object? x)	(format #t "the end-of-file object"))
-     (else	     	(format #t "an unknown object (~s)" x)))
+     (else	     	(format #t "an an instance of class ~A" 
+				(class-name (class-of x)))))
   (format #t ".~%"))
 
 
@@ -52,15 +54,14 @@
 ;;; describe for STklos instances
 ;;;
 (define-method describe ((x <object>))
-  (format #t "~S is an instance of class ~A~%" x (class-name (class-of x)))
-
+  (next-method)
   ;; print all the instance slots
   (format #t "Slots are: ~%")
   (for-each (lambda (slot)
 	      (let ((name (slot-definition-name slot)))
 		(format #t "     ~S = ~A~%" name
 					    (if (slot-bound? x name) 
-						(format #f "~S" (slot-ref x name))
+						(format #f "~W" (slot-ref x name))
 						"#[unbound]"))))
        (class-slots (class-of x)))
   (make-undefined))
@@ -69,7 +70,7 @@
 ;;; Describe for classes
 ;;;
 (define-method describe ((x <class>))
-  (format #t "~S is a class. It's an instance of ~A~%" 
+  (format #t "~S is a class. It's an instance of ~A~%." 
 	  (class-name x) (class-name (class-of x)))
   
   ;; Super classes 

@@ -176,7 +176,7 @@ typedef struct {
 				 * If not NULL, it's malloc-ed. */
     int flags;			/* Various flags;  see below for
 				 * definitions. */
-#ifdef STk_CODE
+#ifdef SCM_CODE
     char *env;			/* -variable and -textvariable environment */
     int string;			/* if true the value of the variable associated
  				 * to the button must be "stringified"

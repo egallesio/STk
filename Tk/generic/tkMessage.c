@@ -18,6 +18,11 @@
 #include "default.h"
 #include "tkInt.h"
 
+#ifdef BGLK_CODE
+#  define STk_tcl_getvar	SCM_tcl_getvar
+#  define STk_tcl_setvar	SCM_tcl_setvar
+#endif
+
 /*
  * A data structure of the following type is kept for each message
  * widget managed by this file:
@@ -85,7 +90,7 @@ typedef struct {
 				 * scripts.  Malloc'ed, but may be NULL. */
     int flags;			/* Various flags;  see below for
 				 * definitions. */
-#ifdef STk_CODE
+#ifdef SCM_CODE
     char *env;			/* -variable and -textvariable environment */
 #endif
 } Message;
@@ -152,7 +157,7 @@ static Tk_ConfigSpec configSpecs[] = {
 	DEF_MESSAGE_PADY, Tk_Offset(Message, padY), 0},
     {TK_CONFIG_RELIEF, "-relief", "relief", "Relief",
 	DEF_MESSAGE_RELIEF, Tk_Offset(Message, relief), 0},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_CLOSURE, "-takefocus", "takeFocus", "TakeFocus",
 #else
     {TK_CONFIG_STRING, "-takefocus", "takeFocus", "TakeFocus",
@@ -275,7 +280,7 @@ Tk_MessageCmd(clientData, interp, argc, argv)
     msgPtr->cursor = None;
     msgPtr->takeFocus = NULL;
     msgPtr->flags = 0;
-#ifdef STk_CODE
+#ifdef SCM_CODE
     msgPtr->env = NULL;
 #endif
 
@@ -462,13 +467,13 @@ ConfigureMessage(interp, msgPtr, argc, argv, flags)
     if (msgPtr->textVarName != NULL) {
 	char *value;
 
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	value = STk_tcl_getvar(msgPtr->textVarName, msgPtr->env);
 #else
 	value = Tcl_GetVar(interp, msgPtr->textVarName, TCL_GLOBAL_ONLY);
 #endif
 	if (value == NULL) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    STk_tcl_setvar(msgPtr->textVarName, msgPtr->string, 0, msgPtr->env);
 #else
 	    Tcl_SetVar(interp, msgPtr->textVarName, msgPtr->string,
@@ -844,7 +849,7 @@ MessageTextVarProc(clientData, interp, name1, name2, flags)
 
     if (flags & TCL_TRACE_UNSETS) {
 	if ((flags & TCL_TRACE_DESTROYED) && !(flags & TCL_INTERP_DESTROYED)) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    STk_tcl_setvar(msgPtr->textVarName, msgPtr->string, 0, msgPtr->env);
 #else
 	    Tcl_SetVar(interp, msgPtr->textVarName, msgPtr->string,
@@ -857,7 +862,7 @@ MessageTextVarProc(clientData, interp, name1, name2, flags)
 	return (char *) NULL;
     }
 
-#ifdef STk_CODE
+#ifdef SCM_CODE
     value = STk_tcl_getvar(msgPtr->textVarName, msgPtr->env);
 #else
     value = Tcl_GetVar(interp, msgPtr->textVarName, TCL_GLOBAL_ONLY);

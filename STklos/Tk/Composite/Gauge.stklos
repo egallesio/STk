@@ -1,21 +1,20 @@
 ;;;;
 ;;;; G a u g e . s t k l o s  	  --  Gauges class definition
 ;;;;
-;;;; Copyright © 1996-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1996-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
-;;;; Permission to use, copy, and/or distribute this software and its
-;;;; documentation for any purpose and without fee is hereby granted, provided
-;;;; that both the above copyright notice and this permission notice appear in
-;;;; all copies and derived works.  Fees for distribution or use of this
-;;;; software or derived works may only be charged with express written
-;;;; permission of the copyright holder.  
-;;;; This software is provided ``as is'' without express or implied warranty.
-;;;;
-;;;; $Id: Gauge.stklos 1.1 Wed, 04 Feb 1998 11:34:59 +0100 eg $
+;;;; Permission to use, copy, modify, distribute,and license this
+;;;; software and its documentation for any purpose is hereby granted,
+;;;; provided that existing copyright notices are retained in all
+;;;; copies and that this notice is included verbatim in any
+;;;; distributions.  No written agreement, license, or royalty fee is
+;;;; required for any of the authorized uses.
+;;;; This software is provided ``AS IS'' without express or implied
+;;;; warranty.
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 17-Oct-1996 14:53
-;;;; Last file update:  4-Feb-1998 10:23
+;;;; Last file update:  3-Sep-1999 20:13 (eg)
 ;;;
 
 (require "Basics")
@@ -39,6 +38,8 @@
 
 (define-class <Gauge> (<Tk-simple-widget>)
   ( priv-box     ;; The Cid of the box used in the canvas to represent the gauge
+   (class	  :init-keyword   :class
+		  :init-form      "Gauge")
    (foreground   :accessor        foreground 
 		 :initform        "#3a5fcd"   ; RoyalBlue3
 		 :init-keyword    :foreground
@@ -97,6 +98,8 @@
 
 (define-class <Valued-Gauge> (<Gauge>)
   ( priv-txt
+   (class	    :init-keyword   :class
+		    :init-form      "ValuedGauge")
    (text-font  	    :accessor 	     text-font
 		    :initform  	     '(Helvetica -14 bold)
 		    :allocation      :active

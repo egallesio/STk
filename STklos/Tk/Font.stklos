@@ -1,0 +1,96 @@
+;;;; Font.stklos 					-- The Font Class
+;;;;
+;;;; Copyright © 1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, modify, distribute,and license this
+;;;; software and its documentation for any purpose is hereby granted,
+;;;; provided that existing copyright notices are retained in all
+;;;; copies and that this notice is included verbatim in any
+;;;; distributions.  No written agreement, license, or royalty fee is
+;;;; required for any of the authorized uses.
+;;;; This software is provided ``AS IS'' without express or implied
+;;;; warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 18-May-1999 13:24
+;;;; Last file update:  3-Sep-1999 20:10 (eg)
+
+(require "Basics")
+
+(select-module STklos+Tk)
+
+;=============================================================================
+;
+; 				<Font> class definition
+;
+;=============================================================================
+
+(define-class <Font> ()
+  ((Id)
+   (family 	:accessor 	family     
+		:allocation 	:tk-virtual 
+		:init-keyword 	:family)
+   (size	:accessor 	size
+		:allocation 	:tk-virtual 
+		:init-keyword 	:size)
+   (weight	:accessor 	weight
+		:allocation 	:tk-virtual
+		:init-keyword	:weight)
+   (slant	:accessor 	slant
+		:allocation 	:tk-virtual
+		:init-keyword	:slant)
+   (underline	:accessor 	underline
+		:allocation 	:tk-virtual
+		:init-keyword	:underline)
+   (overstrike	:accessor 	overstrike 
+		:allocation 	:tk-virtual
+		:init-keyword	:overstrike)
+   ;; Special virtual slot "value"
+   (value	:accessor 	value
+		:allocation	:virtual
+		:init-keyword	:value
+		:slot-ref	(lambda (o)
+				  (let ((id (slot-ref o 'id))
+					(font (with-module Tk font)))
+				    (append 
+				     (list (font 'conf id :family)
+					   (font 'conf id :size)
+					   (string->symbol (font 'conf id :weight))
+					   (string->symbol (font 'conf id :slant)))
+				     (if (font 'conf id :underline)
+					 '(underline)
+					 '())
+				     (if (font 'conf id :overstrike)
+					 '(overstrike)
+					 '()))))
+		:slot-set!	(lambda (o v)
+				  (let ((id (slot-ref o 'id))
+					(font (with-module Tk font)))
+				    (apply font 'configure id (font 'actual v))))))
+		:metaclass <Tk-font-metaclass>)
+
+(define-method initialize ((self <Font>) initargs)
+  (let ((Id   (gensym "font"))
+	(font (with-module Tk font)))
+    (font 'create Id)
+    (slot-set! self 'Id Id)
+    (next-method)))
+
+;=============================================================================
+;
+; a special Tk-write-object for communicating fonts to Tk
+; 
+;=============================================================================
+
+(define-method Tk-write-object((self <Font>) port)
+  (write (slot-ref self 'id) port))
+
+(provide "Font")
+#|
+  Example:
+     (define f (make <Font> :family "helvetica" :size 48))
+     (define b (make <Button> :text "foo" :font f))
+     (pack b)
+     (after 3000 (lambda () (slot-set! f 'value "fixed")))
+
+#|

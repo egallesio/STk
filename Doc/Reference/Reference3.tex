@@ -3,7 +3,7 @@
 %
 %           Author: Erick Gallesio [eg@unice.fr]
 %    Creation date: 16-Dec-1997 14:00
-% Last file update:  8-Apr-1998 11:04
+% Last file update: 17-May-1999 00:07
 %
 
 
@@ -371,7 +371,7 @@ equivalence).  All the types defined in Table~\ref{FfiTypes}, except
 
 Hereafter, there are some commented  definitions of external functions:
 \begin{scheme}
-  (define-external isatty ((fd :int))  
+ (define-external isatty ((fd :int))  
      :return-type :boolean)
 
   (define-external system ((cmd (:char *))) \emph{;; or ((cmd :string))}
@@ -467,6 +467,11 @@ column of Table~\ref{FfiTypes}. Some examples using the \texttt{printf} function
     ((not l))
   (system l))
   \end{scheme}
+\end{note}
+\begin{note}
+  The same convention also applies for parameters of type
+  \texttt{:string}, \texttt{:dynamic-ptr} or \texttt{:static-ptr}: they accept
+  the special value \schfalse{} as a synonym of the C \texttt{NULL} pointer.
 \end{note}
 \end{entry}
 

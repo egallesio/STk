@@ -256,7 +256,16 @@ Tk_ImageCmd(clientData, interp, argc, argv)
 			         "|",
 			         (char*) NULL);
 #else
+#  ifdef BGLK_CODE	
+	/* Beware of space characters in the image */
+	Tcl_ResetResult(interp);
+	Tcl_AppendResult(interp, "\"",
+			         Tcl_GetHashKey(&winPtr->mainPtr->imageTable, hPtr),
+			         "\"",
+			         (char*) NULL);
+#  else
 	interp->result = Tcl_GetHashKey(&winPtr->mainPtr->imageTable, hPtr);
+#  endif
 #endif
     } else if ((c == 'd') && (strncmp(argv[1], "delete", length) == 0)) {
 	for (i = 2; i < argc; i++) {
@@ -289,7 +298,7 @@ Tk_ImageCmd(clientData, interp, argc, argv)
 		    " names\"", (char *) NULL);
 	    return TCL_ERROR;
 	}
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    Tcl_AppendResult(interp, "(", NULL);
 #endif
 	for (hPtr = Tcl_FirstHashEntry(&winPtr->mainPtr->imageTable, &search);
@@ -297,7 +306,7 @@ Tk_ImageCmd(clientData, interp, argc, argv)
 	    Tcl_AppendElement(interp, Tcl_GetHashKey(
 		    &winPtr->mainPtr->imageTable, hPtr));
 	}
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    Tcl_AppendResult(interp, ")", NULL);
 #endif
     } else if ((c == 't') && (strcmp(argv[1], "type") == 0)) {

@@ -2,21 +2,20 @@
 ;;;; s t k l o s . s t k    -- A variation of the Gregor Kickzales Tiny CLOS
 ;;;;			      for STk
 ;;;;
-;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
-;;;; Permission to use, copy, and/or distribute this software and its
-;;;; documentation for any purpose and without fee is hereby granted, provided
-;;;; that both the above copyright notice and this permission notice appear in
-;;;; all copies and derived works.  Fees for distribution or use of this
-;;;; software or derived works may only be charged with express written
-;;;; permission of the copyright holder.  
-;;;; This software is provided ``as is'' without express or implied warranty.
-;;;;
-;;;; $Id: stklos.stk 1.28 Mon, 30 Nov 1998 13:06:22 +0100 eg $
+;;;; Permission to use, copy, modify, distribute,and license this
+;;;; software and its documentation for any purpose is hereby granted,
+;;;; provided that existing copyright notices are retained in all
+;;;; copies and that this notice is included verbatim in any
+;;;; distributions.  No written agreement, license, or royalty fee is
+;;;; required for any of the authorized uses.
+;;;; This software is provided ``AS IS'' without express or implied
+;;;; warranty.
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 20-Feb-1994 21:09
-;;;; Last file update: 25-Nov-1998 10:39
+;;;; Last file update:  3-Sep-1999 20:06 (eg)
 
 (when (provided? "stklos") 
   (error "STklos already initialized."))
@@ -40,7 +39,7 @@
     method-body
     compute-get-n-set
     allocate-instance initialize make-instance make
-    no-next-method  no-applicable-method no-method
+    no-next-method  no-applicable-method no-method next-method-exists?
     change-class 
     shallow-clone deep-clone
     apply-generic apply-method apply-methods compute-applicable-methods 
@@ -94,16 +93,17 @@
 ;--------------------------------------------------
 ; 						[FIXME] This is too complicate
 (define (%find-class name env . default)
-  ;; Verify that name is a correct symbol
-  (unless (symbol? name) (error "find-class: bad symbol ~S" name))
-  
-  ;; Search symbol in the globals of given env. (it must denote a class)
-  (or (and (symbol-bound? name env)
-	   (let ((cls (lookup-symbol name env)))
-	     (and (is-a? cls <class>) cls)))
-      (if (null? default)
-	  (error "find-class: class ~S not found" name)
-	  (car default))))
+  (if (symbol? name)
+      ;; Search symbol in the globals of given env. (it must denote a class)
+      (or (and (symbol-bound? name env)
+	       (let ((cls (lookup-symbol name env)))
+		 (and (is-a? cls <class>) cls)))
+	  (if (null? default)
+	      (error "find-class: class ~S not found" name)
+	      (car default)))
+      (if (is-a? name <class>) 
+	  name
+	  (error "find-class: bad-class" name))))
 
 ;=============================================================================
 
@@ -469,6 +469,10 @@
 
 (define-method no-method ((gf <generic>) args)
   (error "No method defined for ~S"  gf))
+
+
+(define-macro (next-method-exists?)
+  `((with-module STklos %next-method-exists?) next-method))
 
 ;=============================================================================
 ;
@@ -910,3 +914,4 @@
 (export class-cpl get-slot-allocation slot-definition-initform)
 
 (provide "stklos")
+

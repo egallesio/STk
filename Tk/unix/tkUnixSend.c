@@ -18,6 +18,10 @@
 #include "tkInt.h"
 #include "tkUnixInt.h"
 
+#ifdef BGLK_CODE
+#  define STk_stringify SCM_stringify
+#endif
+
 /* 
  * The following structure is used to keep track of the interpreters
  * registered by this process.
@@ -816,7 +820,7 @@ Tk_SetAppName(tkwin, name)
 	    if (i == 2) {
 		Tcl_DStringInit(&dString);
 		Tcl_DStringAppend(&dString, name, -1);
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		Tcl_DStringAppend(&dString, "#", 1);
 #else
 		Tcl_DStringAppend(&dString, " #", 2);
@@ -946,7 +950,7 @@ Tk_SendCmd(clientData, interp, argc, argv)
 	    break;
 	} else {
 	    Tcl_AppendResult(interp, "bad option \"", argv[i],
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		    "\": must be :async, :displayof, or :-", (char *) NULL);
 #else
 		    "\": must be -async, -displayof, or --", (char *) NULL);
@@ -1009,20 +1013,19 @@ Tk_SendCmd(clientData, interp, argc, argv)
 		 */
 
 		Tcl_ResetResult(interp);
+#ifdef SCM_CODE
 		Tcl_AddErrorInfo(interp, Tcl_GetVar2(localInterp,
-#ifdef STk_CODE
 			"*error-info*", (char *) NULL, TCL_GLOBAL_ONLY));
-#else
-			"errorInfo", (char *) NULL, TCL_GLOBAL_ONLY));
-#endif
-#ifdef STk_CODE
 		Tcl_SetVar2(interp, "*error-code*", (char *) NULL,
 			Tcl_GetVar2(localInterp, "*error-code*", (char *) NULL,
+			TCL_GLOBAL_ONLY), TCL_GLOBAL_ONLY);
 #else
+		Tcl_AddErrorInfo(interp, Tcl_GetVar2(localInterp,
+			"errorInfo", (char *) NULL, TCL_GLOBAL_ONLY));
 		Tcl_SetVar2(interp, "errorCode", (char *) NULL,
 			Tcl_GetVar2(localInterp, "errorCode", (char *) NULL,
-#endif
 			TCL_GLOBAL_ONLY), TCL_GLOBAL_ONLY);
+#endif
 	    }
             if (localInterp->freeProc != TCL_STATIC) {
                 interp->result = localInterp->result;
@@ -1172,10 +1175,11 @@ Tk_SendCmd(clientData, interp, argc, argv)
     if (pending.errorCode != NULL) {
 #ifdef STk_CODE
 	Tcl_SetVar2(interp, "*error-code*", (char *) NULL, pending.errorCode,
+		TCL_GLOBAL_ONLY);
 #else
 	Tcl_SetVar2(interp, "errorCode", (char *) NULL, pending.errorCode,
-#endif
 		TCL_GLOBAL_ONLY);
+#endif
 	ckfree(pending.errorCode);
     }
     Tcl_SetResult(interp, pending.result, TCL_DYNAMIC);
@@ -1222,7 +1226,7 @@ TkGetInterpNames(interp, tkwin)
      */
 
     regPtr = RegOpen(interp, winPtr->dispPtr, 1);
-#ifdef STk_CODE
+#ifdef SCM_CODE
     Tcl_AppendResult(interp, "(", NULL);
 #endif    
     for (p = regPtr->property; (p-regPtr->property) < (int) regPtr->propLength; ) {
@@ -1248,11 +1252,13 @@ TkGetInterpNames(interp, tkwin)
 	     * The application still exists; add its name to the result.
 	     */
 
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    char *s = STk_stringify(entryName, 0);
 	  
 	    Tcl_AppendElement(interp, s);
-	    free(s);
+#ifndef BGLK_CODE
+	    ckfree(s);
+#endif
 #else
 	    Tcl_AppendElement(interp, entryName);
 #endif
@@ -1275,7 +1281,7 @@ TkGetInterpNames(interp, tkwin)
 	    p = entry;
 	}
     }
-#ifdef STk_CODE
+#ifdef SCM_CODE
     Tcl_AppendResult(interp, ")", NULL);
 #endif 
     RegClose(regPtr);
@@ -1536,22 +1542,24 @@ SendEventProc(clientData, eventPtr)
 		if (result == TCL_ERROR) {
 		    char *varValue;
     
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		    varValue = Tcl_GetVar2(remoteInterp, "*error-info*",
+			    (char *) NULL, TCL_GLOBAL_ONLY);
 #else
 		    varValue = Tcl_GetVar2(remoteInterp, "errorInfo",
-#endif
 			    (char *) NULL, TCL_GLOBAL_ONLY);
+#endif
 		    if (varValue != NULL) {
 			Tcl_DStringAppend(&reply, "\0-i ", 4);
 			Tcl_DStringAppend(&reply, varValue, -1);
 		    }
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		    varValue = Tcl_GetVar2(remoteInterp, "*error-code*",
+			    (char *) NULL, TCL_GLOBAL_ONLY);
 #else
 		    varValue = Tcl_GetVar2(remoteInterp, "errorCode",
-#endif
 			    (char *) NULL, TCL_GLOBAL_ONLY);
+#endif
 		    if (varValue != NULL) {
 			Tcl_DStringAppend(&reply, "\0-e ", 4);
 			Tcl_DStringAppend(&reply, varValue, -1);

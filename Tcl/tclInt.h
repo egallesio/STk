@@ -37,7 +37,7 @@
 
 #include <ctype.h>
 #ifdef NO_LIMITS_H
-#  ifdef STk_CODE
+#  ifdef SCM_CODE
 #    include "compat/limits.h"
 #  else
 #     include "../compat/limits.h"
@@ -46,7 +46,7 @@
 #   include <limits.h>
 #endif
 #ifdef NO_STDLIB_H
-#  ifdef STk_CODE
+#  ifdef SCM_CODE
 #    include "compat/stdlib.h"
 #  else
 #    include "../compat/stdlib.h"
@@ -55,7 +55,7 @@
 #   include <stdlib.h>
 #endif
 #ifdef NO_STRING_H
-#  ifdef STk_CODE
+#  ifdef SCM_CODE
 #    include "compat/string.h"
 #  else
 #    include "../compat/string.h"
@@ -1316,6 +1316,7 @@ typedef enum {
 #define	TCL_INVOKE_HIDDEN	(1<<0)
 #define TCL_INVOKE_NO_UNKNOWN	(1<<1)
 
+#ifndef STk_CODE
 /*
  * The structure used as the internal representation of Tcl list
  * objects. This is an array of pointers to the element objects. This array
@@ -1330,6 +1331,7 @@ typedef struct List {
     int elemCount;		/* Current number of list elements. */
     Tcl_Obj **elements;		/* Array of pointers to element objects. */
 } List;
+#endif
 
 /*
  * The following types are used for getting and storing platform-specific
@@ -1941,7 +1943,7 @@ EXTERN int	TclCompileWhileCmd _ANSI_ARGS_((Tcl_Interp *interp,
  * EXTERN void	TclDecrRefCount _ANSI_ARGS_((Tcl_Obj *objPtr));
  *----------------------------------------------------------------
  */
-#ifdef STk_CODE
+#ifdef SCM_CODE
 
 
    EXTERN void Tcl_ResetObjResult _ANSI_ARGS_((Interp *interp));
@@ -2109,7 +2111,7 @@ EXTERN int	TclCompileWhileCmd _ANSI_ARGS_((Tcl_Interp *interp,
         } \
     }
 
-#endif /* STk_CODE */
+#endif /* SCM_CODE */
 /*
  *----------------------------------------------------------------
  * Procedures used in conjunction with Tcl namespaces. They are

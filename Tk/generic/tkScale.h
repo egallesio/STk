@@ -149,6 +149,9 @@ typedef struct TkScale {
 #ifdef STk_CODE
     char *env;			/* -variable environment */
 #endif
+#ifdef SCM_CODE
+    double oldRoundValue;	/*  hack for TkRoundToResolution */
+#endif
 } TkScale;
 
 /*
@@ -218,6 +221,10 @@ EXTERN void		TkEventuallyRedrawScale _ANSI_ARGS_((TkScale *scalePtr,
 			    int what));
 EXTERN double		TkRoundToResolution _ANSI_ARGS_((TkScale *scalePtr,
 			    double value));
+#ifdef SCM_CODE
+EXTERN double		TkRoundToValueResolution _ANSI_ARGS_((TkScale *scalePtr,
+			    double value));
+#endif
 EXTERN TkScale *	TkpCreateScale _ANSI_ARGS_((Tk_Window tkwin));
 EXTERN void		TkpDestroyScale _ANSI_ARGS_((TkScale *scalePtr));
 EXTERN void		TkpDisplayScale _ANSI_ARGS_((ClientData clientData));

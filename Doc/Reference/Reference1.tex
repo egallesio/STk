@@ -3,7 +3,7 @@
 %
 %           Author: Erick Gallesio [eg@unice.fr]
 %    Creation date: ??-Nov-1993 ??:??
-% Last file update: 30-May-1998 23:04
+% Last file update: 31-Aug-1999 13:04 (eg)
 %
 
 \section*{Introduction}
@@ -519,6 +519,24 @@ Returns \schtrue{} if \var{obj} is a symbol, otherwise returns {\schfalse}.
 \end{entry}
 
 \begin{entry}{%
+\proto{string->uninterned-symbol}{ string}{procedure}}
+\saut
+
+Returns a symbol whose print name is made from the characters of
+\ide{string}. This symbol is guaranteed to be \emph{unique} (i.e. not
+\ide{eq?} to any other symbol):
+\begin{scheme}
+(let ((ua (string->uninterned-symbol "a")))
+  (list (eq? 'a ua)
+        (eqv? 'a ua)
+        (eq? ua (string->uninterned-symbol "a"))
+        (eqv? ua (string->uninterned-symbol "a"))))
+        \lev (\schfalse{} \schtrue{} \schfalse{} \schtrue{})
+\end{scheme}
+
+\end{entry}
+
+\begin{entry}{%
 \proto{gensym}{}{procedure}
 \proto{gensym}{ prefix}{procedure}}
 \saut
@@ -1021,13 +1039,24 @@ returns the body of \hyper{procedure}. If \hyper{procedure} is not a closure,
 \label{inputoutput}
 The {\rrrr} states that ports represent input and output devices.
 However, it defines only ports which are attached to files.  In
-{\stk}, ports can also be attached to strings or to a external command
-input or output. String ports are similar to file ports, except that
-characters are read from (or written to) a string rather than a file.
-External command input or output ports are implemented with Unix pipes
-and are called pipe ports. A pipe port is created by specifying the
-command to execute prefixed with the string {\tt "|~"}. Specification
-of a pipe port can occur everywhere a file name is needed.
+{\stk}, ports can also be attached to strings, to a external command
+input or output, or even be completely virtual (i.e. the behavior of
+the port is given by the user).
+\begin{itemize}
+  \item String ports are similar to file ports, except that characters
+    are read from (or written to) a string rather than a file.
+  \item External command input or output ports are implemented with
+    Unix pipes and are called pipe ports. A pipe port is created by
+    specifying the command to execute prefixed with the string {\tt
+      "|~"}. Specification of a pipe port can occur everywhere a file
+    name is needed.
+  \item Virtual ports creation needs that the basic I/O functions are
+    at the port creation time. This functions will be used to simulate
+    low level accesses a ``virtual device''. This kind of port is
+    particularly convenient for reading or writing in a graphical window
+    as if it was a file. Once virtual port is created, it can be accessed 
+    as a normal port with the standard Scheme primitives.
+\end{itemize}
 
 
 \begin{entry}{%
@@ -1073,12 +1102,30 @@ containing all the text that has been written on the string port.
 \end{entry}
 
 \begin{entry}{%
+\proto{input-file-port?}{ obj}{procedure}
+\proto{output-file-port?}{ obj}{procedure}}
+\saut
+Returns \schtrue{} if \var{obj} is either an input or an output file port,
+otherwise returns {\schfalse}.
+\end{entry}
+
+\begin{entry}{%
 \proto{input-string-port?}{ obj}{procedure}
 \proto{output-string-port?}{ obj}{procedure}}
 \saut
 Returns \schtrue{} if \var{obj} is either an input or an output string port,
 otherwise returns {\schfalse}.
 \end{entry}
+
+
+\begin{entry}{%
+\proto{input-virtual-port?}{ obj}{procedure}
+\proto{output-virtual-port?}{ obj}{procedure}}
+\saut
+Returns \schtrue{} if \var{obj} is either an input or an output virtual port,
+otherwise returns {\schfalse}.
+\end{entry}
+
 
 \begin{entry}{%
 \proto{current-input-port}{}{procedure}
@@ -1095,14 +1142,18 @@ Returns the current default error port.
 
 \begin{entry}{%
 \proto{with-input-from-file}{ string thunk}{procedure}
-\proto{with-output-to-file}{ string thunk}{procedure}}
+\proto{with-output-to-file}{ string thunk}{procedure}
+\proto{with-error-to-file}{ string thunk}{procedure}}
 \saut
-\doc
 
-The following example uses a pipe port opened for reading. It permits
-to read all the lines produced by an external {\tt ls} command
-(i.e. the ouput of the {\tt ls} command is {\em redirected} to the
-Scheme pipe port).
+\ide{With-input-from-file} and \ide{with-output-to-file} are identical
+to \rrrr{}. \ide{With-error-to-file} is similar to \ide{with-output-to-file}
+except that this is the error port which is redirected to the file.
+
+The following example uses a pipe port opened for
+reading. It permits to read all the lines produced by an external {\tt
+  ls} command (i.e. the ouput of the {\tt ls} command is {\em
+  redirected} to the Scheme pipe port).
 
 \begin{scheme}
 (with-input-from-file "\verb+|+ ls -ls" 
@@ -1121,6 +1172,29 @@ it is the standard input of the Unix command which is redirected.
     (format {\schtrue} "A simple mail sent from STk\verb+\+n")))
 \end{scheme}  
 \end{entry}
+
+
+\begin{entry}{%
+\proto{with-input-from-port}{ port thunk}{procedure}
+\proto{with-output-to-port}{ port thunk}{procedure}
+\proto{with-error-to-port}{ port thunk}{procedure}}
+\saut
+These procedure are similar to the above function except that the
+thunk is called with the input, output or error port redirected to
+the given port (port can be any kind of port)
+
+\begin{scheme}
+(let ((p (open-input-string "123 456")))
+  (with-input-from-port p
+                   (lambda ()
+                     (read p))))
+  \lev 123
+\end{scheme}
+\end{entry}
+
+
+
+
 
 \begin{entry}{%
 \proto{with-input-from-string}{ string thunk}{procedure}}
@@ -1145,6 +1219,20 @@ returns the string containing all the text written on the string port.
 
 \begin{scheme}
 (with-output-to-string (lambda () (write 123) (write "Hello"))) \lev "123Hello"
+\end{scheme}
+\end{entry}
+
+\begin{entry}{%
+\proto{with-error-to-string}{ thunk}{procedure}}
+\saut
+A string port is opened for output. \ide{Current-error-port}
+is set to it and \var{thunk} is called. When the \var{thunk} returns,
+the previous default error port is restored. \ide{With-error-to-string}
+returns the string containing all the text written on the string port.
+
+\begin{scheme}
+(with-error-to-string (lambda () (write 123 (current-error-port))))
+   \lev "123"
 \end{scheme}
 \end{entry}
 
@@ -1187,9 +1275,87 @@ output string \var{port}.
 \end{entry}
 
 
+
+\begin{entry}{%
+\proto{open-input-virtual}{ getc readyp eofp close}{procedure}}
+\saut
+
+Returns a virtual port using the \var{getc} procedure to read a
+character from the port, \var{readyp} to know if there is to read from
+the port, \var{eofp} to know if the end of file is reached on the port
+and finally \var{close} to close the port. All theses procedure takes
+one parameter which is the port from which the input is done. 
+\var{Open-input-virtual} accepts also the special value \schfalse{} for 
+the I/O procedures with the following conventions:
+\begin{itemize}
+\item if \var{getc} or \var{eofp} is \schfalse{} any attempt to read
+  the virtual port will an eof object;
+\item if \var{readyp} is \schfalse{}, the file will always be ready
+  for reading;
+\item if \var{clos} is \schfalse{}, no action is done when the port is
+  closed.
+\end{itemize}
+
+Hereafter is a possible implementation of \ide{open-input-string}
+using virtual ports: 
+\begin{scheme}
+(define (open-input-string str)
+  (let ((index 0))
+    (open-input-virtual 
+       (lambda (p)                                ;; getc
+         ;; test on eof is already done by the system
+         (let ((res (string-ref str index)))
+           (set! index (+ index 1))
+           res))
+       \schfalse                                         ;; readyp
+       (lambda (p) (= index (string-length str))) ;; eofp
+       (lambda (p) (set! index 0)))))             ;; close
+\end{scheme}
+\end{entry}
+
+
+\begin{entry}{%
+\proto{open-output-virtual}{ wrtc wrts flush close}{procedure}}
+\saut
+
+Returns a virtual port using the \var{wrtc} procedure to write a
+character to the port, \var{wrts} to write a string to the port,
+\var{flush} to flush the character on the port and finally \var{close}
+to close the port. \var{Wrtc} takes two parameters: a character and
+the port to which the output must be done. \var{Wrts} takes two
+parameters: a string and a port. \var{Flush} and \var{close} takes one
+parameter which is the port on which the action must be done.
+\var{Open-input-virtual} accepts also the special value \schfalse{}
+for the I/O procedures. If a procedure is \schfalse{} nothing is done
+on the corresponding action.
+
+Hereafter is an (very inefficient) implementation of a variant of
+\ide{open-output-string} using virtual ports. The value of the output
+string is printed when the port is closed:
+
+\begin{scheme}
+(define (open-output-string)
+  (let ((str ""))
+    (open-output-virtual 
+       (lambda (c p)                                    ;; wrtc
+         (set! str (string-append str (char->sting c))))
+       (lambda (s p)                                    ;; wrts
+         (set! str (string-append str s)))
+       \schfalse{}                                               ;; flush
+       (lambda (p) (write str) (newline)))))            ;; close
+
+;; Example
+(let ((p (open-output-string)))
+  (display "Hello, world" p)
+  (close-port p))         \lev prints "Hello, world" on current output port
+\end{scheme}
+\end{entry}
+
+
+
 \begin{entry}{%
 \proto{close-input-port}{ port}{procedure}
-a\proto{close-output-port}{ port}{procedure}}
+\proto{close-output-port}{ port}{procedure}}
 \saut
 \doc
 \end{entry}
@@ -1303,17 +1469,6 @@ printed on the specified port.
 (format {\schfalse} "A test.")       \lev "A test."
 (format {\schfalse} "A \tilda{}a." "test")  \lev "A test."
 (format {\schfalse} "A \tilda{}s." "test")  \lev "A \backwhack{}"test\backwhack{}"."
-\end{scheme}
-\end{entry}
-
-\begin{entry}{%
-\proto{get-output-string}{ port}{procedure}}
-\saut
-Returns the string associated with the output string \var{port}.
-\begin{scheme}
-(let ((p (open-output-string)))
-  (display "Hello, world" p)
-  (get-output-string p))         \lev "Hello, world"
 \end{scheme}
 \end{entry}
 
@@ -1432,13 +1587,6 @@ subsequent loads of this file. \ide{Provided?} returns {\schtrue} if
 \end{entry}
 
 \begin{entry}{%
-\proto{transcript-on}{ filename}{procedure}\nopagebreak{}
-\proto{transcript-off}{}{procedure}}
-\saut
-Not implemented.
-\end{entry}
-
-\begin{entry}{%
 \proto{open-file}{ filename mode}{procedure}}
 \saut
 Opens the file whose name is \var{filename} with the specified
@@ -1457,11 +1605,39 @@ reading or writing on this port is disallowed.
 \end{entry}
 
 \begin{entry}{%
-\proto{transcript-on}{ filename}{procedure}\nopagebreak{}
-\proto{transcript-off}{}{procedure}}
+\proto{copy-port}{ src dst}{procedure}}
 \saut
-Not implemented.
+Copies the content of the input port \var{src} to the output-port \var{dest}.
+\begin{scheme}
+(define copy-file
+  (lambda (src dst)
+    (with-input-from-file src (lambda ()
+      (with-output-to-file dst (lambda ()
+         (copy-port (current-input-port)
+                    (current-output-port))))))))
+\end{scheme}
 \end{entry}
+
+\begin{entry}{%
+\proto{port-closed?}{ port}{procedure}}
+\saut
+Returns \schtrue{} if \var{port} has been closed, \schfalse{}  otherwise.
+\end{entry}
+
+\begin{entry}{%
+\proto{copy-port}{ src dst}{procedure}}
+\saut
+Copies the content of the input port \var{src} to the output-port \var{dest}.
+\begin{scheme}
+(define copy-file
+  (lambda (src dst)
+    (with-input-from-file src (lambda ()
+      (with-output-to-file dst (lambda ()
+         (copy-port (current-input-port)
+                    (current-output-port))))))))
+\end{scheme}
+\end{entry}
+
 
 \begin{entry}{%
 \proto{port->string}{ port}{procedure}
@@ -1510,6 +1686,14 @@ connected on the machine running the {\stk} interpreter.
 (port->sexp-list (open-input-file "| users"))
 \end{scheme}
 \end{entry}
+
+\begin{entry}{%
+\proto{transcript-on}{ filename}{procedure}\nopagebreak{}
+\proto{transcript-off}{}{procedure}}
+\saut
+Not implemented.
+\end{entry}
+
 
 %%% Local Variables: 
 %%% mode: latex

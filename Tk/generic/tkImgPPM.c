@@ -212,7 +212,13 @@ FileReadPPM(interp, chan, fileName, formatString, imageHandle, destX, destY,
 	if (count != nBytes) {
 	    Tcl_AppendResult(interp, "error reading PPM image file \"",
 		    fileName, "\": ",
+#ifdef BGLK_CODE
+		    Tcl_Eof(chan) ?
+			     (char *)"not enough data" :
+			     (char *)Tcl_PosixError(interp),
+#else
 		    Tcl_Eof(chan) ? "not enough data" : Tcl_PosixError(interp),
+#endif			     
 		    (char *) NULL);
 	    ckfree((char *) pixelPtr);
 	    return TCL_ERROR;

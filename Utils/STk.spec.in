@@ -7,9 +7,10 @@ Copyright: 	distributable
 Source: 	STk-@VERSION@.tar.gz
 Group:		Development/Languages
 Packager:	Erick Gallesio <eg@unice.fr>
+BuildRoot:	/tmp/STk
 
 %package devel
-Summary: 	Header files and libraries for STkq
+Summary: 	Header files and libraries for STk
 Group: 		Development/Libraries
 Requires:	STk = @VERSION@
 
@@ -43,15 +44,23 @@ the interpreter, you don't need to install this package.
 
 
 %prep
+
 %setup
 
 %build
 CFLAGS=-O2 sh configure --prefix=@prefix@
 make
 
-%install 
-make install
-make install.libs
+%install
+rm -rf %{buildroot}
+mkdir -p %{buildroot}
+
+make install root=%{buildroot}
+make install.libs root=%{buildroot}
+
+%clean
+
+ 
 
 %post
 if [ -d @prefix@/lib/stk/site-scheme ] 

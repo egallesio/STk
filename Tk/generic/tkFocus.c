@@ -148,7 +148,7 @@ Tk_FocusCmd(clientData, interp, argc, argv)
 	    interp->result = focusWinPtr->pathName;
 #endif
 	}
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	else 
 	  interp->result = "#f";
 #endif
@@ -181,7 +181,7 @@ Tk_FocusCmd(clientData, interp, argc, argv)
     if ((c == 'd') && (strncmp(argv[1], "-displayof", length) == 0)) {
 	if (argc != 3) {
 	    Tcl_AppendResult(interp, "wrong # args: should be \"",
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		    argv[0], " :displayof window\"", (char *) NULL);
 #else
 		    argv[0], " -displayof window\"", (char *) NULL);
@@ -199,7 +199,7 @@ Tk_FocusCmd(clientData, interp, argc, argv)
     } else if ((c == 'f') && (strncmp(argv[1], "-force", length) == 0)) {
 	if (argc != 3) {
 	    Tcl_AppendResult(interp, "wrong # args: should be \"",
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		    argv[0], " :force window\"", (char *) NULL);
 #else
 		    argv[0], " -force window\"", (char *) NULL);
@@ -217,7 +217,7 @@ Tk_FocusCmd(clientData, interp, argc, argv)
     } else if ((c == 'l') && (strncmp(argv[1], "-lastfor", length) == 0)) {
 	if (argc != 3) {
 	    Tcl_AppendResult(interp, "wrong # args: should be \"",
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		    argv[0], " :lastfor window\"", (char *) NULL);
 #else
 		    argv[0], " -lastfor window\"", (char *) NULL);
@@ -254,7 +254,7 @@ Tk_FocusCmd(clientData, interp, argc, argv)
 	}
     } else {
 	Tcl_AppendResult(interp, "bad option \"", argv[1],
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		"\": must be :displayof, :force, or :lastfor", (char *) NULL);
 #else
 		"\": must be -displayof, -force, or -lastfor", (char *) NULL);

@@ -5,23 +5,34 @@
  * Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
- * Permission to use, copy, and/or distribute this software and its
- * documentation for any purpose and without fee is hereby granted, provided
- * that both the above copyright notice and this permission notice appear in
- * all copies and derived works.  Fees for distribution or use of this
- * software or derived works may only be charged with express written
- * permission of the copyright holder.  
- * This software is provided ``as is'' without express or implied warranty.
- *
- * This software is a derivative work of other copyrighted softwares; the
- * copyright notices of these softwares are placed in the file COPYRIGHTS
- *
- * $Id: argv.c 1.8 Fri, 22 Jan 1999 14:44:12 +0100 eg $
+ * Permission to use, copy, modify, distribute,and license this
+ * software and its documentation for any purpose is hereby granted,
+ * provided that existing copyright notices are retained in all
+ * copies and that this notice is included verbatim in any
+ * distributions.  No written agreement, license, or royalty fee is
+ * required for any of the authorized uses.
+ * This software is provided ``AS IS'' without express or implied
+ * warranty.
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 30-Aug-1994 15:38
- * Last file update: 15-Jan-1999 09:30
+ * Last file update:  3-Sep-1999 20:18 (eg)
+ *
+ * Win32 support added by Steve Pruitt [steve@pruitt.net]
+ *
+ * For Win32 support the following changes were made:
+ *    - Defined EXPORT_DLL_GLOBALS for dll support
+ *    - Added tcl_MathInProgress (unresolved symbol) 
+ *    - Removed STk_Win32_make_argc_argv (was replaced by setargv in wstk.c)
+ *
  */
+
+/* Export DLL globals from library */ 
+#if (defined(WIN32) && defined(USE_DYNLOAD) && defined(MSC_VER))
+ #ifndef CYGWIN32
+  #define EXPORT_DLL_GLOBALS
+ #endif
+#endif
 
 #include "stk.h"
 
@@ -29,6 +40,16 @@
 #include <process.h>
 #include <io.h>
 #include <stdlib.h>
+
+/*
+ * The following global variable was used to signal matherr that Tcl
+ * is responsible for the arithmetic, so errors could be handled in a
+ * fashion appropriate for Tcl.  Zero means no Tcl math is in progress  
+ * tcl_MathInProgress should always be zero in STk.
+ */
+
+ int tcl_MathInProgress = 0;
+
 #endif
 
 /* Previous versions of Stk use the TkArgv mechanism for managing argc/argv.
@@ -56,6 +77,8 @@ char *STk_arg_load	  = NULL;
 char *STk_arg_image	  = NULL;
 char *STk_arg_cells	  = NULL;
 int   STk_arg_interactive = 0;
+int   version		  = 0;
+
 
 static struct arguments {
   char *key;		/* command option */
@@ -93,6 +116,9 @@ static struct arguments {
 		   "\tUse  previously created image"},
   {"-interactive", (void *) &STk_arg_interactive,  0,
 		   "Interactive mode"},
+  {"-version",	   &version, 			   0,
+   		   "Print the version of the system and abort execution"},
+
   {"-help",	   NULL,			   0,
 		   "\tPrint summary of command-line options and abort"},
   {"", NULL, 0, ""}};
@@ -183,6 +209,13 @@ char **STk_process_argc_argv(int argc, char **argv)
     }
   }
   
+  /* If only the version was asked, return it and abort execution */
+  if (version) {
+    printf("%s\n", STK_VERSION);
+    fflush(stdout);
+    exit(0);
+  }
+
   /* Option have been analysed. Parse program arguments */
   new_argv = (char**) must_malloc((argc + 1)  * sizeof(char*));
 

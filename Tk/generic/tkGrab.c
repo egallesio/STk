@@ -200,7 +200,7 @@ Tk_GrabCmd(clientData, interp, argc, argv)
     if (argc < 2) {
 	badArgs:
 	Tcl_AppendResult(interp, "wrong # args: should be \"",
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		argv[0], " ?:global? window\" or \"", argv[0],
 #else
 		argv[0], " ?-global? window\" or \"", argv[0],
@@ -248,12 +248,12 @@ Tk_GrabCmd(clientData, interp, argc, argv)
 		interp->result = dispPtr->eventualGrabWinPtr->pathName;
 #endif
 	    }
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    else
 	      interp->result = "#f";
 #endif
 	} else {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    Tcl_AppendResult(interp, "(", (char *) NULL);
 #endif
 	    for (dispPtr = tkDisplayList; dispPtr != NULL;
@@ -269,7 +269,7 @@ Tk_GrabCmd(clientData, interp, argc, argv)
 #endif
 		}
 	    }
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    Tcl_AppendResult(interp, ")", (char *) NULL);
 #endif
 	}
@@ -290,7 +290,7 @@ Tk_GrabCmd(clientData, interp, argc, argv)
 	    && (length >= 2)) {
 	if ((argc != 3) && (argc != 4)) {
 	    Tcl_AppendResult(interp, "wrong # args: should be \"",
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		    argv[0], " set ?:global? window\"", (char *) NULL);
 #else
 		    argv[0], " set ?-global? window\"", (char *) NULL);
@@ -305,7 +305,7 @@ Tk_GrabCmd(clientData, interp, argc, argv)
 	    length = strlen(argv[2]);
 	    if ((strncmp(argv[2], "-global", length) != 0) || (length < 2)) {
 		Tcl_AppendResult(interp, "bad argument \"", argv[2],
-#ifdef STk_CODE
+#ifdef SCM_CODE
 			"\": must be \"", argv[0], " set ?:global? window\"",
 #else
 			"\": must be \"", argv[0], " set ?-global? window\"",
@@ -334,7 +334,7 @@ Tk_GrabCmd(clientData, interp, argc, argv)
 	    return TCL_ERROR;
 	}
 	dispPtr = winPtr->dispPtr;
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	if (dispPtr->eventualGrabWinPtr != winPtr) {
 	    interp->result = "\"none\"";
 	} else if (dispPtr->grabFlags & GRAB_GLOBAL) {

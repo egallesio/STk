@@ -15,7 +15,7 @@
 #include "tkInt.h"
 #include "tkUnixInt.h"
 
-#ifndef STk_CODE
+#ifndef SCM_CODE
 /*
  * The Init script (common to Windows and Unix platforms) is
  * defined in tkInitScript.h
@@ -47,14 +47,14 @@ TkpInit(interp)
     Tcl_Interp *interp;
 {
     TkCreateXEventSource();
-#ifdef STk_CODE
+#ifdef SCM_CODE
     return TCL_OK;
 #else
     return Tcl_Eval(interp, initScript);
 #endif
 }
 
-#ifndef STk_CODE
+#ifndef SCM_CODE
 /*
  *----------------------------------------------------------------------
  *

@@ -17,7 +17,7 @@
 #define _TCLPORT
 
 #if defined(__WIN32__) || defined(_WIN32)
-#  ifdef STk_CODE
+#  ifdef SCM_CODE
 #     include "tclWinPort.h"
 #  else
 #     include "../win/tclWinPort.h"
@@ -26,7 +26,7 @@
 #   if defined(MAC_TCL)
 #	include "tclMacPort.h"
 #    else
-#  ifdef STk_CODE
+#  ifdef SCM_CODE
 #     include "tclUnixPort.h"
 #  else
 #     include "../unix/tclUnixPort.h"

@@ -220,7 +220,11 @@ Tk_ChooseColorCmd(clientData, interp, argc, argv)
         int v = i+1;
 	int len = strlen(argv[i]);
 
+#ifdef STk_CODE
+	if (strncmp(argv[i], "-initial-color", len)==0) {
+#else
 	if (strncmp(argv[i], "-initialcolor", len)==0) {
+#endif
 	    if (v==argc) {goto arg_missing;}
 
 	    colorStr = argv[v];
@@ -240,7 +244,11 @@ Tk_ChooseColorCmd(clientData, interp, argc, argv)
 	}
 	else {
     	    Tcl_AppendResult(interp, "unknown option \"", 
+#ifdef STk_CODE
+		argv[i], "\", must be :initial-color, :parent or :title",
+#else
 		argv[i], "\", must be -initialcolor, -parent or -title",
+#endif
 		NULL);
 		return TCL_ERROR;
 	}
@@ -606,7 +614,11 @@ ParseFileDlgArgs(interp, ofnPtr, argc, argv, isOpen)
         int v = i+1;
 	int len = strlen(argv[i]);
 
+#ifdef STk_CODE
+	if (strncmp(argv[i], "-default-extension", len)==0) {
+#else
 	if (strncmp(argv[i], "-defaultextension", len)==0) {
+#endif
 	    if (v==argc) {goto arg_missing;}
 
 	    ofnPtr->lpstrDefExt = argv[v];
@@ -615,7 +627,11 @@ ParseFileDlgArgs(interp, ofnPtr, argc, argv, isOpen)
 		ofnPtr->lpstrDefExt ++;
 	    }
 	}
+#ifdef STk_CODE
+	else if (strncmp(argv[i], "-file-types", len)==0) {
+#else
 	else if (strncmp(argv[i], "-filetypes", len)==0) {
+#endif
 	    if (v==argc) {goto arg_missing;}
 
 	    if (MakeFilter(interp, ofnPtr, argv[v]) != TCL_OK) {
@@ -623,7 +639,11 @@ ParseFileDlgArgs(interp, ofnPtr, argc, argv, isOpen)
 	    }
 	    doneFilter = 1;
 	}
+#ifdef STk_CODE
+	else if (strncmp(argv[i], "-initial-dir", len)==0) {
+#else
 	else if (strncmp(argv[i], "-initialdir", len)==0) {
+#endif
 	    if (v==argc) {goto arg_missing;}
 
 	    if (Tcl_TranslateFileName(interp, argv[v], &buffer) == NULL) {
@@ -633,7 +653,11 @@ ParseFileDlgArgs(interp, ofnPtr, argc, argv, isOpen)
 	    strcpy((char*)ofnPtr->lpstrInitialDir, Tcl_DStringValue(&buffer));
 	    Tcl_DStringFree(&buffer);
 	}
+#ifdef STk_CODE
+	else if (strncmp(argv[i], "-initial-file", len)==0) {
+#else
 	else if (strncmp(argv[i], "-initialfile", len)==0) {
+#endif
 	    if (v==argc) {goto arg_missing;}
 
 	    if (Tcl_TranslateFileName(interp, argv[v], &buffer) == NULL) {
@@ -657,8 +681,13 @@ ParseFileDlgArgs(interp, ofnPtr, argc, argv, isOpen)
 	}
 	else {
     	    Tcl_AppendResult(interp, "unknown option \"", 
+#ifdef STk_CODE
+		argv[i], "\", must be :default-extension, ",
+		":file-types, :initial-dir, :initial-file, :parent or :title",
+#else
 		argv[i], "\", must be -defaultextension, ",
 		"-filetypes, -initialdir, -initialfile, -parent or -title",
+#endif
 		NULL);
 	    return TCL_ERROR;
 	}
@@ -922,8 +951,13 @@ Tk_MessageBoxCmd(clientData, interp, argc, argv)
 	}
 	else {
     	    Tcl_AppendResult(interp, "unknown option \"", 
+#ifdef STk_CODE
+		argv[i], "\", must be :default, :icon, ",
+		":message, :parent, :title or :type", NULL);
+#else
 		argv[i], "\", must be -default, -icon, ",
 		"-message, -parent, -title or -type", NULL);
+#endif
 		return TCL_ERROR;
 	}
     }

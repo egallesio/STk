@@ -1,0 +1,32 @@
+<HTML><HEAD><TITLE>Tk Built-In Commands - console manual page</TITLE></HEAD>
+<BR>
+<BODY bgcolor = #c3ffc3>
+<H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageGreen.gif"> make-console</H2>
+<I>Create a console</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<H3><A NAME="M2">SYNOPSIS</A></H3>
+(<B>make-console</B>)<BR>
+(<B>make-console</B><I>  </I><B>:module</B> <I>module</I>)<BR>
+<BR>
+<H3><A NAME="M3">DESCRIPTION</A></H3>
+The <B>make-console</B> procedure creates a new console in a new
+toplevel window. By default the interaction loop is placed in the
+current module (and changes if the current module is changed). If the
+console is created in a given module, thanks to the <B>:module</B>
+option, it is tied to this module. This second form of console
+creation is particularly useful in debugging phases to set or consult
+variables which are not exported in a module. 
+
+<P>
+<H3><A NAME="M4">INITIALIZATION</A></H3>
+Use <B>(require &quot;console&quot;)</B> to load the console package.
+
+<P>
+<H3><A NAME="M5">DEFAULT BINDINGS</A></H3>
+The defaults bindings are identical to the <B><A HREF="./text.n.html">text</A></B> bindings except  the 
+up and down arrow of on the prompt line which allow to scan the command history.
+
+<H3><A NAME="M6">SEE ALSO</A></H3>
+<B><A HREF="./text.n.html">text</A></B>
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif"><P>
+<A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookGreen.gif"> Back to the <B>STk</B> main page</A>
+</BODY></HTML>

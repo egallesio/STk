@@ -2,25 +2,21 @@
  *
  * c o n t . c				-- Continuations management
  *
- * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
- * Permission to use, copy, and/or distribute this software and its
- * documentation for any purpose and without fee is hereby granted, provided
- * that both the above copyright notice and this permission notice appear in
- * all copies and derived works.  Fees for distribution or use of this
- * software or derived works may only be charged with express written
- * permission of the copyright holder.  
- * This software is provided ``as is'' without express or implied warranty.
- *
- * This software is a derivative work of other copyrighted softwares; the
- * copyright notices of these softwares are placed in the file COPYRIGHTS
- *
- * $Id: cont.c 1.4 Wed, 23 Dec 1998 23:41:27 +0100 eg $
+ * Permission to use, copy, modify, distribute,and license this
+ * software and its documentation for any purpose is hereby granted,
+ * provided that existing copyright notices are retained in all
+ * copies and that this notice is included verbatim in any
+ * distributions.  No written agreement, license, or royalty fee is
+ * required for any of the authorized uses.
+ * This software is provided ``AS IS'' without express or implied
+ * warranty.
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date:  8-Nov-1993 11:34
- * Last file update: 20-Dec-1998 21:25
+ * Last file update:  3-Sep-1999 20:19 (eg)
  */
 
 #include "stk.h"
@@ -133,7 +129,7 @@ void STk_throw(SCM fct, SCM vals)
   for(to=C_START(fct), from=C_STACK(fct), i=C_LEN(fct); i--; ) *to++ = *from++;
 
   /* Everything is restored. Execute the thunk1 of dynamic-wind we enter in back */
-  reenter_cont(C_HANDLER(fct));
+  reenter_cont(C_HANDLER(tmp));
 
   /* And Go! */
   longjmp(C_ENV(tmp), JMP_THROW);
@@ -154,7 +150,8 @@ PRIMITIVE STk_continuationp(SCM obj)
 static void reenter_cont(struct error_handler *eh)
 {
   struct error_handler *p, *before;
-  SCM thunks = NIL;
+  SCM thunks1 = NIL;
+  SCM thunks2 = NIL;
   
   before 	  = STk_err_handler;
   STk_err_handler = eh;
@@ -163,12 +160,18 @@ static void reenter_cont(struct error_handler *eh)
    * have the thunks in reverse order push them in a list
    */
   for (p = STk_err_handler; p && p != before; p = p->prev) {
-    if (NNULLP(p->dynamic_handler))
-      thunks = Cons(CAR(p->dynamic_handler), thunks);
+    if (NNULLP(p->dynamic_handler)) {
+      thunks1 = Cons(CAR(p->dynamic_handler), thunks1);
+      thunks2 = Cons(CDR(p->dynamic_handler), thunks2);
+    }
   }
   /* Execute all the handler now */
-  for ( ; NNULLP(thunks); thunks = CDR(thunks))
-    STk_apply(CAR(thunks), NIL);
+  for ( ; NNULLP(thunks2); thunks2 = CDR(thunks2))
+    Apply0(CAR(thunks2));
+  /* Execute all the handler now */
+  for ( ; NNULLP(thunks1); thunks1 = CDR(thunks1))
+    Apply0(CAR(thunks1));
+
 }
 
 
@@ -186,7 +189,7 @@ void STk_unwind_all(void)   /* called when we exit the interpreter */
   }
   /* Execute all the handler now */
   for ( ; NNULLP(thunks); thunks = CDR(thunks))
-    STk_apply(CAR(thunks), NIL);
+    Apply0(CAR(thunks));
 }
 
 
@@ -202,19 +205,19 @@ PRIMITIVE STk_dynamic_wind(SCM thunk1, SCM thunk2, SCM thunk3)
 
   test_procedure(thunk1); test_procedure(thunk2); test_procedure(thunk3);
 
-  Apply(thunk1, NIL);
+  Apply0(thunk1);
   PUSH_ERROR_HANDLER
     {
       STk_err_handler->dynamic_handler = Cons(thunk1, thunk3);
-      result = Apply(thunk2, NIL);
+      result = Apply0(thunk2);
     }
   WHEN_ERROR
     {
-      Apply(thunk3, NIL);
+      Apply0(thunk3);
       PROPAGATE_ERROR();
     }
   POP_ERROR_HANDLER;
-  Apply(thunk3, NIL);
+  Apply0(thunk3);
   return result;
 }
 
@@ -260,6 +263,6 @@ PRIMITIVE STk_call_with_values(SCM producer, SCM consumer)
   if (!STk_procedurep(producer)) Serror("bad producer", producer);
   if (!STk_procedurep(consumer)) Serror("bad consumer", consumer);
 
-  res = Apply(producer, NIL);
+  res = Apply0(producer);
   return Apply(consumer, VALUESP(res) ? CAR(res) : LIST1(res));
 }

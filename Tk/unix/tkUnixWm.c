@@ -20,6 +20,12 @@
 #include "tkUnixInt.h"
 #include <errno.h>
 
+#ifdef BGLK_CODE
+#  define STk_stringify_result 	SCM_stringify_result
+#  define STk_valid_callback	SCM_valid_callback
+#  define STk_add_callback	SCM_add_callback
+#endif
+
 /*
  * A data structure of the following type holds information for
  * each window manager protocol (such as WM_DELETE_WINDOW) for
@@ -918,7 +924,7 @@ Tk_WmCmd(clientData, interp, argc, argv)
 		    wmPtr->wrapperPtr->window, &cmapList, &count) == 0) {
 		return TCL_OK;
 	    }
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    Tcl_AppendResult(interp, "(", NULL);
 #endif
 	    for (i = 0; i < count; i++) {
@@ -929,7 +935,7 @@ Tk_WmCmd(clientData, interp, argc, argv)
 	        winPtr2  = (TkWindow *) Tk_IdToWindow(winPtr->display,
 			cmapList[i]);
 		if (winPtr2 == NULL) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		    sprintf(buffer, "#x%lx", cmapList[i]);
 #else
 		    sprintf(buffer, "0x%lx", cmapList[i]);
@@ -939,7 +945,7 @@ Tk_WmCmd(clientData, interp, argc, argv)
 		    Tcl_AppendElement(interp, winPtr2->pathName);
 		}
 	    }
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    Tcl_AppendResult(interp, ")", NULL);
 #endif
 	    XFree((char *) cmapList);
@@ -1050,7 +1056,7 @@ Tk_WmCmd(clientData, interp, argc, argv)
 	    return TCL_ERROR;
 	}
 	if (argc == 3) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    interp->result = wmPtr->hints.input ? "\"passive\"" : "\"active\"";
 #else
 	    interp->result = wmPtr->hints.input ? "passive" : "active";
@@ -1082,7 +1088,7 @@ Tk_WmCmd(clientData, interp, argc, argv)
 	if (window == None) {
 	    window = Tk_WindowId((Tk_Window) winPtr);
 	}
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	sprintf(interp->result, "#x%x", (unsigned int) window);
 #else
 	sprintf(interp->result, "0x%x", (unsigned int) window);
@@ -1110,7 +1116,7 @@ Tk_WmCmd(clientData, interp, argc, argv)
 		width = winPtr->changes.width;
 		height = winPtr->changes.height;
 	    }
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    sprintf(interp->result, "\"%dx%d%c%d%c%d\"", width, height,
 #else
 	    sprintf(interp->result, "%dx%d%c%d%c%d", width, height,
@@ -1140,13 +1146,13 @@ Tk_WmCmd(clientData, interp, argc, argv)
 			wmPtr->reqGridHeight, wmPtr->widthInc,
 			wmPtr->heightInc);
 	    }
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    else
 	      interp->result = "#f";
 #endif
 	    return TCL_OK;
 	}
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	if (*argv[3] == '\0' || strcmp(argv[3], "#f") == 0) {
 #else
 	if (*argv[3] == '\0') {
@@ -1208,14 +1214,16 @@ Tk_WmCmd(clientData, interp, argc, argv)
 	    if (wmPtr->hints.flags & WindowGroupHint) {
 		interp->result = wmPtr->leaderName;
 	    }
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    else
 	      interp->result = "#f";
+#  ifdef STk_CODE
 	    STk_sharp_dot_result(interp, interp->result);
+#  endif
 #endif
 	    return TCL_OK;
 	}
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	if (*argv[3] == '\0' || strcmp(argv[3], "#f") == 0) {
 #else
 	if (*argv[3] == '\0') {
@@ -1262,7 +1270,7 @@ Tk_WmCmd(clientData, interp, argc, argv)
 	    if (wmPtr->hints.flags & IconPixmapHint) {
 		interp->result = Tk_NameOfBitmap(winPtr->display,
 			wmPtr->hints.icon_pixmap);
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    STk_stringify_result(interp, interp->result);
 	    }
 	    else {
@@ -1271,7 +1279,7 @@ Tk_WmCmd(clientData, interp, argc, argv)
 	    }
 	    return TCL_OK;
 	}
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	if (*argv[3] == '\0' || strcmp(argv[3], "#f") == 0) {
 #else
 	if (*argv[3] == '\0') {
@@ -1346,12 +1354,12 @@ Tk_WmCmd(clientData, interp, argc, argv)
 		interp->result = Tk_NameOfBitmap(winPtr->display,
 			wmPtr->hints.icon_mask);
 	    }
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    STk_stringify_result(interp, interp->result);
 #endif
 	    return TCL_OK;
 	}
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	if (*argv[3] == '\0' || strcmp(argv[3], "#f") == 0) {
 #else
 	if (*argv[3] == '\0') {
@@ -1378,7 +1386,7 @@ Tk_WmCmd(clientData, interp, argc, argv)
 	}
 	if (argc == 3) {
 	    interp->result = (wmPtr->iconName != NULL) ? wmPtr->iconName : "";
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    STk_stringify_result(interp, interp->result);
 #endif
 	    return TCL_OK;
@@ -1405,13 +1413,13 @@ Tk_WmCmd(clientData, interp, argc, argv)
 		sprintf(interp->result, "%d %d", wmPtr->hints.icon_x,
 			wmPtr->hints.icon_y);
 	    }
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    else 
 	      interp->result = "#f";
 #endif
 	    return TCL_OK;
 	}
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	if (*argv[3] == '\0' || strcmp(argv[3], "#f") == 0) {
 #else
 	if (*argv[3] == '\0') {
@@ -1443,14 +1451,16 @@ Tk_WmCmd(clientData, interp, argc, argv)
 	    if (wmPtr->icon != NULL) {
 		interp->result = Tk_PathName(wmPtr->icon);
 	    }
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    else
 	      interp->result = "#f";
+#  ifdef STk_CODE
 	    STk_sharp_dot_result(interp, interp->result);
+#  endif
 #endif
 	    return TCL_OK;
 	}
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	if (*argv[3] == '\0' || strcmp(argv[3], "#f") == 0) {
 #else
 	if (*argv[3] == '\0') {
@@ -1581,7 +1591,7 @@ Tk_WmCmd(clientData, interp, argc, argv)
 	    return TCL_ERROR;
 	}
 	if (argc == 3) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    interp->result = (Tk_Attributes((Tk_Window) winPtr)->override_redirect)
 					      ? "#t" : "#f";
 #else
@@ -1614,13 +1624,13 @@ Tk_WmCmd(clientData, interp, argc, argv)
 	}
 	if (argc == 3) {
 	    if (wmPtr->sizeHintsFlags & USPosition) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		interp->result = "\"user\"";
 #else
 		interp->result = "user";
 #endif
 	    } else if (wmPtr->sizeHintsFlags & PPosition) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		interp->result = "\"program\"";
 	    } else {
 	        interp->result = "#f";
@@ -1630,7 +1640,7 @@ Tk_WmCmd(clientData, interp, argc, argv)
 	    }
 	    return TCL_OK;
 	}
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	if (*argv[3] == '\0' || strcmp(argv[3], "#f") == 0) {
 #else
 	if (*argv[3] == '\0') {
@@ -1669,7 +1679,7 @@ Tk_WmCmd(clientData, interp, argc, argv)
 	    /*
 	     * Return a list of all defined protocols for the window.
 	     */
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    Tcl_AppendResult(interp, "(", NULL);
 	    for (protPtr = wmPtr->protPtr; protPtr; protPtr = protPtr->nextPtr) {
 	      Tcl_AppendResult(interp, " \"",
@@ -1725,7 +1735,7 @@ Tk_WmCmd(clientData, interp, argc, argv)
 	}
 	cmdLength = strlen(argv[4]);
 	if (cmdLength > 0) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    SCM closure;
 
 	    if (!STk_valid_callback(argv[4], &closure)) {
@@ -1764,7 +1774,7 @@ Tk_WmCmd(clientData, interp, argc, argv)
 	    return TCL_ERROR;
 	}
 	if (argc == 3) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    sprintf(interp->result, "(#%c #%c)",
 		    (wmPtr->flags  & WM_WIDTH_NOT_RESIZABLE) ? 'f' : 't',
 		    (wmPtr->flags  & WM_HEIGHT_NOT_RESIZABLE) ? 'f' : 't');
@@ -1801,13 +1811,13 @@ Tk_WmCmd(clientData, interp, argc, argv)
 	}
 	if (argc == 3) {
 	    if (wmPtr->sizeHintsFlags & USSize) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		interp->result = "\"user\"";
 #else
 		interp->result = "user";
 #endif
 	    } else if (wmPtr->sizeHintsFlags & PSize) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		interp->result = "\"program\"";
 	    }
 	    else {
@@ -1818,7 +1828,7 @@ Tk_WmCmd(clientData, interp, argc, argv)
 	    }
 	    return TCL_OK;
 	}
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	if (*argv[3] == '\0' || strcmp(argv[3], "#f") == 0) {
 #else
 	if (*argv[3] == '\0') {
@@ -1849,7 +1859,7 @@ Tk_WmCmd(clientData, interp, argc, argv)
 		    argv[0], " state window\"", (char *) NULL);
 	    return TCL_ERROR;
 	}
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	if (wmPtr->iconFor != NULL) {
 	    interp->result = "\"icon\"";
 	} else if (wmPtr->withdrawn) {
@@ -1917,14 +1927,14 @@ Tk_WmCmd(clientData, interp, argc, argv)
 	    if (wmPtr->master != None) {
 		interp->result = wmPtr->masterWindowName;
 	    }
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    else {
 	        interp->result = "#f";
 	    }
 #endif
 	    return TCL_OK;
 	}
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	if (argv[3][0] == '\0' || strcmp(argv[3], "#f") == 0) {
 #else
 	if (argv[3][0] == '\0') {

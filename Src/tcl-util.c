@@ -4,24 +4,22 @@
  * 				   of code of the Tcl lib modified to take into
  *				   account some Scheme specificities)
  *
- * Copyright © 1993-1997 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
- * Permission to use, copy, and/or distribute this software and its
- * documentation for any purpose and without fee is hereby granted, provided
- * that both the above copyright notice and this permission notice appear in
- * all copies and derived works.  Fees for distribution or use of this
- * software or derived works may only be charged with express written
- * permission of the copyright holder.  
- * This software is provided ``as is'' without express or implied warranty.
- *
- * This software is a derivative work of other copyrighted softwares; the
- * copyright notices of these softwares are placed in the file COPYRIGHTS
+ * Permission to use, copy, modify, distribute,and license this
+ * software and its documentation for any purpose is hereby granted,
+ * provided that existing copyright notices are retained in all
+ * copies and that this notice is included verbatim in any
+ * distributions.  No written agreement, license, or royalty fee is
+ * required for any of the authorized uses.
+ * This software is provided ``AS IS'' without express or implied
+ * warranty.
  *
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 26-Feb-1993 10:10
- * Last file update: 25-Aug-1997 22:51
+ * Last file update:  3-Sep-1999 20:59 (eg)
  *
  *
  * This code is derivated from several Tcl files which have the following 

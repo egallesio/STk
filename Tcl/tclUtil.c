@@ -54,7 +54,7 @@ char *tclExecutableName = NULL;
  *
  * NOTE: these variables are not thread-safe.
  */
-#ifndef STk_CODE
+#ifndef SCM_CODE
 static char precisionString[10] = "12";
 				/* The string value of all the tcl_precision
 				 * variables. */
@@ -153,7 +153,7 @@ TclFindElement(interp, list, listLength, elementPtr, nextPtr, sizePtr,
 	goto done;
     }
 
-#ifdef STk_CODE
+#ifdef SCM_CODE
     if (*p == '(') {
 #else
     if (*p == '{') {
@@ -181,7 +181,7 @@ TclFindElement(interp, list, listLength, elementPtr, nextPtr, sizePtr,
 	     * braces. In this case, keep a nesting count.
 	     */
 
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    case '(':
 #else
 	    case '{':
@@ -196,7 +196,7 @@ TclFindElement(interp, list, listLength, elementPtr, nextPtr, sizePtr,
 	     * quit when the last close brace is seen.
 	     */
 
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    case ')':
 #else
 	    case '}':
@@ -428,7 +428,7 @@ Tcl_SplitList(interp, list, argcPtr, argvPtr)
      * the number of space characters in the list.
      */
 
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {
       char *q;
 
@@ -606,7 +606,7 @@ Tcl_ScanCountedElement(string, length, flagPtr)
      */
 
     nestingLevel = 0;
-#ifdef STk_CODE
+#ifdef SCM_CODE
     flags = TCL_DONT_USE_BRACES;
 #else
     flags = 0;
@@ -633,7 +633,7 @@ Tcl_ScanCountedElement(string, length, flagPtr)
 		    flags |= TCL_DONT_USE_BRACES|BRACES_UNMATCHED;
 		}
 		break;
-#ifndef STk_CODE
+#ifndef SCM_CODE
 	    case '[':
 	    case '$':
 	    case ';':
@@ -734,7 +734,7 @@ Tcl_ConvertCountedElement(src, length, dst, flags)
     int flags;			/* Flags produced by Tcl_ScanElement. */
 {
     char *p = dst;
-#ifndef STk_CODE
+#ifndef SCM_CODE
     CONST char *lastChar;
 #endif
 
@@ -746,14 +746,14 @@ Tcl_ConvertCountedElement(src, length, dst, flags)
     if (src && length == -1) {
 	length = strlen(src);
     }
-#ifdef STk_CODE
+#ifdef SCM_CODE
     if ((src == NULL) || (*src == 0)) {
         p[0] = '\\';
  	p[1] = '0';
  	p[2] = 0;
  	return 2;
     }
-    while (*p++ = *src++) /* Nothing */;
+    while ((*p++ = *src++)) /* Nothing */;
     return p - dst - 1;
 #else
     if ((src == NULL) || (length == 0)) {
@@ -896,7 +896,7 @@ Tcl_Merge(argc, argv)
     } else {
 	flagPtr = (int *) ckalloc((unsigned) argc*sizeof(int));
     }
-#ifdef STk_CODE
+#ifdef SCM_CODE
     numChars = 3; /* +2 cause of () */
 #else
     numChars = 1;
@@ -909,8 +909,12 @@ Tcl_Merge(argc, argv)
      * Pass two: copy into the result area.
      */
 
+#ifdef BGLK_CODE
+    result = (char *) ckalloc_atomic((unsigned) numChars);
+#else
     result = (char *) ckalloc((unsigned) numChars);
-#ifdef STk_CODE
+#endif
+#ifdef SCM_CODE
     *result = '('; dst = result+1;
 #else
     dst = result;
@@ -921,7 +925,7 @@ Tcl_Merge(argc, argv)
 	*dst = ' ';
 	dst++;
     }
-#ifdef STk_CODE
+#ifdef SCM_CODE
     if (dst != result+1) dst -= 1;
     dst[0] = ')';
     dst[1] = '\0';
@@ -970,7 +974,11 @@ Tcl_Concat(argc, argv)
     for (totalSize = 1, i = 0; i < argc; i++) {
 	totalSize += strlen(argv[i]) + 1;
     }
+#ifdef BGLK_CODE
+    result = (char *) ckalloc_atomic((unsigned) totalSize);
+#else
     result = (char *) ckalloc((unsigned) totalSize);
+#endif
     if (argc == 0) {
 	*result = '\0';
 	return result;
@@ -1057,8 +1065,12 @@ Tcl_ConcatObj(objc, objv)
      * is one more than the total number of characters, and so includes
      * room for the terminating NULL byte.
      */
-    
+
+#ifdef BGLK_CODE
+    concatStr = (char *) ckalloc_atomic((unsigned) allocSize);
+#else
     concatStr = (char *) ckalloc((unsigned) allocSize);
+#endif
 
     /*
      * Now concatenate the elements. Clip white space off the front and back
@@ -1107,7 +1119,7 @@ Tcl_ConcatObj(objc, objv)
         }
     }
     
-#ifdef STk_CODE
+#ifdef SCM_CODE
     return Tcl_NewStringObj(concatStr, finalSize);
 #else
     TclNewObj(objPtr);
@@ -1293,7 +1305,11 @@ Tcl_SetResult(interp, string, freeProc)
     } else if (freeProc == TCL_VOLATILE) {
 	length = strlen(string);
 	if (length > TCL_RESULT_SIZE) {
+#ifdef BGLK_CODE
+	    iPtr->result = (char *) ckalloc_atomic((unsigned) length+1);
+#else
 	    iPtr->result = (char *) ckalloc((unsigned) length+1);
+#endif
 	    iPtr->freeProc = TCL_DYNAMIC;
 	} else {
 	    iPtr->result = iPtr->resultSpace;
@@ -1313,7 +1329,11 @@ Tcl_SetResult(interp, string, freeProc)
 
     if (oldFreeProc != 0) {
 	if ((oldFreeProc == TCL_DYNAMIC)
+#ifdef BGLK_CODE
+		|| (oldFreeProc == (Tcl_FreeProc *) GC_free)) {
+#else
 		|| (oldFreeProc == (Tcl_FreeProc *) free)) {
+#endif
 	    ckfree(oldResult);
 	} else {
 	    (*oldFreeProc)(oldResult);
@@ -1391,17 +1411,20 @@ Tcl_SetObjResult(interp, objPtr)
 				 * object. */
 {
     Interp *iPtr = (Interp *) interp;
+#ifndef SCM_CODE
     Tcl_Obj *oldObjResult = iPtr->objResultPtr;
+#endif
 
     iPtr->objResultPtr = objPtr;
     Tcl_IncrRefCount(objPtr);	/* since interp result is a reference */
 
+#ifndef SCM_CODE
     /*
      * We wait until the end to release the old object result, in case
      * we are setting the result to itself.
      */
-    
     TclDecrRefCount(oldObjResult);
+#endif
 
     /*
      * Reset the string result since we just set the result object.
@@ -1409,7 +1432,11 @@ Tcl_SetObjResult(interp, objPtr)
 
     if (iPtr->freeProc != NULL) {
 	if ((iPtr->freeProc == TCL_DYNAMIC)
+#ifdef BGLK_CODE
+	        || (iPtr->freeProc == (Tcl_FreeProc *) GC_free)) {
+#else
 	        || (iPtr->freeProc == (Tcl_FreeProc *) free)) {
+#endif
 	    ckfree(iPtr->result);
 	} else {
 	    (*iPtr->freeProc)(iPtr->result);
@@ -1463,7 +1490,11 @@ Tcl_GetObjResult(interp)
 	
 	if (iPtr->freeProc != NULL) {
 	    if ((iPtr->freeProc == TCL_DYNAMIC)
+#ifdef BGLK_CODE
+	            || (iPtr->freeProc == (Tcl_FreeProc *) GC_free)) {
+#else
 	            || (iPtr->freeProc == (Tcl_FreeProc *) free)) {
+#endif
 		ckfree(iPtr->result);
 	    } else {
 		(*iPtr->freeProc)(iPtr->result);
@@ -1700,7 +1731,11 @@ SetupAppendBuffer(iPtr, newSpace)
 	} else {
 	    totalSpace *= 2;
 	}
+#ifdef BGLK_CODE
+	new = (char *) ckalloc_atomic((unsigned) totalSpace);
+#else
 	new = (char *) ckalloc((unsigned) totalSpace);
+#endif
 	strcpy(new, iPtr->result);
 	if (iPtr->appendResult != NULL) {
 	    ckfree(iPtr->appendResult);
@@ -1745,7 +1780,11 @@ Tcl_FreeResult(interp)
     
     if (iPtr->freeProc != NULL) {
 	if ((iPtr->freeProc == TCL_DYNAMIC)
+#ifdef BGLK_CODE
+	        || (iPtr->freeProc == (Tcl_FreeProc *) GC_free)) {
+#else
 	        || (iPtr->freeProc == (Tcl_FreeProc *) free)) {
+#endif
 	    ckfree(iPtr->result);
 	} else {
 	    (*iPtr->freeProc)(iPtr->result);
@@ -1832,12 +1871,13 @@ Tcl_SetErrorCode TCL_VARARGS_DEF(Tcl_Interp *,arg1)
 	if (string == NULL) {
 	    break;
 	}
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	(void) Tcl_SetVar2((Tcl_Interp *) iPtr, "*error-code*",
+		(char *) NULL, string, flags);
 #else
 	(void) Tcl_SetVar2((Tcl_Interp *) iPtr, "errorCode",
-#endif
 		(char *) NULL, string, flags);
+#endif
 	flags |= TCL_APPEND_VALUE;
     }
     va_end(argList);
@@ -1870,7 +1910,7 @@ Tcl_SetObjErrorCode(interp, errorObjPtr)
     Tcl_Interp *interp;
     Tcl_Obj *errorObjPtr;
 {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 /* FIXME: !!!!!!!
    On doit mettre erreur code a jour .....
    VCELL(Intern("error-code"), TCLOBJDATA((SCM)errorObjPtr)); 
@@ -1974,7 +2014,11 @@ Tcl_RegExpCompile(interp, string)
 	iPtr->patLengths[i+1] = iPtr->patLengths[i];
 	iPtr->regexps[i+1] = iPtr->regexps[i];
     }
+#ifdef BGLK_CODE
+    iPtr->patterns[0] = (char *) ckalloc_atomic((unsigned) (length+1));
+#else
     iPtr->patterns[0] = (char *) ckalloc((unsigned) (length+1));
+#endif
     strcpy(iPtr->patterns[0], string);
     iPtr->patLengths[0] = length;
     iPtr->regexps[0] = result;
@@ -2176,7 +2220,11 @@ Tcl_DStringAppend(dsPtr, string, length)
 
     if (newSize >= dsPtr->spaceAvl) {
 	dsPtr->spaceAvl = newSize*2;
+#ifdef BGLK_CODE
+	newString = (char *) ckalloc_atomic((unsigned) dsPtr->spaceAvl);
+#else
 	newString = (char *) ckalloc((unsigned) dsPtr->spaceAvl);
+#endif
 	memcpy((VOID *) newString, (VOID *) dsPtr->string,
 		(size_t) dsPtr->length);
 	if (dsPtr->string != dsPtr->staticSpace) {
@@ -2239,7 +2287,11 @@ Tcl_DStringAppendElement(dsPtr, string)
 
     if (newSize >= dsPtr->spaceAvl) {
 	dsPtr->spaceAvl = newSize*2;
+#ifdef BGLK_CODE
+	newString = (char *) ckalloc_atomic((unsigned) dsPtr->spaceAvl);
+#else
 	newString = (char *) ckalloc((unsigned) dsPtr->spaceAvl);
+#endif
 	memcpy((VOID *) newString, (VOID *) dsPtr->string,
 		(size_t) dsPtr->length);
 	if (dsPtr->string != dsPtr->staticSpace) {
@@ -2295,7 +2347,11 @@ Tcl_DStringSetLength(dsPtr, length)
 	char *newString;
 
 	dsPtr->spaceAvl = length+1;
+#ifdef BGLK_CODE
+	newString = (char *) ckalloc_atomic((unsigned) dsPtr->spaceAvl);
+#else
 	newString = (char *) ckalloc((unsigned) dsPtr->spaceAvl);
+#endif
 
 	/*
 	 * SPECIAL NOTE: must use memcpy, not strcpy, to copy the string
@@ -2436,11 +2492,19 @@ Tcl_DStringGetResult(interp, dsPtr)
     dsPtr->length = strlen(iPtr->result);
     if (iPtr->freeProc != NULL) {
 	if ((iPtr->freeProc == TCL_DYNAMIC)
+#ifdef BGLK_CODE
+		|| (iPtr->freeProc == (Tcl_FreeProc *) GC_free)) {
+#else
 		|| (iPtr->freeProc == (Tcl_FreeProc *) free)) {
+#endif
 	    dsPtr->string = iPtr->result;
 	    dsPtr->spaceAvl = dsPtr->length+1;
 	} else {
+#ifdef BGLK_CODE
+	    dsPtr->string = (char *) ckalloc_atomic((unsigned) (dsPtr->length+1));
+#else
 	    dsPtr->string = (char *) ckalloc((unsigned) (dsPtr->length+1));
+#endif
 	    strcpy(dsPtr->string, iPtr->result);
 	    (*iPtr->freeProc)(iPtr->result);
 	}
@@ -2451,7 +2515,11 @@ Tcl_DStringGetResult(interp, dsPtr)
 	    dsPtr->string = dsPtr->staticSpace;
 	    dsPtr->spaceAvl = TCL_DSTRING_STATIC_SIZE;
 	} else {
+#ifdef BGLK_CODE
+	    dsPtr->string = (char *) ckalloc_atomic((unsigned) (dsPtr->length + 1));
+#else
 	    dsPtr->string = (char *) ckalloc((unsigned) (dsPtr->length + 1));
+#endif
 	    dsPtr->spaceAvl = dsPtr->length + 1;
 	}
 	strcpy(dsPtr->string, iPtr->result);
@@ -2483,7 +2551,7 @@ void
 Tcl_DStringStartSublist(dsPtr)
     Tcl_DString *dsPtr;			/* Dynamic string. */
 {
-#ifdef STk_CODE
+#ifdef SCM_CODE
   Tcl_DStringAppend(dsPtr, "(", -1);
 #else
     if (TclNeedSpace(dsPtr->string, dsPtr->string + dsPtr->length)) {
@@ -2517,7 +2585,7 @@ void
 Tcl_DStringEndSublist(dsPtr)
     Tcl_DString *dsPtr;			/* Dynamic string. */
 {
-#ifdef STk_CODE
+#ifdef SCM_CODE
     Tcl_DStringAppend(dsPtr, ")", -1);
 #else
     Tcl_DStringAppend(dsPtr, "}", -1);
@@ -2573,7 +2641,7 @@ Tcl_PrintDouble(interp, value, dst)
     p[1] = '0';
     p[2] = 0;
 }
-#ifndef STk_CODE
+#ifndef SCM_CODE
 
 /*
  *----------------------------------------------------------------------
@@ -2700,7 +2768,7 @@ TclNeedSpace(start, end)
 	return 0;
     }
     end--;
-#ifdef STk_CODE
+#ifdef SCM_CODE
     if (*end != '(') {
 #else
     if (*end != '{') {
@@ -2715,7 +2783,7 @@ TclNeedSpace(start, end)
 	    return 0;
 	}
 	end--;
-#ifdef STk_CODE
+#ifdef SCM_CODE
     } while (*end == '(');
 #else
     } while (*end == '{');
@@ -2726,7 +2794,7 @@ TclNeedSpace(start, end)
     return 1;
 }
 
-#ifndef STk_CODE
+#ifndef SCM_CODE
 /*
  *----------------------------------------------------------------------
  *

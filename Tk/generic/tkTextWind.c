@@ -113,7 +113,7 @@ static Tk_CustomOption alignOption = {AlignParseProc, AlignPrintProc,
 static Tk_ConfigSpec configSpecs[] = {
     {TK_CONFIG_CUSTOM, "-align", (char *) NULL, (char *) NULL,
 	"center", 0, TK_CONFIG_DONT_SET_DEFAULT, &alignOption},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_CLOSURE, "-create", (char *) NULL, (char *) NULL,
 #else
     {TK_CONFIG_STRING, "-create", (char *) NULL, (char *) NULL,
@@ -127,7 +127,7 @@ static Tk_ConfigSpec configSpecs[] = {
 	"0", Tk_Offset(TkTextEmbWindow, padY),
 	TK_CONFIG_DONT_SET_DEFAULT},
     {TK_CONFIG_BOOLEAN, "-stretch", (char *) NULL, (char *) NULL,
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	"#f", Tk_Offset(TkTextEmbWindow, stretch),
 #else
 	"0", Tk_Offset(TkTextEmbWindow, stretch),
@@ -295,7 +295,7 @@ TkTextWindowCmd(textPtr, interp, argc, argv)
 		    argv[0], " window names\"", (char *) NULL);
 	    return TCL_ERROR;
 	}
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	Tcl_AppendResult(interp, "(", (char *) NULL);
 #endif
 	for (hPtr = Tcl_FirstHashEntry(&textPtr->windowTable, &search);
@@ -309,7 +309,7 @@ TkTextWindowCmd(textPtr, interp, argc, argv)
 		    Tcl_GetHashKey(&textPtr->markTable, hPtr));
 #endif
 	}
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	Tcl_AppendResult(interp, ")", (char *) NULL);
 #endif
 
@@ -807,8 +807,17 @@ EmbWinLayoutProc(textPtr, indexPtr, ewPtr, offset, maxX, maxChars,
 			    STk_convert_for_Tcl(STk_last_Tk_as_SCM(), &dumb),
  			    -1);
 	}
-#else
+#else 
+#  ifdef BGLK_CODE
+ 	{
+ 	  /* Convert last result for Tk */
+ 	  Tcl_DStringAppend(&name, 
+			    SCM_scm_to_tk_string(SCM_last_Tk_as_scheme()),
+ 			    -1); 
+	}
+#  else
 	Tcl_DStringAppend(&name, textPtr->interp->result, -1);
+#  endif
 #endif
 	Tcl_ResetResult(textPtr->interp);
 	ewPtr->body.ew.tkwin = Tk_NameToWindow(textPtr->interp,

@@ -44,7 +44,7 @@
  * Note that this entire search mechanism can be bypassed by defining an
  * alternate tkInit procedure before calling Tk_Init().
  */
-#ifndef STk_CODE
+#ifndef SCM_CODE
 static char initScript[] = "if {[info proc tkInit]==\"\"} {\n\
   proc tkInit {} {\n\
     global tk_library tk_version tk_patchLevel\n\

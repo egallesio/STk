@@ -6,7 +6,7 @@
 ;;; heading remains.
 
 ;;; slightly modified by Erick Gallesio (changes are noted with [eg])
-;;;      (Last file update: 27-Feb-1998 17:35)
+;;;      (Last file update: 15-Aug-1999 20:08)
 
 
 ;;; Usage:
@@ -89,7 +89,7 @@
 ;;; This means that the following regexp should be able to separate
 ;;; out these 6 basic parts of the url:
 ;;;
-;;; "^([a-zA-Z0-9+.-]+:|)(//[^#/]*|)([^#?;]*|)(;[^?#]*|)(\\?[^#]*|)(#.*|)$"
+;;; "^([a-zA-Z0-9+.-][a-zA-Z0-9+.-]+:|)(//[^#/]*|)([^#?;]*|)(;[^?#]*|)(\\?[^#]*|)(#.*|)$"
 ;;;
 ;;; Once this is done, the net address must be parsed.  I believe this
 ;;; can be done as follows:
@@ -106,6 +106,8 @@
 ;;;    become /.			[eg] corrected
 ;;;   -Proxy junk barely tested...
 
+
+(require "fs")
 
 (define-module URL
    (export url:parse-url url:unparse-url url:service url:user       
@@ -197,12 +199,13 @@
 		   (smerge-aux (cdr url) (cdr parent) positions (+ 1 ref))))))
     (smerge-aux url parent positions 0))
 
-  (define (dirname f)
-    (define r (string->regexp "^(.*/|)([^/]*)$"))
-    (car (split r f)))
+;  (define (dirname f)			;; [eg] deleted to use fs.stk instead
+;    (define r (string->regexp "^(.*/|)([^/]*)$"))
+;    (car (split r f)))
 
   (define (merge-paths)
     (let* ((base (string-append (dirname (filename parent))
+				(if (eq? (os-kind) 'Unix) "/" "\\")     ; [eg]
 				(filename url)))
 	   (slb  (string-length base))
 	   (newpath 
@@ -301,7 +304,7 @@
 
 (define url-regexp 
   (string->regexp
-   "^([a-zA-Z0-9+.-]+:|)(//[^#/]*|)([^#?;]*|)(;[^?#]*|)(\\?[^#]*|)(#.*|)$"))
+   "^([[a-zA-Z0-9+.-][a-zA-Z0-9+.-]+:|)(//[^#/]*|)([^#?;]*|)(;[^?#]*|)(\\?[^#]*|)(#.*|)$"))
 
 (define up-hp-regexp
   (string->regexp

@@ -34,7 +34,7 @@ libevtcl-win.a: $(EVWINOBJ)
 	ar q libevtcl.a $(EVWINOBJ)
 	$(RANLIB) libevtcl.a
 
-install: all
+install:
 
 install.libs: install
 	-if [ ! -d $(ardir) ] ; then mkdir -p $(ardir); fi 

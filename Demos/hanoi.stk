@@ -1,11 +1,24 @@
 #!/usr/local/bin/stk -f
-;;
-;; Hanoi - Towers of Hanoi diversion
-;;
-;; This program is a rewriting in STk of a program found on the net. Original
-;; author is Damon A Permezel (probably fubar!dap@natinst.com)
-;; Re-writing is very direct and needs much more working
-;;
+;;;;
+;;;; Hanoi - Towers of Hanoi diversion
+;;;;
+;;;; Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;;
+;;;; Permission to use, copy, modify, distribute,and license this
+;;;; software and its documentation for any purpose is hereby granted,
+;;;; provided that existing copyright notices are retained in all
+;;;; copies and that this notice is included verbatim in any
+;;;; distributions.  No written agreement, license, or royalty fee is
+;;;; required for any of the authorized uses.
+;;;; This software is provided ``AS IS'' without express or implied
+;;;; warranty.
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;; Last file update:  3-Sep-1999 19:22 (eg)
+
+;;;; This program is a rewriting in STk of a program found on the net. Original
+;;;; author is Damon A Permezel (probably fubar!dap@natinst.com)
+;;;; Re-writing is very direct and needs much more working
+;;;;
 
 (define *gc-verbose*	#f)
 

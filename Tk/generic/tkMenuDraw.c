@@ -948,11 +948,16 @@ TkPostSubmenu(interp, menuPtr, mePtr)
 	 */
 
 	TkEventuallyRedrawMenu(menuPtr, (TkMenuEntry *) NULL);
-	result = Tcl_VarEval(interp, menuPtr->postedCascade->name,
 #ifdef STk_CODE
+	result = Tcl_VarEval(interp, menuPtr->postedCascade->name,
 		" 'unpost", (char *) NULL);
 #else
+#  ifdef BGLK_CODE
+	result = SCM_unpost_cascade( menuPtr->postedCascade->name );
+#  else
+	result = Tcl_VarEval(interp, menuPtr->postedCascade->name,
 		" unpost", (char *) NULL);
+#  endif
 #endif
 	menuPtr->postedCascade = NULL;
 	if (result != TCL_OK) {
@@ -975,10 +980,15 @@ TkPostSubmenu(interp, menuPtr, mePtr)
 	AdjustMenuCoords(menuPtr, mePtr, &x, &y, string);
 #ifdef STk_CODE
 	result = Tcl_VarEval(interp, mePtr->name, " 'post ", string,
-#else
-	result = Tcl_VarEval(interp, mePtr->name, " post ", string,
-#endif
 		(char *) NULL);
+#else
+#  ifdef BGLK_CODE
+	result = SCM_post_cascade( mePtr->name, x, y );
+#  else
+	result = Tcl_VarEval(interp, mePtr->name, " post ", string,
+		(char *) NULL);
+#  endif
+#endif
 	if (result != TCL_OK) {
 	    return result;
 	}

@@ -45,8 +45,14 @@ static char *		FormatConfigValue _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tcl_FreeProc **freeProcPtr));
 
 #ifdef STk_CODE
+#  define DEFAULT_STK_ENV "#.(global-environment)"
+#endif
+#ifdef BGLK_CODE
+#  define STk_valid_callback 	SCM_valid_callback
+#  define STk_add_callback 	SCM_add_callback
+#endif
 
-#define DEFAULT_STK_ENV "#.(global-environment)"
+#ifdef SCM_CODE
 
 /* This UGLY code is used only for menus items.
  * It saves in the static variable menu_addr the address of the menu item
@@ -400,7 +406,8 @@ DoConfig(interp, tkwin, specPtr, value, valueIsUid, widgRec)
 		break;
 #ifdef STk_CODE
 	    case TK_CONFIG_ENV: {
-		SCM p;
+	      char buffer[50], *s = "";		
+	      SCM p;
 		
 		if (*value) {
 		  if (!STk_valid_environment(value, &p)) {
@@ -409,19 +416,25 @@ DoConfig(interp, tkwin, specPtr, value, valueIsUid, widgRec)
 		    return TCL_ERROR;
 		  }
 		  if (p != NULL) {
+		    if (menu_addr != NULL) {
+		      sprintf(buffer, "%lx", (unsigned long) menu_addr);
+		      s = buffer;
+		    }
+
 		    /* add this environment to the callback table */
-		    STk_add_callback(Tk_PathName(tkwin), specPtr->argvName, "", p);
+		    STk_add_callback(Tk_PathName(tkwin), specPtr->argvName, s, p);
 		  }
 		}
 		goto String;
 	    }
+#endif
+#ifdef SCM_CODE
 	    case TK_CONFIG_CLOSURE: {
 	        char buffer[50], *s = "";
 		SCM p;
 
 		if (*value) {
 		  if (!STk_valid_callback(value, &p)) {
-		  BadSpec:	
 		    Tcl_AppendResult(interp, "bad closure specification \"",
 				             value, "\"", (char *) NULL);
 		    return TCL_ERROR;
@@ -450,7 +463,11 @@ String:	    case TK_CONFIG_SINT:
 		if (nullValue) {
 		    new = NULL;
 		} else {
+#ifdef BGLK_CODE
+		    new = ckalloc_atomic((unsigned) (strlen(value) + 1));
+#else
 		    new = (char *) ckalloc((unsigned) (strlen(value) + 1));
+#endif
 		    strcpy(new, value);
 		}
 		old = *((char **) ptr);
@@ -460,17 +477,22 @@ String:	    case TK_CONFIG_SINT:
 		*((char **) ptr) = new;
 		break;
 	    }
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    case TK_CONFIG_MENU: {
 		char *old, *new;
 
 		if (nullValue) {
 		    new = NULL;
 		} else {
+#ifdef BGLK_CODE
+		    new = ckalloc_atomic((unsigned) (strlen(value) + 1));
+		    strcpy(new, value);
+#else
 		    new = (char *) ckalloc((unsigned) (strlen(value) + 3));
 		    new[0] = '#';
 		    new[1] = '.';
 		    strcpy(new+2, value);
+#endif
 		}
 		old = *((char **) ptr);
 		if (old != NULL) {
@@ -705,7 +727,7 @@ Tk_ConfigureInfo(interp, tkwin, specs, widgRec, argvName, flags)
     register Tk_ConfigSpec *specPtr;
     int needFlags, hateFlags;
     char *list;
-#ifdef STk_CODE
+#ifdef SCM_CODE
     char *leader = "(";
 #else
     char *leader = "{";
@@ -739,7 +761,7 @@ Tk_ConfigureInfo(interp, tkwin, specs, widgRec, argvName, flags)
      * Loop through all the specs, creating a big list with all
      * their information.
      */
-#ifdef STk_CODE
+#ifdef SCM_CODE
     Tcl_AppendResult(interp, "(", NULL);
 #endif
     for (specPtr = specs; specPtr->type != TK_CONFIG_END; specPtr++) {
@@ -754,7 +776,7 @@ Tk_ConfigureInfo(interp, tkwin, specs, widgRec, argvName, flags)
 	    continue;
 	}
 	list = FormatConfigInfo(interp, tkwin, specPtr, widgRec);
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	Tcl_AppendResult(interp, leader, list, ")", (char *) NULL);
 	ckfree(list);
 	leader = " (";
@@ -764,7 +786,7 @@ Tk_ConfigureInfo(interp, tkwin, specs, widgRec, argvName, flags)
 	leader = " {";
 #endif
     }
-#ifdef STk_CODE
+#ifdef SCM_CODE
     Tcl_AppendResult(interp, ")", NULL);
 #endif
     return TCL_OK;
@@ -799,7 +821,7 @@ FormatConfigInfo(interp, tkwin, specPtr, widgRec)
 					 * values of info for widget. */
 {
     char *argv[6], *result;
-#ifdef STk_CODE
+#ifdef SCM_CODE
 #   define MAX_BUFFER 200
     char buffer[MAX_BUFFER], dflt[MAX_BUFFER];
     size_t len;
@@ -813,8 +835,12 @@ FormatConfigInfo(interp, tkwin, specPtr, widgRec)
     argv[2] = specPtr->dbClass;
     argv[3] = specPtr->defValue;
     if (specPtr->type == TK_CONFIG_SYNONYM) {
-#ifdef STk_CODE
-      result = ckalloc(strlen(argv[0]) + strlen(argv [1]) + 4);
+#ifdef SCM_CODE
+#ifdef BGLK_CODE
+      result = (char *)ckalloc_atomic(strlen(argv[0]) + strlen(argv [1]) + 4);
+#else
+      result = (char *)ckalloc(strlen(argv[0]) + strlen(argv [1]) + 4);
+#endif
       sprintf(result, ":%s \"%s\"", argv[0]+1, argv [1]);
       return result;
 #else
@@ -829,7 +855,7 @@ FormatConfigInfo(interp, tkwin, specPtr, widgRec)
     if (argv[2] == NULL) {
 	argv[2] = "";
     }
-#ifdef STk_CODE
+#ifdef SCM_CODE
     /* 
      * Default value of an option (the one at index 3) can contain weird 
      * characters (e.g. fonts can contain '#'). Quote it if necessary.
@@ -847,9 +873,11 @@ FormatConfigInfo(interp, tkwin, specPtr, widgRec)
       case TK_CONFIG_CUSTOM:   if (argv[3] == NULL)
 				 argv[3] = "\"\"";
       			       break;
+#ifdef STk_CODE
       case TK_CONFIG_ENV:      /* The Default environment is always the global 1 */
 			       argv[3] = DEFAULT_STK_ENV;
 			       break;
+#endif
       case TK_CONFIG_IMAGE:    
       case TK_CONFIG_CLOSURE:  if (argv[3] == NULL || argv[3][0] == '\0')
 				  argv[3] = "\"\"";
@@ -874,7 +902,11 @@ FormatConfigInfo(interp, tkwin, specPtr, widgRec)
      * Qutotication is a little bit simplistic here, but those parameters 
      * are identifier (a priori)
      */
-    result = ckalloc(len);      
+#ifdef BGLK_CODE
+    result = (char *)ckalloc_atomic(len);
+#else
+    result = (char *)ckalloc(len);
+#endif
     sprintf(result, ":%s \"%s\" \"%s\" %s %s", 
 	    	    argv[0]+1,argv[1],argv[2],argv[3],argv[4]);
 #else
@@ -887,7 +919,11 @@ FormatConfigInfo(interp, tkwin, specPtr, widgRec)
     result = Tcl_Merge(5, argv);
 #endif
     if (freeProc != NULL) {
+#ifdef BGLK_CODE
+	if ((freeProc == TCL_DYNAMIC) || (freeProc == (Tcl_FreeProc *) GC_free)) {
+#else
 	if ((freeProc == TCL_DYNAMIC) || (freeProc == (Tcl_FreeProc *) free)) {
+#endif
 	    ckfree(argv[4]);
 	} else {
 	    (*freeProc)(argv[4]);
@@ -939,7 +975,7 @@ FormatConfigValue(interp, tkwin, specPtr, widgRec, buffer, freeProcPtr)
     result = "";
     switch (specPtr->type) {
 	case TK_CONFIG_BOOLEAN:
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    /* NO BREAK */
         case TK_CONFIG_SBOOLEAN:
 	    return (*((int *) ptr) == 0) ? "#f" : "#t";
@@ -953,7 +989,7 @@ FormatConfigValue(interp, tkwin, specPtr, widgRec, buffer, freeProcPtr)
 #endif
 	case TK_CONFIG_INT:
 	    sprintf(buffer, "%d", *((int *) ptr));
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    return buffer;
 #else
 	    result = buffer;
@@ -961,13 +997,13 @@ FormatConfigValue(interp, tkwin, specPtr, widgRec, buffer, freeProcPtr)
 #endif
 	case TK_CONFIG_DOUBLE:
 	    Tcl_PrintDouble(interp, *((double *) ptr), buffer);
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    return buffer;
 #else
 	    result = buffer;
 	    break;
 #endif
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	case TK_CONFIG_SINT:
 	    result   = (*(char **) ptr);
 	    if (result == NULL) result = "0";
@@ -976,12 +1012,14 @@ FormatConfigValue(interp, tkwin, specPtr, widgRec, buffer, freeProcPtr)
 	    result   = (*(char **) ptr);
 	    if (result == NULL) result = "#f";
 	    return result;
+#   ifdef STk_CODE
         case TK_CONFIG_ENV:
 	    result = (*(char **) ptr);
 	    if (result == NULL || *result == 0) {
 	      result = DEFAULT_STK_ENV;
 	    }
 	    return result;
+#   endif
         case TK_CONFIG_CLOSURE:
 	    result = (*(char **) ptr);
 	    if (result == NULL) {
@@ -991,6 +1029,7 @@ FormatConfigValue(interp, tkwin, specPtr, widgRec, buffer, freeProcPtr)
 	    else {
 	      return result;
 	    }
+#   ifdef STk_CODE
         case TK_CONFIG_IMAGE:
 	    result = (*(char **) ptr);
 	    if (result == NULL)
@@ -999,6 +1038,11 @@ FormatConfigValue(interp, tkwin, specPtr, widgRec, buffer, freeProcPtr)
 	      sprintf(buffer, "#.|%s|", result);
 	      return  buffer;
 	    }
+#   endif
+#   ifdef BGLK_CODE
+        case TK_CONFIG_IMAGE:
+	    /* NO BREAK */
+#   endif	    
         case TK_CONFIG_BSTRING:
 	    /* NO BREAK */
 #endif
@@ -1068,7 +1112,7 @@ FormatConfigValue(interp, tkwin, specPtr, widgRec, buffer, freeProcPtr)
 	    break;
 	case TK_CONFIG_PIXELS:
 	    sprintf(buffer, "%d", *((int *) ptr));
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    return buffer;
 #else
 	    result = buffer;
@@ -1076,7 +1120,7 @@ FormatConfigValue(interp, tkwin, specPtr, widgRec, buffer, freeProcPtr)
 #endif
 	case TK_CONFIG_MM:
 	    Tcl_PrintDouble(interp, *((double *) ptr), buffer);
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    return buffer;
 #else
 	    result = buffer;
@@ -1095,14 +1139,14 @@ FormatConfigValue(interp, tkwin, specPtr, widgRec, buffer, freeProcPtr)
 	    result = (*specPtr->customPtr->printProc)(
 		    specPtr->customPtr->clientData, tkwin, widgRec,
 		    specPtr->offset, freeProcPtr);
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    return result;
 #endif
 	    break;
 	default: 
 	    result = "?? unknown type ??";
     }
-#ifdef STk_CODE
+#ifdef SCM_CODE
     /* result contain a value which must be converted to a string */
     if (result == NULL) {
       return  "\"\"";
@@ -1117,8 +1161,13 @@ FormatConfigValue(interp, tkwin, specPtr, widgRec, buffer, freeProcPtr)
       len          = strlen(result);
 
       if (len > (200/2)-3) {
-	r = ckalloc(len * 2 + 3); /* worst overestimation */
+#ifdef BGLK_CODE
+	r = (char *)ckalloc_atomic(len * 2 + 3); /* worst overestimation */
+	*freeProcPtr = (Tcl_FreeProc *) GC_free;
+#else
+	r = (char *)ckalloc(len * 2 + 3); /* worst overestimation */
 	*freeProcPtr = (Tcl_FreeProc *) free;
+#endif
       }
 
       d = r; *d++ = '"';
@@ -1135,7 +1184,11 @@ FormatConfigValue(interp, tkwin, specPtr, widgRec, buffer, freeProcPtr)
 	 * In this case result points something which must be unallocated
 	 *
 	 */
+#ifdef BGLK_CODE
+	if (oldFree == (Tcl_FreeProc *) GC_free) {
+#else
 	if (oldFree == (Tcl_FreeProc *) free) {
+#endif	   
 	    ckfree(result);
 	} else {
 	    (*oldFree)(result);
@@ -1239,8 +1292,10 @@ Tk_FreeOptions(specs, widgRec, display, needFlags)
 	ptr = widgRec + specPtr->offset;
 	switch (specPtr->type) {
 #ifdef STk_CODE
-	    case TK_CONFIG_CLOSURE:
 	    case TK_CONFIG_ENV:
+#endif
+#ifdef SCM_CODE
+	    case TK_CONFIG_CLOSURE:
 	    case TK_CONFIG_MENU:
 	    case TK_CONFIG_SINT:
 	    case TK_CONFIG_SBOOLEAN:

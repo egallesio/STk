@@ -1,6 +1,6 @@
-		    +-----------------------------+
-		    | STk 3.99 Installation notes |
-		    +-----------------------------+
+		    +----------------------------+
+		    | STk 4.0 Installation notes |
+		    +----------------------------+
 
 
 ** This is the Unix INSTALL file. For Windows platform, please look at the 
@@ -178,8 +178,15 @@ To install stk in the definitive place, type
 
 	$ make install
 
+Alternatively, you can use the command
+
+	$ make install-no-strip
+
+to install the executable without stripping them.
+       
+
 Intalling STk and Tk libraries (useless if you don't plan to write some C code)
-is done with.
+is done with. 
 
 	$ make install.lib
 

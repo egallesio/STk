@@ -18,6 +18,12 @@
 #include "default.h"
 #include "tkInt.h"
 
+#ifdef BGLK_CODE
+#  define STk_stringify_result	SCM_stringify_result
+#  define STk_stringify		SCM_stringify
+#endif
+
+
 /*
  * One record of the following type is kept for each element
  * associated with a listbox widget:
@@ -248,7 +254,7 @@ static Tk_ConfigSpec configSpecs[] = {
 	DEF_LISTBOX_SELECT_MODE, Tk_Offset(Listbox, selectMode), 0},
     {TK_CONFIG_BOOLEAN, "-setgrid", "setGrid", "SetGrid",
 	DEF_LISTBOX_SET_GRID, Tk_Offset(Listbox, setGrid), 0},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_CLOSURE, "-takefocus", "takeFocus", "TakeFocus",
 #else
     {TK_CONFIG_STRING, "-takefocus", "takeFocus", "TakeFocus",
@@ -257,14 +263,14 @@ static Tk_ConfigSpec configSpecs[] = {
 	TK_CONFIG_NULL_OK},
     {TK_CONFIG_INT, "-width", "width", "Width",
 	DEF_LISTBOX_WIDTH, Tk_Offset(Listbox, width), 0},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_CLOSURE, "-xscrollcommand", "xScrollCommand", "ScrollCommand",
 #else
     {TK_CONFIG_STRING, "-xscrollcommand", "xScrollCommand", "ScrollCommand",
 #endif
 	DEF_LISTBOX_SCROLL_COMMAND, Tk_Offset(Listbox, xScrollCmd),
 	TK_CONFIG_NULL_OK},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_CLOSURE, "-yscrollcommand", "yScrollCommand", "ScrollCommand",
 #else
     {TK_CONFIG_STRING, "-yscrollcommand", "yScrollCommand", "ScrollCommand",
@@ -575,7 +581,7 @@ ListboxWidgetCmd(clientData, interp, argc, argv)
 		    (char *) NULL);
 	    goto error;
 	}
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	Tcl_AppendResult(interp, "(", NULL);
 #endif
 	count = 0;
@@ -587,7 +593,7 @@ ListboxWidgetCmd(clientData, interp, argc, argv)
 		count++;
 	    }
 	}
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	Tcl_AppendResult(interp, ")", NULL);
 #endif
 	if (count != listPtr->numSelected) {
@@ -647,7 +653,7 @@ ListboxWidgetCmd(clientData, interp, argc, argv)
 	    /* Empty loop body. */
 	}
 	if (elPtr != NULL) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    if (argc == 3) {
 	        if (first >= 0) {
 		    STk_stringify_result(interp, elPtr->text);
@@ -832,7 +838,7 @@ ListboxWidgetCmd(clientData, interp, argc, argv)
 		    i++, elPtr = elPtr->nextPtr) {
 		/* Empty loop body. */
 	    }
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    interp->result = (elPtr->selected) ? "#t" : "#f";
 #else
 	    if (elPtr->selected) {

@@ -73,7 +73,7 @@ TkGetDefaultScreenName(interp, screenName)
     char *screenName;		/* Screen name from command line, or NULL. */
 {
     if ((screenName == NULL) || (screenName[0] == '\0')) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	screenName = getenv("DISPLAY");
 #else
 	screenName = Tcl_GetVar2(interp, "env", "DISPLAY", TCL_GLOBAL_ONLY);

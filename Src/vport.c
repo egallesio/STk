@@ -1,24 +1,22 @@
 /*
  * v p o r t . c			-- Virtual ports management
  *
- * Copyright © 1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1998-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
- * Permission to use, copy, and/or distribute this software and its
- * documentation for any purpose and without fee is hereby granted, provided
- * that both the above copyright notice and this permission notice appear in
- * all copies and derived works.  Fees for distribution or use of this
- * software or derived works may only be charged with express written
- * permission of the copyright holder.  
- * This software is provided ``as is'' without express or implied warranty.
- *
- * This software is a derivative work of other copyrighted softwares; the
- * copyright notices of these softwares are placed in the file COPYRIGHTS
+ * Permission to use, copy, modify, distribute,and license this
+ * software and its documentation for any purpose is hereby granted,
+ * provided that existing copyright notices are retained in all
+ * copies and that this notice is included verbatim in any
+ * distributions.  No written agreement, license, or royalty fee is
+ * required for any of the authorized uses.
+ * This software is provided ``AS IS'' without express or implied
+ * warranty.
  *
  *
  *            Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 26-Oct-1998 15:55
- * Last file update:  5-Nov-1998 16:06
+ * Last file update:  3-Sep-1999 21:02 (eg)
  *
  */
 
@@ -62,7 +60,7 @@ PRIMITIVE STk_open_input_virtual(SCM l, int len)
   struct virtual_iob *p;
   SCM getc, readyp, eofp, close, z;
 
-  ENTER_PRIMITIVE("open-virtual-input");
+  ENTER_PRIMITIVE("open-input-virtual");
 
   if (len != 4) Serror("bad number of arguments", l);
   getc   = CAR(l);
@@ -104,7 +102,7 @@ PRIMITIVE STk_open_output_virtual(SCM l, int len)
   struct virtual_iob *p;
   SCM putc, puts, flush, close, z;
 
-  ENTER_PRIMITIVE("open-virtual-input");
+  ENTER_PRIMITIVE("open-output-virtual");
   
   if (len != 4) Serror("bad number of arguments", l);
   putc   = CAR(l);

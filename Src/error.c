@@ -2,25 +2,21 @@
  *
  * e r r o r . c 			-- The error procedure
  *
- * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
- * Permission to use, copy, and/or distribute this software and its
- * documentation for any purpose and without fee is hereby granted, provided
- * that both the above copyright notice and this permission notice appear in
- * all copies and derived works.  Fees for distribution or use of this
- * software or derived works may only be charged with express written
- * permission of the copyright holder.  
- * This software is provided ``as is'' without express or implied warranty.
- *
- * This software is a derivative work of other copyrighted softwares; the
- * copyright notices of these softwares are placed in the file COPYRIGHTS
- *
- * $Id: error.c 1.13 Wed, 23 Dec 1998 23:41:27 +0100 eg $
+ * Permission to use, copy, modify, distribute,and license this
+ * software and its documentation for any purpose is hereby granted,
+ * provided that existing copyright notices are retained in all
+ * copies and that this notice is included verbatim in any
+ * distributions.  No written agreement, license, or royalty fee is
+ * required for any of the authorized uses.
+ * This software is provided ``AS IS'' without express or implied
+ * warranty.
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 14-Nov-1993 14:58
- * Last file update: 23-Dec-1998 15:13
+ * Last file update:  3-Sep-1999 20:19 (eg)
  */
 
 #include "stk.h"
@@ -138,12 +134,7 @@ static void print_message(char *message, SCM x)
     }
   POP_ERROR_HANDLER;
 
-  /*
-   * Retain the arguments of this error in global Scheme variables
-   */
   Flush(STk_curr_oport); Flush(STk_curr_eport);
-  STk_define_variable("*last-error-message*", STk_makestring(message), NIL);
-  STk_define_variable("*last-error-arg*", x, NIL);
 }
 
 
@@ -151,6 +142,10 @@ void STk_err(char *message, SCM x)
 {
   STk_reset_eval_hook();
 
+  /*  Retain the arguments of this error in global Scheme variables */
+  STk_define_variable("*last-error-message*", STk_makestring(message), NIL);
+  STk_define_variable("*last-error-arg*", x, NIL);
+  
  /* Print a message if the error is not ignored */
   if (!(STk_err_handler->context & ERR_IGNORED)) {
     if (*message) print_message(message, x);

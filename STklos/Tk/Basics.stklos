@@ -1,21 +1,20 @@
 ;;;;
 ;;;; B a s i c s . s t k 		--  Basic object class definition
 ;;;;
-;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
-;;;; Permission to use, copy, and/or distribute this software and its
-;;;; documentation for any purpose and without fee is hereby granted, provided
-;;;; that both the above copyright notice and this permission notice appear in
-;;;; all copies and derived works.  Fees for distribution or use of this
-;;;; software or derived works may only be charged with express written
-;;;; permission of the copyright holder.  
-;;;; This software is provided ``as is'' without express or implied warranty.
-;;;;
-;;;; $Id: Basics.stklos 1.13 Wed, 23 Dec 1998 23:41:27 +0100 eg $
+;;;; Permission to use, copy, modify, distribute,and license this
+;;;; software and its documentation for any purpose is hereby granted,
+;;;; provided that existing copyright notices are retained in all
+;;;; copies and that this notice is included verbatim in any
+;;;; distributions.  No written agreement, license, or royalty fee is
+;;;; required for any of the authorized uses.
+;;;; This software is provided ``AS IS'' without express or implied
+;;;; warranty.
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 30-Mar-1993 15:39
-;;;; Last file update: 19-Dec-1998 19:05
+;;;; Last file update:  3-Sep-1999 20:09 (eg)
 
 (require "Tk-meta")
 
@@ -28,6 +27,7 @@
 	Id			    ; Tk Id of a widget
 	Eid			    ; External Id of widget
 	tk-widget? 		    ; a predicate
+	clone-widget		    ; clone for widgets
 	initialize-composite-widget ; must be overloaded for composite widgets
 	get-Tk-default-value	    ; Find the default value of a given Tk option
 	tk-constructor		    ; Returns the Tk-command associated to a class
@@ -127,6 +127,23 @@
 ;;;
 (define-method get-Tk-default-value ((self <Tk-widget>) slot)
   (list-ref ((slot-ref self 'Id) 'configure (make-keyword slot)) 3))
+
+
+;;;
+;;; Clone a widget
+;;;
+(define-method clone-widget ((self <Tk-widget>) new-parent)
+  (let ((options '()))
+    ;; Build the option list used for creating the widget by introspecting it
+    (for-each (lambda (slot)
+		(let ((name    (slot-definition-name slot))
+		      (keyword (slot-definition-init-keyword slot)))
+		  (unless (member name '(id eid parent))
+		    (if keyword 
+			(set! options (append (list keyword (slot-ref self name))
+					      options))))))
+	      (class-slots (class-of self)))
+    (apply make (class-of self) :parent new-parent options)))
 
 
 ;=============================================================================

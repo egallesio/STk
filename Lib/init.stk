@@ -3,19 +3,18 @@
 ;;;;
 ;;;; Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
-;;;; Permission to use, copy, and/or distribute this software and its
-;;;; documentation for any purpose and without fee is hereby granted, provided
-;;;; that both the above copyright notice and this permission notice appear in
-;;;; all copies and derived works.  Fees for distribution or use of this
-;;;; software or derived works may only be charged with express written
-;;;; permission of the copyright holder.  
-;;;; This software is provided ``as is'' without express or implied warranty.
-;;;;
-;;;; $Id: init.stk 1.22 Tue, 02 Feb 1999 15:29:27 +0100 eg $
+;;;; Permission to use, copy, modify, distribute,and license this
+;;;; software and its documentation for any purpose is hereby granted,
+;;;; provided that existing copyright notices are retained in all
+;;;; copies and that this notice is included verbatim in any
+;;;; distributions.  No written agreement, license, or royalty fee is
+;;;; required for any of the authorized uses.
+;;;; This software is provided ``AS IS'' without express or implied
+;;;; warranty.
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;    Creation date: ??-Sep-1993 ??:??
-;;;; Last file update:  2-Feb-1999 13:46
+;;;; Last file update:  3-Sep-1999 19:52 (eg)
 ;;;;
 
 ;;;==============================================================================
@@ -31,6 +30,7 @@
   (define *argc* 	   (length *argv*))
   (define Tk:initialized?  #f)
   (define *shared-suffix* (cond 
+			   ((string=? (machine-type) "Ms-Win32") "dll")
 			   ((string=? (substring (machine-type) 0 2) "HP") "sl")
 			   (else      "so")))
   (define *load-suffixes*  (list "stk" "stklos" "scm" *shared-suffix*))
@@ -53,6 +53,11 @@
 (define call/cc call-with-current-continuation)		;; To make life easier
 
 (define !		 system)
+
+(define (os-kind)
+  (if (string=? (machine-type) "Ms-Win32")
+      'Windows
+      'Unix))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;
@@ -104,7 +109,7 @@
   (let ((counter 0))
     (lambda prefix
       (set! counter (+ counter 1))
-      (string->symbol
+      (string->uninterned-symbol
          (string-append (if (null? prefix) "G" (car prefix))
 			(number->string counter))))))
 
@@ -152,7 +157,10 @@
   `(with-module STk
 	(unless  (symbol-bound? ',var) (define ,var ,value))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define-macro (receive vars producer . body)
+  `(call-with-values (lambda () ,producer)
+		     (lambda ,vars ,@body)))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;
 ;;;; Random 
 ;;;;	This version of random is constructed over the C one. It can return
@@ -301,6 +309,7 @@
     (close-output-port file)
     result))
 
+
 (define (call-with-input-string string proc)
   (proc (open-input-string string)))
 
@@ -318,7 +327,7 @@
 (define (build-path-from-shell-variable var)
   (let ((path (getenv var)))	
     (if path 
-	(split-string path ":")
+	(split-string path (if (eqv? (os-kind) 'Unix) ":" ";"))
 	'())))
 
 (let ((lib  (%library-location)))
@@ -453,10 +462,18 @@
    ((pair? (car l)) (apply fn (map car l)) (apply for-each* fn (map cdr l)))
    (else            (apply fn l))))
 
-(define (os-kind)
-  (if (string=? (machine-type) "Ms-Win32")
-      'Windows
-      'Unix))
+(define (some pred l)
+  (if (null? l) 
+      #f
+      (or (pred (car l)) 
+	  (some pred (cdr l)))))
+
+(define (every pred l)
+  (if (null? l)
+      #t
+      (and (pred (car l) )
+	   (every pred (cdr l)))))
+
 
 ;; Tell if the parameter string is a complete (or a set of complete) sexpr
 (define (complete-sexpr? s) 
@@ -554,12 +571,22 @@
 ;;;
 ;;;==============================================================================
 
+(with-module Scheme
+  (autoload "defsyntax" define-syntax)   
+  ;; SRFIs
+  (autoload "srfi-0"	cond-expand)
+  (autoload "srfi-2"	land*)
+  (autoload "srfi-7"	program))
+
+
+
+
 (with-module STk
   ;; Make the STklos autoload symbols accessible from the global scope
   (import STklos)
 
   ;; Define some useful autoload
-  (autoload "unix" 	basename dirname decompose-file-name)
+  (autoload "fs" 	basename dirname decompose-file-name)
   (autoload "process"	run-process process?)
   (autoload "regexp"	string->regexp regexp? regexp-replace regexp-replace-all)
   (autoload "trace" 	trace untrace)
@@ -569,20 +596,39 @@
   (autoload "ffi"	define-external external-exists?)
   (autoload "extset"	setter extended-name->scheme-name)
   (autoload "pp"    	pp) ;; martine pretty-print package 
-  
+
+
+
+  ;; Procedure used for writing the components of toplevel result. This
+  ;; is far from perfect, but this is sufficient for the most obvious
+  ;; cases (shared sublists, which are not circular structures, typically 
+  ;; for n-queens problems ...)
+  (define repl-write (lambda (x) ((if (list? x) write write*) x)))
 
   ;; Procedure called for prompting the user
-  (define (repl-display-prompt module)    
-    (let ((p (current-error-port))
-	  (n (module-name module)))
-      (flush)	; flush *stdout* before printing the prompt
-      (format p "~A> " (case n
-			 ((stk)    "STk")
-			 ((stklos) "STklos")
-			 ((scheme) "Scheme")
-			 ((tk)	   "Tk")
-			 (else	  n)))
-      (flush p)))
+  (define (repl-display-prompt module)
+    (let ((RDP (lambda (module)
+		 (let ((p (current-error-port))
+		       (n (module-name module)))
+		   (flush)	; flush *stdout* before printing the prompt
+		   (format p "~A> " (case n
+				      ((stk)    "STk")
+				      ((stklos) "STklos")
+				      ((scheme) "Scheme")
+				      ((tk)	   "Tk")
+				      (else	  n)))
+		   (flush p)))))
+      ;; RDP is the real prompt procedure. The body of this function is
+      ;; only executed for the displaying the first prompt
+      (when Tk:initialized?
+	;; This autoload was in tk-init but it causes problems when an
+	;; error occur in the file loaded before the first prompt
+	;; appears. Now, we use the graphical report error only when
+	;; everything is correctly initialized. 
+	(tk-set-error-handler!)) ; make STk:report-error and bgerror autoload
+
+      (set! repl-display-prompt RDP)
+      (repl-display-prompt module)))
   
   ;; Procedure called for printing toplevel results
   (define (repl-display-result result)
@@ -592,4 +638,4 @@
 	  (set! *last-defined* #f))
 	(call-with-values (lambda () result)
 			  (lambda l
-			    (for-each (lambda (x) (write* x) (newline)) l))))))
+			    (for-each (lambda (x) (repl-write x) (newline)) l))))))

@@ -2,25 +2,21 @@
  *
  * p r i m i t i v e s . c			-- List of STk subrs
  *
- * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
- * Permission to use, copy, and/or distribute this software and its
- * documentation for any purpose and without fee is hereby granted, provided
- * that both the above copyright notice and this permission notice appear in
- * all copies and derived works.  Fees for distribution or use of this
- * software or derived works may only be charged with express written
- * permission of the copyright holder.  
- * This software is provided ``as is'' without express or implied warranty.
- *
- * This software is a derivative work of other copyrighted softwares; the
- * copyright notices of these softwares are placed in the file COPYRIGHTS
- *
- * $Id: primitives.c 1.21 Fri, 22 Jan 1999 14:44:12 +0100 eg $
+ * Permission to use, copy, modify, distribute,and license this
+ * software and its documentation for any purpose is hereby granted,
+ * provided that existing copyright notices are retained in all
+ * copies and that this notice is included verbatim in any
+ * distributions.  No written agreement, license, or royalty fee is
+ * required for any of the authorized uses.
+ * This software is provided ``AS IS'' without express or implied
+ * warranty.
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: ??????
- * Last file update:  1-Dec-1998 15:09
+ * Last file update:  3-Sep-1999 20:22 (eg)
  */
 
 
@@ -176,6 +172,8 @@ static struct Primitive Scheme_primitives[] = {
   {"symbol?",		    tc_subr_1,	    STk_symbolp},
   {"symbol->string",	    tc_subr_1,	    STk_symbol2string},
   {"string->symbol",	    tc_subr_1,	    STk_string2symbol},
+  {"string->uninterned-symbol",						/* + */
+   			    tc_subr_1,	    STk_string2usymbol},	
 
   /**** Section 6.5 ****/
   {"number?",		    tc_subr_1,	    STk_numberp},
@@ -340,11 +338,14 @@ static struct Primitive Scheme_primitives[] = {
   {"write-char",	    tc_subr_1_or_2, STk_write_char},
   {"load",		    tc_subr_1_or_2, STk_load},
 
+  {"input-file-port?",	    tc_subr_1,	    STk_input_file_portp},	/* + */
+  {"output-file-port?",	    tc_subr_1,	    STk_output_file_portp},	/* + */
   {"with-input-from-port",  tc_subr_2,	    STk_with_input_from_port},	/* + */
   {"with-output-to-port",   tc_subr_2,	    STk_with_output_to_port},	/* + */
   {"with-error-to-port",    tc_subr_2,	    STk_with_error_to_port},	/* + */
   {"open-file",		    tc_subr_2,	    STk_open_file},		/* + */
   {"close-port",	    tc_subr_1,	    STk_close_port},		/* + */
+  {"port-closed?",	    tc_subr_1,	    STk_port_closedp},		/* + */
   {"read-line",		    tc_subr_0_or_1, STk_read_line},		/* + */
   {"copy-port",		    tc_subr_2, 	    STk_copy_port},		/* + */
   {"flush",		    tc_subr_0_or_1, STk_flush},			/* + */
@@ -360,6 +361,7 @@ static struct Primitive Scheme_primitives[] = {
   {"write*",		    tc_subr_1_or_2, STk_write_star},		/* + */
   {"input-string-port?",    tc_subr_1,	    STk_input_string_portp},	/* + */
   {"output-string-port?",   tc_subr_1,	    STk_output_string_portp},	/* + */
+  {"with-error-to-file",    tc_subr_2,	    STk_with_error_to_file},	/* + */
   {"current-error-port",    tc_subr_0,	    STk_current_error_port},	/* + */
   {"open-input-string",	    tc_subr_1,	    STk_open_input_string},	/* + */
   {"open-output-string",    tc_subr_0,	    STk_open_output_string},	/* + */
@@ -415,6 +417,7 @@ static struct Primitive Scheme_primitives[] = {
   {"module-exports",	    tc_subr_1,	    STk_module_exports},	/* + */
   {"module-environment",    tc_subr_1,	    STk_module_env},		/* + */
   {"module-symbols",	    tc_subr_1,	    STk_module_symbols},	/* + */
+  {"all-modules",	    tc_subr_0,	    STk_all_modules},		/* + */
   {"%get-module",	    tc_subr_1,	    STk_get_module},		/* Undoc */
 
   /**** Section 6.14 ****/

@@ -463,8 +463,12 @@ TkCanvPostscriptCmd(canvasPtr, interp, argc, argv)
     TkPostscriptInfo psInfo, *oldInfoPtr;
     int result;
     Tk_Item *itemPtr;
+#ifdef BGLK_CODE
+    char string[400+1], *p;
+#else
 #define STRING_LENGTH 400
     char string[STRING_LENGTH+1], *p;
+#endif
     time_t now;
     size_t length;
     int deltaX = 0, deltaY = 0;		/* Offset of lower-left corner of

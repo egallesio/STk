@@ -3,17 +3,18 @@
 ;;;;
 ;;;; Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
-;;;; Permission to use, copy, and/or distribute this software and its
-;;;; documentation for any purpose and without fee is hereby granted, provided
-;;;; that both the above copyright notice and this permission notice appear in
-;;;; all copies and derived works.  Fees for distribution or use of this
-;;;; software or derived works may only be charged with express written
-;;;; permission of the copyright holder.  
-;;;; This software is provided ``as is'' without express or implied warranty.
+;;;; Permission to use, copy, modify, distribute,and license this
+;;;; software and its documentation for any purpose is hereby granted,
+;;;; provided that existing copyright notices are retained in all
+;;;; copies and that this notice is included verbatim in any
+;;;; distributions.  No written agreement, license, or royalty fee is
+;;;; required for any of the authorized uses.
+;;;; This software is provided ``AS IS'' without express or implied
+;;;; warranty.
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 21-Oct-1996 14:02
-;;;; Last file update:  2-Feb-1999 09:00
+;;;; Last file update:  3-Sep-1999 19:56 (eg)
 ;;;;
 
 (require "Tk-classes")
@@ -22,7 +23,8 @@
 (import WWW)
 
 (define WWW:browser
-  (let ((browser #f))		;; Id of browser (#f if no browser exists)
+  (let ((browser #f)		;; Id of browser (#f if no browser exists)
+	(lentry  #f))		;; The labeled entry of the interface
     (lambda args
 
   ;; URL history management
@@ -49,31 +51,42 @@
   ;;; Make interface
   ;;;
   (define (make-buttons parent txt)
-    (let* ((f      (make <Frame>  :parent parent))
-	   (back   (make <Button> :parent f :text "Back" 
-			 :command (lambda () (new-url txt 'previous))))
-	   (forw   (make <Button> :parent f :text "Forward"
-			 :command (lambda () (new-url txt 'next))))
-	   (reload (make <Button> :parent f :text "Reload"
-			 :command (lambda () (new-url txt 'reload))))
-	   (stop   (make <Button> :parent f :foreground  "Red"   :text "Stop"
-			 :command (lambda () (set! www:stop-loading #t))))
-	   (exit   (make <Button> :parent f :foreground  "Blue2" :text "Exit"
-			 :command (lambda () (destroy parent))))
-	   (help   (make <Button> :parent f :text "Help"
-			 :command (lambda () (STk:show-help-file "STk-hlp.html")))))
-      
-      (pack stop back forw reload exit :side "left")
-      (pack help :side "right")
-      f))
+    (let ((s (make-toolbar parent
+	   `(("tb_back.gif"     "Back"    ,(lambda () (new-url (Id txt) 'previous)))
+	     2
+	     ("tb_forward.gif"  "Forward" ,(lambda () (new-url (Id txt) 'next)))
+	     2
+	     ("tb_reload.gif"   "Reload"  ,(lambda () (new-url (Id txt) 'reload)))
+	     2
+	     ("tb_stop.gif"     "Stop Loading" 
+	      			          ,(lambda () (set! www:stop-loading #t)))
+	     10
+	     ("tb_exit.gif"     "Exit"    ,(lambda () (destroy parent)))
+	     0
+	     ("tb_info.gif"     "Help"    ,(lambda () 
+					     (STk:show-help-file "STk-hlp.html"))))
+	   :relief "ridge" :border-width 2
+	   :release-command (default-release-toolbar txt))))
+      s))
 
+  (define (make-location parent txt)
+    (let* ((s  (make-toolbar parent '(0)
+			     :relief "ridge" :border-width 2
+			     :release-command (default-release-toolbar txt)))
+	   (f  (toolbar-item s 0))
+	   (le (make <Labeled-entry> :parent f :title "Location:" 
+		                     :font '(Courier -12))))
+      (pack le :fill 'x :expand #t)
+      (bind (Id le) "<Return>" (lambda () (www:view-url (Id txt) (value le))))
+      ;; Keep a reference on the labeled entry for later bindings
+      (set! lentry le)
+      s))
 
   (define (make-interface parent)
-    (let* ((loc   (make <Labeled-entry> :parent parent :title "Location:" 
-			:font '(Courier -12)))
-	   (txt   (make <Scroll-text> :parent parent :font '(Courier -12)
+    (let* ((txt   (make <Scroll-text> :parent parent :font '(Courier -12)
 			:width 100 :height 45))
-	   (f     (make-buttons parent (Id txt)))
+	   (loc   (make-location parent txt))
+	   (f     (make-buttons parent txt))
 	   (f1    (make <Frame> :parent parent))
 	   (lab	  (make <Label> :parent f1 :anchor "w"))
 	   (gauge (make <Gauge> :parent f1 :width 200 :height 10 
@@ -85,8 +98,6 @@
       (pack f1    :expand #f :fill "x")
       (pack lab   :expand #t :fill "x" :side "left")
       (pack gauge :expand #f :side "left" :padx 10)
-
-      (bind (Id loc) "<Return>" (lambda () (www:view-url (Id txt) (value loc))))
 
       ;; Redefinition of WWW hooks
       ;;
@@ -123,7 +134,7 @@
 
       (set! www:hook-location
 	    (lambda (url)
-	      (set! (value loc) url)
+	      (set! (value lentry) url)
 	      (new-url txt url)))
 
       ;; Return the txt widget
@@ -134,10 +145,11 @@
   ;;;;
   (let* ((url    (get-keyword :url args #f))
 	 (parent (get-keyword :parent args #f)))
+
     (unless browser
       (set! browser (make-interface 
-		       (or parent 
-			   (make <Toplevel> :title "STk Web browser"))))
+		        (or parent 
+			    (make <Toplevel> :title "STk Web browser"))))
       (bind browser "<Destroy>" (lambda () (set! browser #f))))
 
     (when url

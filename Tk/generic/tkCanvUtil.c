@@ -363,7 +363,7 @@ Tk_CanvasTagsPrintProc(clientData, tkwin, widgRec, offset, freeProcPtr)
 {
     register Tk_Item *itemPtr = (Tk_Item *) widgRec;
 
-#ifdef STk_CODE
+#ifdef SCM_CODE
     char *s;
     int i;
     Tcl_DString ds;
@@ -388,8 +388,12 @@ Tk_CanvasTagsPrintProc(clientData, tkwin, widgRec, offset, freeProcPtr)
     s = ckalloc(strlen(Tcl_DStringValue(&ds)) + 1);
     strcpy(s, Tcl_DStringValue(&ds));
     Tcl_DStringFree(&ds);
-      
+
+#ifdef BGLK_CODE
+    *freeProcPtr = (Tcl_FreeProc *) GC_free;
+#else
     *freeProcPtr = (Tcl_FreeProc *) free;
+#endif
     return s;
 #else
     if (itemPtr->numTags == 0) {

@@ -1,0 +1,23 @@
+;;;; s t k f o n t s e l . s t k l o s 		-- A demo of the font chooser
+;;;;
+;;;; Copyright © 1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, modify, distribute,and license this
+;;;; software and its documentation for any purpose is hereby granted,
+;;;; provided that existing copyright notices are retained in all
+;;;; copies and that this notice is included verbatim in any
+;;;; distributions.  No written agreement, license, or royalty fee is
+;;;; required for any of the authorized uses.
+;;;; This software is provided ``AS IS'' without express or implied
+;;;; warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 25-Apr-1999 19:35
+;;;; Last file update:  3-Sep-1999 18:59 (eg)
+
+(require "font-chooser")
+
+(let ((f (make-font-chooser)))
+  (if f
+      (format #t "You have selected the font ~S\n" f)
+      (format #t "You have aborted font selection\n")))

@@ -160,7 +160,7 @@ typedef struct {
 				 * scripts.  Malloc'ed, but may be NULL. */
     int flags;			/* Various flags;  see below for
 				 * definitions. */
-#ifdef STk_CODE
+#ifdef SCM_CODE
     char *env;			/*  -textvariable environment */
 #endif
 } TkMenuButton;

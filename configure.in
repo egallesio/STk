@@ -5,11 +5,13 @@ dnl	to configure the system for the local environment.
 
 AC_INIT(README)
 
-VERSION=3.99.4
-echo "VERSION=$VERSION" > VERSION
+VERSION=4.0.0
+echo "VERSION=$VERSION" 			> VERSION
+echo "/* File generated. DO NOT EDIT */" 	> Src/stkvers.h
+echo "#define STK_VERSION \"$VERSION\"" 	> Src/stkvers.h
 
 # I have a lot of problems with cache. So ...
-/bin/rm -f ./config.cache Src/config.cache Tk/config.cache Tcl/config.cache
+/bin/rm -f ./config.cache Src/config.cache Tcl/config.cache Tk/unix/config.cache
 
 # determine the kind of the machine which is running this script
 os=`uname -s`
@@ -25,6 +27,10 @@ case $os in
 	  case $machine in
 	    i*86) machine=ix86;;
 	  esac;;
+  FreeBSD*)
+ 	  case $machine in
+ 	    i*86) machine=ix86;;
+ 	  esac;;
   SunOS*)
 	  case $version in
 	    4.1.*) version=4.1.X;;
@@ -59,7 +65,7 @@ esac
 #	EOBJ= Some extra '.o' to build
 #	ETKOBJ= Some extra '.o' to build (when used with Tk)
 #	MACHINE= something which identifies the machine (hard/OS/machine)
-DFLGS="-DSTk_CODE"
+DFLGS="-DSTk_CODE -DSCM_CODE"
 EOBJ=""
 ETKOBJ=""
 EDFLGS=""
@@ -450,10 +456,11 @@ case $OS in
      STKLDFLAGS="$STKLDFLAGS -Wl,-E"
      LIB_DLD=-ldld;;
    FREEBSD)
-     SH_CCFLAGS="-pic"
-     SH_LDFLAGS="-Bshareable -o"
+     SH_CCFLAGS="-fpic"
+     SH_LDFLAGS="-shared -o"
      SH_LOADER="ld"
-     LIB_MALLOC="-lgnumalloc"
+     LIB_MALLOC=""
+     STKLDFLAGS=-rdynamic
      SH_SUFFIX='so';;
    IRIX5)
      if test "$CC" = "gcc"
@@ -518,6 +525,7 @@ AC_OUTPUT(Makefile Utils/STk.spec)
 
 
 
+
 ##############################################################################
 
 ####
@@ -534,13 +542,13 @@ echo "**** Configuring Stack directory";
 (cd Stack; CC=$CC /bin/sh ./configure)
 
 echo "**** Configuring Tcl directory";
-(cd Tcl; CC=$CC /bin/sh ./configure)
+(cd Tcl; CC=$CC /bin/sh ./configure --prefix=$prefix)
 
 echo "**** Configuring Tk directory";
 if test "$x_includes" != "" -a "$x_libraries" != ""
 then
   (cd Tk/$FLAVOR; CC=$CC /bin/sh ./configure $FLAVOR --x-includes=$x_includes \
-				          	  --x-libraries=$x_libraries)
+				 --x-libraries=$x_libraries --prefix=$prefix)
 else
   (cd Tk/$FLAVOR; CC=$CC /bin/sh ./configure $FLAVOR)
 fi
@@ -562,6 +570,12 @@ case $OS in
 	    done;;
    *)       ;;
 esac
+
+# RPM 3.0 seems to need that symbolic links are not "dead". So we make
+# the link from Snow/Makefile to STk/Makefile here instead of packing
+# the file in the tarball
+rm -f Snow/Makefile
+(cd Snow; ln -s ../Src/Makefile .)
 
 ###
 ### SUMMARY

@@ -319,7 +319,7 @@ ImgXpmConfigureMaster(masterPtr, argc, argv, flags)
     } else {
 	Tcl_AppendResult(masterPtr->interp,
 #ifdef STk_CODE
-	    "must specify  :data or :file", NULL);
+	    "must specify :data or :file", NULL);
 #else
 	    "must specify one of -data, -file or -id", NULL);
 #endif

@@ -1,0 +1,38 @@
+;;;; srfi-7.stk 				-- SRFI-7 (PROGRAM)
+;;;;
+;;;; Copyright © 1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, modify, distribute,and license this
+;;;; software and its documentation for any purpose is hereby granted,
+;;;; provided that existing copyright notices are retained in all
+;;;; copies and that this notice is included verbatim in any
+;;;; distributions.  No written agreement, license, or royalty fee is
+;;;; required for any of the authorized uses.
+;;;; This software is provided ``AS IS'' without express or implied
+;;;; warranty.
+;;;;
+;;;; This is an implementation of SRFI-7 (Richard Kelsey). This implementation 
+;;;; corresponds to the second implementation given in the reference document.
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 31-Aug-1999 16:10 (eg)
+;;;; Last file update:  3-Sep-1999 19:54 (eg)
+
+(require "defsyntax")
+
+(define-syntax program
+  (syntax-rules (requires files code feature-cond)
+     ((program)
+      (begin))
+     ((program (requires feature-id ...) more ...)
+      (begin (cond-expand ((and feature-id ...) 'okay)) (program more ...)))
+     ((program (files filename ...) more ...)
+      (begin (load filename) ... (program more ...)))
+     ((program (code stuff ...) more ...)
+      (begin stuff ... (program more ...)))
+     ((program (feature-cond (requirement stuff ...) ...) more ...)
+      (begin (cond-expand (requirement (program stuff ...)) ...) 
+	     (program more ...)))))
+
+(provide "srfi-7")
+

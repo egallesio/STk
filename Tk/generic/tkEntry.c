@@ -141,7 +141,7 @@ typedef struct {
     int avgWidth;		/* Width of average character. */
     int flags;			/* Miscellaneous flags;  see below for
 				 * definitions. */
-#ifdef STk_CODE
+#ifdef SCM_CODE
     char *env;			/* -textvariable environment */
     int stringp;		/* if true the value of the variable associated
 				 * to the entry must be "stringified" */
@@ -261,11 +261,11 @@ static Tk_ConfigSpec configSpecs[] = {
 	DEF_ENTRY_SHOW, Tk_Offset(Entry, showChar), TK_CONFIG_NULL_OK},
     {TK_CONFIG_UID, "-state", "state", "State",
 	DEF_ENTRY_STATE, Tk_Offset(Entry, state), 0},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_BOOLEAN, "-stringvalue", "stringvalue", "StringValue",
 	"#t", Tk_Offset(Entry, stringp), 0},
 #endif
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_CLOSURE, "-takefocus", "takeFocus", "TakeFocus",
 #else
     {TK_CONFIG_STRING, "-takefocus", "takeFocus", "TakeFocus",
@@ -276,7 +276,7 @@ static Tk_ConfigSpec configSpecs[] = {
 	TK_CONFIG_NULL_OK},
     {TK_CONFIG_INT, "-width", "width", "Width",
 	DEF_ENTRY_WIDTH, Tk_Offset(Entry, prefWidth), 0},
-#ifdef STk_CODE
+#ifdef SCM_CODE
     {TK_CONFIG_CLOSURE, "-xscrollcommand", "xScrollCommand", "ScrollCommand",
 #else
     {TK_CONFIG_STRING, "-xscrollcommand", "xScrollCommand", "ScrollCommand",
@@ -405,7 +405,11 @@ Tk_EntryCmd(clientData, interp, argc, argv)
     entryPtr->widgetCmd = Tcl_CreateCommand(interp,
 	    Tk_PathName(entryPtr->tkwin), EntryWidgetCmd,
 	    (ClientData) entryPtr, EntryCmdDeletedProc);
+#ifdef BGLK_CODE
+    entryPtr->string = (char *) ckalloc_atomic(1);
+#else
     entryPtr->string = (char *) ckalloc(1);
+#endif
     entryPtr->string[0] = '\0';
     entryPtr->insertPos = 0;
     entryPtr->selectFirst = -1;
@@ -454,7 +458,7 @@ Tk_EntryCmd(clientData, interp, argc, argv)
     entryPtr->highlightGC = None;
     entryPtr->avgWidth = 1;
     entryPtr->flags = 0;
-#ifdef STk_CODE
+#ifdef SCM_CODE
     entryPtr->env     = NULL;
     entryPtr->stringp = 0;
 #endif
@@ -588,7 +592,7 @@ EntryWidgetCmd(clientData, interp, argc, argv)
 		    argv[0], " get\"", (char *) NULL);
 	    goto error;
 	}
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	if (entryPtr->stringp)
 	  STk_stringify_result(interp, entryPtr->string);
 	else
@@ -688,7 +692,7 @@ EntryWidgetCmd(clientData, interp, argc, argv)
 			argv[0], " selection present\"", (char *) NULL);
 		goto error;
 	    }
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    interp->result = (entryPtr->selectFirst == -1) ? "#f" : "#t";
 #else
 	    if (entryPtr->selectFirst == -1) {
@@ -941,13 +945,13 @@ ConfigureEntry(interp, entryPtr, argc, argv, flags)
     if (entryPtr->textVarName != NULL) {
 	char *value;
 
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	value = STk_tcl_getvar(entryPtr->textVarName, entryPtr->env);
 #else
 	value = Tcl_GetVar(interp, entryPtr->textVarName, TCL_GLOBAL_ONLY);
 #endif
 	if (value == NULL) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    STk_tcl_setvar(entryPtr->textVarName, entryPtr->string,
 			   (entryPtr->stringp? STk_STRINGIFY: 0), entryPtr->env);
 #else
@@ -1430,7 +1434,11 @@ InsertChars(entryPtr, index, string)
     if (length == 0) {
 	return;
     }
+#ifdef BGLK_CODE
+    new = (char *) ckalloc_atomic((unsigned) (entryPtr->numChars + length + 1));
+#else
     new = (char *) ckalloc((unsigned) (entryPtr->numChars + length + 1));
+#endif
     strncpy(new, entryPtr->string, (size_t) index);
     strcpy(new+index, string);
     strcpy(new+index+length, entryPtr->string+index);
@@ -1496,7 +1504,11 @@ DeleteChars(entryPtr, index, count)
 	return;
     }
 
+#ifdef BGLK_CODE
+    new = (char *) ckalloc_atomic((unsigned) (entryPtr->numChars + 1 - count));
+#else
     new = (char *) ckalloc((unsigned) (entryPtr->numChars + 1 - count));
+#endif
     strncpy(new, entryPtr->string, (size_t) index);
     strcpy(new+index, entryPtr->string+index+count);
     ckfree(entryPtr->string);
@@ -1578,7 +1590,7 @@ EntryValueChanged(entryPtr)
     if (entryPtr->textVarName == NULL) {
 	newValue = NULL;
     } else {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	newValue = STk_tcl_setvar(entryPtr->textVarName, entryPtr->string, 
 	        (entryPtr->stringp ? STk_STRINGIFY : 0), entryPtr->env);
 #else
@@ -2338,7 +2350,7 @@ EntryTextVarProc(clientData, interp, name1, name2, flags)
 
     if (flags & TCL_TRACE_UNSETS) {
 	if ((flags & TCL_TRACE_DESTROYED) && !(flags & TCL_INTERP_DESTROYED)) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    STk_tcl_setvar(entryPtr->textVarName, entryPtr->string,
 		    (entryPtr->stringp ? STk_STRINGIFY : 0), entryPtr->env);
 #else
@@ -2359,7 +2371,7 @@ EntryTextVarProc(clientData, interp, name1, name2, flags)
      * the entry).
      */
 
-#ifdef STk_CODE
+#ifdef SCM_CODE
     value = STk_tcl_getvar(entryPtr->textVarName, entryPtr->env);
 #else
     value = Tcl_GetVar(interp, entryPtr->textVarName, TCL_GLOBAL_ONLY);

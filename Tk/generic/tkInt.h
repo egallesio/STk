@@ -737,6 +737,7 @@ EXTERN void		TkComputeAnchor _ANSI_ARGS_((Tk_Anchor anchor,
 			    int *yPtr));
 EXTERN int		TkCopyAndGlobalEval _ANSI_ARGS_((Tcl_Interp *interp,
 			    char *script));
+
 EXTERN unsigned long	TkCreateBindingProcedure _ANSI_ARGS_((
 			    Tcl_Interp *interp, Tk_BindingTable bindingTable,
 			    ClientData object, char *eventString,

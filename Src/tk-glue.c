@@ -2,25 +2,21 @@
  *
  * t k - g l u e . c 		- Glue function between the scheme and Tk worlds
  *
- * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
- * Permission to use, copy, and/or distribute this software and its
- * documentation for any purpose and without fee is hereby granted, provided
- * that both the above copyright notice and this permission notice appear in
- * all copies and derived works.  Fees for distribution or use of this
- * software or derived works may only be charged with express written
- * permission of the copyright holder.  
- * This software is provided ``as is'' without express or implied warranty.
- *
- * This software is a derivative work of other copyrighted softwares; the
- * copyright notices of these softwares are placed in the file COPYRIGHTS
- *
- * $Id: tk-glue.c 1.9 Mon, 28 Dec 1998 23:05:11 +0100 eg $
+ * Permission to use, copy, modify, distribute,and license this
+ * software and its documentation for any purpose is hereby granted,
+ * provided that existing copyright notices are retained in all
+ * copies and that this notice is included verbatim in any
+ * distributions.  No written agreement, license, or royalty fee is
+ * required for any of the authorized uses.
+ * This software is provided ``AS IS'' without express or implied
+ * warranty.
  *
  *            Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 19-Feb-1993 22:15
- * Last file update: 27-Dec-1998 20:47
+ * Last file update:  4-Sep-1999 14:26 (eg)
  *
  */
 
@@ -186,7 +182,7 @@ void STk_add_callback(char *key1, char *key2, char *key3, SCM closure)
 {
   Tcl_HashEntry *entry;
   Tcl_HashTable *secondary_hash_table;
-  int new;
+  int new_entry;
   char key[200]; /* Largely sufficient */
 
   if (*key2) {
@@ -197,7 +193,7 @@ void STk_add_callback(char *key1, char *key2, char *key3, SCM closure)
     else {
       secondary_hash_table = (Tcl_HashTable *) must_malloc(sizeof(Tcl_HashTable));
       Tcl_InitHashTable(secondary_hash_table, TCL_STRING_KEYS);
-      entry = Tcl_CreateHashEntry(&Tk_callbacks, (char *) key1, &new);
+      entry = Tcl_CreateHashEntry(&Tk_callbacks, (char *) key1, &new_entry);
       Tcl_SetHashValue(entry, secondary_hash_table);
     }
     
@@ -206,12 +202,12 @@ void STk_add_callback(char *key1, char *key2, char *key3, SCM closure)
      * hash table, it will be garbaged at next GC run
      */
     sprintf(key, "%s#%s", key2, key3);/* Create a new key from key2 and key3 */
-    entry = Tcl_CreateHashEntry(secondary_hash_table, key, &new);
+    entry = Tcl_CreateHashEntry(secondary_hash_table, key, &new_entry);
     Tcl_SetHashValue(entry, closure); 
   }
   else {
     /* Only one key. No need for a secondary hash table */
-    entry =Tcl_CreateHashEntry(&Tk_callbacks, key1, &new);
+    entry =Tcl_CreateHashEntry(&Tk_callbacks, key1, &new_entry);
     Tcl_SetHashValue(entry, closure);
   }
 }
@@ -305,13 +301,13 @@ void STk_sharp_dot_result(Tcl_Interp *interp, char *value)
   s[1] = '.';
   strcpy(s+2, value);
   
-  Tcl_SetResult(interp, s, TCL_VOLATILE);
+  Tcl_SetResult(interp, s, TCL_DYNAMIC);
 }
 
 void STk_stringify_result(Tcl_Interp *interp, char *value)
 {
   /* Transform Tcl result in "result" with " and \ escaped */
-  Tcl_SetResult(interp,  STk_stringify(value, 0), TCL_VOLATILE);
+  Tcl_SetResult(interp,  STk_stringify(value, 0), TCL_DYNAMIC);
 }
 
 SCM STk_last_Tk_as_SCM(void)

@@ -67,13 +67,13 @@
 #define DEF_LABEL_HIGHLIGHT_WIDTH	"0"
 #define DEF_BUTTON_HIGHLIGHT_WIDTH	"1"
 #define DEF_BUTTON_IMAGE		(char *) NULL
-#ifdef STk_CODE
+#ifdef SCM_CODE
 #   define DEF_BUTTON_INDICATOR		"#t"
 #else
 #   define DEF_BUTTON_INDICATOR		"1"
 #endif
 #define DEF_BUTTON_JUSTIFY		"center"
-#ifdef STk_CODE
+#ifdef SCM_CODE
 #  define DEF_BUTTON_OFF_VALUE		"#f"
 #  define DEF_BUTTON_ON_VALUE		"#t"
 #else
@@ -90,7 +90,7 @@
 #define DEF_BUTTON_SELECT_MONO		BLACK
 #define DEF_BUTTON_SELECT_IMAGE		(char *) NULL
 #define DEF_BUTTON_STATE		"normal"
-#ifdef STk_CODE
+#ifdef SCM_CODE
 #  define DEF_LABEL_TAKE_FOCUS		"#f"
 #else
 #  define DEF_LABEL_TAKE_FOCUS		"0"
@@ -99,14 +99,14 @@
 #define DEF_BUTTON_TEXT			""
 #define DEF_BUTTON_TEXT_VARIABLE	""
 #define DEF_BUTTON_UNDERLINE		"-1"
-#ifdef STk_CODE
+#ifdef SCM_CODE
 #  define DEF_BUTTON_VALUE		"#f"
 #else
 #  define DEF_BUTTON_VALUE		""
 #endif
 #define DEF_BUTTON_WIDTH		"0"
 #define DEF_BUTTON_WRAP_LENGTH		"0"
-#ifdef STk_CODE
+#ifdef SCM_CODE
 #  define DEF_RADIOBUTTON_VARIABLE	"*selected-button*"
 #else
 #  define DEF_RADIOBUTTON_VARIABLE	"selectedButton"
@@ -121,7 +121,7 @@
 #define DEF_CANVAS_BG_MONO		WHITE
 #define DEF_CANVAS_BORDER_WIDTH		"0"
 #define DEF_CANVAS_CLOSE_ENOUGH		"1"
-#ifdef STk_CODE
+#ifdef SCM_CODE
 #  define DEF_CANVAS_CONFINE		"#t"
 #else
 #  define DEF_CANVAS_CONFINE		"1"
@@ -160,7 +160,7 @@
 #define DEF_ENTRY_BG_MONO		WHITE
 #define DEF_ENTRY_BORDER_WIDTH		"2"
 #define DEF_ENTRY_CURSOR		"xterm"
-#ifdef STk_CODE
+#ifdef SCM_CODE
 #  define DEF_ENTRY_ENV			""
 #  define DEF_ENTRY_EXPORT_SELECTION	"#t"
 #else
@@ -201,7 +201,7 @@
 #define DEF_FRAME_BORDER_WIDTH		"0"
 #define DEF_FRAME_CLASS			"Frame"
 #define DEF_FRAME_COLORMAP		""
-#ifdef STk_CODE
+#ifdef SCM_CODE
 #  define DEF_FRAME_CONTAINER		"#f"
 #else
 #  define DEF_FRAME_CONTAINER		"0"
@@ -212,7 +212,7 @@
 #define DEF_FRAME_HIGHLIGHT		BLACK
 #define DEF_FRAME_HIGHLIGHT_WIDTH	"0"
 #define DEF_FRAME_RELIEF		"flat"
-#ifdef STk_CODE
+#ifdef SCM_CODE
 #  define DEF_FRAME_TAKE_FOCUS		"#f"
 #else
 #  define DEF_FRAME_TAKE_FOCUS		"0"
@@ -229,7 +229,7 @@
 #define DEF_LISTBOX_BG_MONO		WHITE
 #define DEF_LISTBOX_BORDER_WIDTH	"2"
 #define DEF_LISTBOX_CURSOR		""
-#ifdef STk_CODE
+#ifdef SCM_CODE
 #  define DEF_LISTBOX_EXPORT_SELECTION	"#t"
 #else
 #  define DEF_LISTBOX_EXPORT_SELECTION	"1"
@@ -248,7 +248,7 @@
 #define DEF_LISTBOX_SELECT_FG_COLOR	BLACK
 #define DEF_LISTBOX_SELECT_FG_MONO	WHITE
 #define DEF_LISTBOX_SELECT_MODE		"browse"
-#ifdef STk_CODE
+#ifdef SCM_CODE
 #  define DEF_LISTBOX_SET_GRID		"#f"
 #else
 #  define DEF_LISTBOX_SET_GRID		"0"
@@ -265,7 +265,7 @@
 #define DEF_MENU_ENTRY_ACCELERATOR	(char *) NULL
 #define DEF_MENU_ENTRY_BG		(char *) NULL
 #define DEF_MENU_ENTRY_BITMAP		None
-#ifdef STk_CODE
+#ifdef SCM_CODE
 #  define DEF_MENU_ENTRY_COLUMN_BREAK	"#f"
 #else
 #  define DEF_MENU_ENTRY_COLUMN_BREAK	"0"
@@ -276,20 +276,20 @@
 #endif
 #define DEF_MENU_ENTRY_FG		(char *) NULL
 #define DEF_MENU_ENTRY_FONT		(char *) NULL
-#ifdef STk_CODE
+#ifdef SCM_CODE
 #  define DEF_MENU_ENTRY_HIDE_MARGIN	"#f"
 #else
 #  define DEF_MENU_ENTRY_HIDE_MARGIN	"0"
 #endif
 #define DEF_MENU_ENTRY_IMAGE		(char *) NULL
-#ifdef STk_CODE
+#ifdef SCM_CODE
 #  define DEF_MENU_ENTRY_INDICATOR	"#t"
 #else
 #  define DEF_MENU_ENTRY_INDICATOR	"1"
 #endif
 #define DEF_MENU_ENTRY_LABEL		(char *) NULL
 #define DEF_MENU_ENTRY_MENU		(char *) NULL
-#ifdef STk_CODE
+#ifdef SCM_CODE
 #  define DEF_MENU_ENTRY_OFF_VALUE	"#f"
 #  define DEF_MENU_ENTRY_ON_VALUE	"#t"
 #else
@@ -300,7 +300,7 @@
 #define DEF_MENU_ENTRY_STATE		"normal"
 #define DEF_MENU_ENTRY_VALUE		(char *) NULL
 #define DEF_MENU_ENTRY_CHECK_VARIABLE	(char *) NULL
-#ifdef STk_CODE
+#ifdef SCM_CODE
 #  define DEF_MENU_ENTRY_RADIO_VARIABLE	"*selected-button*"
 #else
 #  define DEF_MENU_ENTRY_RADIO_VARIABLE	"selectedButton"
@@ -329,7 +329,7 @@
 #define DEF_MENU_RELIEF			"raised"
 #define DEF_MENU_SELECT_COLOR		INDICATOR
 #define DEF_MENU_SELECT_MONO		BLACK
-#ifdef STk_CODE
+#ifdef SCM_CODE
 #  define DEF_MENU_TAKE_FOCUS		"#f"
 #  define DEF_MENU_TEAROFF		"#t"
 #else
@@ -367,13 +367,13 @@
 #define DEF_MENUBUTTON_HIGHLIGHT	BLACK
 #define DEF_MENUBUTTON_HIGHLIGHT_WIDTH	"0"
 #define DEF_MENUBUTTON_IMAGE		(char *) NULL
-#ifdef STk_CODE
+#ifdef SCM_CODE
 #  define DEF_MENUBUTTON_INDICATOR	"#f"
 #else
 #  define DEF_MENUBUTTON_INDICATOR	"0"
 #endif
 #define DEF_MENUBUTTON_JUSTIFY		"center"
-#ifdef STk_CODE
+#ifdef SCM_CODE
 #  define DEF_MENUBUTTON_MENU		"#f"
 #else
 #  define DEF_MENUBUTTON_MENU		""
@@ -382,7 +382,7 @@
 #define DEF_MENUBUTTON_PADY		"3p"
 #define DEF_MENUBUTTON_RELIEF		"flat"
 #define DEF_MENUBUTTON_STATE		"normal"
-#ifdef STk_CODE
+#ifdef SCM_CODE
 #  define DEF_MENUBUTTON_TAKE_FOCUS	"#f"
 #else
 #  define DEF_MENUBUTTON_TAKE_FOCUS	"0"
@@ -415,7 +415,7 @@
 #define DEF_MESSAGE_PADX		"-1"
 #define DEF_MESSAGE_PADY		"-1"
 #define DEF_MESSAGE_RELIEF		"flat"
-#ifdef STk_CODE
+#ifdef SCM_CODE
 #  define DEF_MESSAGE_TAKE_FOCUS	"#f"
 #else
 #  define DEF_MESSAGE_TAKE_FOCUS	"0"
@@ -456,7 +456,7 @@
 #define DEF_SCALE_RESOLUTION		"1"
 #define DEF_SCALE_TROUGH_COLOR		TROUGH
 #define DEF_SCALE_TROUGH_MONO		WHITE
-#ifdef STk_CODE
+#ifdef SCM_CODE
 #  define DEF_SCALE_SHOW_VALUE		"#t"
 #else
 #  define DEF_SCALE_SHOW_VALUE		"1"
@@ -486,7 +486,7 @@
 #define DEF_SCROLLBAR_HIGHLIGHT_BG	NORMAL_BG
 #define DEF_SCROLLBAR_HIGHLIGHT		BLACK
 #define DEF_SCROLLBAR_HIGHLIGHT_WIDTH	"1"
-#ifdef STk_CODE
+#ifdef SCM_CODE
 #  define DEF_SCROLLBAR_JUMP		"#f"
 #else
 #  define DEF_SCROLLBAR_JUMP		"0"
@@ -509,7 +509,7 @@
 #define DEF_TEXT_BORDER_WIDTH		"2"
 #define DEF_TEXT_CURSOR			"xterm"
 #define DEF_TEXT_FG			BLACK
-#ifdef STk_CODE
+#ifdef SCM_CODE
 #  define DEF_TEXT_EXPORT_SELECTION	"#t"
 #else
 #  define DEF_TEXT_EXPORT_SELECTION	"1"
@@ -535,7 +535,7 @@
 #define DEF_TEXT_SELECT_FG_COLOR	BLACK
 #define DEF_TEXT_SELECT_FG_MONO		WHITE
 #define DEF_TEXT_SELECT_RELIEF		"raised"
-#ifdef STk_CODE
+#ifdef SCM_CODE
 #  define DEF_TEXT_SET_GRID		"#f"
 #else
 #  define DEF_TEXT_SET_GRID		"0"

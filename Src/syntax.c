@@ -2,24 +2,21 @@
  *
  * s y n t a x . c			-- Syntaxic forms implementation
  *
- * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
- * Permission to use, copy, and/or distribute this software and its
- * documentation for any purpose and without fee is hereby granted, provided
- * that both the above copyright notice and this permission notice appear in
- * all copies and derived works.  Fees for distribution or use of this
- * software or derived works may only be charged with express written
- * permission of the copyright holder.  
- * This software is provided ``as is'' without express or implied warranty.
- *
- * This software is a derivative work of other copyrighted softwares; the
- * copyright notices of these softwares are placed in the file COPYRIGHTS
- *
+ * Permission to use, copy, modify, distribute,and license this
+ * software and its documentation for any purpose is hereby granted,
+ * provided that existing copyright notices are retained in all
+ * copies and that this notice is included verbatim in any
+ * distributions.  No written agreement, license, or royalty fee is
+ * required for any of the authorized uses.
+ * This software is provided ``AS IS'' without express or implied
+ * warranty.
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 25-Oct-1993 23:39
- * Last file update: 10-Sep-1998 14:12
+ * Last file update:  3-Sep-1999 20:59 (eg)
  */
 
 /* Notes:
@@ -220,13 +217,30 @@ static SCM syntax_let_family(SCM *pform, SCM env, char *who, int type, int len)
     al = Cons(CAR(CDR(tmp)),al);
   }
 
+  /* Things are a tricky for named let: the scope of the name of a
+   * named let encloses only the body of the let and not the
+   * initialization values of the bound variables. Thus we have: 
+   *   (let ((f -)) 
+   *      (let f ((n (f 1))) n)) => -1 
+   * and not 1 (the exemple comes from a message from Allegro
+   * Petrofsky <Allegro@Petrofsky.Berkeley.CA.US> in comp.lang.scheme.
+   * That means that the previous let is equivalent to 
+   *    (let ((f -))
+   *       ((letrec ((f (lambda (n) n))) f)
+   *          (f 1)))
+   * rather than
+   *     (let ((f -))
+   *       (letrec ((f (lambda (n) n)))
+   *          (f 1)))
+   */
   tmp = named_let ?
     	   /* named let */
-    	   LIST4(makecell(tc_letrec), 
-		 LIST1(CAR(CDR(*pform))),
-		 LIST1(Cons(Sym_lambda, 
-			    Cons(Reverse(fl), CDR(CDR(CDR(*pform)))))),
-		 Cons(CAR(CDR(*pform)), Reverse(al))) :
+           Cons(LIST4(makecell(tc_letrec), 
+		      LIST1(CAR(CDR(*pform))),
+		      LIST1(Cons(Sym_lambda, 
+				 Cons(Reverse(fl), CDR(CDR(CDR(*pform)))))),
+		      CAR(CDR(*pform))),
+		Reverse(al))  :
 	   /* normal case */
 	   Cons(makecell(type), 
 		Cons(Reverse(fl), 
@@ -265,11 +279,14 @@ PRIMITIVE STk_syntax_begin(SCM *pform, SCM env, int len)
 {
   register SCM l = CDR(*pform);
 
-  if (len == 0) Err("begin: no subform in sequence", l);
-  for ( ; NNULLP(CDR(l));  l = CDR(l))
-    EVALCAR(l);
-  if (ModifyCode()) CAR(*pform) = makecell(tc_begin);
-  SYNTAX_RETURN(CAR(l), Truth);;
+  if (len == 0) {
+    SYNTAX_RETURN(UNDEFINED, Ntruth);
+  } else {
+    for ( ; NNULLP(CDR(l));  l = CDR(l))
+      EVALCAR(l);
+    if (ModifyCode()) CAR(*pform) = makecell(tc_begin);
+    SYNTAX_RETURN(CAR(l), Truth);
+  }
 }
 
 PRIMITIVE STk_syntax_delay(SCM *pform, SCM env, int len)

@@ -3,7 +3,7 @@
 %
 %           Author: Erick Gallesio [eg@unice.fr]
 %    Creation date: ??-Nov-1993 ??:??
-% Last file update: 20-Apr-1998 11:58
+% Last file update: 16-Aug-1999 20:21
 %
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -426,6 +426,13 @@ Returns the list of symbols exported by \var{module}.
 \proto{module-symbols}{ module} {procedure}}
 \saut
 Returns the list symbols that ere defined in \var{module}.
+\end{entry}
+
+
+\begin{entry}{%
+\proto{all-modules}{ } {procedure}}
+\saut
+Returns a list of all the living modules.
 \end{entry}
 
 
@@ -973,6 +980,12 @@ Returns the handlers, or the list of handlers, associated to the signal
 a vector of all the signal handlers currently in effect. 
 \end{entry}
 
+
+\begin{entry}{%
+\proto{send-signal}{ sig} {procedure}}
+\saut 
+Sends the signal \var{sig} to the running program.
+\end{entry}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%

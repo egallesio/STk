@@ -1,25 +1,23 @@
 ;;;;
 ;;;; T k - c l a s s e s . s t k l o s	-- A set of autoloads for Tk classes
 ;;;;
-;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
-;;;; Permission to use, copy, and/or distribute this software and its
-;;;; documentation for any purpose and without fee is hereby granted, provided
-;;;; that both the above copyright notice and this permission notice appear in
-;;;; all copies and derived works.  Fees for distribution or use of this
-;;;; software or derived works may only be charged with express written
-;;;; permission of the copyright holder.  
-;;;; This software is provided ``as is'' without express or implied warranty.
-;;;;
-;;;; $Id: Tk-classes.stklos 1.17 Sat, 26 Sep 1998 19:19:52 +0200 eg $
+;;;; Permission to use, copy, modify, distribute,and license this
+;;;; software and its documentation for any purpose is hereby granted,
+;;;; provided that existing copyright notices are retained in all
+;;;; copies and that this notice is included verbatim in any
+;;;; distributions.  No written agreement, license, or royalty fee is
+;;;; required for any of the authorized uses.
+;;;; This software is provided ``AS IS'' without express or implied
+;;;; warranty.
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 19-Sep-1994 16:00
-;;;; Last file update: 26-Sep-1998 16:00
+;;;; Last file update:  3-Sep-1999 20:11 (eg)
 
 
-(require "Tk-meta")	; for all the Tk meta classes
-
+(require "Tk-meta")	; for all the Tk meta classe
 
 (with-module STklos+Tk
 
@@ -40,7 +38,12 @@
   (make-autoload "Basics"  	<Tk-composite-widget> <Tk-composite-toplevel> 
 				<Tk-simple-widget>)
   (make-autoload "Button"  	<Label> <Button> <Check-button> <Radio-button>)
-  (make-autoload "Canvas"  	<Canvas> <canvas-group> <Tk-canvas-item>)
+  (make-autoload "Canvas"  	<Canvas> <Canvas-group> <Tk-canvas-item>
+		 		<Tk-canvas-figure> <Tk-composite-item> 
+				<Canvas-group> <Arc> <Bitmap-item> <Image-item>
+				<Line> <Oval> <Polygon> <Rectangle> <Text-item>
+				<Canvas-Window>) 
+  (make-autoload "Combobox"	<Combobox>)
   (make-autoload "Entry"   	<Entry>)
   (make-autoload "Listbox"  	<Listbox>)
   (make-autoload "Menu"    	<Menu> <Menu-button> make-menubar)
@@ -56,6 +59,7 @@
   (make-autoload "Colorbox"	<Color-box>)
   (make-autoload "Defbutton"	<Default-button>)
   (make-autoload "Filebox"	<File-box> make-file-box)
+  (make-autoload "Font"		<Font>)
   (make-autoload "Gauge"	<Gauge> <Valued-gauge>)
   (make-autoload "Hierarchy"	<Hierarchy-tree> <Hierarchy-item>)
   (make-autoload "Lentry"	<Labeled-entry>)
@@ -69,11 +73,14 @@
   (make-autoload "Paned"	<HPaned> <VPaned>)
   (make-autoload "Schemetext"	<Scheme-text>)
   (make-autoload "Scrollbox"	<Scroll-Listbox>)
+  (make-autoload "Scrollframe"	<Scroll-Frame>)
   (make-autoload "Scrollcanvas"	<Scroll-Canvas>)
   (make-autoload "Scrolltext"	<Scroll-Text>)
+  (make-autoload "Toolbar"	<Toolbar> make-toolbar default-release-toolbar)
   (make-autoload "Image" 	<Image> <Bitmap-image> <Photo-image> <Pixmap-Image>)
 
-  (make-autoload "Tk-active"	<Tk-active-metaclass>)
+  (make-autoload "Tk-active"	<Tk-active-metaclass> 
+		 		<Tk-active-and-propagated-metaclass>)
 
   ;==== OS dependent part
   (when (eq? (os-kind) 'Unix)

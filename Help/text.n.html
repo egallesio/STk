@@ -915,7 +915,7 @@ If the specified range contains embedded windows, no information
 about them is included in the returned string.
 
 <P>
-<DT><A NAME="M114">{(widget-name} {B'image} {Ioption} {R?Iarg} arg {...R?)}</A><DD>
+<DT><A NAME="M114">(<I>widget-name </I><B>'image </B><I>option </I>?<I>arg arg ...</I>?)</A><DD>
 This command is used to manipulate embedded images.
 The behavior of the command depends on the <I>option</I> argument
 that follows the <B>tag</B> argument.
@@ -923,13 +923,13 @@ The following forms of the command are currently supported:
 <P>
 <P>
 <DL>
-<DT><A NAME="M115">{(widget-name} {B'image} {'cgetR} {Iindex} {optionR)}</A><DD>
+<DT><A NAME="M115">(<I>widget-name </I><B>'image 'cget</B> <I>index option</I>)</A><DD>
 Returns the value of a configuration option for an embedded image.
 <I>Index</I> identifies the embedded image, and <I>option</I>
 specifies a particular configuration option, which must be one of
 the ones listed in the section EMBEDDED IMAGES.
 <P>
-<DT><A NAME="M116">{(widget-name} {B'image} 'configure {IindexR} {?Ioption} value {...R?)}</A><DD>
+<DT><A NAME="M116">(<I>widget-name </I><B>'image 'configure </B><I>index</I> ?<I>option value ...</I>?)</A><DD>
 Query or modify the configuration options for an embedded image.
 If no <I>option</I> is specified, returns a list describing all of
 the available options for the embedded image at <I>index</I>
@@ -944,7 +944,7 @@ this case the command returns an empty string.
 See EMBEDDED IMAGES for information on the options that
 are supported.
 <P>
-<DT><A NAME="M117">{(widget-name} {B'image} 'create {IindexR} {?Ioption} value {...R?)}</A><DD>
+<DT><A NAME="M117">(<I>Widget-name </I><B>'image 'create </B><I>index</I> ?<I>option value ...</I>?)</A><DD>
 This command creates a new image annotation, which will appear
 in the text at the position given by <I>index</I>.
 Any number of <I>option-value</I> pairs may be specified to
@@ -954,7 +954,7 @@ this image.
 See EMBEDDED IMAGES for information on the options that
 are supported, and a description of the identifier returned.
 <P>
-<DT><A NAME="M118">{(widget-name} {B'image} {'namesR)}</A><DD>
+<DT><A NAME="M118">(<I>Widget-name </I><B>'image 'names</B>)</A><DD>
 Returns a list whose elements are the names of all image instances currently
 embedded in <I>window</I>.
 <P>

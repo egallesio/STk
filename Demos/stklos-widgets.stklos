@@ -20,7 +20,8 @@
 (define composite-widgets '(Choice-box 
 			    Color-Box
                             Default-button 
-                            File-box 
+                            File-box
+			    Font-chooser
 			    Gauge
 			    Help-Balloon
 			    Hierarchy-Tree
@@ -32,6 +33,7 @@
 			    Scroll-Canvas
                             Scroll-Listbox
 			    Scroll-text
+			    Toolbar
 			    Valued-Gauge))
 
 (for-each (lambda (x)
@@ -55,7 +57,7 @@
 
 ;=============================================================================
 (define (demo-color-box)
-  (let ((f (make <Color-Box> :value "gray75")))
+  (let ((f (make <Color-Box> :value "gray75" :title "Color Box Demo")))
     (colorbox-wait-result f)))
 
 ;=============================================================================
@@ -185,9 +187,8 @@
   ;; Make a Menu bar
   ;;
   (define tl   (make <Toplevel> :title "Multiple and Inner windows demo"))
-  (define top  (make <Frame> :parent tl))
   (define col '#("violet" "skyblue1" "Misty Rose" "Plum" "grey40"))
-  (define menu (make-menubar top 
+  (define menu (make-toolbar tl
      `(("Menu" 
 	("Add one"  ,(let ((counter 0))
 		       (lambda () 
@@ -198,13 +199,15 @@
 			 (set! counter (1+ counter)))))
 	("")
 	("Quit"     ,(lambda () (destroy tl)))))))
-  (pack menu :side "left" :expand #f)
-  (pack top :fill "x")
+  (pack menu :side "top" :expand #f :fill 'x)
   ;;
   ;; Make a multiple window
   ;;
   (define f (make <Multiple-window> :parent tl :background "cyan4"))
   (pack f :fill "both" :expand #t)
+
+  ;; Attach the floting toolbar to the f widget
+  (slot-set! menu 'release-command (default-release-toolbar f))
 
   (define f1 (make <Inner-window> :parent f :title "A Text window"))
   (define f2 (make <Inner-window> :parent f :title "A canvas window"))
@@ -272,4 +275,71 @@
     (make <Notepad-Tab> :parent f :text "host2"             :action Host)
     (make <Notepad-Tab> :parent f :text "Multi-line\nlabel" :action Mess)
     (make <Notepad-Tab> :parent f :bitmap "questhead" :width 30 :action Host)))
- 
+
+;==============================================================================
+(define (demo-toolbar)
+  (define-macro (P x) ; A macro for printing traces (for this demo)
+    `(lambda () (display ,x) (newline)))
+
+  (define top (make <toplevel> :title "Toolbar Demo"))
+  (define st (make <Scroll-Text> :parent top :font '(Helvetica 18 bold)
+		   :width 48 :height 12
+		   :value (& "\n\n\n"
+			     "\tTo re-attach a detached toolbar, drag it on\n"
+			     "\tone of the 4 sides of this text editor")))
+  (define action (default-release-toolbar st))
+  
+  (define f1 
+    (make-toolbar *top-root*
+		  `(("File"
+		       ("---")			;; we want a tear-off
+		       ("Open" 	,(P "Open"))
+		       ("Close"	,(P "Close"))
+		       ("")			;; insert a  separator
+		       ("Exit"	,(lambda() (exit 0))))
+		    ("Edit"
+		       ("Cut" 	,(P "Cut"))
+		       ("Copy"  ,(P "Copy"))
+		       ("Paste" ,(P "Paste"))
+		       ("Submenu" 		;; a submenu without tear-off
+			  ("sub1"  ,(P "sub1"))
+			  ("sub2"  ,(P "sub2")))
+		       ;; a completely managed item
+		       (radiobutton :label "Foo" :foreground "blue3")
+		       (radiobutton :label "Bar" :foreground "blue3"))
+		    0
+		    ("Help"
+		       ("About"	,(P "About"))))		  
+		:parent top :background "Bisque3" :release-command action))
+
+  (define f2 
+    (make-toolbar *top-root*
+		`(("tb_console.gif"   "Open New Console"      ,(P 1))
+		  ("tb_edit.gif"      "Open New Editor"       ,(P 2))
+		  ("tb_customize.gif" "Customize Environment" ,(P 3))
+		  20 		; insert a 20 pixels wide space 
+		  ("tb_fileopen.gif"  "Load File"   	      ,(P 4)))
+		:parent top :background "Bisque4" :release-command action))
+
+  (define f3 
+    (make-toolbar *top-root*
+		`(("tb_copy.gif"  "Copy" 	    ,(P 5))
+		  ("tb_paste.gif" "Paste"           ,(P 6))
+		  ("tb_cut.gif"   "Cut" 	    ,(P 7))
+		  20
+		  ("tb_info.gif" "Help on Console"  , (P 8)))
+		:parent top :background "Wheat2" :release-command action
+		:orientation "vertical"))
+
+  (pack f1 f2 :side "top" :fill 'x)
+  (pack f3 :side "left" :fill 'y)
+  (pack st :fill 'both :expand #t :side "bottom"))
+
+;=============================================================================
+(define (demo-font-chooser)
+  (require "font-chooser")
+  (let ((font (make-font-chooser)))
+    (if font 
+	(format #t "You have choosed the font ~S\n" font)))
+	(format #t "**Cancel**"))
+	

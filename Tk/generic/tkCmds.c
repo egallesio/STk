@@ -17,6 +17,13 @@
 #include "tkInt.h"
 #include <errno.h>
 
+#ifdef BGLK_CODE
+#  define STk_create_tcl_object		SCM_CREATE_TCL_OBJECT
+#  define STk_get_NIL_value    		SCM_NIL
+#  define STk_get_widget_value		tcl_lookup_command
+#  define STk_convert_Tcl_string2list	SCM_tk_string_to_scm_list
+#endif
+
 /*
  * Forward declarations for procedures defined later in this file:
  */
@@ -58,7 +65,7 @@ Tk_BellCmd(clientData, interp, argc, argv)
     size_t length;
 
     if ((argc != 1) && (argc != 3)) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	Tcl_AppendResult(interp, "wrong # args: should be (", argv[0],
 		" ?:displayof window?)", (char *) NULL);
 #else
@@ -72,7 +79,7 @@ Tk_BellCmd(clientData, interp, argc, argv)
 	length = strlen(argv[1]);
 	if ((length < 2) || (strncmp(argv[1], "-displayof", length) != 0)) {
 	    Tcl_AppendResult(interp, "bad option \"", argv[1],
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		    "\": must be :displayof", (char *) NULL);
 #else
 		    "\": must be -displayof", (char *) NULL);
@@ -135,21 +142,28 @@ Tk_BindCmd(clientData, interp, argc, argv)
     }
 
     if (argc == 4) {
+#ifndef SCM_CODE
 	int append = 0;
+#endif
 	unsigned long mask;
 
 	if (argv[3][0] == 0) {
 	    return Tk_DeleteBinding(interp, winPtr->mainPtr->bindingTable,
 		    object, argv[2]);
 	}
-#ifndef STk_CODE
+#ifndef SCM_CODE
 	if (argv[3][0] == '+') {
 	    argv[3]++;
 	    append = 1;
 	}
 #endif
+#ifndef SCM_CODE
 	mask = Tk_CreateBinding(interp, winPtr->mainPtr->bindingTable,
 		object, argv[2], argv[3], append);
+#else
+	mask = Tk_CreateBinding(interp, winPtr->mainPtr->bindingTable,
+		object, argv[2], argv[3], argv[1], "");
+#endif
 	if (mask == 0) {
 	    return TCL_ERROR;
 	}
@@ -163,7 +177,7 @@ Tk_BindCmd(clientData, interp, argc, argv)
 	    return TCL_OK;
 	}
 
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	if (*command == '(') { 
 	  char *p = interp->result;
           
@@ -304,7 +318,7 @@ Tk_BindtagsCmd(clientData, interp, argc, argv)
 	return TCL_ERROR;
     }
     if (argc == 2) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
         Tcl_AppendResult(interp, "(", NULL);
 #endif
 	if (winPtr->numTags == 0) {
@@ -312,8 +326,13 @@ Tk_BindtagsCmd(clientData, interp, argc, argv)
 	    Tcl_AppendResult(interp, " #.", winPtr->pathName, NULL);
 	    Tcl_AppendResult(interp, " \"", winPtr->classUid, "\"", NULL);
 #else
+#   ifdef BGLK_CODE
+	    Tcl_AppendResult(interp, " \"", winPtr->pathName, "\"", NULL);
+	    Tcl_AppendResult(interp, " \"", winPtr->classUid, "\"", NULL);
+#   else
 	    Tcl_AppendElement(interp, winPtr->pathName);
 	    Tcl_AppendElement(interp, winPtr->classUid);
+#   endif
 #endif
 	    for (winPtr2 = winPtr;
 		    (winPtr2 != NULL) && !(winPtr2->flags & TK_TOP_LEVEL);
@@ -324,10 +343,14 @@ Tk_BindtagsCmd(clientData, interp, argc, argv)
 #ifdef STk_CODE
 		Tcl_AppendResult(interp, " #.", winPtr2->pathName, NULL);
 #else
+#   ifdef BGLK_CODE
+		Tcl_AppendResult(interp, " \"", winPtr2->pathName, "\"", NULL);
+#   else
 		Tcl_AppendElement(interp, winPtr2->pathName);
+#   endif
 #endif
 	    }
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    Tcl_AppendElement(interp, "\"all\"");
 #else
 	    Tcl_AppendElement(interp, "all");
@@ -342,11 +365,16 @@ Tk_BindtagsCmd(clientData, interp, argc, argv)
 		else
 		  Tcl_AppendResult(interp, " \"", s, "\"", NULL);
 #else
+#   ifdef BGLK_CODE
+		Tcl_AppendResult(interp, " \"", (char *) winPtr->tagPtr[i], 
+				 "\"", NULL);
+#   else		
 		Tcl_AppendElement(interp, (char *) winPtr->tagPtr[i]);
+#   endif
 #endif
 	    }
 	}
-#ifdef STk_CODE
+#ifdef SCM_CODE
         Tcl_AppendResult(interp, ")", NULL);
 #endif
 	return TCL_OK;
@@ -375,7 +403,11 @@ Tk_BindtagsCmd(clientData, interp, argc, argv)
 	     * if there is one.
 	     */
 
+#ifdef BGLK_CODE
+	    copy = (char *) ckalloc_atomic((unsigned) (strlen(p) + 1));
+#else
 	    copy = (char *) ckalloc((unsigned) (strlen(p) + 1));
+#endif
 	    strcpy(copy, p);
 	    winPtr->tagPtr[i] = (ClientData) copy;
 	} else {
@@ -681,7 +713,7 @@ Tk_TkObjCmd(clientData, interp, objc, objv)
 		HeightMMOfScreen(screenPtr) = height;
 	    } else {
 		Tcl_WrongNumArgs(interp, 2, objv,
-#ifdef STk_CODE
+#ifdef SCM_CODE
 			"?:displayof window? ?factor?");
 #else
 			"?-displayof window? ?factor?");
@@ -1036,7 +1068,7 @@ Tk_WinfoObjCmd(clientData, interp, objc, objv)
 	case WIN_CHILDREN: {
 	    Tcl_Obj *strPtr;
 
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    Tcl_SetObjResult(interp, STk_create_tcl_object(STk_get_NIL_value()));
 	    winPtr = winPtr->childList;
 	    for ( ; winPtr != NULL; winPtr = winPtr->nextPtr) {
@@ -1087,7 +1119,7 @@ Tk_WinfoObjCmd(clientData, interp, objc, objv)
 	    Tk_MakeWindowExist(tkwin);
 	    TkpPrintWindowId(buf, Tk_WindowId(tkwin));
 	    Tcl_ResetResult(interp);
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    {
 	      long res;
 	      sscanf(buf, "%lx", &res);
@@ -1110,7 +1142,7 @@ Tk_WinfoObjCmd(clientData, interp, objc, objv)
 		Tcl_SetStringObj(Tcl_GetObjResult(interp),
 		        winPtr->geomMgrPtr->name, -1);
 	    }
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    else 
 	      Tcl_SetBooleanObj(Tcl_GetObjResult(interp), 0);
 #endif
@@ -1124,7 +1156,7 @@ Tk_WinfoObjCmd(clientData, interp, objc, objv)
 	case WIN_PARENT: {
 	    Tcl_ResetResult(interp);
 	    if (winPtr->parentPtr != NULL) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	        Tcl_SetObjResult(interp,
 				 STk_create_tcl_object(
 				   STk_get_widget_value(
@@ -1161,7 +1193,7 @@ Tk_WinfoObjCmd(clientData, interp, objc, objv)
 	    Tcl_ResetResult(interp);
 	    if (useX & useY) {
 	        sprintf(buf, "%d %d", x, y);
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		Tcl_SetObjResult(interp, 
 				 STk_create_tcl_object(
 				   STk_convert_Tcl_string2list(buf)));
@@ -1251,7 +1283,7 @@ Tk_WinfoObjCmd(clientData, interp, objc, objv)
 	case WIN_TOPLEVEL: {
 	    winPtr = GetToplevel(tkwin);
 	    if (winPtr != NULL) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	        Tcl_SetObjResult(interp, 
 				 STk_create_tcl_object(
 				   STk_get_widget_value(winPtr->pathName)));
@@ -1293,7 +1325,7 @@ Tk_WinfoObjCmd(clientData, interp, objc, objv)
 	    break;
 	}
 	case WIN_VISUALID: {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    Tcl_SetLongObj(Tcl_GetObjResult(interp),
 			   (long) XVisualIDFromVisual(Tk_Visual(tkwin)));
 #else
@@ -1354,7 +1386,7 @@ Tk_WinfoObjCmd(clientData, interp, objc, objv)
 		return TCL_ERROR;
 	    }
 	    if (objc - skip != 3) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	        Tcl_WrongNumArgs(interp, 2, objv, "?:displayof window? name");
 #else
 	        Tcl_WrongNumArgs(interp, 2, objv, "?-displayof window? name");
@@ -1377,7 +1409,7 @@ Tk_WinfoObjCmd(clientData, interp, objc, objv)
 		return TCL_ERROR;
 	    }
 	    if (objc - skip != 3) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		Tcl_WrongNumArgs(interp, 2, objv, "?:displayof window? id");
 #else
 		Tcl_WrongNumArgs(interp, 2, objv, "?-displayof window? id");
@@ -1406,7 +1438,7 @@ Tk_WinfoObjCmd(clientData, interp, objc, objv)
 	    }
 	    if (objc - skip != 4) {
 		Tcl_WrongNumArgs(interp, 2, objv,
-#ifdef STk_CODE
+#ifdef SCM_CODE
 			"?:displayof window? rootX rootY");
 #else
 			"?-displayof window? rootX rootY");
@@ -1424,7 +1456,7 @@ Tk_WinfoObjCmd(clientData, interp, objc, objv)
 	    }
 	    tkwin = Tk_CoordsToWindow(x, y, tkwin);
 	    if (tkwin != NULL) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	        Tcl_SetObjResult(interp,
 				 STk_create_tcl_object(
 				   STk_get_widget_value(Tk_PathName(tkwin))));
@@ -1434,7 +1466,7 @@ Tk_WinfoObjCmd(clientData, interp, objc, objv)
 			Tk_PathName(tkwin), -1);
 #endif
 	    }
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    else {
 	      /* No window; return #f */
 	      Tcl_SetBooleanObj(Tcl_GetObjResult(interp),0);
@@ -1450,7 +1482,7 @@ Tk_WinfoObjCmd(clientData, interp, objc, objv)
 		return TCL_ERROR;
 	    }
 	    if (objc - skip != 2) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		Tcl_WrongNumArgs(interp, 2, objv, "?:displayof window?");
 #else
 		Tcl_WrongNumArgs(interp, 2, objv, "?-displayof window?");
@@ -1458,7 +1490,7 @@ Tk_WinfoObjCmd(clientData, interp, objc, objv)
 		return TCL_ERROR;
 	    }
 	    result = TkGetInterpNames(interp, tkwin);
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    if (result == TCL_OK) {
 	      Tcl_SetObjResult(interp, 
 			       STk_create_tcl_object(
@@ -1475,7 +1507,7 @@ Tk_WinfoObjCmd(clientData, interp, objc, objv)
 		return TCL_ERROR;
 	    }
 	    if (objc - skip != 3) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		Tcl_WrongNumArgs(interp, 2, objv, "?:displayof window? id");
 #else
 		Tcl_WrongNumArgs(interp, 2, objv, "?-displayof window? id");
@@ -1505,7 +1537,7 @@ Tk_WinfoObjCmd(clientData, interp, objc, objv)
 
 	    tkwin = (Tk_Window) winPtr;
 	    if (Tk_PathName(tkwin) != NULL) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	        Tcl_SetObjResult(interp,
 				 STk_create_tcl_object(
 				   STk_get_widget_value(Tk_PathName(tkwin))));
@@ -1601,7 +1633,7 @@ Tk_WinfoObjCmd(clientData, interp, objc, objv)
 	    sprintf(buf, "%d %d %d", colorPtr->red, colorPtr->green,
 		    colorPtr->blue);
 	    Tk_FreeColor(colorPtr);
-#ifdef STk_CODE
+#ifdef SCM_CODE
 	    Tcl_SetObjResult(interp, 
 			     STk_create_tcl_object(
 			       STk_convert_Tcl_string2list(buf)));
@@ -1616,7 +1648,7 @@ Tk_WinfoObjCmd(clientData, interp, objc, objv)
 	    int count, i;
 	    char visualIdString[16];
 	    int includeVisualId;
-#ifndef STk_CODE
+#ifndef SCM_CODE
 	    Tcl_Obj *strPtr;
 #endif
 
@@ -1627,7 +1659,7 @@ Tk_WinfoObjCmd(clientData, interp, objc, objv)
 			    "includeids") == 0)) {
 		includeVisualId = 1;
 	    } else {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		Tcl_WrongNumArgs(interp, 2, objv, "window ?'includeids?");
 #else
 		Tcl_WrongNumArgs(interp, 2, objv, "window ?includeids?");
@@ -1658,7 +1690,7 @@ Tk_WinfoObjCmd(clientData, interp, objc, objv)
 		    sprintf(buf, "%s %d", string, visInfoPtr[i].depth);
 		}
 		if (includeVisualId) {
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		    sprintf(visualIdString, " %d",
 #else
 		    sprintf(visualIdString, " 0x%x",
@@ -1666,10 +1698,10 @@ Tk_WinfoObjCmd(clientData, interp, objc, objv)
 			    (unsigned int) visInfoPtr[i].visualid);
 		    strcat(buf, visualIdString);
 		}
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		Tcl_ListObjAppendElement(interp,
-					 Tcl_GetObjResult(interp),
-					 STk_convert_Tcl_string2list(buf));
+				Tcl_GetObjResult(interp),
+				(Tcl_Obj *) STk_convert_Tcl_string2list(buf));
 #else
 		strPtr = Tcl_NewStringObj(buf, -1);
 		Tcl_ListObjAppendElement(NULL, Tcl_GetObjResult(interp),
@@ -1734,7 +1766,7 @@ TkGetDisplayOf(interp, objc, objv, tkwinPtr)
     if ((length >= 2) && (strncmp(string, "-displayof", (unsigned) length) == 0)) {
         if (objc < 2) {
 	    Tcl_SetStringObj(Tcl_GetObjResult(interp),
-#ifdef STk_CODE
+#ifdef SCM_CODE
 		    "value for \":displayof\" missing", -1);
 #else
 		    "value for \"-displayof\" missing", -1);

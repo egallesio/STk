@@ -1,25 +1,27 @@
 /*
  *  p o r t . c			-- ports implementation
  *
- * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
- * Permission to use, copy, and/or distribute this software and its
- * documentation for any purpose and without fee is hereby granted, provided
- * that both the above copyright notice and this permission notice appear in
- * all copies and derived works.  Fees for distribution or use of this
- * software or derived works may only be charged with express written
- * permission of the copyright holder.  
- * This software is provided ``as is'' without express or implied warranty.
- *
- * This software is a derivative work of other copyrighted softwares; the
- * copyright notices of these softwares are placed in the file COPYRIGHTS
- *
- * $Id: port.c 1.23 Fri, 22 Jan 1999 14:44:12 +0100 eg $
+ * Permission to use, copy, modify, distribute,and license this
+ * software and its documentation for any purpose is hereby granted,
+ * provided that existing copyright notices are retained in all
+ * copies and that this notice is included verbatim in any
+ * distributions.  No written agreement, license, or royalty fee is
+ * required for any of the authorized uses.
+ * This software is provided ``AS IS'' without express or implied
+ * warranty.
  *
  *            Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 17-Feb-1993 12:27
- * Last file update: 26-Dec-1998 21:36
+ * Last file update:  3-Sep-1999 20:21 (eg)
+ *
+ * Win32 support by Steve Pruitt <steve@pruitt.net>
+ * 	- Modified do_load for dynamic loading of WIN32 Dll files
+ * 	- Added check for *shared-prefix* in try_loadfile 
+ * 	- Added "#define strcasecmp stricmp" for Win32 *shared-prefix* support
+ * 	- Modified STk_open_file to allow Win32 modes "wb" and "rb"
  *
  */
 
@@ -31,6 +33,8 @@
 
 
 #if defined(WIN32) && !defined(CYGWIN32)
+#  define strcasecmp stricmp
+
   /* Provide substitute functions dor WIN32 */
   FILE *popen(char *cmd, char *mode) 
   {	
@@ -68,6 +72,11 @@ static SCM makeport(char *name, int type, char *mode, int error)
   int flags = 0;
   FILE *f;
   char *full_name;
+
+#ifdef WIN32
+  /* Transform name in an absolute name */
+  name = CHARS(STk_internal_expand_file_name(name));
+#endif
 
   if (strncmp(name, "| ", 2)) {
     full_name = CHARS(STk_internal_expand_file_name(name));
@@ -114,8 +123,14 @@ void STk_close_file_port(SCM port)
 #endif
   if (PORT_FLAGS(port) & PIPE_PORT)   		    /* Pipe port */
     pclose(f);
-  else 						    /* File port */
-    fclose(f);
+  else { 					    /* File port */
+    /* FIXME: Normally close should suffice but glibc2.1.1 on Linux dumps 
+     * core if a file is closed two times. (this arrives when a socket is 
+     * lost and the interpreter call this function). 
+     */
+    fflush(f); 
+    close(fileno(f));
+  }
 }
 
 
@@ -158,6 +173,11 @@ static int do_load(char *full_name, SCM module)
 {
   int c;
 
+#ifdef WIN32
+  /* Transform name in an absolute name */
+  full_name = CHARS(STk_internal_expand_file_name(full_name));
+#endif
+
   if (!STk_dirp(full_name)) {
      FILE *f = fopen(full_name, "r");
      
@@ -172,7 +192,20 @@ static int do_load(char *full_name, SCM module)
       * use identical conventions 
       */
      c = getc(f); fclose(f);
+
+#if (defined(WIN32) && defined(USE_DYNLOAD) && !defined(CYGWIN32))
+     /* If suffix is a Win32 shared-suffix then assume object file */
+     if (c != EOF) {
+	char *s, *shared_suffix;
+	s=full_name;
+	shared_suffix=CHARS(STk_lookup_variable("*shared-suffix*", NIL));
+	s = s + strlen(s) - strlen(shared_suffix);
+        if (stricmp(s,shared_suffix) == 0) c = *(s-1); else c = EOF;
+     }
+     if (c == '.') {
+#else
      if (c != EOF && ((iscntrl(c)&& c!= '\n' && c!= '\t') || !isascii(c))) {
+#endif
        STk_load_object_file(full_name);
      }
      else {
@@ -311,10 +344,20 @@ SCM STk_load_file(char *fname, int err_if_absent, SCM module)
 
 PRIMITIVE STk_input_portp(SCM port)
 {
-  return IPORTP(port)? Truth: Ntruth;
+  return INP(port) ? Truth: Ntruth;
 }
 
 PRIMITIVE STk_output_portp(SCM port)
+{
+  return OUTP(port)? Truth: Ntruth;
+}
+
+PRIMITIVE STk_input_file_portp(SCM port)
+{
+  return IPORTP(port) ? Truth: Ntruth;
+}
+
+PRIMITIVE STk_output_file_portp(SCM port)
 {
   return OPORTP(port)? Truth: Ntruth;
 }
@@ -347,7 +390,7 @@ SCM STk_redirect_input(SCM port, SCM thunk)
   PUSH_ERROR_HANDLER
     {
       STk_curr_iport = port;
-      result         = Apply(thunk, NIL);
+      result         = Apply0(thunk);
       STk_curr_iport = prev_iport;
     }
   WHEN_ERROR
@@ -401,7 +444,7 @@ SCM STk_redirect_output(SCM port, SCM thunk)
   PUSH_ERROR_HANDLER
     {
       STk_curr_oport = port;
-      result         = Apply(thunk, NIL);
+      result         = Apply0(thunk);
       STk_curr_oport = prev_oport;
     }
   WHEN_ERROR
@@ -456,7 +499,7 @@ SCM STk_redirect_error(SCM port, SCM thunk)
   PUSH_ERROR_HANDLER
     {
       STk_curr_eport = port;
-      result         = Apply(thunk, NIL);
+      result         = Apply0(thunk);
       STk_curr_eport = prev_eport;
     }
   WHEN_ERROR
@@ -695,7 +738,7 @@ static SCM internal_format(SCM l,int len,int error)/* a very simple and poor one
   return format_in_string ? STk_get_output_string(port) : UNDEFINED;
 
 TooMuch:
-  Serror("too much ~ in format string", l);
+  Serror("too many ``~'' in format string", l);
   return UNDEFINED;
 }
 
@@ -734,7 +777,14 @@ PRIMITIVE STk_open_file(SCM filename, SCM mode)
   ENTER_PRIMITIVE("open-file");
 
   if (NSTRINGP(filename)) Serror("bad file name", filename); 
+
+/* allow modes "wb" and "rb" on win32 systems */
+#if (defined(MSC_VER) && defined(WIN32) && !defined(CYGWIN32))
+  if (NSTRINGP(mode)) goto Error;
+  if (CHARS(mode)[1] != '\0' && CHARS(mode)[1] != 'b') goto Error;
+#else
   if (NSTRINGP(mode) || CHARS(mode)[1] != '\0') goto Error;
+#endif
   
   switch (CHARS(mode)[0]) {
     case 'a': 
@@ -753,6 +803,14 @@ PRIMITIVE STk_close_port(SCM port)
   if (INP(port) || OUTP(port)) STk_close(port);
   else Err("close-port: bad port", port);
   return UNDEFINED;
+}
+
+PRIMITIVE STk_port_closedp(SCM port)
+{
+  ENTER_PRIMITIVE("port-closed?");
+
+  if (!(INP(port) || OUTP(port))) Serror("bad port", port);
+  return (PORT_FLAGS(port) & PORT_CLOSED) ? Truth : Ntruth;
 }
 
 PRIMITIVE STk_read_line(SCM port)
@@ -823,7 +881,6 @@ PRIMITIVE STk_write_star(SCM expr, SCM port)
   STk_print_star(expr, port);
   return UNDEFINED;
 }
-
 
 /******************************************************************************
  *
@@ -945,7 +1002,7 @@ PRIMITIVE STk_autoloadp(SCM symbol, SCM module)
 
 static void apply_file_closure(SCM closure)
 {
-  Apply(closure, NIL);
+  Apply0(closure);
 }
  
 

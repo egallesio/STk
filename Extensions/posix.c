@@ -2,25 +2,22 @@
  *
  * p o s i x . c			-- Provide some POSIX.1 functions 
  *
- * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
- * Permission to use, copy, and/or distribute this software and its
- * documentation for any purpose and without fee is hereby granted, provided
- * that both the above copyright notice and this permission notice appear in
- * all copies and derived works.  Fees for distribution or use of this
- * software or derived works may only be charged with express written
- * permission of the copyright holder.  
- * This software is provided ``as is'' without express or implied warranty.
+ * Permission to use, copy, modify, distribute,and license this
+ * software and its documentation for any purpose is hereby granted,
+ * provided that existing copyright notices are retained in all
+ * copies and that this notice is included verbatim in any
+ * distributions.  No written agreement, license, or royalty fee is
+ * required for any of the authorized uses.
+ * This software is provided ``AS IS'' without express or implied
+ * warranty.
  *
- * This software is a derivative work of other copyrighted softwares; the
- * copyright notices of these softwares are placed in the file COPYRIGHTS
- *
- * $Id: posix.c 1.3 Wed, 18 Nov 1998 16:16:26 +0100 eg $ 
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 14-Mar-1995 20:14
- * Last file update: 10-Nov-1998 23:35
+ * Last file update:  3-Sep-1999 20:21 (eg)
  *
  * This file contains also contains code additions from Shiro Kawai 
  * <shiro@sqush.squareusa.com>
