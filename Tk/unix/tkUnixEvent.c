@@ -9,7 +9,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkUnixEvent.c 1.16 97/06/06 11:23:15
+ * SCCS: @(#) tkUnixEvent.c 1.17 97/09/11 12:51:04
  */
 
 #include "tkInt.h"
@@ -111,8 +111,6 @@ TkpOpenDisplay(display_name)
     TkDisplay *dispPtr;
     Display *display = XOpenDisplay(display_name);
 
-    display = XOpenDisplay(display_name);
-
     if (display == NULL) {
 	return NULL;
     }
@@ -148,6 +146,7 @@ TkpCloseDisplay(displayPtr)
     if (dispPtr->display != 0) {
         Tcl_DeleteFileHandler(ConnectionNumber(dispPtr->display));
 	
+        (void) XSync(dispPtr->display, False);
         (void) XCloseDisplay(dispPtr->display);
     }
     

@@ -1,0 +1,47 @@
+;;;; b a s e 6 4 . s t k 				-- Base 64 support
+;;;;
+;;;; Copyright © 1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; $Id: base64.stk 1.1 Mon, 20 Jul 1998 19:44:40 +0200 eg $
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 20-Jul-1998 18:43
+;;;; Last file update: 20-Jul-1998 19:15
+
+
+(if (symbol-bound? '%init-base64)
+    ;; Html module is in the core interpreter
+    (%init-base64)
+    ;; Try to load hash table dynamically
+    (load (string-append "base64." *shared-suffix*)))
+
+
+;;;
+;;; Public procedures 
+;;; 
+(define base64-encode-string #f)
+(define base64-decode-string #f)
+
+
+;;;
+;;; Impl.
+;;;
+(let ((encode/decode (lambda (op)
+		       (lambda (str)
+			 (let ((in  (open-input-string str))
+			       (out (open-output-string)))
+			   (op in out)
+			   (get-output-string out))))))
+
+  (set! base64-encode-string (encode/decode base64-encode))
+  (set! base64-decode-string (encode/decode base64-decode)))
+
+(provide "base64")

@@ -1,0 +1,97 @@
+;;;;
+;;;; m e t h o d - e d i t o r . s t k l o s -- Editor for STklos methods and gf
+;;;;
+;;;; Copyright © 1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; $Id: method-editor.stklos 1.1 Sat, 26 Sep 1998 19:19:52 +0200 eg $
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 24-Sep-1998 16:32
+;;;; Last file update: 26-Sep-1998 17:28
+
+(require "Tk-classes")
+
+;;;
+;;; Utilities
+;;;
+
+(define (method->list  m)
+  (let ((gf (method-generic-function m)))
+    (if gf
+	(let ((proc (uncode (procedure-body (method-procedure m))))
+	      (spec (map* class-name (method-specializers m))))
+	  `(define-method ,(generic-function-name gf) ,(map* list (cdadr proc) spec)
+	     ,@(cddr proc)))
+	;; Method with no associated method
+	'())))
+
+;=============================================================================
+;
+; 			m e t h o d - e d i t o r 
+;
+;=============================================================================
+(define-method  method-editor ((m <method>) parent)
+  
+  (define (make-buttons parent edit env)
+    (let* ((f (make <Frame>  :parent parent :border-width 2 :relief "ridge"))
+	   (e (make <Button> :parent f :text "Eval" :border-width 0
+		    	     :command (lambda () 
+					(eval-string (value edit) env))))
+	   (c (make <Button> :parent f :text "Close" :border-width 0
+		    	     :command (lambda () (destroy parent)))))
+      (pack c e :side 'left)
+      f))
+
+  (let* ((class (if (is-a? parent <Multiple-window>) <Inner-Window> <Toplevel>))
+	 (top   (make class :title m :parent parent))
+	 (body  (pp (method->list m) 75 #f))
+	 (env   (procedure-environment (method-procedure m)))
+	 (edit  (make <Scheme-Text> :parent top :width 80 :background "white" 
+		      		    :value body))
+	 (but  (make-buttons top edit env)))
+    (pack but  :expand #f :fill "x")
+    (pack edit :expand #t :fill "both")
+    top))
+
+
+(define-method method-editor ((m <method>))	; without parent
+  (method-editor m *top-root*))
+
+;=============================================================================
+;
+; 			     g f - e d i t o r 
+;
+;=============================================================================
+(define-method gf-editor ((gf <generic>))
+
+  (define (make-buttons parent)
+    (let* ((f (make <Frame> :parent parent :border-width 2 :relief "ridge"))
+	   (t (make <Label> :parent f :anchor 'w
+		    :text (format #f "Methods of `~S'" (generic-function-name gf))))
+	   (e (make <Button> :parent f :text "Close" 
+		    	     :command (lambda () (destroy parent)))))
+      (pack t :fill 'x :expand #t :side 'left :padx 5)
+      (pack e :side 'left)
+      f))
+
+  (let* ((top  (make <Toplevel> :title "Generic Function Editor"))
+	 (win  (make <Multiple-Window> :parent top :background "wheat3"))
+	 (but  (make-buttons top)))
+    (pack but  :side "top" :expand #f :fill 'x)
+    (pack win  :expand #t :fill "both")
+    
+    (let loop ((x 20) (y 20) (l (generic-function-methods gf)))
+      (when (pair? l)
+	(let ((ed (method-editor (car l) win)))
+	  (place ed :x x :y y)
+	  (loop (+ x 20) (+ y 20) (cdr l)))))))
+
+(provide "method-editor")

@@ -15,11 +15,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: print.c 1.4 Sat, 30 May 1998 21:05:42 +0000 eg $
+ * $Id: print.c 1.7 Wed, 16 Sep 1998 14:57:37 +0200 eg $
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: ??-Oct-1993 ??:?? 
- * Last file update: 30-May-1998 17:44
+ * Last file update: 16-Sep-1998 11:44
  *
  */
 
@@ -159,7 +159,7 @@ SCM STk_print(SCM exp, SCM port, int mode)
     case tc_char:
       if (mode!=DSP_MODE){
 	Puts("#\\", f);
-	Puts(STk_char2string(CHAR(exp)), f);
+	Puts((char *) STk_char2string((unsigned char) CHAR(exp)), f);
       }
       else Putc(CHAR(exp), f);
       break;      
@@ -405,7 +405,7 @@ static void print_cycle(SCM exp, SCM port)
   if ((tmp = STk_assv(exp, cycles)) != Ntruth) {
     if (INTEGERP(value = CDR(tmp))) {
       char buffer[50];
-      sprintf(buffer, "#%d#", INTEGER(value));
+      sprintf(buffer, "#%ld#", INTEGER(value));
       Puts(buffer, PORT_FILE(port));
       return;
     }
@@ -427,9 +427,8 @@ static void printlist_star(SCM exp, SCM port)
 
     if (NULLP(exp=CDR(exp))) break;
 
-    if ((tmp = STk_assv(exp, cycles)) != Ntruth) {
-      value = CDR(tmp);
-      if (NCONSP(exp) || value == Truth || INTEGERP(value)) { 
+    if (NCONSP(exp) || (tmp = STk_assv(exp, cycles)) != Ntruth) {
+      if (NCONSP(exp) || (value = CDR(tmp)) == Truth || INTEGERP(value)) { 
 	/* either  ". X" or ". #0=(...)" or ". #0#" */
 	Puts(" . ", f);
 	print_cycle(exp, port);
@@ -497,7 +496,6 @@ static void pass2(SCM exp, SCM port)
       if ((value=CDR(tmp)) == Truth) {
 	FILE *f = PORT_FILE(port);
 	char buffer[50];
-	int label;
 
 	/* First use of this label. Assign it a value */
 	sprintf(buffer, "#%d=", index_label);

@@ -30,6 +30,7 @@ Other extensions are more "useful":
 	- socket.c: simple support (and hence limited) for sockets. It allows you
 	  to make simple clients and servers program using TCP/IP
 	- sregexp.c Regular expressions
+	- base64. c provide base64 file endoding and decoding.
 
 
 For more informations on extension building, read the document

@@ -12,7 +12,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkWindow.c 1.232 97/08/06 21:42:15
+ * SCCS: @(#) tkWindow.c 1.233 97/10/31 09:55:23
  */
 
 #include "tkPort.h"
@@ -166,7 +166,8 @@ static TkCmd commands[] = {
 #endif
     {(char *) NULL,	(int (*) _ANSI_ARGS_((ClientData, Tcl_Interp *, int, char **))) NULL, NULL, 0}
 };
-    
+
+#ifndef STk_CODE    
 /*
  * The variables and table below are used to parse arguments from
  * the "argv" variable in Tk_Init.
@@ -201,6 +202,7 @@ static Tk_ArgvInfo argTable[] = {
     {(char *) NULL, TK_ARGV_END, (char *) NULL, (char *) NULL,
 	(char *) NULL}
 };
+#endif
 
 /*
  * Forward declarations to procedures defined later in this file:
@@ -212,7 +214,9 @@ static void		DeleteWindowsExitProc _ANSI_ARGS_((
 			    ClientData clientData));
 static TkDisplay *	GetScreen _ANSI_ARGS_((Tcl_Interp *interp,
 			    char *screenName, int *screenPtr));
+#ifndef STk_CODE
 static int		Initialize _ANSI_ARGS_((Tcl_Interp *interp));
+#endif
 static int		NameWindow _ANSI_ARGS_((Tcl_Interp *interp,
 			    TkWindow *winPtr, TkWindow *parentPtr,
 			    char *name));
@@ -437,6 +441,7 @@ GetScreen(interp, screenName, screenPtr)
 	    dispPtr->lastDestroyRequest = 0;
 	    dispPtr->cmapPtr = NULL;
 	    dispPtr->implicitWinPtr = NULL;
+	    dispPtr->focusPtr = NULL;
 	    dispPtr->stressPtr = NULL;
 	    dispPtr->delayedMotionPtr = NULL;
 	    Tcl_InitHashTable(&dispPtr->winTable, TCL_ONE_WORD_KEYS);
@@ -745,11 +750,8 @@ TkCreateMainWindow(interp, screenName, baseName)
     Tcl_InitHashTable(&mainPtr->nameTable, TCL_STRING_KEYS);
     TkBindInit(mainPtr);
     TkFontPkgInit(mainPtr);
-    mainPtr->focusPtr = NULL;
-    mainPtr->focusWinPtr = NULL;
-    mainPtr->focusSerial = 0;
-    mainPtr->focusOnMapPtr = NULL;
-    mainPtr->forceFocus = 0;
+    mainPtr->tlFocusPtr = NULL;
+    mainPtr->displayFocusPtr = NULL;
     mainPtr->optionRootPtr = NULL;
     Tcl_InitHashTable(&mainPtr->imageTable, TCL_STRING_KEYS);
     mainPtr->strictMotif = 0;
@@ -2649,12 +2651,85 @@ Initialize(interp)
     rest = 0;
 
     /*
-     * If there is an "argv" variable, get its value, extract out
-     * relevant arguments from it, and rewrite the variable without
-     * the arguments that we used.
+     * We start by resetting the result because it might not be clean
      */
+    Tcl_ResetResult(interp);
 
-    p = Tcl_GetVar2(interp, "argv", (char *) NULL, TCL_GLOBAL_ONLY);
+    if (Tcl_IsSafe(interp)) {
+	/*
+	 * Get the clearance to start Tk and the "argv" parameters
+	 * from the master.
+	 */
+	Tcl_DString ds;
+	
+	/*
+	 * Step 1 : find the master and construct the interp name
+	 * (could be a function if new APIs were ok).
+	 * We could also construct the path while walking, but there
+	 * is no API to get the name of an interp either.
+	 */
+	Tcl_Interp *master = interp;
+
+	while (1) {
+	    master = Tcl_GetMaster(master);
+	    if (master == NULL) {
+		Tcl_DStringFree(&ds);
+		Tcl_AppendResult(interp, "NULL master", (char *) NULL);
+		return TCL_ERROR;
+	    }
+	    if (!Tcl_IsSafe(master)) {
+		/* Found the trusted master. */
+		break;
+	    }
+	}
+	/*
+	 * Construct the name (rewalk...)
+	 */
+	if (Tcl_GetInterpPath(master, interp) != TCL_OK) {
+	    Tcl_AppendResult(interp, "error in Tcl_GetInterpPath",
+		    (char *) NULL);
+	    return TCL_ERROR;
+	}
+	/*
+	 * Build the string to eval.
+	 */
+	Tcl_DStringInit(&ds);
+	Tcl_DStringAppendElement(&ds, "::safe::TkInit");
+	Tcl_DStringAppendElement(&ds, Tcl_GetStringResult(master));
+	
+	/*
+	 * Step 2 : Eval in the master. The argument is the *reversed*
+	 * interp path of the slave.
+	 */
+	
+	if (Tcl_Eval(master, Tcl_DStringValue(&ds)) != TCL_OK) {
+	    /*
+	     * We might want to transfer the error message or not.
+	     * We don't. (no API to do it and maybe security reasons).
+	     */
+	    Tcl_DStringFree(&ds);
+	    Tcl_AppendResult(interp, 
+		    "not allowed to start Tk by master's safe::TkInit",
+		    (char *) NULL);
+	    return TCL_ERROR;
+	}
+	Tcl_DStringFree(&ds);
+	/* 
+	 * Use the master's result as argv.
+	 * Note: We don't use the Obj interfaces to avoid dealing with
+	 * cross interp refcounting and changing the code below.
+	 */
+
+	p = Tcl_GetStringResult(master);
+    } else {
+	/*
+	 * If there is an "argv" variable, get its value, extract out
+	 * relevant arguments from it, and rewrite the variable without
+	 * the arguments that we used.
+	 */
+
+	p = Tcl_GetVar2(interp, "argv", (char *) NULL, TCL_GLOBAL_ONLY);
+    }
     argv = NULL;
     if (p != NULL) {
 	if (Tcl_SplitList(interp, p, &argc, &argv) != TCL_OK) {

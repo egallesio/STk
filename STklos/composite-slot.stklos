@@ -11,7 +11,7 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
-;;;; $Id: composite-slot.stklos 1.1 Tue, 03 Feb 1998 10:13:08 +0000 eg $
+;;;; $Id: composite-slot.stklos 1.1 Tue, 03 Feb 1998 11:13:08 +0100 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 17-Oct-1996 18:16

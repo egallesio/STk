@@ -17,11 +17,11 @@
 ;;;; This software is a derivative work of other copyrighted softwares; the
 ;;;; copyright notices of these softwares are placed in the file COPYRIGHTS
 ;;;;
-;;;; $Id: tk-init.stk 1.13 Thu, 28 May 1998 20:07:43 +0000 eg $
+;;;; $Id: tk-init.stk 1.18 Wed, 30 Sep 1998 14:02:29 +0200 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 17-May-1993 12:35
-;;;; Last file update: 28-May-1998 19:16
+;;;; Last file update: 27-Sep-1998 12:26
 ;;;;
 
 (unless (equal? *tk-version* "8.0")
@@ -82,7 +82,6 @@
 (define tk::grab	 "")
 (define tk::inMenuButton '())
 (define tk::posted	 #f)
-(define tk::selectMode	 '())
 (define tk::cursor	 "")
 (define tk::kill-buffer  "") ;; One kill buffer shared between all texts. 
 
@@ -167,6 +166,7 @@
 ;;;; *start-withdrawn* to #f
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+
 (when *start-withdrawn*
   ;; Start without mapping the root window.
   (wm 'withdraw ".")
@@ -186,7 +186,7 @@
     (set! wm
 	  (lambda l
 	    (let ((res (apply old-wm l)))
-	      (unless (eq? (old-wm 'state *root*) 'withdrawn)
+	      (unless (equal? (old-wm 'state *root*) "withdrawn")
 		;; Previous wm call makes the *root* window no more withdrawn
 		;; Replace the pack and wm command by the original Tk ones
 		(set! pack    		old-pack)
@@ -285,10 +285,12 @@
 (case (os-kind)
   ((Windows) (event 'add "<<Cut>>"   "<Control-Key-x>" "<Shift-Key-Delete>")
 	     (event 'add "<<Copy>>"  "<Control-Key-c>" "<Control-Key-Insert>")
-	     (event 'add "<<Paste>>" "<Control-Key-v>" "<Shift-Key-Insert>"))
+	     (event 'add "<<Paste>>" "<Control-Key-v>" "<Shift-Key-Insert>")
+	     (event 'add "<<PasteSelection>>" "<ButtonRelease-2>" ))
   ((Unix)    (event 'add "<<Cut>>"   "<Control-Key-x>" "<Key-F20>") 
 	     (event 'add "<<Copy>>"  "<Control-Key-c>" "<Key-F16>")
 	     (event 'add "<<Paste>>" "<Control-Key-v>" "<Key-F18>")
+	     (event 'add "<<PasteSelection>>" "<ButtonRelease-2>" )
 	     ;; Add a trace to set and unset Motif bindings when the
 	     ;; *tk-strict-Motif* variable is changed
 	     (let ((trace (lambda ()
@@ -298,6 +300,7 @@
 			      (event op "<<Paste>>" "<Control-Key-y>")))))
 	       (trace-var '*tk-strict-Motif* trace)
 	       (trace))))
+  
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -328,6 +331,9 @@
 (autoload "sterm" 	 sterm)
 (autoload "image"        find-image make-image change-image delete-image)
 
+(when (eq? (os-kind) 'Unix)
+  (autoload "tk-unix"	 Tk:choose-color Tk:message-box
+	    		 Tk:get-open-file Tk:get-set-file Tk:get-file))
 
 ;=============================================================================
 ;
@@ -355,8 +361,9 @@
     (apply STk:report-error args))
   
   ;; Global help functions which are defined when Tk is loaded
-  (autoload "help"         help STk:show-help-file)
-  (autoload "www-browser"  WWW:browser))
+  (autoload "help"          help STk:show-help-file)
+  (autoload "www-browser"   WWW:browser)
+  (autoload "class-browser" class-browser))
 
 ;;;;
 ;;;; Retain now that Tk is now fully initialized

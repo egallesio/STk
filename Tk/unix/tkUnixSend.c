@@ -11,7 +11,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkUnixSend.c 1.72 97/06/10 09:38:38
+ * SCCS: @(#) tkUnixSend.c 1.74 97/11/04 17:12:18
  */
 
 #include "tkPort.h"
@@ -365,17 +365,21 @@ RegFindName(regPtr, name)
     char *name;			/* Name of an application. */
 {
     char *p, *entry;
-    Window commWindow;
+    unsigned int id;
 
-    commWindow = None;
     for (p = regPtr->property; (p-regPtr->property) < (int) regPtr->propLength; ) {
 	entry = p;
 	while ((*p != 0) && (!isspace(UCHAR(*p)))) {
 	    p++;
 	}
 	if ((*p != 0) && (strcmp(name, p+1) == 0)) {
-	    if (sscanf(entry, "%x", (unsigned int *) &commWindow) == 1) {
-		return commWindow;
+	    if (sscanf(entry, "%x", &id) == 1) {
+		/*
+		 * Must cast from an unsigned int to a Window in case we
+		 * are on a 64-bit architecture.
+		 */
+
+		return (Window) id;
 	    }
 	}
 	while (*p != 0) {
@@ -539,6 +543,16 @@ RegClose(regPtr)
     if (regPtr->locked) {
 	XUngrabServer(regPtr->dispPtr->display);
     }
+
+    /*
+     * After ungrabbing the server, it's important to flush the output
+     * immediately so that the server sees the ungrab command.  Otherwise
+     * we might do something else that needs to communicate with the
+     * server (such as invoking a subprocess that needs to do I/O to
+     * the screen); if the ungrab command is still sitting in our
+     * output buffer, we could deadlock.
+     */
+
     XFlush(regPtr->dispPtr->display);
 
     if (regPtr->property != NULL) {
@@ -1200,6 +1214,7 @@ TkGetInterpNames(interp, tkwin)
     NameRegistry *regPtr;
     Window commWindow;
     int count;
+    unsigned int id;
 
     /*
      * Read the registry property, then scan through all of its entries.
@@ -1207,10 +1222,15 @@ TkGetInterpNames(interp, tkwin)
      */
 
     regPtr = RegOpen(interp, winPtr->dispPtr, 1);
+#ifdef STk_CODE
+    Tcl_AppendResult(interp, "(", NULL);
+#endif    
     for (p = regPtr->property; (p-regPtr->property) < (int) regPtr->propLength; ) {
 	entry = p;
-	if (sscanf(p,  "%x",(unsigned int *) &commWindow) != 1) {
+	if (sscanf(p,  "%x",(unsigned int *) &id) != 1) {
 	    commWindow =  None;
+	} else {
+	    commWindow = id;
 	}
 	while ((*p != 0) && (!isspace(UCHAR(*p)))) {
 	    p++;
@@ -1255,6 +1275,9 @@ TkGetInterpNames(interp, tkwin)
 	    p = entry;
 	}
     }
+#ifdef STk_CODE
+    Tcl_AppendResult(interp, ")", NULL);
+#endif 
     RegClose(regPtr);
     return TCL_OK;
 }

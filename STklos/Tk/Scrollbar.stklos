@@ -11,16 +11,18 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
-;;;; $Id: Scrollbar.stklos 1.2 Sat, 24 Jan 1998 14:12:00 +0000 eg $
+;;;; $Id: Scrollbar.stklos 1.3 Sun, 23 Aug 1998 20:43:58 +0200 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;    Creation date:  5-Mar-1994 17:19
-;;;; Last file update: 24-Jan-1998 13:57
+;;;; Last file update: 20-Aug-1998 17:42
 
 (require "Basics")
 (select-module STklos+Tk)
-(export activate scrollbar-delta scrollbar-fraction scrollbar-identify
-	scrollbar-get scrollbar-set!)
+(export activate scrollbar-delta scrollbar-fraction 
+	scrollbar-identify scrollbar-get scrollbar-set! 
+	STk:h-scroll-side STk:h-scroll-side-set!
+	STk:v-scroll-side STk:v-scroll-side-set!)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -16,11 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: port.c 1.10 Tue, 09 Jun 1998 07:40:04 +0000 eg $
+ * $Id: port.c 1.13 Wed, 16 Sep 1998 14:57:37 +0200 eg $
  *
  *            Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 17-Feb-1993 12:27
- * Last file update:  8-Jun-1998 19:23
+ * Last file update: 15-Sep-1998 14:44
  *
  */
 #ifndef WIN32
@@ -125,6 +125,7 @@ static SCM verify_port(char *proc_name, SCM port, int mode)
   if ((mode & F_READ)  && INP(port))  return port; /* not else. It can be both */
   if ((mode & F_WRITE) && OUTP(port)) return port;
   Serror("bad port", port);
+  return UNDEFINED; /* cannot occur */
 }
 
 static void closeport(SCM port)
@@ -208,7 +209,7 @@ static int do_load(char *full_name, SCM module)
      }
      else {
        /* file seems not to be an object file. Try to load it as a Scheme file */
-       jmp_buf jb, *prev_jb = Top_jmp_buf;
+       Jmp_Buf jb, *prev_jb = Top_jmp_buf;
        long prev_context    = Error_context;
        SCM prev_module;
        SCM previous_file, form;
@@ -227,7 +228,7 @@ static int do_load(char *full_name, SCM module)
        /* save normal error jmpbuf so that eval error don't lead to toplevel */
        /* This permits to close the opened file in case of error */
        /* If in a "catch", keep the ERR_IGNORED bit set */
-       if ((k = setjmp(jb)) == 0) {
+       if ((k = setjmp(jb.j)) == 0) {
 	 Top_jmp_buf   = &jb;
 
 	 for( ; ; ) {
@@ -243,7 +244,7 @@ static int do_load(char *full_name, SCM module)
        STk_selected_module = prev_module;
        STk_last_defined    = Ntruth;
 
-       if (k) /*propagate error */ longjmp(*Top_jmp_buf, k);
+       if (k) /*propagate error */ longjmp(Top_jmp_buf->j, k);
 
        /* No error: restore info about current line and file */
        STk_current_filename = previous_file;
@@ -284,6 +285,7 @@ static int try_loadfile(char *prefix, char *fname, SCM suffixes, SCM module)
 
 TooLong:
     Err("load: filename too long", NIL);
+    return 0; /* cannot occur */
 }
 
 SCM STk_load_file(char *fname, int err_if_absent, SCM module)
@@ -360,7 +362,7 @@ PRIMITIVE STk_current_error_port(void)
 
 PRIMITIVE STk_with_input_from_file(SCM string, SCM thunk)
 {
-  jmp_buf env, *prev_env = Top_jmp_buf;
+  Jmp_Buf env, *prev_env = Top_jmp_buf;
   SCM result, prev_iport = STk_curr_iport;
   int prev_context 	 = Error_context;
   int k;
@@ -372,7 +374,7 @@ PRIMITIVE STk_with_input_from_file(SCM string, SCM thunk)
 
   STk_curr_iport = UNBOUND; 	/* will not be changed if opening fails */
 
-  if ((k = setjmp(env)) == 0) {
+  if ((k = setjmp(env.j)) == 0) {
     Top_jmp_buf     = &env;
     STk_curr_iport  = makeport(CHARS(string), tc_iport, "r", TRUE);
     result          = Apply(thunk, NIL);
@@ -383,13 +385,13 @@ PRIMITIVE STk_with_input_from_file(SCM string, SCM thunk)
   Top_jmp_buf    = prev_env;
   Error_context  = prev_context;
 
-  if (k) /*propagate error */ longjmp(*Top_jmp_buf, k);
+  if (k) /*propagate error */ longjmp(Top_jmp_buf->j, k);
   return result;
 }
 
 PRIMITIVE STk_with_output_to_file(SCM string, SCM thunk)
 {
-  jmp_buf env, *prev_env = Top_jmp_buf;
+  Jmp_Buf env, *prev_env = Top_jmp_buf;
   SCM result, prev_oport = STk_curr_oport;
   int prev_context       = Error_context;
   int k;
@@ -401,7 +403,7 @@ PRIMITIVE STk_with_output_to_file(SCM string, SCM thunk)
 
   STk_curr_oport = UNBOUND;		/* will not be changed if opening fails */
 
-  if ((k = setjmp(env)) == 0) {
+  if ((k = setjmp(env.j)) == 0) {
     Top_jmp_buf     = &env;
     STk_curr_oport  = makeport(CHARS(string), tc_oport, "w", TRUE);
     result          = Apply(thunk, NIL);
@@ -412,7 +414,7 @@ PRIMITIVE STk_with_output_to_file(SCM string, SCM thunk)
   Top_jmp_buf    = prev_env;
   Error_context  = prev_context;
 
-  if (k) /*propagate error */ longjmp(*Top_jmp_buf, k);
+  if (k) /*propagate error */ longjmp(Top_jmp_buf->j, k);
   return result;
 }
 
@@ -467,7 +469,7 @@ PRIMITIVE STk_peek_char(SCM port)
   port = verify_port("peek-char", port, F_READ);
   c = Getc(PORT_FILE(port));
   Ungetc(c, PORT_FILE(port));
-  return (c == EOF) ? STk_eof_object : STk_makechar(c);
+  return (c == EOF) ? STk_eof_object : STk_makechar((unsigned char) c);
 }
 
 PRIMITIVE STk_eof_objectp(SCM obj)
@@ -478,7 +480,7 @@ PRIMITIVE STk_eof_objectp(SCM obj)
 #ifdef WIN32
 PRIMITIVE STk_char_readyp(SCM port) 
 {
-  STk_panic("Not yet implemented!");
+  panic("Not yet implemented!");
 }
 #else
 PRIMITIVE STk_char_readyp(SCM port) 
@@ -697,7 +699,8 @@ PRIMITIVE STk_close_port(SCM port)
 PRIMITIVE STk_read_line(SCM port)
 {
   FILE *f;
-  int c, i, size = 128;
+  int c, i;
+  size_t size = 128;
   char *buff = (char *) must_malloc(size);
   SCM res;
 
@@ -719,8 +722,6 @@ PRIMITIVE STk_read_line(SCM port)
 
 PRIMITIVE STk_flush(SCM port)
 {
-  int code;
-  
   ENTER_PRIMITIVE("flush");
 
   port = verify_port(proc_name, port, F_WRITE|F_READ);

@@ -15,7 +15,7 @@
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 10-Oct-1995 07:55
- * Last file update: 26-Apr-1998 18:41
+ * Last file update: 10-Sep-1998 12:25
  *
  */
 
@@ -106,8 +106,6 @@ static void handle_sigsegv_signal(void)
 
 void STk_handle_signal(int sig)
 {
-  SCM l, arg;
-
 #ifndef  HAVE_SIGACTION
   if (sig < MAX_SYSTEM_SIG)
     signal(sig, STk_handle_signal);

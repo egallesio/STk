@@ -106,8 +106,9 @@ Indicates the anchor point for the selection, which is set with the
 <P>
 <DT><A NAME="M32"><B>end</B></A><DD>
 Indicates the end of the listbox.
-For some procedures this means just after the last element;
-for other procedures it means the last element.
+For most procedure this refers to the last element in the listbox,
+but for a few procedure such as <B>index</B> and <B>insert</B>
+it refers to the element just after the last one.
 <P>
 <DT><A NAME="M33"><B>@</B><I>x</I><B>,</B><I>y</I></A><DD>
 Indicates the element that covers the point in the listbox window
@@ -134,6 +135,8 @@ procedures are possible for listbox widgets:
 <DL>
 <DT><A NAME="M35">(<I>widget-name '</I><B>activate</B> <I>index</I>)</A><DD>
 Sets the active element to the one indicated by <I>index</I>.
+If <I>index</I> is outside the range of elements in the listbox
+then the closest element is activated.
 The active element is drawn with an underline when the widget
 has the input focus, and its index may be retrieved with the
 index <B>active</B>.
@@ -146,7 +149,9 @@ of the upper-left corner of the screen area covered by the text
 (specified in pixels relative to the widget) and the last two
 elements give the width and height of the area, in pixels.
 If no part of the element given by <I>index</I> is visible on the
-screen then the result is an empty list;  if the element is
+screen,
+or if <I>index</I> refers to a non-existent element,
+then the result is an empty list;  if the element is
 partially visible, the result gives the full area of the element,
 including any parts that are not visible.
 <P>
@@ -186,7 +191,8 @@ to delete.  If <I>last</I> isn't specified it defaults to
 <DT><A NAME="M42">(<I>widget-name '</I><B>get </B><I>first</I>)</A><DD>
 <DT><A NAME="M43">(<I>widget-name '</I><B>get </B><I>first</I> <I>last</I>)</A><DD>
 If <I>last</I> is omitted, returns the contents of the listbox
-element indicated by <I>first</I>.
+element indicated by <I>first</I>,
+or an empty list if <I>first</I> refers to a non-existent element.
 If <I>last</I> is specified, the procedure returns a list whose elements
 are all of the listbox elements between <I>first</I> and <I>last</I>,
 inclusive.
@@ -194,8 +200,9 @@ Both <I>first</I> and <I>last</I> may have any of the standard
 forms for indices.
 <P>
 <DT><A NAME="M44">(<I>widget-name '</I><B>index </B><I>index</I>)</A><DD>
-Returns a decimal string giving the integer index value that
-corresponds to <I>index</I>.
+Returns the integer index value that corresponds to <I>index</I>.
+If <I>index</I> is <B>end</B> the return value is a count of the number
+of elements in the listbox (not the index of the last element).
 <P>
 <DT><A NAME="M45">(<I>widget-name '</I><B>insert </B><I>index </I>?<I>element element ...</I>?)</A><DD>
 Inserts zero or more new elements in the list just before the
@@ -246,6 +253,8 @@ has several forms, depending on <I>option</I>:
 <DL>
 <DT><A NAME="M52">(<I>widget-name </I><B>'selection 'anchor </B><I>index</I>)</A><DD>
 Sets the selection anchor to the element given by <I>index</I>.
+If <I>index</I> refers to a non-existent element, then the closest
+element is used.
 The selection anchor is the end of the selection that is fixed
 while dragging out a selection with the mouse.
 The index <B>anchor</B> may be used to refer to the anchor
@@ -387,15 +396,17 @@ the other modes appear to be useful only in special situations.
 <P>
 In addition to the above behavior, the following additional behavior
 is defined by the default bindings:
-<OL>
-<LI>
+<P>
+<DL>
+<DT><A NAME="M70">{[1]}</A><DD>
 In <B>extended</B> mode, the selected range can be adjusted by pressing
 button 1 with the Shift key down:  this modifies the selection to
 consist of the elements between the anchor and the element under
 the mouse, inclusive.
 The un-anchored end of this new selection can also be dragged with
 the button down.
-<LI>
+<P>
+<DT><A NAME="M71">{[2]}</A><DD>
 In <B>extended</B> mode, pressing button 1 with the Control key down
 starts a toggle operation: the anchor is set to the element under
 the mouse, and its selection state is reversed.  The selection state
@@ -405,17 +416,20 @@ of all elements between the anchor and the element under the mouse
 is set to match that of the anchor element;  the selection state of
 all other elements remains what it was before the toggle operation
 began.
-<LI>
+<P>
+<DT><A NAME="M72">{[3]}</A><DD>
 If the mouse leaves the listbox window with button 1 down, the window
 scrolls away from the mouse, making information visible that used
 to be off-screen on the side of the mouse.
 The scrolling continues until the mouse re-enters the window, the
 button is released, or the end of the listbox is reached.
-<LI>
+<P>
+<DT><A NAME="M73">{[4]}</A><DD>
 Mouse button 2 may be used for scanning.
 If it is pressed and dragged over the listbox, the contents of
 the listbox drag at high speed in the direction the mouse moves.
-<LI>
+<P>
+<DT><A NAME="M74">{[5]}</A><DD>
 If the Up or Down key is pressed, the location cursor (active
 element) moves up or down one element.
 If the selection mode is <B>browse</B> or <B>extended</B> then the
@@ -423,70 +437,85 @@ new active element is also selected and all other elements are
 deselected.
 In <B>extended</B> mode the new active element becomes the
 selection anchor.
-<LI>
+<P>
+<DT><A NAME="M75">{[6]}</A><DD>
 In <B>extended</B> mode, Shift-Up and Shift-Down move the location
 cursor (active element) up or down one element and also extend
 the selection to that element in a fashion similar to dragging
 with mouse button 1.
-<LI>
+<P>
+<DT><A NAME="M76">{[7]}</A><DD>
 The Left and Right keys scroll the listbox view left and right
 by the width of the character <B>0</B>.
 Control-Left and Control-Right scroll the listbox view left and
 right by the width of the window.
 Control-Prior and Control-Next also scroll left and right by
 the width of the window.
-<LI>
+<P>
+<DT><A NAME="M77">{[8]}</A><DD>
 The Prior and Next keys scroll the listbox view up and down
 by one page (the height of the window).
-<LI>
+<P>
+<DT><A NAME="M78">{[9]}</A><DD>
 The Home and End keys scroll the listbox horizontally to
 the left and right edges, respectively.
-<LI>
+<P>
+<DT><A NAME="M79">{[10]}</A><DD>
 Control-Home sets the location cursor to the the first element in
 the listbox, selects that element, and deselects everything else
 in the listbox.
-<LI>
+<P>
+<DT><A NAME="M80">{[11]}</A><DD>
 Control-End sets the location cursor to the the last element in
 the listbox, selects that element, and deselects everything else
 in the listbox.
-<LI>
+<P>
+<DT><A NAME="M81">{[12]}</A><DD>
 In <B>extended</B> mode, Control-Shift-Home extends the selection
 to the first element in the listbox and Control-Shift-End extends
 the selection to the last element.
-<LI>
+<P>
+<DT><A NAME="M82">{[13]}</A><DD>
 In <B>multiple</B> mode, Control-Shift-Home moves the location cursor
 to the first element in the listbox and Control-Shift-End moves
 the location cursor to the last element.
-<LI>
+<P>
+<DT><A NAME="M83">{[14]}</A><DD>
 The space and Select keys make a selection at the location cursor
 (active element) just as if mouse button 1 had been pressed over
 this element.
-<LI>
+<P>
+<DT><A NAME="M84">{[15]}</A><DD>
 In <B>extended</B> mode, Control-Shift-space and Shift-Select
 extend the selection to the active element just as if button 1
 had been pressed with the Shift key down.
-<LI>
+<P>
+<DT><A NAME="M85">{[16]}</A><DD>
 In <B>extended</B> mode, the Escape key cancels the most recent
 selection and restores all the elements in the selected range
 to their previous selection state.
-<LI>
+<P>
+<DT><A NAME="M86">{[17]}</A><DD>
 Control-slash selects everything in the widget, except in
 <B>single</B> and <B>browse</B> modes, in which case it selects
 the active element and deselects everything else.
-<LI>
+<P>
+<DT><A NAME="M87">{[18]}</A><DD>
 Control-backslash deselects everything in the widget, except in
 <B>browse</B> mode where it has no effect.
-<LI>
+<P>
+<DT><A NAME="M88">{[19]}</A><DD>
 The F16 key (labelled Copy on many Sun workstations) or Meta-w
 copies the selection in the widget to the clipboard, if there is
 a selection.
 
-</OL>
+<P>
+</DL>
 <P>
 The behavior of listboxes can be changed by defining new bindings for
 individual widgets or by redefining the class bindings.
 
-<H3><A NAME="M70">EXAMPLE</A></H3>
+<H3><A NAME="M89">EXAMPLE</A></H3>
 Herafter is an example of a listbox connected to a scrollbar
 <PRE>;; Create list box and scrollbar
 (listbox   '.l :height 5 
@@ -499,7 +528,7 @@ Herafter is an example of a listbox connected to a scrollbar
 ;; Pack elements
 (pack .l :side &quot;left&quot; :expand #t  :fill &quot;both&quot;)
 (pack .s :side &quot;right&quot; :expand #f :fill &quot;y&quot;)</PRE>
-<H3><A NAME="M71">SEE ALSO</A></H3>
+<H3><A NAME="M90">SEE ALSO</A></H3>
 <B><A HREF="./scrollbar.n.html">scrollbar</A></B>
 <P><IMG ALIGN=TOP SRC="./Img/line-red.gif"><P>
 <A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookBlue.gif"> Back to the <B>STk</B> main page</A>

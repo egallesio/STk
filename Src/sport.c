@@ -1,7 +1,7 @@
 /*
  * s p o r t . c			-- String ports management
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -18,7 +18,7 @@
  *
  *            Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 17-Feb-1993 12:27
- * Last file update: 13-Jun-1996 18:24
+ * Last file update: 14-Sep-1998 13:52
  *
  *
  * This is achieved in a (surely very) dependant way. A string port is implemented
@@ -39,7 +39,7 @@ SCM STk_internal_open_input_string(char *str)
   p->signature = SPORT_SIGNATURE;
   p->flag      = READING;
   p->cnt       = p->bufsiz = strlen(str);
-  p->base      = p->ptr    = must_malloc(p->cnt + 1);
+  p->base      = p->ptr    = must_malloc((unsigned int ) p->cnt + 1);
   strcpy(p->base, str);
 
   /* Sport_descr is a short version of a port_descr */
@@ -64,14 +64,14 @@ void STk_free_string_port(SCM port)
 
 SCM STk_internal_read_from_string(SCM port, int *eof, int case_significant)
 {
-  jmp_buf jb, *prev_jb = Top_jmp_buf;
+  Jmp_Buf jb, *prev_jb = Top_jmp_buf;
   long prev_context     = Error_context;
   SCM result;
   int k;
 
   /* save normal error jmpbuf  so that read error don't lead to toplevel */
   /* If in a "catch", keep the ERR_IGNORED bit set */
-  if ((k = setjmp(jb)) == 0) {
+  if ((k = setjmp(jb.j)) == 0) {
     Top_jmp_buf   = &jb;
     Error_context = (Error_context & ERR_IGNORED) | ERR_READ_FROM_STRING;
     result 	  = STk_readf(PORT_FILE(port), case_significant);
@@ -87,7 +87,7 @@ SCM STk_internal_read_from_string(SCM port, int *eof, int case_significant)
    *    - we are in a catch. Do a longjump to the catch to signal it a fail
    *    - otherwise error has already signaled, just return EVAL_ERROR
    */
-  if (Error_context & ERR_IGNORED) longjmp(*Top_jmp_buf, k);
+  if (Error_context & ERR_IGNORED) longjmp(Top_jmp_buf->j, k);
   return EVAL_ERROR;
 }
 
@@ -98,7 +98,7 @@ PRIMITIVE STk_open_input_string(SCM s)
 }
 
 
-PRIMITIVE STk_open_output_string()
+PRIMITIVE STk_open_output_string(void)
 {
   struct str_iob *p;
   SCM z;
@@ -109,7 +109,7 @@ PRIMITIVE STk_open_output_string()
   p->flag      = WRITING;
   p->cnt       = 0;
   p->bufsiz    = START_ALLOC;
-  p->base      = p->ptr = (char *) must_malloc(START_ALLOC);
+  p->base      = p->ptr = (unsigned char *) must_malloc(START_ALLOC);
 
   NEWCELL(z, tc_osport);
   z->storage_as.port.p   = (struct port_descr *) 
@@ -142,7 +142,7 @@ PRIMITIVE STk_output_string_portp(SCM port)
 
 PRIMITIVE STk_with_input_from_string(SCM string, SCM thunk)
 {
-  jmp_buf env, *prev_env = Top_jmp_buf;
+  Jmp_Buf env, *prev_env = Top_jmp_buf;
   SCM result, prev_iport = STk_curr_iport;
   int prev_context	 = Error_context;
   int k;
@@ -150,7 +150,7 @@ PRIMITIVE STk_with_input_from_string(SCM string, SCM thunk)
   if (NSTRINGP(string))     Err("with-input-from-string: bad string", string);
   if (!STk_is_thunk(thunk)) Err("with-input-from-string: bad thunk", thunk);
 
-  if ((k = setjmp(env)) == 0) {
+  if ((k = setjmp(env.j)) == 0) {
     Top_jmp_buf    = &env;
     STk_curr_iport = STk_internal_open_input_string(CHARS(string));
     result         = Apply(thunk, NIL);
@@ -160,20 +160,20 @@ PRIMITIVE STk_with_input_from_string(SCM string, SCM thunk)
   Top_jmp_buf    = prev_env;
   Error_context  = prev_context;
 
-  if (k) /*propagate error */ longjmp(*Top_jmp_buf, k);
+  if (k) /*propagate error */ longjmp(Top_jmp_buf->j, k);
   return result;
 }
 
 PRIMITIVE STk_with_output_to_string(SCM thunk)
 {
-  jmp_buf env, *prev_env = Top_jmp_buf;
+  Jmp_Buf env, *prev_env = Top_jmp_buf;
   SCM result, prev_oport = STk_curr_oport;
   int prev_context       = Error_context;
   int k;
 
   if (!STk_is_thunk(thunk)) Err("with-output-to-string: bad thunk", thunk);
 
-  if ((k = setjmp(env)) == 0) {
+  if ((k = setjmp(env.j)) == 0) {
     Top_jmp_buf    = &env;
     STk_curr_oport = STk_open_output_string();
     Apply(thunk, NIL);
@@ -184,7 +184,7 @@ PRIMITIVE STk_with_output_to_string(SCM thunk)
   Top_jmp_buf    = prev_env;
   Error_context  = prev_context;
 
-  if (k) /*propagate error */ longjmp(*Top_jmp_buf, k);
+  if (k) /*propagate error */ longjmp(Top_jmp_buf->j, k);
   return result;
 }
 

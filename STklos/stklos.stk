@@ -12,11 +12,11 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
-;;;; $Id: stklos.stk 1.23 Sun, 31 May 1998 17:22:09 +0000 eg $
+;;;; $Id: stklos.stk 1.27 Sat, 26 Sep 1998 19:40:12 +0200 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 20-Feb-1994 21:09
-;;;; Last file update: 31-May-1998 13:11
+;;;; Last file update: 26-Sep-1998 19:32
 
 (when (provided? "stklos") 
   (error "STklos already initialized."))
@@ -45,7 +45,7 @@
     shallow-clone deep-clone
     apply-generic apply-method apply-methods compute-applicable-methods 
     method-more-specific? sort-applicable-methods
-    class-subclasses
+    class-subclasses class-methods
     slot-value (setter slot-value)
 )
 
@@ -60,17 +60,6 @@
       '()
       (append (apply func (map car args))
 	      (apply mapappend func (map cdr args)))))
-
-(define (map* fct l)	  	; A simple map which accepts dotted lists
-  (cond ((null? l) '())
-	((pair? l) (cons (fct (car l)) (map* fct (cdr l))))
-	(else      (fct l))))
-
-(define (for-each* fct l)	; A simple for-each which accepts dotted lists
-  (cond ((null? l) #f)
-	((pair? l) (fct (car l)) 
-		   (for-each* fct (cdr l)))
-	(else      (fct l))))
 
 (define (find-duplicate l)	; find a duplicate in a list; #f otherwise
   (cond 
@@ -698,7 +687,10 @@
 		  (error "You must supply a :slot-ref and a :slot-set! in ~A" s))
 	       (list (make-closure get env)
 		     (make-closure set env))))
-    (else    (error "Allocation \"~S\" is unknown"(slot-definition-allocation s)))))
+    (else    (next-method))))
+
+(define-method compute-get-n-set ((o <object>) s)
+  (error "Allocation \"~S\" is unknown" (slot-definition-allocation s)))
 
 ;=============================================================================
 ;
@@ -875,10 +867,22 @@
 ; 				T o o l s
 ;
 ;=============================================================================
+
+(define (list2set l)			;; duplicate the standard list->set
+  (let Loop ((l l) (res '()))		;; function but using eq instead of eqv
+    (cond				;; which really sucks a lot, uselessly here
+     ((null? l) 	 res)
+     ((memq (car l) res) (Loop (cdr l) res))
+     (else		 (Loop (cdr l) (cons (car l) res))))))
+
+
 (define (class-subclasses c)
   (letrec ((allsubs (lambda (c)
 		      (cons c (mapappend allsubs (class-direct-subclasses c))))))
-    (list->set (cdr (allsubs c)))))
+    (list2set (cdr (allsubs c)))))
+
+(define (class-methods c)
+  (list2set (mapappend class-direct-methods (cons c (class-subclasses c)))))
 
 ;;
 ;; Clos like SLOT-VALUE 

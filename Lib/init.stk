@@ -11,11 +11,11 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
-;;;; $Id: init.stk 1.15 Tue, 19 May 1998 10:44:58 +0000 eg $
+;;;; $Id: init.stk 1.17 Sat, 26 Sep 1998 19:19:52 +0200 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;    Creation date: ??-Sep-1993 ??:??
-;;;; Last file update: 14-May-1998 22:12
+;;;; Last file update: 26-Sep-1998 17:22
 ;;;;
 
 ;;;==============================================================================
@@ -440,6 +440,19 @@
 (define-macro (multiple-value-bind vars form . body)
   `(apply (lambda ,vars ,@body) ,form))
 
+(define (map* fn . l) 		; A map which accepts dotted lists (arg lists  
+  (cond 			; must be "isomorph"
+   ((null? (car l)) '())
+   ((pair? (car l)) (cons (apply fn      (map car l))
+			  (apply map* fn (map cdr l))))
+   (else            (apply fn l))))
+
+(define (for-each* fn . l) 	; A for-each which accepts dotted lists (arg lists  
+  (cond 			; must be "isomorph"
+   ((null? (car l)) '())
+   ((pair? (car l)) (apply fn (map car l)) (apply for-each* fn (map cdr l)))
+   (else            (apply fn l))))
+
 (define (os-kind)
   (case (machine-type)
     (("MS_Win32") 'Windows)	
@@ -455,7 +468,8 @@
 		       (cond
 			((null? l) 	     res)
 			((memv (car l) res) (rem-dupl (cdr l) res))
-			(ELSE		(rem-dupl (cdr l) (cons (car l) res)))))))
+			(ELSE		    (rem-dupl (cdr l) (cons (car l) 
+								    res)))))))
     (rem-dupl l '())))
 
 (define (set-union l1 l2)

@@ -2,7 +2,7 @@
  *
  * c h a r . c				-- Characters management
  *
- * Copyright © 1993-1997 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -19,7 +19,7 @@
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: ??????
- * Last file update: 14-Apr-1997 14:14
+ * Last file update: 14-Sep-1998 13:48
  */
 
 #include <ctype.h>
@@ -31,58 +31,58 @@ struct charelem {
 };
 
 static struct charelem chartable [] = { 
-  "null",       '\000',
-  "bell",       '\007',
-  "backspace",  '\010',
-  "newline",    '\012',
-  "page",       '\014',
-  "return",     '\015',
-  "escape",     '\033',
-  "space",      '\040',
-  "delete",     '\177',
+  {"null",       '\000'},
+  {"bell",       '\007'},
+  {"backspace",  '\010'},
+  {"newline",    '\012'},
+  {"page",       '\014'},
+  {"return",     '\015'},
+  {"escape",     '\033'},
+  {"space",      '\040'},
+  {"delete",     '\177'},
 
   /* poeticless names */
-  "nul",        '\000',
-  "soh",        '\001',
-  "stx",        '\002',
-  "etx",        '\003',
-  "eot",        '\004',
-  "enq",        '\005',
-  "ack",        '\006',
-  "bel",        '\007',
+  {"nul",        '\000'},
+  {"soh",        '\001'},
+  {"stx",        '\002'},
+  {"etx",        '\003'},
+  {"eot",        '\004'},
+  {"enq",        '\005'},
+  {"ack",        '\006'},
+  {"bel",        '\007'},
 
-  "bs",         '\010',
-  "ht",         '\011',
-  "tab",        '\011',
-  "nl",         '\012',
-  "vt",         '\013',
-  "np",         '\014',
-  "cr",         '\015',
-  "so",         '\016',
-  "si",         '\017',
+  {"bs",         '\010'},
+  {"ht",         '\011'},  /*and also */ {"tab", '\011'},
+  {"nl",         '\012'},
+  {"vt",         '\013'},
+  {"np",         '\014'},
+  {"cr",         '\015'},
+  {"so",         '\016'},
+  {"si",         '\017'},
 
-  "dle",        '\020',
-  "dc1",        '\021',
-  "dc2",        '\022',
-  "dc3",        '\023',
-  "dc4",        '\024',
-  "nak",        '\025',
-  "syn",        '\026',
-  "etb",        '\027',
+  {"dle",        '\020'},
+  {"dc1",        '\021'},
+  {"dc2",        '\022'},
+  {"dc3",        '\023'},
+  {"dc4",        '\024'},
+  {"nak",        '\025'},
+  {"syn",        '\026'},
+  {"etb",        '\027'},
 
-  "can",        '\030',
-  "em",         '\031',
-  "sub",        '\032',
-  "esc",        '\033',
-  "fs",         '\034',
-  "gs",         '\035',
-  "rs",         '\036',
-  "us",         '\037',
+  {"can",        '\030'},
+  {"em",         '\031'},
+  {"sub",        '\032'},
+  {"esc",        '\033'},
+  {"fs",         '\034'},
+  {"gs",         '\035'},
+  {"rs",         '\036'},
+  {"us",         '\037'},
 
-  "sp",		'\040',					  
-  "del",	'\177',
+  {"sp",	'\040'},
+  {"del",	'\177'},
   
-  "",           '\000'};
+  {"",           '\000'}
+};
 
 
 static int my_strcmpi(register char *p1, register char *p2)
@@ -108,13 +108,13 @@ unsigned char STk_string2char(char *s)
   return '\0'; /* never reached */
 }
 
-char *STk_char2string(unsigned char c)  /* convert a char to it's external rep. */
-{
+unsigned char *STk_char2string(unsigned char c)  /* convert a char to it's */
+{						 /* external representation */
   static unsigned char result[2] = " ";  /* sets the \0 */
   register struct charelem *p;
 
   for (p=chartable; *(p->name); p++)
-    if (p->value == c) return p->name;
+    if (p->value == c) return (unsigned char *) p->name;
   
   /* If we are here it's a "normal" char */
   *result = c;
@@ -209,17 +209,17 @@ PRIMITIVE STk_integer2char(SCM i)
   int c = STk_integer_value(i);
 
   if (c < 0 || c > MAX_CHAR_CODE) Err("integer->char: bad integer", i);
-  return STk_makechar(c);
+  return STk_makechar((unsigned char) c);
 }
 
 PRIMITIVE STk_char_upper(SCM c)
 {
   if (NCHARP(c)) Err("char-upcase: bad character", c);
-  return STk_makechar(toupper(CHAR(c)));
+  return STk_makechar((unsigned char) toupper(CHAR(c)));
 }
 
 PRIMITIVE STk_char_lower(SCM c)
 {
   if (NCHARP(c)) Err("char-downcase: bad character", c);
-  return STk_makechar(tolower(CHAR(c)));
+  return STk_makechar((unsigned char) tolower(CHAR(c)));
 }

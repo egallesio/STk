@@ -1,3 +1,30 @@
+30/09/98 Release 3.99.3
+-----------------------
+Mains changes/modifications since 3.99.2 are:
+
+	* Tk level is 8.0.3 (the latest stable Tk release)
+
+	* New STklos Classes:	
+		+ <Hierarchy-tree> and <Hierarchy-item> to draw
+		  hierarchy such as files/directories, class/metaclasses ...
+		+ <Notepad> to define ... notepads
+		+ <Scheme-text> which extends <Text> to "font-lockify" 
+		Scheme buffers
+
+	* Method and generic function editor
+
+	* A class browser (type "(class-browser)" to access it)
+
+	* some new manual pages
+
+	* Base64 Encoding/Decoding extension
+
+	* Locale extension to treat strings and character using locale information
+
+	* Better installation scripts (+ some corrections)
+
+	* Bug corrections
+
 06/09/98 Release 3.99.2
 -----------------------
 

@@ -11,7 +11,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tk.h 1.209 97/08/08 11:30:28
+ * SCCS: @(#) tk.h 1.211 97/11/20 12:44:45
  */
 
 #ifndef _TK
@@ -21,9 +21,10 @@
  * When version numbers change here, you must also go into the following files
  * and update the version numbers:
  *
+ * README
  * unix/configure.in
- * win/makefile.bc
- * win/makefile.vc
+ * win/makefile.bc	(Not for patch release updates)
+ * win/makefile.vc	(Not for patch release updates)
  * library/tk.tcl
  *
  * The release level should be  0 for alpha, 1 for beta, and 2 for
@@ -40,10 +41,10 @@
 #define TK_MAJOR_VERSION   8
 #define TK_MINOR_VERSION   0
 #define TK_RELEASE_LEVEL   2
-#define TK_RELEASE_SERIAL  0
+#define TK_RELEASE_SERIAL  3
 
 #define TK_VERSION "8.0"
-#define TK_PATCH_LEVEL "8.0"
+#define TK_PATCH_LEVEL "8.0.3"
 
 /* 
  * A special definition used to allow this header file to be included 
@@ -76,6 +77,11 @@
 #endif
 #ifdef __STDC__
 #   include <stddef.h>
+#endif
+
+#ifdef BUILD_tk
+# undef TCL_STORAGE_CLASS
+# define TCL_STORAGE_CLASS DLLEXPORT
 #endif
 
 #ifdef STk_CODE
@@ -679,6 +685,10 @@ typedef struct Tk_Item  {
 					 * pixel drawn in item.  Item area
 					 * includes x1 and y1 but not x2
 					 * and y2. */
+    int   reserved1;			/* This padding is for compatibility */
+    char *reserved2;			/* with Jan Nijtmans dash patch */
+    int   reserved3;
+    char *reserved4;
 
     /*
      *------------------------------------------------------------------
@@ -781,6 +791,10 @@ typedef struct Tk_ItemType {
 					 * from an item. */
     struct Tk_ItemType *nextPtr;	/* Used to link types together into
 					 * a list. */
+    char *reserved1;			/* Reserved for future extension. */
+    int   reserved2;			/* Carefully compatible with */
+    char *reserved3;			/* Jan Nijtmans dash patch */
+    char *reserved4;
 } Tk_ItemType;
 
 /*
@@ -883,6 +897,7 @@ struct Tk_ImageType {
 				/* Next in list of all image types currently
 				 * known.  Filled in by Tk, not by image
 				 * manager. */
+    char *reserved;		/* reserved for future expansion */
 };
 
 /*
@@ -915,6 +930,7 @@ typedef struct Tk_PhotoImageBlock {
     int		offset[3];	/* Address differences between the red, green
 				 * and blue components of the pixel and the
 				 * pixel as a whole. */
+    int		reserved;	/* Reserved for extensions (dash patch) */
 } Tk_PhotoImageBlock;
 
 /*
@@ -1132,16 +1148,9 @@ EXTERN Tk_TextLayout	Tk_ComputeTextLayout _ANSI_ARGS_((Tk_Font font,
 			    int *heightPtr));
 EXTERN Tk_Window	Tk_CoordsToWindow _ANSI_ARGS_((int rootX, int rootY,
 			    Tk_Window tkwin));
-#ifdef STk_CODE
-EXTERN unsigned long	Tk_CreateBinding _ANSI_ARGS_((Tcl_Interp *interp,
-			    Tk_BindingTable bindingTable, ClientData object,
-			    char *eventString, char *command, char *str1, 
-			    char *str2));
-#else
 EXTERN unsigned long	Tk_CreateBinding _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tk_BindingTable bindingTable, ClientData object,
 			    char *eventString, char *command, int append));
-#endif
 EXTERN Tk_BindingTable	Tk_CreateBindingTable _ANSI_ARGS_((Tcl_Interp *interp));
 EXTERN Tk_ErrorHandler	Tk_CreateErrorHandler _ANSI_ARGS_((Display *display,
 			    int errNum, int request, int minorCode,
@@ -1561,4 +1570,8 @@ EXTERN int		Tk_WmCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int argc, char **argv));
 
 #endif /* RESOURCE_INCLUDED */
+
+#undef TCL_STORAGE_CLASS
+#define TCL_STORAGE_CLASS DLLIMPORT
+
 #endif /* _TK */

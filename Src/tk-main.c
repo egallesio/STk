@@ -6,7 +6,7 @@
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 13-May-1993 10:59
- * Last file update: 28-Mar-1998 16:17
+ * Last file update: 15-Sep-1998 14:45
  *
  *
  * Code used here was originally copyrigthed as shown below:
@@ -31,6 +31,7 @@
 #ifdef USE_TK
 #include <signal.h>
 #include "stk.h"
+#include <tkInt.h>
 
 
 /*

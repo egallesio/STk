@@ -68,7 +68,7 @@
 	(let* ((top (make <Toplevel> :title (format #f "Demo code: ~A" file)
 			  	     :geometry "+400+400"))
 	       (but (make <Frame> :parent top))
-	       (txt (make <Scroll-Text>  :parent top  :wrap "none"
+	       (txt (make <Scheme-text>  :parent top  :wrap "none"
 			  :h-scroll-side "bottom" :width 85 :height 30 :font "fixed"
 			  :value (exec (string-append "cat " file)))))
       

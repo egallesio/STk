@@ -12,7 +12,7 @@ a font.  The procedure has several different forms, determined by the
 first argument.  The following forms are currently supported:
 <P>
 <DL>
-<DT><A NAME="M4">(<B>font 'actual </B><I>font</I> ?\fB\:displayof \fIwindow\fR? ?\fIoption\fR?)</A><DD>
+<DT><A NAME="M4">(<B>font 'actual </B><I>font</I> {?B:displayof} {IwindowR?} {?IoptionR?)}</A><DD>
 </DL>
 <P>
 <DL>
@@ -29,15 +29,15 @@ first argument.  The following forms are currently supported:
 <P>
 <DL>
 <DT><A NAME="M8">(<B>font 'families</B>)</A><DD>
-<DT><A NAME="M9">(<B>font 'families</B> \fB\:displayof \fIwindow\fR?)</A><DD>
+<DT><A NAME="M9">(<B>font 'families</B> {B:displayof} {IwindowR?)}</A><DD>
 </DL>
 <P>
 <DL>
-<DT><A NAME="M10">(<B>font 'measure </B><I>font</I> ?\fB\:displayof \fIwindow\fR? \fItext\fR)</A><DD>
+<DT><A NAME="M10">(<B>font 'measure </B><I>font</I> {?B:displayof} {IwindowR?} {ItextR)}</A><DD>
 </DL>
 <P>
 <DL>
-<DT><A NAME="M11">(<B>font 'metrics </B><I>font</I> ?\fB\:displayof \fIwindow\fR? ?\fIoption\fR?)</A><DD>
+<DT><A NAME="M11">(<B>font 'metrics </B><I>font</I> {?B:displayof} {IwindowR?} {?IoptionR?)}</A><DD>
 </DL>
 <P>
 <DL>
@@ -51,15 +51,15 @@ The following formats are accepted as a font description anywhere
 permitted when specifying the <B>:font</B> option for widgets.
 <P>
 <DL>
-<DT><A NAME="M14">[1] <I>fontname</I></A><DD>
+<DT><A NAME="M14">{[1]} <I>fontname</I></A><DD>
 </DL>
 <P>
 <DL>
-<DT><A NAME="M15">[2] <I>systemfont</I></A><DD>
+<DT><A NAME="M15">{[2]} <I>systemfont</I></A><DD>
 </DL>
 <P>
 <DL>
-<DT><A NAME="M16">[3] <I>family </I>?<I>size</I>? ?<I>style</I>? ?<I>style ...</I>?</A><DD>
+<DT><A NAME="M16">{[3]} <I>family </I>?<I>size</I>? ?<I>style</I>? ?<I>style ...</I>?</A><DD>
 </DL>
 <UL>
 <PRE><B>normal	bold	roman	italic	
@@ -67,11 +67,11 @@ underline	overstrike</B></PRE>
 </UL>
 <P>
 <DL>
-<DT><A NAME="M17">[4] X-font names (XLFD)</A><DD>
+<DT><A NAME="M17">{[4]} X-font names (XLFD)</A><DD>
 </DL>
 <P>
 <DL>
-<DT><A NAME="M18">[5] <I>option value </I>?<I>option value ...</I>?</A><DD>
+<DT><A NAME="M18">{[5]} <I>option value </I>?<I>option value ...</I>?</A><DD>
 </DL>
 <P>
 When font description <I>font</I> is used, the system attempts to parse the
@@ -86,11 +86,11 @@ an error is generated.
 <H3><A NAME="M19">FONT METRICS</A></H3>
 <P>
 <DL>
-<DT><A NAME="M20"><B>:ascent         </B></A><DD>
+<DT><A NAME="M20"><B>:ascent </B></A><DD>
 </DL>
 <P>
 <DL>
-<DT><A NAME="M21"><B>:descent        </B></A><DD>
+<DT><A NAME="M21"><B>:descent </B></A><DD>
 </DL>
 <P>
 <DL>
@@ -98,7 +98,7 @@ an error is generated.
 </DL>
 <P>
 <DL>
-<DT><A NAME="M23"><B>:fixed           </B></A><DD>
+<DT><A NAME="M23"><B>:fixed </B></A><DD>
 </DL>
 <H3><A NAME="M24">FONT OPTIONS</A></H3>
 The following options are supported on all platforms, and are used when

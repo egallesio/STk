@@ -13,7 +13,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkText.c 1.103 97/07/31 09:14:37
+ * SCCS: @(#) tkText.c 1.104 97/10/13 15:18:24
  */
 
 #include "default.h"
@@ -1492,8 +1492,8 @@ void
 TkTextLostSelection(clientData)
     ClientData clientData;		/* Information about text widget. */
 {
-#ifdef ALWAYS_SHOW_SELECTION
     register TkText *textPtr = (TkText *) clientData;
+#ifdef ALWAYS_SHOW_SELECTION
     TkTextIndex start, end;
 
     if (!textPtr->exportSelection) {
@@ -1510,8 +1510,8 @@ TkTextLostSelection(clientData)
     TkTextMakeIndex(textPtr->tree, TkBTreeNumLines(textPtr->tree), 0, &end);
     TkTextRedrawTag(textPtr, &start, &end, textPtr->selTagPtr, 1);
     TkBTreeTag(&start, &end, textPtr->selTagPtr, 0);
-    textPtr->flags &= ~GOT_SELECTION;
 #endif
+    textPtr->flags &= ~GOT_SELECTION;
 }
 
 /*
@@ -1589,6 +1589,9 @@ TextSearchCmd(textPtr, interp, argc, argv)
     int code, matchLength, matchChar, passes, stopLine, searchWholeText;
     int patLength;
     char *arg, *pattern, *varName, *p, *startOfLine;
+#ifdef STk_CODE
+    char *env;
+#endif
     char buffer[20];
     TkTextIndex index, stopIndex;
     Tcl_DString line, patDString;
@@ -1605,6 +1608,9 @@ TextSearchCmd(textPtr, interp, argc, argv)
     backwards = 0;
     noCase = 0;
     varName = NULL;
+#ifdef STk_CODE
+    env = "";
+#endif
     for (i = 2; i < argc; i++) {
 	arg = argv[i];
 	if (arg[0] != '-') {
@@ -1615,7 +1621,7 @@ TextSearchCmd(textPtr, interp, argc, argv)
 	    badSwitch:
 	    Tcl_AppendResult(interp, "bad switch \"", arg,
 #ifdef STk_CODE
-		    "\": must be -forward, :backward, :exact, :regexp, ",
+		    "\": must be :forward, :backward, :exact, :regexp, ",
 		    ":nocase, :count, or ::", (char *) NULL);
 #else
 		    "\": must be -forward, -backward, -exact, -regexp, ",
@@ -1628,11 +1634,30 @@ TextSearchCmd(textPtr, interp, argc, argv)
 	    backwards = 1;
 	} else if ((c == 'c') && (strncmp(argv[i], "-count", length) == 0)) {
 	    if (i >= (argc-1)) {
+#ifdef STk_CODE
+		interp->result = "no value given for \":count\" option";
+#else
 		interp->result = "no value given for \"-count\" option";
+#endif
 		return TCL_ERROR;
 	    }
 	    i++;
 	    varName = argv[i];
+#ifdef STk_CODE
+	} else if ((c == 'e') && (strncmp(argv[i], "-environment", length) == 0)) {
+	    SCM env_val;
+	  
+	    if (i >= (argc-1)) {
+		interp->result = "no value given for \":environment\" option";
+		return TCL_ERROR;
+	    }
+	    i++;
+	    env = argv[i];
+	    if (!STk_valid_environment(env, &env_val)){
+		interp->result = "Parameter of \":environment\" is not valid";
+		return TCL_ERROR;
+	    }
+#endif
 	} else if ((c == 'e') && (strncmp(argv[i], "-exact", length) == 0)) {
 	    exact = 1;
 	} else if ((c == 'f') && (strncmp(argv[i], "-forwards", length) == 0)) {
@@ -1885,8 +1910,12 @@ TextSearchCmd(textPtr, interp, argc, argv)
 	    }
 	    if (varName != NULL) {
 		sprintf(buffer, "%d", matchLength);
+#ifdef STk_CODE
+		if (STk_tcl_setvar(varName, buffer, 0, env) == NULL) {
+#else
 		if (Tcl_SetVar(interp, varName, buffer, TCL_LEAVE_ERR_MSG)
 			== NULL) {
+#endif
 		    code = TCL_ERROR;
 		    goto done;
 		}

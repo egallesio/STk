@@ -218,7 +218,7 @@ document.  1.0 refers to the end of the document, 0.333
 refers to a point one-third of the way through the document,
 and so on.
 <P>
-<DT><A NAME="M42">'<B>scroll </B><I>number '</I><B>unit</B></A><DD>
+<DT><A NAME="M42">'<B>scroll </B><I>number '</I><B>units</B></A><DD>
 The widget should adjust its view by <I>number</I> units.
 The units are defined in whatever way makes sense for the widget,
 such as characters or lines in a text widget.
@@ -226,7 +226,7 @@ such as characters or lines in a text widget.
 the top or left of the window, or -1, which means that one unit
 should scroll off the bottom or right of the window.
 <P>
-<DT><A NAME="M43">'<B>scroll </B><I>number '</I><B>page</B></A><DD>
+<DT><A NAME="M43">'<B>scroll </B><I>number '</I><B>pages</B></A><DD>
 The widget should adjust its view by <I>number</I> pages.
 It is up to the widget to define the meaning of a page;  typically
 it is slightly less than what fits in the window, so that there
@@ -302,70 +302,85 @@ the following default behavior.
 If the behavior is different for vertical and horizontal scrollbars,
 the horizontal behavior is described in parentheses.
 
-<OL>
-<LI>
+<P>
+<DL>
+<DT><A NAME="M48">{[1]}</A><DD>
 Pressing button 1 over <B>arrow1</B> causes the view in the
 associated widget to shift up (left) by one unit so that the
 document appears to move down (right) one unit.
 If the button is held down, the action auto-repeats.
-<LI>
+<P>
+<DT><A NAME="M49">{[2]}</A><DD>
 Pressing button 1 over <B>trough1</B> causes the view in the
 associated widget to shift up (left) by one screenful so that the
 document appears to move down (right) one screenful.
 If the button is held down, the action auto-repeats.
-<LI>
+<P>
+<DT><A NAME="M50">{[3]}</A><DD>
 Pressing button 1 over the slider and dragging causes the view
 to drag with the slider.
 If the <B>jump</B> option is true, then the view doesn't drag along
 with the slider;  it changes only when the mouse button is released.
-<LI>
+<P>
+<DT><A NAME="M51">{[4]}</A><DD>
 Pressing button 1 over <B>trough2</B> causes the view in the
 associated widget to shift down (right) by one screenful so that the
 document appears to move up (left) one screenful.
 If the button is held down, the action auto-repeats.
-<LI>
+<P>
+<DT><A NAME="M52">{[5]}</A><DD>
 Pressing button 1 over <B>arrow2</B> causes the view in the
 associated widget to shift down (right) by one unit so that the
 document appears to move up (left) one unit.
 If the button is held down, the action auto-repeats.
-<LI>
+<P>
+<DT><A NAME="M53">{[6]}</A><DD>
 If button 2 is pressed over the trough or the slider, it sets
 the view to correspond to the mouse position;  dragging the
 mouse with button 2 down causes the view to drag with the mouse.
 If button 2 is pressed over one of the arrows, it causes the
 same behavior as pressing button 1.
-<LI>
+<P>
+<DT><A NAME="M54">{[7]}</A><DD>
 If button 1 is pressed with the Control key down, then if the
 mouse is over <B>arrow1</B> or <B>trough1</B> the view changes
 to the very top (left) of the document;  if the mouse is over
 <B>arrow2</B> or <B>trough2</B> the view changes
 to the very bottom (right) of the document;  if the mouse is
 anywhere else then the button press has no effect.
-<LI>
+<P>
+<DT><A NAME="M55">{[8]}</A><DD>
 In vertical scrollbars the Up and Down keys have the same behavior
 as mouse clicks over <B>arrow1</B> and <B>arrow2</B>, respectively.
 In horizontal scrollbars these keys have no effect.
-<LI>
+<P>
+<DT><A NAME="M56">{[9]}</A><DD>
 In vertical scrollbars Control-Up and Control-Down have the same
 behavior as mouse clicks over <B>trough1</B> and <B>trough2</B>, respectively.
 In horizontal scrollbars these keys have no effect.
-<LI>
+<P>
+<DT><A NAME="M57">{[10]}</A><DD>
 In horizontal scrollbars the Up and Down keys have the same behavior
 as mouse clicks over <B>arrow1</B> and <B>arrow2</B>, respectively.
 In vertical scrollbars these keys have no effect.
-<LI>
+<P>
+<DT><A NAME="M58">{[11]}</A><DD>
 In horizontal scrollbars Control-Up and Control-Down have the same
 behavior as mouse clicks over <B>trough1</B> and <B>trough2</B>, respectively.
 In vertical scrollbars these keys have no effect.
-<LI>
+<P>
+<DT><A NAME="M59">{[12]}</A><DD>
 The Prior and Next keys have the same behavior
 as mouse clicks over <B>trough1</B> and <B>trough2</B>, respectively.
-<LI>
+<P>
+<DT><A NAME="M60">{[13]}</A><DD>
 The Home key adjusts the view to the top (left edge) of the document.
-<LI>
+<P>
+<DT><A NAME="M61">{[14]}</A><DD>
 The End key adjusts the view to the bottom (right edge) of the document.
 
-</OL>
+<P>
+</DL>
 <P><IMG ALIGN=TOP SRC="./Img/line-red.gif"><P>
 <A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookBlue.gif"> Back to the <B>STk</B> main page</A>
 </BODY></HTML>

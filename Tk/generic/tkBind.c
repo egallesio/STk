@@ -906,11 +906,7 @@ Tk_DeleteBindingTable(bindingTable)
  */
 
 unsigned long
-#ifdef STk_CODE
-Tk_CreateBinding(interp, bindingTable, object, eventString, command, str1, str2)
-#else
 Tk_CreateBinding(interp, bindingTable, object, eventString, command, append)
-#endif
     Tcl_Interp *interp;		/* Used for error reporting. */
     Tk_BindingTable bindingTable;
 				/* Table in which to create binding. */
@@ -920,24 +916,18 @@ Tk_CreateBinding(interp, bindingTable, object, eventString, command, append)
 				 * triggers binding. */
     char *command;		/* Contains Tcl command to execute when
 				 * binding triggers. */
-#ifdef STk_CODE
-    char *str1, *str2;		       /* strings used as keys in the binding 
-					* table. */
-#else
     int append;			/* 0 means replace any existing binding for
 				 * eventString; 1 means append to that
 				 * binding.  If the existing binding is for a
 				 * callback function and not a Tcl command
 				 * string, the existing binding will always be
 				 * replaced. */
-#endif
 {
     BindingTable *bindPtr = (BindingTable *) bindingTable;
     PatSeq *psPtr;
     unsigned long eventMask;
     char *new, *old;
 #ifdef STk_CODE
-    int append = 0;		/* will never change (make #ifdef simpler) */
     SCM p;
 
     if (!STk_valid_callback(command, &p) || (p == NULL)) {
@@ -1011,7 +1001,7 @@ Tk_CreateBinding(interp, bindingTable, object, eventString, command, append)
     psPtr->freeProc = FreeTclBinding;
     psPtr->clientData = (ClientData) new;
 #ifdef STk_CODE
-    if (eventMask) STk_add_callback(str1, eventString, str2, p);
+     if (eventMask) STk_add_callback(new, "", "", p);
 #endif
     return eventMask;
 }
@@ -2245,9 +2235,14 @@ ExpandPercents(winPtr, before, eventPtr, keySym, dsPtr)
     Tcl_DString *dsPtr;		/* Dynamic string in which to append new
 				 * command. */
 {
+#ifdef STk_CODE
+    int number, flags;
+#else
     int spaceNeeded, cvtFlags;	/* Used to substitute string as proper Tcl
 				 * list element. */
     int number, flags, length;
+#endif
+
 #define NUM_SIZE 40
     char *string;
     char numStorage[NUM_SIZE+1];
@@ -3236,9 +3231,9 @@ GetAllVirtualEvents(interp, vetPtr)
  *---------------------------------------------------------------------------
  */
 static int
-HandleEventGenerate(interp, main, argc, argv)
+HandleEventGenerate(interp, mainwin, argc, argv)
     Tcl_Interp *interp;	    /* Interp for error messages and name lookup. */
-    Tk_Window main;	    /* Main window associated with interp. */
+    Tk_Window mainwin;	    /* Main window associated with interp. */
     int argc;		    /* Number of arguments. */
     char **argv;	    /* Argument strings. */
 {
@@ -3251,7 +3246,7 @@ HandleEventGenerate(interp, main, argc, argv)
     XEvent event;    
 
     if (argv[0][0] == '.') {
-	tkwin = Tk_NameToWindow(interp, argv[0], main);
+	tkwin = Tk_NameToWindow(interp, argv[0], mainwin);
 	if (tkwin == NULL) {
 	    return TCL_ERROR;
 	}
@@ -3261,8 +3256,8 @@ HandleEventGenerate(interp, main, argc, argv)
 		    argv[0], "\"", (char *) NULL);
 	    return TCL_ERROR;
 	}
-	tkwin = Tk_IdToWindow(Tk_Display(main), (Window) i);
-	if ((tkwin == NULL) || (((TkWindow *) main)->mainPtr
+	tkwin = Tk_IdToWindow(Tk_Display(mainwin), (Window) i);
+	if ((tkwin == NULL) || (((TkWindow *) mainwin)->mainPtr
 		!= ((TkWindow *) tkwin)->mainPtr)) {
 	    Tcl_AppendResult(interp, "window id \"", argv[0],
 		    "\" doesn't exist in this application", (char *) NULL);
@@ -3373,7 +3368,7 @@ HandleEventGenerate(interp, main, argc, argv)
 	    }
 	} else if (strcmp(field, "-above") == 0) {
 	    if (value[0] == '.') {
-		tkwin2 = Tk_NameToWindow(interp, value, main);
+		tkwin2 = Tk_NameToWindow(interp, value, mainwin);
 		if (tkwin2 == NULL) {
 		    return TCL_ERROR;
 		}
@@ -3532,7 +3527,7 @@ HandleEventGenerate(interp, main, argc, argv)
 	    }
 	} else if (strcmp(field, "-root") == 0) {
 	    if (value[0] == '.') {
-		tkwin2 = Tk_NameToWindow(interp, value, main);
+		tkwin2 = Tk_NameToWindow(interp, value, mainwin);
 		if (tkwin2 == NULL) {
 		    return TCL_ERROR;
 		}
@@ -3606,7 +3601,7 @@ HandleEventGenerate(interp, main, argc, argv)
 	    }	    
 	} else if (strcmp(field, "-subwindow") == 0) {
 	    if (value[0] == '.') {
-		tkwin2 = Tk_NameToWindow(interp, value, main);
+		tkwin2 = Tk_NameToWindow(interp, value, mainwin);
 		if (tkwin2 == NULL) {
 		    return TCL_ERROR;
 		}
@@ -3644,7 +3639,7 @@ HandleEventGenerate(interp, main, argc, argv)
 	    }
 	} else if (strcmp(field, "-window") == 0) {
 	    if (value[0] == '.') {
-		tkwin2 = Tk_NameToWindow(interp, value, main);
+		tkwin2 = Tk_NameToWindow(interp, value, mainwin);
 		if (tkwin2 == NULL) {
 		    return TCL_ERROR;
 		}
@@ -4570,6 +4565,9 @@ static void
 FreeTclBinding(clientData)
     ClientData clientData;
 {
+#ifdef STk_CODE
+    STk_delete_callback((char*) clientData);
+#endif
     ckfree((char *) clientData);
 }
 
@@ -4680,5 +4678,3 @@ TkCopyAndGlobalEval(interp, script)
     Tcl_DStringFree(&buffer);
     return code;
 }
-
-

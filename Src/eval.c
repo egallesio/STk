@@ -16,11 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: eval.c 1.10 Fri, 10 Apr 1998 12:05:25 +0000 eg $
+ * $Id: eval.c 1.12 Thu, 10 Sep 1998 23:44:28 +0200 eg $
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 23-Oct-1993 21:37
- * Last file update: 10-Apr-1998 10:45
+ * Last file update: 10-Sep-1998 14:09
  */
 
 #include "stk.h"
@@ -75,6 +75,7 @@ TooFew:
   Err("too few arguments to", call);
 TooMuch:
   Err("too many arguments to", call);
+  return UNDEFINED; /* never reached */
 }
 
 static SCM eval_args(SCM l, SCM env)
@@ -456,8 +457,7 @@ Begin:	   case tc_begin:
 		x = CAR(tmp);
 	        goto Top;
 	   case tc_cont:
-		if (len == 1) STk_throw(fct, EVALCAR(tmp));
-		goto Error;
+               STk_throw(fct, eval_args(tmp, env));
 	   case tc_let:
 		env = add_frame(CAR(tmp), eval_args(CAR(CDR(tmp)),env), env);
 		tmp = CDR(CDR(tmp));
@@ -491,7 +491,7 @@ Begin:	   case tc_begin:
 		}
            case tc_macro:
 	        x = Apply(fct->storage_as.macro.code, x);
-/*FIXME:        x = Apply(fct->storage_as.macro.code, Cons(fct, tmp));
+/*FIXME:        x = Apply(fct->storage_as.macro.code, Cons(fct, tmp)); */
 /*		if (fct->storage_as.macro.env != Ntruth) {
 		  printf("EG: ==========>R5 macro\n");
 		  env = fct->storage_as.macro.env;
@@ -542,11 +542,12 @@ Begin:	   case tc_begin:
 		env = STk_append2(fct->storage_as.env.data, env);
 		goto Begin;
 	   case tc_apply:
+	        if (!len) goto Error_Apply;
 		tmp = eval_args(tmp, env);
 		fct = CAR(tmp);
 		tmp = STk_liststar(CDR(tmp),len-1);
 		len = STk_llength(tmp);
-		if (len == -1) Err("apply: bad parameter list", tmp);
+		if (len == -1) goto Error_Apply;
 
 		switch (TYPE(fct)) {
 		  case tc_closure: env = extend_env(fct, tmp, x, len);
@@ -571,6 +572,8 @@ Begin:	   case tc_begin:
 #endif
 		    default: 	     RETURN(Apply(fct, tmp));
 		}
+Error_Apply:
+		Err("apply: bad parameter list", tmp);
            default:
 		if (EXTENDEDP(fct)) {
 		  if (STk_extended_eval_parameters(fct)) 
@@ -633,8 +636,7 @@ Top:
     case tc_lsubr:
 	 return SUBRF(fct)(param, STk_llength(param));
     case tc_cont:
-	 if (STk_llength(param) == 1)
-	   STk_throw(fct, CAR(param));
+        STk_throw(fct, param);
     case tc_closure: { 
 	 register SCM code;
          register SCM env = extend_env(fct, param, fct, STk_llength(param));

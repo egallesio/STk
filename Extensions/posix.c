@@ -2,7 +2,7 @@
  *
  * p o s i x . c			-- Provide some POSIX.1 functions 
  *
- * Copyright © 1993-1997 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -16,11 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: posix.c 1.1 Sat, 03 Jan 1998 12:46:25 +0000 eg $ 
+ * $Id: posix.c 1.2 Thu, 10 Sep 1998 23:44:28 +0200 eg $ 
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 14-Mar-1995 20:14
- * Last file update: 30-Dec-1997 23:31
+ * Last file update: 10-Sep-1998 15:06
  *
  * This file contains also contains code additions from Shiro Kawai 
  * <shiro@sqush.squareusa.com>
@@ -92,16 +92,16 @@ static PRIMITIVE posix_stat2vector(SCM descr)
   info = (struct stat *) EXTDATA(descr);
 
   z = STk_makevect(10, NIL);	/* NIL because some integers are bignums */
-  VECT(z)[0] = STk_makeinteger(info->st_dev);
-  VECT(z)[1] = STk_makeinteger(info->st_ino);
-  VECT(z)[2] = STk_makeinteger(info->st_mode);
-  VECT(z)[3] = STk_makeinteger(info->st_nlink);
-  VECT(z)[4] = STk_makeinteger(info->st_uid);
-  VECT(z)[5] = STk_makeinteger(info->st_gid);
-  VECT(z)[6] = STk_makeinteger(info->st_size);
-  VECT(z)[7] = STk_makeinteger(info->st_atime);
-  VECT(z)[8] = STk_makeinteger(info->st_mtime);
-  VECT(z)[9] = STk_makeinteger(info->st_ctime);
+  VECT(z)[0] = STk_makeinteger((long)info->st_dev);
+  VECT(z)[1] = STk_makeinteger((long)info->st_ino);
+  VECT(z)[2] = STk_makeinteger((long)info->st_mode);
+  VECT(z)[3] = STk_makeinteger((long)info->st_nlink);
+  VECT(z)[4] = STk_makeinteger((long)info->st_uid);
+  VECT(z)[5] = STk_makeinteger((long)info->st_gid);
+  VECT(z)[6] = STk_makeinteger((long)info->st_size);
+  VECT(z)[7] = STk_makeinteger((long)info->st_atime);
+  VECT(z)[8] = STk_makeinteger((long)info->st_mtime);
+  VECT(z)[9] = STk_makeinteger((long)info->st_ctime);
 
   return z;
 }
@@ -187,7 +187,7 @@ static PRIMITIVE posix_mkdir(SCM path, SCM mode)
   
     if (NSTRINGP(path))  Err("posix-mkdir: bad path", path);
     if (NINTEGERP(mode)) Err("posix-mkdir: bad mode", mode);
-    r = mkdir(CHARS(path), INTEGER(mode));
+    r = mkdir(CHARS(path), (mode_t) INTEGER(mode));
     return (r < 0)? Ntruth : Truth;
 }
 
@@ -266,7 +266,7 @@ static PRIMITIVE posix_mktime(SCM t)
     Err("posix-mktime: bad time structure", t);
   
   sec = (time_t) mktime(EXTDATA(t));
-  return STk_makeinteger((double) sec);
+  return STk_makeinteger((long) sec);
 }
 
 static PRIMITIVE posix_tm2vector(SCM t)
@@ -338,7 +338,7 @@ static PRIMITIVE posix_strftime(SCM format, SCM t)
     return STk_makestring(buffer);
   else
     Err("posix-strftime: buffer too short", NIL);
-  /*NOTREACHED*/
+  return UNDEFINED; /* never reached */
 }
 
 /******************************************************************************

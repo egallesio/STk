@@ -3,7 +3,7 @@
 		   ---------------------------------
 
 
-(Last release is always available from <ftp://kaolin.unice.fr/pub/STk> )
+(Latest release is always available from <ftp://kaolin.unice.fr/pub/STk> )
 
 STk is a R4RS Scheme interpreter which can access the Tk graphical
 package.  Concretely it can be seen as the John Ousterhout's Tk
@@ -18,7 +18,8 @@ This release runs on majors Unix versions (Linux, Solaris, OSF, ...)
 The previous version was also running on Microsoft Win32 (port of
 current version is planned but has not be done yet).
 
-Version 3.99 uses the Tk 8.0 package for the graphical part.
+Version 3.99 uses the Tk 8.0.3 package for the graphical widgets
+(Tk8.0.3 is the latest stable release of Tk).
 
 
 DIFFERENCE PREVIOUS RELEASE
@@ -35,14 +36,14 @@ distribution main directory for more informations.
    * A simple FFI has been added. It allows to access C
      functions without writing C code (works only on a
      limited set of architectures for now).
-   * Integration of the Tk8.0 toolkit
+   * Integration of the Tk 8.0.3 toolkit
    * The MOP of STklos is now very similar to the CLOS one.
    * When a class is redefined, the instances and methods
      which uses it are redefined accordingly, as in CLOS.
    * Generic functions can be now traced with the standard
      TRACE function.
    * Some new composite widgets: Gauge, Valued-Gauge,
-     Balloon-help, ...
+     Balloon-help, Notespad, Hierarchies, ...
    * The HTML-browser has been enhanced to access now the
      web (i.e. you can grab distant texts or images). The
      Web browser admit now applets written in Scheme.
@@ -115,6 +116,7 @@ For now, STk is known to run on the following machine/systems
 	- PC (SCO)		  
 	- PC (NetBSD-1.0)	  
 	- Sony WS (Sony NEWS, NEWSOS 4.2R)
+	- PowerPC running Linux
 	- ...
 
 

@@ -16,11 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: toplevel.c 1.6 Tue, 19 May 1998 10:44:58 +0000 eg $
+ * $Id: toplevel.c 1.11 Wed, 30 Sep 1998 14:02:29 +0200 eg $
  *
  *	     Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date:  6-Apr-1994 14:46
- * Last file update: 14-May-1998 22:19
+ * Last file update: 27-Sep-1998 16:48
  */
 
 #include "stk.h"
@@ -42,7 +42,12 @@ static void print_banner(void)
 
 static void weird_dirs(char *argv0)
 {
-  STk_panic("Could not find the directory where STk was installed.\nPerhaps some directories don't exist, or current executable (\"%s\") is in a strange place.\nYou should consider to set the \"STK_LIBRARY\" shell variable.", argv0);
+  panic("Could not find the directory where STk was installed.\nPerhaps some directories don't exist, or current executable (\"%s\") is in a strange place.\nYou should consider to set the \"STK_LIBRARY\" shell variable.", argv0);
+}
+
+static void no_display(char *argv0)
+{
+  panic("DISPLAY variable is not set. Tk cannot be initialized. Please use command line option ``-no-tk'' when executing \"%s\"", argv0);
 }
 
 static void load_init_file(void)
@@ -123,8 +128,37 @@ static void set_last_defined(char *name, SCM val)
 }
 
 
+/* 
+ * A Panic procedure.
+ */
+
+static void panic_proc(char *format, ...)
+{
+  va_list ap;
+  char buf[1024];
+
+  va_start(ap, format);
+  vsprintf(buf, format, ap);
+
+#ifdef WIN32
+  MessageBeep(MB_ICONEXCLAMATION);
+  MessageBox(NULL, buf, "Fatal error in STk", 
+	     MB_ICONSTOP | MB_OK | MB_TASKMODAL | MB_SETFOREGROUND);
+#else
+  fprintf(STk_stderr, "\n**** Fatal error in STk:\n**** %s\n**** ABORT.\n", buf);
+  fflush(STk_stderr);
+#endif
+  exit(1);
+}
+
+
+
 static void init_interpreter(void)
 {
+
+  /* Set the panic porcedure */
+  Tcl_SetPanicProc(panic_proc);
+
 #ifdef WIN32
   /* First initialize the IO system, to have a console on Windows */
   STk_init_io();
@@ -179,10 +213,6 @@ static void init_interpreter(void)
   STk_define_variable(GC_VERBOSE,    Ntruth, NIL);
   STk_define_variable(REPORT_ERROR,  NIL,    NIL);
 
-  STk_define_variable(LOAD_SUFFIXES, NIL,    NIL);
-  STk_define_variable(LOAD_PATH,     NIL,    NIL);
-  STk_define_variable(LOAD_VERBOSE,  Ntruth, NIL);
-
   /* Initialize module system */
   STk_init_modules();
 
@@ -204,6 +234,12 @@ static void init_interpreter(void)
   /* initialize STk_wind_stack and protect it against garbage colection */
   STk_wind_stack = NIL;	 STk_gc_protect(&STk_wind_stack);
 
+  /* Define some global variables */
+  STk_define_variable(LOAD_SUFFIXES, NIL,			       NIL);
+  STk_define_variable(LOAD_PATH,     NIL,			       NIL);
+  STk_define_variable(LOAD_VERBOSE,  Ntruth,			       NIL);
+  STk_define_variable(STK_LIBRARY,   STk_makestring(STk_library_path), NIL);
+
   /* Initialize C variables */
   STk_last_defined = Ntruth;
   STk_define_C_variable(LAST_DEFINED, get_last_defined, set_last_defined);
@@ -221,12 +257,10 @@ static void finish_initialisation(void)
    * See if we have the '-file' option
    */
   if (STk_arg_file) {
-    SCM res;
-
     STk_set_signal_handler(STk_makeinteger(SIGINT), Truth);
     STk_interactivep = 0;
     if (STk_load_file(STk_arg_file, FALSE, STk_selected_module) == Ntruth)
-      STk_panic("Cannot open file \"%s\".", STk_arg_file);
+      panic("Cannot open file \"%s\".", STk_arg_file);
 
 #ifdef USE_TK
     if (Tk_initialized) Tk_MainLoop();
@@ -293,7 +327,7 @@ static void repl_loop(void)
        * the saved continuation.
        */
       STk_dumped_core = 0;
-      longjmp(*Top_jmp_buf, JMP_RESTORE);
+      longjmp(Top_jmp_buf->j, JMP_RESTORE);
     }
     else {
       if (STk_interactivep) {
@@ -325,7 +359,7 @@ static void repl_driver(int argc, char **argv)
   }
 
   /* Point where we come back on errors, image restoration, ... */
-  k = setjmp(*Top_jmp_buf);
+  k = setjmp(Top_jmp_buf->j);
   
   Error_context	     = ERR_OK;	
   STk_sigint_counter = 0;
@@ -348,12 +382,14 @@ static void repl_driver(int argc, char **argv)
 #  else
 			if (!STk_arg_Xdisplay) 
 			  STk_arg_Xdisplay =  getenv("DISPLAY");
-			if (!STk_arg_no_tk && STk_arg_Xdisplay)
+			if (!STk_arg_no_tk) {
+			  if (!STk_arg_Xdisplay) no_display(STk_Argv0);
 			  Tk_main(STk_arg_sync,
 				  STk_arg_name,
 				  STk_arg_file,
 				  STk_arg_Xdisplay,
 				  STk_arg_geometry);
+			}
 #  endif
 #endif
 			load_user_init_file();
@@ -381,6 +417,7 @@ static void repl_driver(int argc, char **argv)
   if (STk_interactivep) fprintf(STk_stderr, "Bye.\n");
   STk_quit_interpreter(UNBOUND);
 }
+
 
 /******************************************************************************
  *

@@ -9,7 +9,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkUnixFocus.c 1.7 97/08/11 09:47:20
+ * SCCS: @(#) tkUnixFocus.c 1.9 97/10/31 09:54:04
  */
 
 #include "tkInt.h"
@@ -27,7 +27,11 @@ extern int tclFocusDebug;
  *	one window to another.
  *
  * Results:
- *	None.
+ *	The return value is the serial number of the command that
+ *	changed the focus.  It may be needed by the caller to filter
+ *	out focus change events that were queued before the command.
+ *	If the procedure doesn't actually change the focus then
+ *	it returns 0.
  *
  * Side effects:
  *	The official X focus window changes;  the application's focus
@@ -36,7 +40,7 @@ extern int tclFocusDebug;
  *----------------------------------------------------------------------
  */
 
-void
+int
 TkpChangeFocus(winPtr, force)
     TkWindow *winPtr;		/* Window that is to receive the X focus. */
     int force;			/* Non-zero means claim the focus even
@@ -46,7 +50,7 @@ TkpChangeFocus(winPtr, force)
     TkDisplay *dispPtr = winPtr->dispPtr;
     Tk_ErrorHandler errHandler;
     Window window, root, parent, *children; 
-    unsigned int numChildren; 
+    unsigned int numChildren, serial; 
     TkWindow *winPtr2;
     int dummy;
 
@@ -60,8 +64,10 @@ TkpChangeFocus(winPtr, force)
      * manager doesn't need to hear about the focus change in order to
      * redecorate the menu.
      */
+
+    serial = 0;
     if (winPtr->atts.override_redirect) {
-	return;
+	return serial;
     }
 
     /*
@@ -123,10 +129,21 @@ TkpChangeFocus(winPtr, force)
      * events on either side of the mark.
      */
 
-    winPtr->mainPtr->focusSerial = NextRequest(winPtr->display);
+    serial = NextRequest(winPtr->display);
     XNoOp(winPtr->display);
 
     done:
     XUngrabServer(dispPtr->display);
-    return;
+
+    /*
+     * After ungrabbing the server, it's important to flush the output
+     * immediately so that the server sees the ungrab command.  Otherwise
+     * we might do something else that needs to communicate with the
+     * server (such as invoking a subprocess that needs to do I/O to
+     * the screen); if the ungrab command is still sitting in our
+     * output buffer, we could deadlock.
+     */
+
+    XFlush(dispPtr->display);
+    return serial;
 }

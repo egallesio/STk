@@ -2,7 +2,7 @@
  *
  * k e y w o r d . c				-- Keywords management
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -19,7 +19,7 @@
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 19-Nov-1993 16:12
- * Last file update: 13-May-1996 22:40
+ * Last file update: 10-Sep-1998 12:16
  */
 
 #include "stk.h"
@@ -110,5 +110,6 @@ PRIMITIVE STk_get_keyword(SCM key, SCM l, SCM default_value)
     return default_value;
   }
 Error:
-    Err("get-keyword: bad list", l);
+  Err("get-keyword: bad list", l);
+  return UNDEFINED; /* never reached */
 }

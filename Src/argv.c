@@ -19,7 +19,7 @@
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 30-Aug-1994 15:38
- * Last file update:  7-Jun-1998 18:01
+ * Last file update: 17-Sep-1998 12:58
  */
 
 #include "stk.h"
@@ -51,41 +51,40 @@ char *STk_arg_cells	  = NULL;
 int   STk_arg_interactive = 0;
 
 static struct arguments {
-  char *key;
-  char **flag;
-  char need_argument;
-  char *init;
-  char *help;
+  char *key;		/* command option */
+  void *flag;		/* flag variable */
+  char need_argument;	/* option needs arguments */
+  char *help;		/* help string */
 } Table[] = {
 #ifdef USE_TK
-  {"-colormap",	   (char **) &STk_arg_colormap,	   0, (char *) 0,
+  {"-colormap",	   (void *) &STk_arg_colormap,	   0, 
    		   "Use a private colormap"},
-  {"-display",	   &STk_arg_Xdisplay,		   1, NULL,
+  {"-display",	   (void *) &STk_arg_Xdisplay,	   1, 
 		   "Display to use"},
-  {"-geometry",	   &STk_arg_geometry,		   1, NULL,
+  {"-geometry",	   (void *) &STk_arg_geometry,	   1, 
 		   "Initial geometry for window"},
-  {"-name",	   &STk_arg_name,		   1, NULL,
+  {"-name",	   (void *) &STk_arg_name,	   1, 
 		   "\tName to use for application"},
-  {"-sync",	   (char **) &STk_arg_sync,	   0, (char *) 0,
+  {"-sync",	   (void *) &STk_arg_sync,	   0, 
 		   "\tUse synchronous mode for display server"},
-  {"-visual", 	   &STk_arg_visual,		   1, NULL,
-   		   "Visual for main window"},
-  {"-no-tk",	   (char **) &STk_arg_no_tk,	   0, (char *) 0,
+  {"-visual", 	   (void *) &STk_arg_visual,	   1, 
+   		   "\tVisual for main window"},
+  {"-no-tk",	   (void *) &STk_arg_no_tk,	   0, 
 		   "\tDon't initialize Tk"},
 #endif
-  {"-file",	   &STk_arg_file,		   1,  NULL,
+  {"-file",	   (void *) &STk_arg_file,	   1,
 		   "\tFile from which to read commands"},
-  {"-load",	   &STk_arg_load,		   1,  NULL,
+  {"-load",	   (void *) &STk_arg_load,	   1,
 		   "\tFile to load after all the initializations are done"},
-  {"-cells",	   &STk_arg_cells,		   1, (char *) 0L,
+  {"-cells",	   (void *) &STk_arg_cells,	   1,
 		   "\tDefault size for heap"},
-  {"-image",	   &STk_arg_image,		   1,  NULL,
+  {"-image",	   (void *) &STk_arg_image,	   1,
 		   "\tUse  previously created image"},
-  {"-interactive", (char **) &STk_arg_interactive, 0, (char *) 0,
+  {"-interactive", (void *) &STk_arg_interactive,  0,
 		   "Interactive mode"},
-  {"-help",	   NULL,			   0,  NULL,
+  {"-help",	   NULL,			   0,
 		   "\tPrint summary of command-line options and abort"},
-  {"", NULL, 0, NULL, ""}};
+  {"", NULL, 0, ""}};
 
 static void usage(void)
 {
@@ -103,9 +102,12 @@ char **STk_process_argc_argv(int argc, char **argv)
   int i;
   
   /* Reset arguments to their default value */
-  for (p = Table; *(p->key); p++) 
+  for (p = Table; *(p->key); p++)
     if (p->flag)
-      *(p->flag) = p->init;
+      if (p->need_argument)
+	*((char **) p->flag) = NULL;
+      else
+	*((int *) p->flag) = 0;
 
   /* Set the program name */
   STk_whence(*argv, STk_Argv0);
@@ -132,8 +134,8 @@ char **STk_process_argc_argv(int argc, char **argv)
 	    argc -= 1;
 	    argv += 1;
 	    
-	    if (*argv) 
-	      *(p->flag) = *argv;
+	    if (*argv)
+	      *((char **) p->flag) = *argv;
 	    else {
 	      fprintf(STk_stderr,
 		      "\"%s\"  option requires an additional argument\n", 
@@ -143,9 +145,9 @@ char **STk_process_argc_argv(int argc, char **argv)
 	  }
 	  else
 	    if (p->flag)
-	      *(p->flag) = (char *) TRUE;
+	      *((int *) p->flag) = TRUE;
 	    else
-	       usage();
+	      usage();
 	}
       }
     }
@@ -191,7 +193,7 @@ void STk_save_unix_args_and_environment(int argc, char **argv)
   /* Open a file in which we will save argc/argv/envp */
   sprintf(filename, "/usr/tmp/STktmp%d", getpid());
   if ((f = fopen(filename, "w")) == NULL) {
-    STk_panic("Cannot save environment in %s.", filename);
+    panic("Cannot save environment in %s.", filename);
     exit(1);
   }
 
@@ -226,7 +228,7 @@ void STk_restore_unix_args_and_environment(int *argc, char ***argv)
   /* Open a file in which we have saved argc/argv/envp */
   sprintf(filename, "/usr/tmp/STktmp%d", getpid());
   if ((f = fopen(filename, "r")) == NULL) {
-    STk_panic("Cannot re-open environment in %s.", filename);
+    panic("Cannot re-open environment in %s.", filename);
     exit(1);
   }
 
@@ -238,8 +240,8 @@ void STk_restore_unix_args_and_environment(int *argc, char ***argv)
 
   for (i=0; i<Argc; i++) {
     fscanf(f, "%d", &l); getc(f);
-    Argv[i] = must_malloc(l+1);
-    fread(Argv[i], 1, l, f);
+    Argv[i] = must_malloc((size_t) l+1);
+    fread(Argv[i], 1, (unsigned) l, f);
     Argv[i][l] = '\0';
   }
   Argv[Argc] = NULL;
@@ -249,8 +251,8 @@ void STk_restore_unix_args_and_environment(int *argc, char ***argv)
   Env = must_malloc((env_len+1) * sizeof(char *));
   for (i=0; i<env_len; i++) {
     fscanf(f, "%d", &l); getc(f);
-    Env[i] = must_malloc(l+1);
-    fread(Env[i], 1, l, f);
+    Env[i] = must_malloc((size_t) l+1);
+    fread(Env[i], 1, (unsigned) l, f);
     Env[i][l] = '\0';
   }
   Env[i]= NULL;

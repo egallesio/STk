@@ -22,23 +22,30 @@ command.
 Photos support the following <I>options</I>:
 <P>
 <DL>
-<DT><A NAME="M5"><B>:data </B><I>string</I></A><DD>
+<DT><A NAME="M5">{B:channel} {IchannelIdR}</A><DD>
+<I>channelId</I> gives the name of a port open for reading which is to be
+read to supply data for the photo image.  The data format in the port
+must be one of those for which there is an image format handler that
+can read data from a file or port.
+<P>
+<DT><A NAME="M6"><B>:data </B><I>string</I></A><DD>
 Specifies the contents of the image as a string.  The format of the
 string must be one of those for which there is an image file format
 handler that will accept string data.  If both the <B>:data</B>
 and <B>:file</B> options are specified, the <B>:file</B> option takes
 precedence.
 <P>
-<DT><A NAME="M6"><B>:format </B><I>format-name</I></A><DD>
+<DT><A NAME="M7"><B>:format </B><I>format-name</I></A><DD>
 Specifies the name of the file format for the data specified with the
 <B>:data</B> or <B>:file</B> option.
 <P>
-<DT><A NAME="M7"><B>:file </B><I>name</I></A><DD>
+<DT><A NAME="M8"><B>:file </B><I>name</I></A><DD>
 <I>name</I> gives the name of a file that is to be read to supply data
 for the photo image.  The file format must be one of those for which
-there is an image file format handler that can read data from a file.
+there is an image file format handler that can read data from a file or
+port.
 <P>
-<DT><A NAME="M8"><B>:gamma </B><I>value</I></A><DD>
+<DT><A NAME="M9"><B>:gamma </B><I>value</I></A><DD>
 Specifies that the colors allocated for displaying this image in a
 window should be corrected for a non-linear display with the specified
 gamma exponent value.  (The intensity produced by most
@@ -49,13 +56,13 @@ value is one (no correction).  In general, values greater than one
 will make the image lighter, and values less than one will make it
 darker.
 <P>
-<DT><A NAME="M9"><B>:height </B><I>number</I></A><DD>
+<DT><A NAME="M10"><B>:height </B><I>number</I></A><DD>
 Specifies the height of the image, in pixels.  This option is useful
 primarily in situations where the user wishes to build up the contents
 of the image piece by piece.  A value of zero (the default) allows the
 image to expand or shrink vertically to fit the data stored in it.
 <P>
-<DT><A NAME="M10"><B>:palette </B><I>palette-spec</I></A><DD>
+<DT><A NAME="M11"><B>:palette </B><I>palette-spec</I></A><DD>
 Specifies the resolution of the color cube to be allocated for
 displaying this image, and thus the number of colors used from the
 colormaps of the windows where it is displayed.  The
@@ -66,7 +73,7 @@ red, green and blue to use, respectively.  If the first form (a single
 number) is used, the image will be displayed in monochrome (i.e.,
 grayscale).
 <P>
-<DT><A NAME="M11"><B>:width </B><I>number</I></A><DD>
+<DT><A NAME="M12"><B>:width </B><I>number</I></A><DD>
 Specifies the width of the image, in pixels.    This option is useful
 primarily in situations where the user wishes to build up the contents
 of the image piece by piece.  A value of zero (the default) allows the
@@ -74,7 +81,7 @@ image to expand or shrink horizontally to fit the data stored in it.
 
 <P>
 </DL>
-<H3><A NAME="M12">IMAGE COMMAND</A></H3>
+<H3><A NAME="M13">IMAGE COMMAND</A></H3>
 When a photo image is created, Tk also creates a new command
 whose name is the same as the image.
 This command may be used to invoke various operations
@@ -94,18 +101,18 @@ changed.
 The following commands are possible for photo images:
 <P>
 <DL>
-<DT><A NAME="M13">(<I>imageName '</I><B>blank</B>)</A><DD>
+<DT><A NAME="M14">(<I>imageName '</I><B>blank</B>)</A><DD>
 Blank the image; that is, set the entire image to have no data, so it
 will be displayed as transparent, and the background of whatever
 window it is displayed in will show through.
 <P>
-<DT><A NAME="M14">(<I>imageName '</I><B>cget</B> <I>option</I>)</A><DD>
+<DT><A NAME="M15">(<I>imageName '</I><B>cget</B> <I>option</I>)</A><DD>
 Returns the current value of the configuration option given
 by <I>option</I>.
 <I>Option</I> may have any of the values accepted by the
 <B>image create photo</B> command.
 <P>
-<DT><A NAME="M15">(<I>imageName '</I><B>configure</B> ?<I>option</I>? ?<I>value option value ...</I>?)</A><DD>
+<DT><A NAME="M16">(<I>imageName '</I><B>configure</B> ?<I>option</I>? ?<I>value option value ...</I>?)</A><DD>
 Query or modify the configuration options for the image.
 If no <I>option</I> is specified, returns a list describing all of
 the available options for <I>imageName</I> (see <B>Tk_ConfigureInfo</B> for
@@ -119,7 +126,7 @@ this case the command returns an empty string.
 <I>Option</I> may have any of the values accepted by the
 <B>image create photo</B> command.
 <P>
-<DT><A NAME="M16">(<I>imageName '</I><B>copy</B> <I>sourceImage</I> ?<I>option value(s) ...</I>?)</A><DD>
+<DT><A NAME="M17">(<I>imageName '</I><B>copy</B> <I>sourceImage</I> ?<I>option value(s) ...</I>?)</A><DD>
 Copies a region from the image called <I>sourceImage</I> (which must
 be a photo image) to the image called <I>imageName</I>, possibly with
 pixel zooming and/or subsampling.  If no options are specified, this
@@ -129,7 +136,7 @@ options may be specified:
 <P>
 <P>
 <DL>
-<DT><A NAME="M17"><B>:from </B><I>x1 y1 x2 y2</I></A><DD>
+<DT><A NAME="M18"><B>:from </B><I>x1 y1 x2 y2</I></A><DD>
 Specifies a rectangular sub-region of the source image to be copied.
 (<I>x1,y1</I>) and (<I>x2,y2</I>) specify diagonally opposite corners of
 the rectangle.  If <I>x2</I> and <I>y2</I> are not specified, the
@@ -138,7 +145,7 @@ pixels copied will include the left and top edges of the specified
 rectangle but not the bottom or right edges.  If the <B>:from</B>
 option is not given, the default is the whole source image.
 <P>
-<DT><A NAME="M18"><B>:to </B><I>x1 y1 x2 y2</I></A><DD>
+<DT><A NAME="M19"><B>:to </B><I>x1 y1 x2 y2</I></A><DD>
 Specifies a rectangular sub-region of the destination image to be
 affected.  (<I>x1,y1</I>) and (<I>x2,y2</I>) specify diagonally opposite
 corners of the rectangle.  If <I>x2</I> and <I>y2</I> are not specified,
@@ -147,14 +154,14 @@ region (after subsampling and zooming, if specified).  If <I>x2</I> and
 <I>y2</I> are specified, the source region will be replicated if
 necessary to fill the destination region in a tiled fashion.
 <P>
-<DT><A NAME="M19"><B>:shrink</B></A><DD>
+<DT><A NAME="M20"><B>:shrink</B></A><DD>
 Specifies that the size of the destination image should be reduced, if
 necessary, so that the region being copied into is at the bottom-right
 corner of the image.  This option will not affect the width or height
 of the image if the user has specified a non-zero value for the
 <B>:width</B> or <B>:height</B> configuration option, respectively.
 <P>
-<DT><A NAME="M20"><B>:zoom </B><I>x y</I></A><DD>
+<DT><A NAME="M21"><B>:zoom </B><I>x y</I></A><DD>
 Specifies that the source region should be magnified by a factor of
 <I>x</I> in the X direction and <I>y</I> in the Y direction.  If <I>y</I>
 is not given, the default value is the same as <I>x</I>.  With this
@@ -162,7 +169,7 @@ option, each pixel in the source image will be expanded into a block
 of <I>x</I> x <I>y</I> pixels in the destination image, all the same
 color.  <I>x</I> and <I>y</I> must be greater than 0.
 <P>
-<DT><A NAME="M21"><B>:subsample </B><I>x y</I></A><DD>
+<DT><A NAME="M22"><B>:subsample </B><I>x y</I></A><DD>
 Specifies that the source image should be reduced in size by using
 only every <I>x</I>th pixel in the X direction and <I>y</I>th pixel in
 the Y direction.  Negative values will cause the image to be flipped
@@ -170,13 +177,13 @@ about the Y or X axes, respectively.  If <I>y</I> is not given, the
 default value is the same as <I>x</I>.
 <P>
 </DL>
-<DT><A NAME="M22">(<I>imageName '</I><B>get</B> <I>x y</I>)</A><DD>
+<DT><A NAME="M23">(<I>imageName '</I><B>get</B> <I>x y</I>)</A><DD>
 Returns the color of the pixel at coordinates (<I>x</I>,<I>y</I>) in the
 image as a list of three integers between 0 and 255, representing the
 red, green and blue components respectively.
 <P>
-<DT><A NAME="M23">(<I>imageName '</I><B>put </B><I>data</I>)</A><DD>
-<DT><A NAME="M24">(option	<I>imageName '</I><B>put </B><I>data</I> <B>:to</B><I> x1 y1 x2 y2</I>)</A><DD>
+<DT><A NAME="M24">(<I>imageName '</I><B>put </B><I>data</I>)</A><DD>
+<DT><A NAME="M25">(option <I>imageName '</I><B>put </B><I>data</I> <B>:to</B><I> x1 y1 x2 y2</I>)</A><DD>
 Sets pixels in <I>imageName</I> to the colors specified in <I>data</I>.
 <I>data</I> is used to form a two-dimensional array of pixels that are
 then copied into the <I>imageName</I>.  <I>data</I> is structured as a
@@ -191,7 +198,7 @@ specify diagonally opposite corners of the affected rectangle, and the
 array given in <I>data</I> will be replicated as necessary in the X and
 Y directions to fill the rectangle.
 <P>
-<DT><A NAME="M25">(<I>imageName '</I><B>read</B> <I>filename</I> ?<I>option value(s) ...</I>?)</A><DD>
+<DT><A NAME="M26">(<I>imageName '</I><B>read</B> <I>filename</I> ?<I>option value(s) ...</I>?)</A><DD>
 Reads image data from the file named <I>filename</I> into the image.
 This command first searches the list of
 image file format handlers for a handler that can interpret the data
@@ -201,13 +208,13 @@ specified:
 <P>
 <P>
 <DL>
-<DT><A NAME="M26"><B>:format </B><I>format-name</I></A><DD>
+<DT><A NAME="M27"><B>:format </B><I>format-name</I></A><DD>
 Specifies the format of the image data in <I>filename</I>.
 Specifically, only image file format handlers whose names begin with
 <I>format-name</I> will be used while searching for an image data
 format handler to read the data.
 <P>
-<DT><A NAME="M27"><B>:from </B><I>x1 y1 x2 y2</I></A><DD>
+<DT><A NAME="M28"><B>:from </B><I>x1 y1 x2 y2</I></A><DD>
 Specifies a rectangular sub-region of the image file data to be copied
 to the destination image.  If only <I>x1</I> and <I>y1</I> are
 specified, the region extends from (<I>x1,y1</I>) to the bottom-right
@@ -216,7 +223,7 @@ specified, they specify diagonally opposite corners or the region.
 The default, if this option is not specified, is the whole of the
 image in the image file.
 <P>
-<DT><A NAME="M28"><B>:shrink</B></A><DD>
+<DT><A NAME="M29"><B>:shrink</B></A><DD>
 If this option, the size of <I>imageName</I> will be reduced, if
 necessary, so that the region into which the image file data are read
 is at the bottom-right corner of the <I>imageName</I>.  This option
@@ -224,13 +231,13 @@ will not affect the width or height of the image if the user has
 specified a non-zero value for the <B>:width</B> or <B>:height</B>
 configuration option, respectively.
 <P>
-<DT><A NAME="M29"><B>:to </B><I>x y</I></A><DD>
+<DT><A NAME="M30"><B>:to </B><I>x y</I></A><DD>
 Specifies the coordinates of the top-left corner of the region of
 <I>imageName</I> into which data from <I>filename</I> are to be read.
 The default is (0,0).
 <P>
 </DL>
-<DT><A NAME="M30">(<I>imageName '</I><B>redither</B>)</A><DD>
+<DT><A NAME="M31">(<I>imageName '</I><B>redither</B>)</A><DD>
 The dithering algorithm used in displaying photo images propagates
 quantization errors from one pixel to its neighbors.
 If the image data for <I>imageName</I> is supplied in pieces, the
@@ -239,13 +246,13 @@ not noticeable, but if it is a problem, this command can be used to
 recalculate the dithered image in each window where the image is
 displayed.
 <P>
-<DT><A NAME="M31">(<I>imageName '</I><B>write </B><I>filename</I> ?<I>option value(s) ...</I>?)</A><DD>
+<DT><A NAME="M32">(<I>imageName '</I><B>write </B><I>filename</I> ?<I>option value(s) ...</I>?)</A><DD>
 Writes image data from <I>imageName</I> to a file named <I>filename</I>.
 The following options may be specified:
 <P>
 <P>
 <DL>
-<DT><A NAME="M32"><B>:format</B><I> format-name</I></A><DD>
+<DT><A NAME="M33"><B>:format</B><I> format-name</I></A><DD>
 Specifies the name of the image file format handler to be used to
 write the data to the file.  Specifically, this subcommand searches
 for the first handler whose name matches a initial substring of
@@ -253,7 +260,7 @@ for the first handler whose name matches a initial substring of
 file.  If this option is not given, this subcommand uses the first
 handler that has the capability to write an image file.
 <P>
-<DT><A NAME="M33"><B>:from </B><I>x1 y1 x2 y2</I></A><DD>
+<DT><A NAME="M34"><B>:from </B><I>x1 y1 x2 y2</I></A><DD>
 Specifies a rectangular region of <I>imageName</I> to be written to the
 image file.  If only <I>x1</I> and <I>y1</I> are specified, the region
 extends from <I>(x1,y1)</I> to the bottom-right corner of
@@ -263,7 +270,7 @@ if this option is not given, is the whole image.
 <P>
 </DL>
 </DL>
-<H3><A NAME="M34">IMAGE FORMATS</A></H3>
+<H3><A NAME="M35">IMAGE FORMATS</A></H3>
 The photo image code is structured to allow handlers for additional
 image file formats to be added easily.  The photo image code maintains
 a list of these handlers.  Handlers are added to the list by
@@ -292,7 +299,7 @@ requested handler, and may contain additional information following
 that, which the handler can use, for example, to specify which variant
 to use of the formats supported by the handler.
 
-<H3><A NAME="M35">COLOR ALLOCATION</A></H3>
+<H3><A NAME="M36">COLOR ALLOCATION</A></H3>
 When a photo image is displayed in a window, the photo image code
 allocates colors to use to display the image and dithers the image, if
 necessary, to display a reasonable approximation to the image using
@@ -321,12 +328,12 @@ the image to be displayed in shades of gray, even on a color display,
 by giving a single number rather than three numbers separated by
 slashes.
 
-<H3><A NAME="M36">CREDITS</A></H3>
+<H3><A NAME="M37">CREDITS</A></H3>
 The photo image type was designed and implemented by Paul Mackerras,
 based on his earlier photo widget and some suggestions from
 John Ousterhout.
 
-<H3><A NAME="M37">SEE ALSO</A></H3>
+<H3><A NAME="M38">SEE ALSO</A></H3>
 <B><A HREF="./bitmap.n.html">bitmap</A></B>, <B>make-image</B>, <B><A HREF="./image.n.html">image</A></B>, <B><A HREF="./jpeg.n.html">jpeg</A></B>, <B><A HREF="./pixmap.n.html">pixmap</A></B>
 <P><IMG ALIGN=TOP SRC="./Img/line-red.gif"><P>
 <A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookBlue.gif"> Back to the <B>STk</B> main page</A>

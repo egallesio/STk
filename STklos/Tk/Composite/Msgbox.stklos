@@ -11,11 +11,11 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
-;;;; $Id: Msgbox.stklos 1.3 Wed, 04 Feb 1998 10:34:59 +0000 eg $
+;;;; $Id: Msgbox.stklos 1.4 Thu, 10 Sep 1998 23:44:28 +0200 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 29-Aug-1997 21:06
-;;;; Last file update:  4-Feb-1998 10:33
+;;;; Last file update: 10-Sep-1998 19:29
 
 (require "image")
 (require "Basics")
@@ -37,7 +37,7 @@
 				  (string->symbol (string-lower name)))
 			    (destroy box))))
 
-(define msgbox-default-image (make-image "error"))
+;(define msgbox-default-image (make-image "error"))
 
 ;=============================================================================
 ;
@@ -51,7 +51,7 @@
 ;;;;
 ;;;; Resources
 ;;;;
-(option 'add "*MessageBox*icon.Image" 	msgbox-default-image  "widgetDefault")
+;(option 'add "*MessageBox*icon.Image" 	msgbox-default-image  "widgetDefault")
 (option 'add "*MessageBox*msg.Font"     '(Helvetica -16 bold) "widgetDefault")
 (option 'add "*MessageBox*msg.Aspect"   1000                  "widgetDefault")
 
@@ -71,6 +71,10 @@
 		    :allocation	  :propagated
 		    :propagate-to (msg))
    (bitmap 	    :accessor 	   bitmap
+		    :init-keyword :bitmap
+		    :allocation	  :propagated
+		    :propagate-to (icon))
+   (image 	    :accessor 	   bitmap
 		    :init-keyword :bitmap
 		    :allocation	  :propagated
 		    :propagate-to (icon))))
@@ -173,7 +177,7 @@
 
     (pack yes no :side 'left :expand #t :padx '3m :pady '2m)))
 
-;=============================================================================
+;================================================================b=============
 ;
 ; 		< Y e s - n o - c a n c e l - m e s s a g e - b o x >
 ;
@@ -201,7 +205,7 @@
   (define (Tk:message-box . l)
     (let* ((default (get-keyword :default l ""))
 	   (icon    (get-keyword :icon    l #f))
-	   (text    (get-keyword :text    l ""))
+	   (msg     (get-keyword :message l ""))
 	   (title   (get-keyword :title   l ""))
 	   (class   (case (get-keyword :type  l 'ok)
 		      ((abortretryignore) <Abort-retry-ignore-message-box>)
@@ -210,14 +214,24 @@
 		      ((yesno)		  <Yes-no-message-box>)
 		      ((yesnocancel)	  <Yes-no-cancel-message-box>)
 		      (else		  <Ok-message-box>)))
-	   (box     (make class :text text :title title)))
+	   (box     (make class :text msg :title title)))
       
       ;; Default
       ;/////// must be done ////////
       
-      ;; Icon 
-      (if icon (set! (icon box) (make-image icon)))
-           
+      ;; Icon
+      (when icon
+	(let ((labicon (slot-ref box 'icon)))
+	  (slot-set! 
+	       labicon 
+	       'bitmap 
+	       (case icon
+		 ((error info question warning) icon)
+		 (else (destroy box)
+		       (error (string-append 
+			       "Tk:message-box: icon must be "
+			       "one of error, info, question or warning.")))))))
+          
       (let ((old-grab (grab 'current box)))
 	(tkwait 'visibility box)
 	(grab 'set box)

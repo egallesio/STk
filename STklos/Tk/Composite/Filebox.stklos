@@ -11,11 +11,11 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
-;;;; $Id: Filebox.stklos 1.6 Tue, 03 Mar 1998 22:48:24 +0000 eg $
+;;;; $Id: Filebox.stklos 1.7 Thu, 10 Sep 1998 23:44:28 +0200 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;    Creation date: 22-Mar-1994 13:05
-;;;; Last file update:  3-Mar-1998 22:54
+;;;; Last file update: 10-Sep-1998 16:16
 
 (require "unix")
 (require "Basics")
@@ -362,7 +362,7 @@
 )
 ;=============================================================================
 ;
-; Make-file-boxFile-chooser (for compatibilty with old STk versions).
+; Make-file-box (for compatibilty with old STk versions).
 ;
 ;=============================================================================
 

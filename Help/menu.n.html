@@ -661,34 +661,42 @@ the same as the original menu.
 <H3><A NAME="M85">DEFAULT BINDINGS</A></H3>
 Tk automatically creates class bindings for menus that give them
 the following default behavior:
-<OL>
-<LI>
+<P>
+<DL>
+<DT><A NAME="M86">{[1]}</A><DD>
 When the mouse enters a menu, the entry underneath the mouse
 cursor activates;  as the mouse moves around the menu, the active
 entry changes to track the mouse.
-<LI>
+<P>
+<DT><A NAME="M87">{[2]}</A><DD>
 When the mouse leaves a menu all of the entries in the menu
 deactivate, except in the special case where the mouse moves from
 a menu to a cascaded submenu.
-<LI>
+<P>
+<DT><A NAME="M88">{[3]}</A><DD>
 When a button is released over a menu, the active entry (if any) is invoked.
 The menu also unposts unless it is a torn-off menu.
-<LI>
+<P>
+<DT><A NAME="M89">{[4]}</A><DD>
 The Space and Return keys invoke the active entry and
 unpost the menu.
-<LI>
+<P>
+<DT><A NAME="M90">{[5]}</A><DD>
 If any of the entries in a menu have letters underlined with
 with <B>:underline</B> option, then pressing one of the underlined
 letters (or its upper-case or lower-case equivalent) invokes that
 entry and unposts the menu.
-<LI>
+<P>
+<DT><A NAME="M91">{[6]}</A><DD>
 The Escape key aborts a menu selection in progress without invoking any
 entry.  It also unposts the menu unless it is a torn-off menu.
-<LI>
+<P>
+<DT><A NAME="M92">{[7]}</A><DD>
 The Up and Down keys activate the next higher or lower entry
 in the menu.  When one end of the menu is reached, the active
 entry wraps around to the other end.
-<LI>
+<P>
+<DT><A NAME="M93">{[8]}</A><DD>
 The Left key moves to the next menu to the left.
 If the current menu is a cascaded submenu, then the submenu is
 unposted and the current menu entry becomes the cascade entry
@@ -700,7 +708,8 @@ Otherwise the key has no effect.
 The left-right order of menubuttons is determined by their stacking
 order:  Tk assumes that the lowest menubutton (which by default
 is the first one created) is on the left.
-<LI>
+<P>
+<DT><A NAME="M94">{[9]}</A><DD>
 The Right key moves to the next menu to the right.
 If the current entry is a cascade entry, then the submenu is
 posted and the  current menu entry becomes the first entry
@@ -708,7 +717,8 @@ in the submenu.
 Otherwise, if the current menu was posted from a
 menubutton, then the current menubutton is unposted and the
 next menubutton to the right is posted.
-</OL>
+<P>
+</DL>
 <P>
 Disabled menu entries are non-responsive:  they don't activate and
 they ignore mouse button presses and releases.
@@ -716,12 +726,12 @@ they ignore mouse button presses and releases.
 The behavior of menus can be changed by defining new bindings for
 individual widgets or by redefining the class bindings.
 
-<H3><A NAME="M86">BUGS</A></H3>
+<H3><A NAME="M95">BUGS</A></H3>
 At present it isn't possible to use the
 option database to specify values for the options to individual
 entries.
 
-<H3><A NAME="M87">SEE ALSO</A></H3>
+<H3><A NAME="M96">SEE ALSO</A></H3>
 <B>popup option-menu menubutton</B>
 <P><IMG ALIGN=TOP SRC="./Img/line-red.gif"><P>
 <A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookBlue.gif"> Back to the <B>STk</B> main page</A>

@@ -20,12 +20,13 @@
  *
  *            Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 17-Feb-1993 12:27
- * Last file update:  8-Apr-1998 18:53
+ * Last file update: 15-Sep-1998 14:43
  *
  */
 
 #include "stk.h"
 #include "gc.h"
+#include "extend.h"
 #ifdef USE_STKLOS
 #  include "stklos.h"
 #endif
@@ -57,7 +58,7 @@ long    STk_alloc_cells;
 int	STk_gc_requested = 0;
 
 /* internal vars */
-static jmp_buf	save_regs_gc_mark;
+static Jmp_Buf	save_regs_gc_mark;
 static long	gc_cells_collected;
 static long	heap_size      = INITIAL_HEAP_SIZE;
 static int	gc_verbose     = 0;
@@ -71,7 +72,7 @@ static struct gc_protected  *protected_registers = NULL;
 
 static void no_memory(void)
 {
-  STk_panic("No more memory. Cannot allocate a new heap.");
+  panic("No more memory. Cannot allocate a new heap.");
 }
 
 static void allocate_new_heap(void)
@@ -316,7 +317,7 @@ static void gc_sweep(void)
 #endif
 #ifdef USE_TK
 	  case tc_tkcommand:  if (! ptr->storage_as.tk.data->deleted)
-	    			 Tcl_internal_DeleteCommand
+	    			 STk_internal_Tcl_DeleteCommand
 				     (STk_main_interp, ptr->storage_as.tk.data->Id);
 			       free(ptr->storage_as.tk.data);
 			       break;
@@ -459,9 +460,10 @@ static void gc_mark_and_sweep(void)
   gc_start();
 
   /**** Marking phase */
-  setjmp(save_regs_gc_mark);  					    /* registers */
-  STk_mark_stack((SCM *) save_regs_gc_mark,
-		 (SCM *) (((char *) save_regs_gc_mark)+sizeof(save_regs_gc_mark)));
+  setjmp(save_regs_gc_mark.j);  				    /* registers */
+  STk_mark_stack((SCM *) save_regs_gc_mark.j,
+		 (SCM *) (((char *) save_regs_gc_mark.j)+
+			  sizeof(save_regs_gc_mark)));
   STk_mark_stack((SCM *) STk_stack_start_ptr, (SCM *) &stack_end);  /* stack */
   mark_protected();						    /* globals */
 
@@ -483,7 +485,7 @@ void STk_gc_for_newcell(void)
     gc_mark_and_sweep();
     if (NNULLP(STk_freelist)) return;
   }
-  STk_panic("Out of storage");
+  panic("Out of storage");
 }
 
 

@@ -16,30 +16,30 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: error.c 1.5 Tue, 19 May 1998 10:44:58 +0000 eg $
+ * $Id: error.c 1.9 Wed, 30 Sep 1998 14:02:29 +0200 eg $
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 14-Nov-1993 14:58
- * Last file update: 14-May-1998 23:02
+ * Last file update: 29-Sep-1998 10:31
  */
 
 #include "stk.h"
 
 /**** Static variables ****/
 
-static jmp_buf global_jmp_buf; 		/* Jump buffer denoting toplevel context */
+static Jmp_Buf global_jmp_buf; 		/* Jump buffer denoting toplevel context */
 static int err_counter=0; 		/* To avoid loops when REPORT_ERROR 	 */
 					/* proc is buggy 			 */
 
 /**** Public variables ****/
-jmp_buf *STk_top_jmp_buf   = &global_jmp_buf;
+Jmp_Buf *STk_top_jmp_buf   = &global_jmp_buf;
 long     STk_error_context = ERR_FATAL;
 
 
 		/***************************************************/
 
-static print_error_message(char *head, char *message, SCM who, 
-			   int uncode, int show_stack)
+static void print_error_message(char *head, char *message, SCM who, 
+				int uncode, int show_stack)
 {
   if (uncode) who = STk_uncode(who);
 
@@ -51,11 +51,10 @@ static print_error_message(char *head, char *message, SCM who,
   if (show_stack) STk_show_eval_stack(5, uncode);
 }
 
-void print_message(char *message, SCM x)
+static void print_message(char *message, SCM x)
 {
   SCM tmp;
   char head[MAX_PATH_LENGTH+50];
-  int k;
   
   switch (Error_context) {
     case ERR_READ_FROM_STRING: strcpy(head,"*** Read from string error:\n"); break;
@@ -101,9 +100,6 @@ void print_message(char *message, SCM x)
 
 void STk_err(char *message, SCM x)
 {
-  SCM tmp;
-  char head[MAX_PATH_LENGTH+50];
-  
   STk_reset_eval_hook();
 
   if (!(Error_context & ERR_IGNORED)) {
@@ -115,9 +111,9 @@ void STk_err(char *message, SCM x)
   err_counter = 0;
   switch (Error_context) {
     case ERR_FATAL: 
-      STk_panic("FATAL ERROR IN CRITICAL CODE SECTION.");
+      panic("FATAL ERROR IN CRITICAL CODE SECTION.");
     default:
-      longjmp(*STk_top_jmp_buf, JMP_ERROR);
+      longjmp(STk_top_jmp_buf->j, JMP_ERROR);
   }
 }
 

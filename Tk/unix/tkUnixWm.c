@@ -12,7 +12,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkUnixWm.c 1.153 97/08/13 13:41:11
+ * SCCS: @(#) tkUnixWm.c 1.155 97/10/28 08:35:19
  */
 
 #include "tkPort.h"
@@ -1849,6 +1849,18 @@ Tk_WmCmd(clientData, interp, argc, argv)
 		    argv[0], " state window\"", (char *) NULL);
 	    return TCL_ERROR;
 	}
+#ifdef STk_CODE
+	if (wmPtr->iconFor != NULL) {
+	    interp->result = "\"icon\"";
+	} else if (wmPtr->withdrawn) {
+	    interp->result = "\"withdrawn\"";
+	} else if (Tk_IsMapped((Tk_Window) winPtr)
+		|| ((wmPtr->flags & WM_NEVER_MAPPED)
+		&& (wmPtr->hints.initial_state == NormalState))) {
+	    interp->result = "\"normal\"";
+	} else {
+	    interp->result = "\"iconic\"";
+#else
 	if (wmPtr->iconFor != NULL) {
 	    interp->result = "icon";
 	} else if (wmPtr->withdrawn) {
@@ -1856,15 +1868,8 @@ Tk_WmCmd(clientData, interp, argc, argv)
 	} else if (Tk_IsMapped((Tk_Window) winPtr)
 		|| ((wmPtr->flags & WM_NEVER_MAPPED)
 		&& (wmPtr->hints.initial_state == NormalState))) {
-#ifdef STk_CODE
-	    interp->result = "\"normal\"";
-#else
 	    interp->result = "normal";
-#endif
 	} else {
-#ifdef STk_CODE
-	    interp->result = "\"iconic\"";
-#else
 	    interp->result = "iconic";
 #endif
 	}
@@ -4591,7 +4596,7 @@ GetMaxSize(wmPtr, maxWidthPtr, maxHeightPtr)
 /*
  *----------------------------------------------------------------------
  *
- * TkMakeMenuWindow --
+ * TkpMakeMenuWindow --
  *
  *	Configure the window to be either a pull-down (or pop-up)
  *	menu, or as a toplevel (torn-off) menu or palette.
@@ -4606,7 +4611,7 @@ GetMaxSize(wmPtr, maxWidthPtr, maxHeightPtr)
  */
 
 void
-TkMakeMenuWindow(tkwin, transient)
+TkpMakeMenuWindow(tkwin, transient)
     Tk_Window tkwin;		/* New window. */
     int transient;		/* 1 means menu is only posted briefly as
 				 * a popup or pulldown or cascade.  0 means
@@ -4633,11 +4638,21 @@ TkMakeMenuWindow(tkwin, transient)
 	atts.override_redirect = False;
 	atts.save_under = False;
     }
-	
+
+    /*
+     * The override-redirect and save-under bits must be set on the
+     * wrapper window in order to have the desired effect.  However,
+     * also set the override-redirect bit on the window itself, so
+     * that the "wm overrideredirect" command will see it.
+     */
+
     if ((atts.override_redirect != Tk_Attributes(wrapperPtr)->override_redirect)
 	    || (atts.save_under != Tk_Attributes(wrapperPtr)->save_under)) {
 	Tk_ChangeWindowAttributes((Tk_Window) wrapperPtr,
 		CWOverrideRedirect|CWSaveUnder, &atts);
+    }
+    if (atts.override_redirect != Tk_Attributes(tkwin)->override_redirect) {
+	Tk_ChangeWindowAttributes(tkwin, CWOverrideRedirect, &atts);
     }
 }
 

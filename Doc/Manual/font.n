@@ -116,7 +116,7 @@ The platform-specific name of a font, interpreted by the graphics server.
 This also includes, under X, an XLFD (see [4]) for which a single ``\fB*\fR''
 character was used to elide more than one field in the middle of the
 name.  See PLATFORM-SPECIFIC issues for a list of the system fonts.
-.VS 1
+.VS 8.0 br
 .TP
 [3] \fIfamily \fR?\fIsize\fR? ?\fIstyle\fR? ?\fIstyle ...\fR?
 .

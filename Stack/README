@@ -2,7 +2,7 @@
 --    Creation date: 28-Sep-1997 18:27
 -- Last file update: 14-Dec-1997 22:05
 --
--- $Id: README 1.1 Sat, 03 Jan 1998 12:46:25 +0000 eg $
+-- $Id: README 1.1 Sat, 03 Jan 1998 13:46:25 +0100 eg $
 
 
 This directory contains code which deals with the stack. It is VERY

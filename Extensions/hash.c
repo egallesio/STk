@@ -2,7 +2,7 @@
  *
  * h a s h  . c			-- Hash Tables 
  *
- * Copyright © 1993-1997 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -19,7 +19,7 @@
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 17-Jan-1994 17:49
- * Last file update: 31-Dec-1997 15:36
+ * Last file update: 15-Jul-1998 17:34
  */
 
 #include <stk.h>
@@ -263,21 +263,21 @@ static PRIMITIVE hash_table_put(SCM ht, SCM key, SCM val)
       break;
     case hash_comp:
       index = Apply(HASH_SXHASH(ht), LIST1(key));
-      entry = Tcl_CreateHashEntry(HASH_H(ht), (char *) index, &new);
-      Tcl_SetHashValue(entry, NIL); /* To avoid GC problems in further allocations 
-				     * Thanks to S. Calvo <sarah@grammatech.com> */
-      if (new)
-	Tcl_SetHashValue(entry, LIST1(Cons(key, val)));
-      else {
-	SCM old = (SCM) Tcl_GetHashValue(entry);
+      if ((entry=Tcl_FindHashEntry(HASH_H(ht), (char *) index)) != NULL) {
+	SCM old = (SCM) Tcl_GetHashValue(entry);	/* waz here */
 	SCM tmp = find_key(key, old, HASH_COMP(ht));
 
 	if (tmp) {
-	  CAR(tmp) = key;
-	  CDR(tmp) = val;
+	  CAR(tmp) = key; /* Generally useless. But we don't master the hash fct */
+	  CDR(tmp) = val;		      /* (i.e. it can have side-effects) */
 	}
 	else
 	  Tcl_SetHashValue(entry, Cons(Cons(key, val), old));
+      }
+      else {						/* new bucket */
+	SCM tmp =  LIST1(Cons(key, val)); /* place it in tmp to avoid GC problems */
+	entry = Tcl_CreateHashEntry(HASH_H(ht), (char *) index, &new);
+	Tcl_SetHashValue(entry, tmp);
       }
       break;
   }

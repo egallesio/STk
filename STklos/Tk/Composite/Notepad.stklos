@@ -1,0 +1,171 @@
+;;;; Notepad.stklos -- Notepad widget
+;;;;
+;;;; Copyright © 1997-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; $Id: Notepad.stklos 1.1 Sun, 30 Aug 1998 11:09:20 +0200 eg $
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date:  1-Feb-1997 11:43
+;;;; Last file update: 29-Aug-1998 12:40
+
+
+(require "Tk-classes")
+
+(select-module STklos+Tk)
+(export select-tab unselect-tab current-tab)
+
+(define-class <Notepad> (<Tk-composite-widget>)
+  (%cache		; A small label used to cache the bottom of tabs
+   %page		; The frame which contains the page associated to a tab
+   %tabs		; All the tabs (first one is a fake one)
+   (%current   :init-form 	#f)
+   (width      :accessor  	width
+	       :allocation	:propagated
+	       :propagate-to	(%page))
+   (height     :accessor  	height
+	       :allocation	:propagated
+	       :propagate-to	(%page))
+   (background :accessor 	background
+	       :init-keyword 	:background
+	       :allocation	:virtual
+	       :slot-ref	(lambda (o) (background (slot-ref o '%cache)))
+	       :slot-set!	(lambda (o v)
+				  (for-each (lambda (x) (slot-set! x 'background v))
+					    (list* (slot-ref o 'frame)
+						   (slot-ref o '%cache)
+						   (slot-ref o '%page)
+						   (slot-ref o '%tabs)))))
+   (foreground :accessor 	foreground
+	       :init-keyword 	:foreground
+	       :allocation	:virtual
+	       :slot-ref	(lambda (o) (foreground (car (slot-ref o '%tabs))))
+	       :slot-set!	(lambda (o v)
+				  (for-each (lambda (x) (slot-set! x 'foreground v))
+					    (slot-ref o '%tabs))))))
+
+(define-method initialize-composite-widget ((self <Notepad>) initargs frame)
+  (let* ((w (get-keyword :width  initargs 500))
+	 (h (get-keyword :height initargs 300))
+	 (f (make <Frame> :parent frame :border-width 2 :relief "raised"
+		  	  :width w :height h))
+	 (c (make <Frame> :parent frame :border-width 0 :height 4)))
+    (pack f :side 'bottom :fill 'both :expand #t)
+    (pack 'propagate f #f)
+    ;; Create a first button in the frame. This button is never mapped but serves 
+    ;; as a prototype for next tabs
+    (slot-set! self '%tabs   (list (make <Button> :parent frame)))
+    (slot-set! self '%cache  c)
+    (slot-set! self '%page   f)
+    (slot-set! self 'Id	     (slot-ref frame 'Id))
+    (bind self "<Configure>" (lambda () (place-cache self)))))
+
+
+(define-method current-tab ((self <Notepad>))
+  (slot-ref self '%current))
+
+
+(define-method place-cache ((self <Notepad>))
+  ;; Place the cache window (associated to the <Configure> event)
+  (let* ((cache   (slot-ref self '%cache))
+	 (current (slot-ref self '%current))
+	 (bd      (border-width current)))
+    (update 'idle)
+    (place cache :in current :bordermode "inside"
+	   :x -1 :y  (- (winfo 'height current) (* 2 bd))
+	   :width (- (winfo 'width  current) (* 2 bd) -1) :height (+ (* 2 bd) 1))
+    (raise cache)))
+
+;=============================================================================
+;
+; 				<Notepad-Tab> class
+;
+;=============================================================================
+
+(define-class <Notepad-Tab> (<Button>)
+  ((action :accessor action :init-form list :init-keyword :action)
+   (page   :accessor page   :init-form #f)))
+  
+
+(define-method initialize ((self <Notepad-Tab>) initargs)
+  (let* ((parent  (get-keyword :parent initargs #f))
+	 (current (slot-ref parent '%current)))
+    (unless (is-a? parent <Notepad>)
+      (error "Parent of tab ~S is not a <Notepad>" self))
+    (next-method)
+    (slot-set! self 'command (lambda () (select-tab self)))
+    (slot-set! self 'active-background (background self))
+    (slot-set! parent '%tabs (append (slot-ref parent '%tabs) (list self)))
+    (pack self :side 'left :fill 'y)
+    ( (if current unselect-tab select-tab) self)
+    (event 'generate parent "<Configure>"))) ; useful if the pad is bigger 
+					     ; than previous ones
+
+(define-method unselect-tab ((self <Notepad-Tab>))
+  ;; Change graphical attributes of unselected tabs
+  (pack 'forget (page self))
+  (slot-set! self 'relief "sunken")
+  (slot-set! self 'foreground  (slot-ref self 'disabled-foreground)))
+
+
+(define-method select-tab ((self <Notepad-Tab>))
+  (let* ((parent  (slot-ref self 'parent))
+	 (proto   (car (slot-ref parent '%tabs)))
+	 (current (slot-ref parent '%current)))
+    ;; Change grapical attributes of selected tabs
+    (slot-set! self 'relief "raised")
+    (slot-set! self 'foreground (slot-ref proto 'foreground))
+    ;; Change the current item
+    (if (and current (not (eqv? current self)))
+	(unselect-tab current))
+    (slot-set! parent '%current self)
+    (event 'generate parent "<Configure>")
+    ;; Call the associated action
+    ((slot-ref self 'action) (slot-ref parent '%page) self)))
+
+
+(provide "Notepad")
+
+#|
+   Example: 
+
+    ;; Fist define the actions associated to the tab
+    ;;
+    (define (Host parent tab)
+      (unless (page tab)      	; First call. Create the interface
+	(let* ((f  (make <Frame>  :parent parent :border-width 3 
+			 :background "darkgray" :relief "groove"))
+	       (b1 (make <Labeled-Entry> :parent f :title "Host: ")) 
+	       (b2 (make <Labeled-Entry> :parent f :title "Port: ")))
+	  (pack b1 b2 :fill 'x :padx 10 :pady 10)
+	  (set! (page tab) f)))
+      (pack (page tab) :padx 10 :pady 10 :fill "both" :expand #t))
+
+    (define (Mess parent tab)
+      (unless (page tab)      	; First call. Create the interface
+	(let ((m (make <Message> :parent parent :border-width 3 
+		       :relief "groove" :background "darkgray" :aspect 300
+		       :justify "center" :font "10x20" 
+		       :text "This is a simple demonstration.")))
+	  (pack m :expand #t :fill "both")
+	  (set! (page tab) m)))
+      (pack (page tab) :padx 10 :pady 10 :fill "both" :expand #t))
+
+
+    ;; Let's go
+    ;;
+    (define f (make <NotePad> :width 450 :height 150))
+    (pack f :expand #t :fill "both" :padx 2 :pady 2)
+
+    (make <Notepad-Tab> :parent f :text "host1"             :action Host)
+    (make <Notepad-Tab> :parent f :text "host2"             :action Host)
+    (make <Notepad-Tab> :parent f :text "Multi-line\nlabel" :action Mess)
+    (make <Notepad-Tab> :parent f :bitmap "questhead"       :width 30 :action Host)
+|#

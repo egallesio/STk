@@ -12,7 +12,7 @@
 #
 #           Author: Erick Gallesio [eg@kaolin.unice.fr]
 #    Creation date:  6-Mar-1994 15:49
-# Last file update:  2-Jun-1998 17:44
+# Last file update: 20-Jul-1998 19:37
 
 include ../config.make
 
@@ -34,7 +34,8 @@ CFLAGS= $(SH_CCFLAGS) $(STKCFLAGS) $(DFLGS) -DUSE_TK @DEFS@ \
 all: $(EXTRA_OBJ)
 	chmod 0755 stk-genmake
 
-# Following lines are needed for weird make commands. Use Gnu make....
+# Following lines are needed for weird make commands. 
+# You really should use Gnu make....
 hash.$(SH_SUFFIX): 	hash.o 
 sregexp.$(SH_SUFFIX): 	sregexp.o 
 process.$(SH_SUFFIX): 	process.o 
@@ -43,6 +44,7 @@ posix.$(SH_SUFFIX):	posix.o
 html.$(SH_SUFFIX):	html.o
 pixmap.$(SH_SUFFIX):	pixmap.o
 jpeg.$(SH_SUFFIX):	jpeg.o
+base64.$(SH_SUFFIX):	base64.o
 examples: $(EXAMPLES)
 
 install:

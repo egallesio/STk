@@ -2,7 +2,7 @@
  *
  * s t r . c				-- Strings management
  *
- * Copyright © 1993-1997 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -16,11 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: str.c 1.1 Sat, 03 Jan 1998 12:46:25 +0000 eg $
+ * $Id: str.c 1.3 Sat, 26 Sep 1998 19:19:52 +0200 eg $
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: ??????
- * Last file update: 30-Dec-1997 10:36
+ * Last file update: 19-Sep-1998 12:40
  */
 
 #include <ctype.h>
@@ -39,7 +39,7 @@ static int stringcomp(SCM s1, SCM s2)
   for (l1=STRSIZE(s1), str1=CHARS(s1), l2=STRSIZE(s2), str2=CHARS(s2);
        l1 && l2;
        l1--, str1++, l2--, str2++)
-    if (*str1 != *str2) return (*str1 - *str2);
+    if (*str1 != *str2) return ((unsigned char) *str1 - (unsigned char) *str2);
   
   /* l1 == 0 || l2 == 0 */
   return l1 ? +1 : (l2 ? -1 : 0);
@@ -72,10 +72,10 @@ SCM STk_makestrg(int len, char *init)
   NEWCELL(z, tc_string);
 
   z->storage_as.string.dim  = len;
-  z->storage_as.string.data = (char *) must_malloc(len+1); 
+  z->storage_as.string.data = (char *) must_malloc((unsigned int) len+1); 
   z->storage_as.string.data[len] = 0;
 
-  if (init) memcpy(z->storage_as.string.data, init, len);
+  if (init) memcpy(z->storage_as.string.data, init, (unsigned int) len);
   STk_allow_sigint();
 
   return z;
@@ -106,7 +106,8 @@ PRIMITIVE STk_make_string(SCM len, SCM init_char)
   long k;
   SCM z;
 
-  if ((k=STk_integer_value(len)) < 0) Err("make-string: bad string length", len);
+  ENTER_PRIMITIVE("make-string");
+  if ((k=STk_integer_value(len)) < 0) Serror("bad string length", len);
 
   z = STk_makestrg(k, NULL);
       
@@ -118,7 +119,7 @@ PRIMITIVE STk_make_string(SCM len, SCM init_char)
       for(j=0 ;j<k; j++) z->storage_as.string.data[j] = c;
     }
     else
-      Err("make-string: initializing char not valid", init_char); }
+      Serror("initializing char not valid", init_char); }
   return z;
 }
 
@@ -154,7 +155,7 @@ PRIMITIVE STk_string_ref(SCM str, SCM index)
 
   if (k >= STRSIZE(str)) 
     Err("string-ref: index out of bounds", index);
-  return STk_makechar(CHARS(str)[k]);
+  return STk_makechar((unsigned char) CHARS(str)[k]);
 }
 
 PRIMITIVE STk_string_set(SCM str, SCM index, SCM value)
@@ -199,6 +200,7 @@ PRIMITIVE STk_substring(SCM string, SCM start, SCM end)
     return STk_makestrg(to - from, CHARS(string)+from);
 
   Err("substring: bad bounds", Cons(start, end));
+  return UNDEFINED; /* cannot occur */
 }
 
 PRIMITIVE STk_string_append(SCM l, int len)
@@ -221,7 +223,7 @@ PRIMITIVE STk_string_append(SCM l, int len)
   
   /* copy strings */
   for (i=0; i < len; i++) {
-    memcpy(p, CHARS(CAR(l)), STRSIZE(CAR(l)));
+    memcpy(p, CHARS(CAR(l)), (unsigned int) STRSIZE(CAR(l)));
     p += STRSIZE(CAR(l));
     l = CDR(l);
   }
@@ -250,10 +252,12 @@ PRIMITIVE STk_list2string(SCM l)
   int j=0, len = STk_llength(l);
   SCM z;
 
-  if (len < 0) Err("list->string: bad list", l);
+  ENTER_PRIMITIVE("list->string");
+  if (len < 0) Serror("bad list", l);
   z = STk_makestrg(len, NULL);
+
   for ( ; NNULLP(l); l=CDR(l)) {
-    if (NCHARP(CAR(l))) Err("list->string: not a character", CAR(l));
+    if (NCHARP(CAR(l))) Serror("not a character", CAR(l));
     CHARS(z)[j++] = CHAR(CAR(l));
   }
   return z;
@@ -270,8 +274,9 @@ PRIMITIVE STk_string_fill(SCM str, SCM c)
   int len, i;
   char c_char;
 
-  if (NSTRINGP(str)) Err("string-fill: not a string", str);
-  if (NCHARP(c))     Err("string-fill: not a char", c);
+  ENTER_PRIMITIVE("string-fill");
+  if (NSTRINGP(str)) Serror("not a string", str);
+  if (NCHARP(c))     Serror("not a char", c);
 
   len = STRSIZE(str);
   c_char = CHAR(c);
@@ -293,7 +298,7 @@ static char *Memmem(char *s1, int l1, char *s2, int l2)
   if (l2 == 0) return s1;
 
   for ( ; l1 >= l2 ; s1++, l1--)
-    if (memcmp(s1, s2, l2) == 0) return s1;
+    if (memcmp(s1, s2, (unsigned int) l2) == 0) return s1;
 
   return NULL;
 }
@@ -328,7 +333,7 @@ PRIMITIVE STk_string_lower(SCM s)
   register char *p, *q;
 
   if (NSTRINGP(s)) Err("string-lower: not a string", s);
-  z = STk_makestrg(strlen(CHARS(s)), NULL);
+  z = STk_makestrg((int) strlen(CHARS(s)), NULL);
 
   for (p=CHARS(s), q=CHARS(z); *p; p++, q++) *q = tolower(*p);
   return z;
@@ -340,7 +345,7 @@ PRIMITIVE STk_string_upper(SCM s)
   register char *p, *q;
 
   if (NSTRINGP(s)) Err("string-upper: not a string", s);
-  z = STk_makestrg(strlen(CHARS(s)), NULL);
+  z = STk_makestrg((int) strlen(CHARS(s)), NULL);
 
   for (p=CHARS(s), q=CHARS(z); *p; p++, q++) *q = toupper(*p);
   return z;
@@ -351,14 +356,15 @@ PRIMITIVE STk_split_string(SCM string, SCM delimiters)
   SCM result = NIL;
   char *c_string, *c_delimiters, *s;
   
-  if (!STRINGP(string)) STk_err("split-string: bad string", string);
+  ENTER_PRIMITIVE("split-string");
+  if (!STRINGP(string)) Serror("bad string", string);
   c_string = CHARS(string);
 
   if (delimiters == UNBOUND)
     c_delimiters = " \t\n";
   else {
     if (!STRINGP(delimiters)) 
-      STk_err("split-string: bad delimiter string", delimiters);
+      Serror("bad delimiter string", delimiters);
     c_delimiters = CHARS(delimiters);
   }
 
@@ -371,7 +377,7 @@ PRIMITIVE STk_split_string(SCM string, SCM delimiters)
 	len = s - c_string;
 	tmp = STk_makestrg(len, NULL);
 	
-	strncpy(CHARS(tmp), c_string, len);
+	strncpy(CHARS(tmp), c_string, (unsigned int) len);
 	CHARS(tmp)[len] = '\0';
 	result = Cons(tmp, result);
       }

@@ -19,7 +19,7 @@
  *
  *            Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 19-Feb-1993 22:15
- * Last file update: 10-Apr-1998 10:49
+ * Last file update: 14-Sep-1998 14:05
  *
  *
  */
@@ -147,6 +147,7 @@ SCM STk_execute_Tcl_lib_cmd(SCM cmd, SCM args, SCM env, int eval_args)
   }
   else
     Err(STk_main_interp->result, NIL);
+  return UNDEFINED; /* never reached */
 }
 
 /******************************************************************************
@@ -174,7 +175,7 @@ int STk_valid_callback(char *s, void **closure)
       for (p = s + 2; *p; p++)
 	if (!isxdigit(*p)) return FALSE;
 
-      sscanf(s+2, "%lx", (unsigned long) closure);
+      sscanf(s+2, "%lx", (unsigned long *) closure);
       if (!STk_valid_address((SCM) *closure)) return FALSE;
     }
   }
@@ -192,7 +193,7 @@ void STk_add_callback(char *key1, char *key2, char *key3, SCM closure)
     /* We have two keys. Use a secondary hash table */
     if (entry=Tcl_FindHashEntry(&Tk_callbacks, key1))
       /* Key already in hash table */
-      secondary_hash_table = Tcl_GetHashValue(entry);
+      secondary_hash_table = (Tcl_HashTable * ) Tcl_GetHashValue(entry);
     else {
       secondary_hash_table = (Tcl_HashTable *) must_malloc(sizeof(Tcl_HashTable));
       Tcl_InitHashTable(secondary_hash_table, TCL_STRING_KEYS);
@@ -226,9 +227,9 @@ void STk_delete_callback(char *key)
   Tcl_HashTable *secondary_hash_table;
 
   if (entry=Tcl_FindHashEntry(&Tk_callbacks, key)) {
-    if (*key != 'a' && strncmp(key, "after#", 6) != 0) {
+    if (*key != '(' && (*key == 'a' && strncmp(key, "after#", 6) != 0)) {
       /* Delete the secondary hash table associated to this entry */
-      secondary_hash_table = Tcl_GetHashValue(entry);
+      secondary_hash_table = (Tcl_HashTable * ) Tcl_GetHashValue(entry);
       Tcl_DeleteHashTable(secondary_hash_table);
       free(secondary_hash_table);
     }
@@ -236,6 +237,7 @@ void STk_delete_callback(char *key)
     Tcl_DeleteHashEntry(entry);
   }
 }
+
 
 void STk_mark_callbacks(void)
 {
@@ -249,13 +251,13 @@ void STk_mark_callbacks(void)
        entry1 = Tcl_NextHashEntry(&search1)) {
     
     key = Tcl_GetHashKey(&Tk_callbacks, entry1);
-    if (*key == 'a' && strncmp(key, "after#", 6) == 0) {
+    if (*key == '(' || (*key == 'a' && strncmp(key, "after#", 6) == 0)) {
       /* No secondary hash table */
       STk_gc_mark((SCM) Tcl_GetHashValue(entry1));
     }
     else {
       /* We have a secondary hash table. Scan it  */
-      secondary = Tcl_GetHashValue(entry1);
+      secondary = (Tcl_HashTable * ) Tcl_GetHashValue(entry1);
       for (entry2 = Tcl_FirstHashEntry(secondary, &search2);
 	   entry2;
 	   entry2 = Tcl_NextHashEntry(&search2)) {
@@ -298,7 +300,7 @@ void STk_sharp_dot_result(Tcl_Interp *interp, char *value)
   int len = strlen(value);
   char *s;
 
-  s = (char *) STk_must_malloc(len + 3);
+  s = (char *) STk_must_malloc((size_t) len + 3);
   s[0] = '#';
   s[1] = '.';
   strcpy(s+2, value);

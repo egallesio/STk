@@ -16,11 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: env.c 1.5 Mon, 20 Apr 1998 20:15:01 +0000 eg $
+ * $Id: env.c 1.6 Wed, 30 Sep 1998 14:02:29 +0200 eg $
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 23-Oct-1993 21:37
- * Last file update: 15-Apr-1998 17:43
+ * Last file update: 29-Sep-1998 10:31
  */
 
 #include "stk.h"

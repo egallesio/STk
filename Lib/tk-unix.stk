@@ -12,72 +12,64 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
-;;;; $Id: tk-unix.stk 1.1 Fri, 10 Apr 1998 07:13:18 +0000 eg $
+;;;; $Id: tk-unix.stk 1.2 Thu, 10 Sep 1998 23:44:28 +0200 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
-;;;;    Creation date:  1-Feb-1998 19:03
-;;;; Last file update:  2-Feb-1998 12:19
+;;;;    Creation date: 10-Sep-1998 23:20
+;;;; Last file update: 10-Sep-1998 23:29
 
-(require "Tk-classes")
+;;; Functions defined here are only loaded when we are on Unix. 
+;;; On windows, they are defined in C and implemented using the
+;;; native look and feel. 
+;;; The functions defined here are simple wrapers around the real ones 
+;;; defined in the STklos+Tk module. Otherwise, we have needed to require
+;;; the loading of "Tk-classes", when running Unix (and not on Windows).
 
-(select-module STklos+Tk)
-
-(export Tk:message-box Tk:get-open-file Tk:get-save-file)
+(select-module Tk)
+(export Tk:message-box Tk:choose-color 
+	Tk:get-file Tk:get-open-file Tk:get-save-file)
 
 ;=============================================================================
 ;
 ; Tk:message-box		
 ;
 ;=============================================================================
-
 (define (Tk:message-box . l)
-  (let* ((default (get-keyword :default l ""))
-	 (icon 	  (get-keyword :icon    l #f))
-	 (text    (get-keyword :text    l ""))
-	 (title   (get-keyword :title   l ""))
-	 (class   (case (get-keyword :type  l 'ok)
-		    ((abortretryignore)	<Abort-retry-ignore-message-box>)
-		    ((okcancel)		<Ok-cancel-message-box>)
-		    ((retrycancel)	<Retry-cancel-message-box>)
-		    ((yesno)		<Yes-no-message-box>)
-		    ((yesnocancel)	<Yes-no-cancel-message-box>)
-		    (else		<Ok-message-box>)))
-	 (box     (make class :text text :title title)))
+  (require "Tk-classes")
+  (apply (with-module STklos+Tk Tk:message-box) l))
 
-    ;; Default
-    ;/////// must be done ////////
+;=============================================================================
+;
+; Tk:choose-color		
+;
+;=============================================================================
+(define (Tk:choose-color . l)
+  (require "Tk-classes")
+  (apply (with-module STklos+Tk Tk:choose-color) l))
 
-    ;; Icon 
-    (if icon (set! (icon box) (make-image icon)))
-    
-    (grab 'set box)
-    (tkwait 'window box)
-    msgbox-button))
+;=============================================================================
+;
+; Tk:get-file		
+;
+;=============================================================================
+(define (Tk:get-file . l)
+  (require "Tk-classes")
+  (apply (with-module STklos+Tk Tk:get-file) l))
 
 ;=============================================================================
 ;
 ; Tk:get-open-file		
 ;
 ;=============================================================================
-
-(define (Tk:get-open-file . l)
-  (apply file-chooser 
-	 :mode 'read 
-	 :value (string-append (get-keyword :initial-dir  l (getcwd))
-			       "/"
-			       (get-keyword :initial-file l ""))
-	 l))
+(define (Tk:get-file . l)
+  (require "Tk-classes")
+  (apply (with-module STklos+Tk Tk:get-open-file) l))
 
 ;=============================================================================
 ;
 ; Tk:get-save-file		
 ;
 ;=============================================================================
-
 (define (Tk:get-save-file . l)
-  (apply file-chooser 
-	 :mode 'write 
-	 :value (string-append (get-keyword :initial-dir  l (getcwd))
-			       "/"
-			       (get-keyword :initial-file l ""))
-	 l))
+  (require "Tk-classes")
+  (apply (with-module STklos+Tk Tk:get-save-file) l))

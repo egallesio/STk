@@ -9,7 +9,7 @@
  * 
  * Win32 support by Caleb Deupree <cdeupree@erinet.com>
  *
- * Last file update: 31-Jan-1998 10:29
+ * Last file update: 10-Sep-1998 15:17
  */
 
 
@@ -75,7 +75,8 @@ static void socket_error(char *who, char *message, SCM object)
 
 static void set_socket_io_ports(int s, SCM sock, char *who)
 {
-  int t, len, port;
+  int t, port;
+  size_t len;
   char *hostname, *fname;
   FILE *fs, *ft;
   char buffer[200];
@@ -138,9 +139,8 @@ static PRIMITIVE make_client_socket(SCM hostname, SCM port)
   char str[] = "make-client-socket";
   struct hostent *hp;
   struct sockaddr_in server;
-  struct in_addr local_ip;
-  SCM z, local_host;
   int s;
+  SCM z;
 
   /* Verify arguments */
   if(NSTRINGP(hostname)) 
@@ -196,8 +196,6 @@ static PRIMITIVE make_server_socket(SCM port)
   char msg[] = "make-server-socket";
   struct sockaddr_in sin;
   int s, portnum, len;
-  SCM local_host;
-  struct in_addr local_ip;
   SCM z;
 
   /* Determine port to use */
@@ -254,7 +252,7 @@ static PRIMITIVE make_server_socket(SCM port)
 
 static PRIMITIVE socket_accept_connection(SCM sock)
 {
-  char buff[50], *s;
+  char *s;
   char str[]= "socket-accept-connection";
   struct sockaddr_in sin;
   struct hostent *host;
@@ -290,7 +288,6 @@ static void apply_socket_closure(SCM closure)
  
 static PRIMITIVE when_socket_ready(SCM s, SCM closure)
 {
-  char str[50];
   int fd;
 
   if (NSOCKETP(s))
@@ -321,6 +318,7 @@ static PRIMITIVE when_socket_ready(SCM s, SCM closure)
 static PRIMITIVE buggy_handler(SCM s, SCM closure)
 {
   Err("when-socket-ready: cannot be used with snow", NIL);
+  return UNDEFINED;
 }
 
 /******************************************************************************
@@ -331,8 +329,6 @@ static PRIMITIVE buggy_handler(SCM s, SCM closure)
 
 static PRIMITIVE socket_shutdown(SCM sock, SCM close_socket)
 {
-  SCM tmp1, tmp2;
-
   if (close_socket == UNBOUND) close_socket = Truth;
 
   if (NSOCKETP(sock)) 	       Err("socket-shutdown: bad socket", sock);

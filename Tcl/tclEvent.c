@@ -79,6 +79,7 @@ static ExitHandler *firstExitPtr = NULL;
 
 char *tclMemDumpFileName = NULL;
 
+#ifndef STk_CODE
 /*
  * This variable is set to 1 when Tcl_Exit is called, and at the end of
  * its work, it is reset to 0. The variable is checked by TclInExit() to
@@ -87,6 +88,7 @@ char *tclMemDumpFileName = NULL;
  */
 
 static int tclInExit = 0;
+#endif
 
 /*
  * Prototypes for procedures referenced only in this file:
@@ -95,9 +97,11 @@ static int tclInExit = 0;
 static void		BgErrorDeleteProc _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp));
 static void		HandleBgErrors _ANSI_ARGS_((ClientData clientData));
+#ifndef STk_CODE
 static char *		VwaitVarProc _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, char *name1, char *name2,
 			    int flags));
+#endif
 
 /*
  *----------------------------------------------------------------------
@@ -219,7 +223,9 @@ HandleBgErrors(clientData)
     int code;
     BgError *errPtr;
     ErrAssocData *assocPtr = (ErrAssocData *) clientData;
+#ifndef STk_CODE
     Tcl_Channel errChannel;
+#endif
 
     Tcl_Preserve((ClientData) assocPtr);
     
@@ -563,6 +569,7 @@ Tcl_Finalize()
     
     TclFinalizeCompExecEnv();
     TclFinalizeEnvironment();
+    TclpFinalize();
     firstExitPtr = NULL;
     tclInExit = 0;
 }

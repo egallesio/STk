@@ -16,11 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- *  $Id: stk.h 1.13 Tue, 19 May 1998 10:44:58 +0000 eg $
+ *  $Id: stk.h 1.19 Wed, 30 Sep 1998 14:02:29 +0200 eg $
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 12-May-1993 10:34
- * Last file update: 14-May-1998 16:36
+ * Last file update: 27-Sep-1998 16:45
  *
  ******************************************************************************/
 
@@ -53,6 +53,11 @@ extern "C" {
  * Headers <tcl*.h> are always included (even if not USE_TK) for the hash table
  * function prototypes, and for implementing the crazy Tcl_Obj type. 
  */
+#ifdef STk_CODE
+#   ifdef OSF1
+#     define HAS_STDARG  /* Hacky */
+#   endif
+#endif
 #include <tcl.h>
 #include <tclInt.h>
 
@@ -89,6 +94,7 @@ extern "C" {
 #define LOAD_SUFFIXES	"*load-suffixes*"
 #define LOAD_VERBOSE	"*load-verbose*"
 #define LAST_DEFINED    "*last-defined*"
+#define STK_LIBRARY     "*stk-library*"
 
 #define REPORT_ERROR	"report-error"
 
@@ -429,7 +435,7 @@ PRIMITIVE STk_equal(SCM x, SCM y);
   ------------------------------------------------------------------------------
 */
 unsigned char  STk_string2char(char *s);
-char *STk_char2string(unsigned char c);
+unsigned char *STk_char2string(unsigned char c);
 SCM   STk_makechar(unsigned char c);
 
 PRIMITIVE STk_charp(SCM obj);
@@ -538,7 +544,11 @@ PRIMITIVE STk_get_environment(SCM env);
 #define JMP_THROW		2
 #define JMP_RESTORE		3
 
-extern jmp_buf *STk_top_jmp_buf; /* Jump buffer denoting toplevel context */
+typedef struct {
+  jmp_buf j;
+} Jmp_Buf;
+
+extern Jmp_Buf *STk_top_jmp_buf; /* Jump buffer denoting toplevel context */
 extern long STk_error_context;
 
 void STk_err(char *message, SCM x);
@@ -841,6 +851,7 @@ SCM* STk_module_lookup(SCM module, SCM var, SCM context);
 SCM  STk_modulevalue(SCM obj);
 SCM  STk_module_env2list(SCM module);
 void STk_select_stk_module(void);
+void STk_initialize_stk_module(void);
 void STk_init_modules(void);
 
 PRIMITIVE STk_define_module(SCM l, SCM env, int len);
@@ -860,6 +871,7 @@ PRIMITIVE STk_module_imports(SCM module);
 PRIMITIVE STk_module_exports(SCM module);
 PRIMITIVE STk_module_env(SCM module);
 PRIMITIVE STk_module_symbols(SCM module);
+
 
 /*
   ------------------------------------------------------------------------------
@@ -1130,8 +1142,8 @@ void STk_signal_GC(void);
   ------------------------------------------------------------------------------
 */
 #ifndef _DEBUG_MALLOC_INC
-void *STk_must_malloc(unsigned long size);
-void *STk_must_realloc(void *ptr, unsigned long size);
+void *STk_must_malloc(size_t size);
+void *STk_must_realloc(void *ptr, size_t size);
 #endif
 
 double   STk_my_time(void);
@@ -1153,7 +1165,6 @@ PRIMITIVE STk_uncode(SCM expr);
 PRIMITIVE STk_default_SIGSEGV_handler(void);
 #endif
 void STk_delete_Tcl_child_Interp(void);
-void STk_panic TCL_VARARGS_DEF(char *,arg1);
 
 
 #define must_malloc  STk_must_malloc
@@ -1178,7 +1189,7 @@ SCM 	  STk_internal_open_input_string(char *s);
 void 	  STk_free_string_port(SCM port);
 SCM 	  STk_internal_read_from_string(SCM port, int *eof, int case_significant);
 PRIMITIVE STk_open_input_string(SCM s);
-PRIMITIVE STk_open_output_string();
+PRIMITIVE STk_open_output_string(void);
 PRIMITIVE STk_get_output_string(SCM port);
 PRIMITIVE STk_input_string_portp(SCM port);
 PRIMITIVE STk_output_string_portp(SCM port);
@@ -1241,7 +1252,7 @@ PRIMITIVE STk_string_lower(SCM s);				/* + */
 PRIMITIVE STk_string_upper(SCM s);				/* + */
 PRIMITIVE STk_split_string(SCM string, SCM delimiters);		/* + */
 
-#define STk_makestring(s) STk_makestrg(strlen(s), (s))
+#define STk_makestring(s) STk_makestrg((int) strlen(s), (s))
 
 
 /*
@@ -1291,6 +1302,16 @@ PRIMITIVE STk_syntax_define    (SCM *pform, SCM env, int len);
 PRIMITIVE STk_while(SCM l, SCM env, int len);
 PRIMITIVE STk_until(SCM l, SCM env, int len);
 PRIMITIVE STk_syntax_extend_env(SCM *pform, SCM env, int len);
+
+/*
+  ------------------------------------------------------------------------------
+  ----
+  ---- T C L - L I B . C
+  ----
+  ------------------------------------------------------------------------------
+*/
+int STk_internal_Tcl_DeleteCommand(Tcl_Interp *interp, char *cmdName); 
+
 /*
   ------------------------------------------------------------------------------
   ----
@@ -1311,7 +1332,7 @@ void 	  STk_change_value	 (SCM var, SCM env);
 void 	  STk_mark_tracevar_table(void);
 PRIMITIVE STk_trace_var		 (SCM var, SCM code);
 PRIMITIVE STk_untrace_var	 (SCM var);
-
+void 	  STk_init_tracevar      (void);
 /*
   ------------------------------------------------------------------------------
   ----
@@ -1339,7 +1360,7 @@ PRIMITIVE STk_untrace_var	 (SCM var);
 void 	  STk_whence(char *exec, char *path);
 SCM 	  STk_internal_expand_file_name(char *s);
 SCM 	  STk_resolve_link(char *path, int count);
-int 	  STk_is_directory(const char *path);
+int 	  STk_dirp(const char *path);
 
 PRIMITIVE STk_expand_file_name(SCM s);
 PRIMITIVE STk_canonical_path(SCM str);
@@ -1445,7 +1466,7 @@ Extern SCM STk_current_filename;
 /* Special symbols */
 Extern SCM STk_sym_lambda, STk_sym_quote,STk_sym_dot, STk_sym_imply, 
 			  STk_sym_debug, STk_sym_else, STk_sym_quasiquote, 
-           STk_sym_unquote, STk_sym_unquote_splicing, STk_sym_break;;
+           STk_sym_unquote, STk_sym_unquote_splicing, STk_sym_break;
 
 /* Dynamic-wind */
 Extern SCM STk_wind_stack;
@@ -1488,17 +1509,8 @@ Extern SCM STk_last_defined;
   ----
   ------------------------------------------------------------------------------
 */
-void  STk_init_glue(void);
-SCM   STk_execute_Tcl_lib_cmd(SCM cmd, SCM args, SCM env, int eval_args);
+#include "tk-glue.h"
 
-/*
- * STk_Stringify permits to transform the string "s" in a valid STk string.
- * Original string is deallocated if free_original is 1 
- */
-char *STk_stringify(char *s, int free_original);
-#endif
-
-#ifdef USE_TK
 /*
   ------------------------------------------------------------------------------
   ----

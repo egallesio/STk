@@ -247,17 +247,14 @@ TkTextTagCmd(textPtr, interp, argc, argv)
 		return Tk_DeleteBinding(interp, textPtr->bindingTable,
 			(ClientData) tagPtr, argv[4]);
 	    }
-#ifdef STk_CODE
-	    mask = Tk_CreateBinding(interp, textPtr->bindingTable,
-		    (ClientData) tagPtr, argv[4], argv[5], argv[0], argv[3]);
-#else
+#ifndef STk_CODE
 	    if (argv[5][0] == '+') {
 		argv[5]++;
 		append = 1;
 	    }
+#endif
 	    mask = Tk_CreateBinding(interp, textPtr->bindingTable,
 		    (ClientData) tagPtr, argv[4], argv[5], append);
-#endif
 	    if (mask == 0) {
 		return TCL_ERROR;
 	    }

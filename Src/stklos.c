@@ -16,11 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: stklos.c 1.14 Thu, 21 May 1998 20:00:04 +0000 eg $
+ * $Id: stklos.c 1.15 Thu, 10 Sep 1998 23:44:28 +0200 eg $
  *
  *            Author: Erick Gallesio [eg@unice.fr]
  *    Creation date:  9-Feb-1994 15:56
- * Last file update: 19-May-1998 16:24 
+ * Last file update: 10-Sep-1998 12:27 
  */
 
 #ifdef USE_STKLOS
@@ -347,7 +347,7 @@ static PRIMITIVE instancep(SCM obj)
   return INSTANCEP(obj)? Truth: Ntruth;
 }
 
-PRIMITIVE class_of(SCM obj)
+static SCM class_of(SCM obj)
 {
   if (INSTANCEP(obj)) { 	
     SCM classe;

@@ -2,7 +2,7 @@
  *
  * s y m b o l . c			-- Symbols management
  *
- * Copyright © 1993-1997 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -19,7 +19,7 @@
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 20-Nov-1993 12:12
- * Last file update: 20-Aug-1997 15:52
+ * Last file update: 14-Sep-1998 13:50
  */
 
 #include "stk.h"
@@ -54,7 +54,7 @@ SCM STk_intern(char *name)
   Tcl_HashEntry *p;
 
   if (p = Tcl_FindHashEntry(&obarray, name))
-    return Tcl_GetHashValue(p);
+    return (SCM) Tcl_GetHashValue(p);
   else {
     SCM sym;
     int absent;

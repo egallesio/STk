@@ -1,3 +1,222 @@
+1998-09-27  Erick Gallesio  <eg@unice.fr>
+
+	* Src/toplevel.c (init_interpreter): *stk-library* is now
+ 	initialized here instead in the Tk initialization procedure
+	(implying that this variable is now defined in snow).
+
+	* Tk version is now 8.0.3. The stable version of Tk8.0
+
+1998-09-26  Erick Gallesio  <eg@unice.fr>
+
+	* Demos/classbrowse.stklos: New Demo of the class browser
+
+	* Lib/class-browser.stklos: New file. This is class browser which
+ 	fully use the MOP to display various informations about classes,
+ 	such as their methods or their slots. Accessing to a class is done
+ 	through a panel which shows the complete class hierarchy
+
+	* Lib/method-editor.stklos: New file: Editor for methods and
+ 	generic functions
+
+	* Demos/widget.stk: Code of the various demo of the big widget
+ 	program are now "font-locked".
+
+	* STklos/Tk/Composite/Schemetext.stklos: New class: <Scheme-text>. 
+	This is a subclass of <Scroll-text> specialize for Scheme
+ 	programs. For now, only Emacs like "font-locking" is done by this
+ 	widget.
+
+	* Tk/generic/tkText.c (TextSearchCmd): Added environment
+ 	management to the Text searches.
+
+1998-09-25  Erick Gallesio  <eg@unice.fr>
+
+	* Src/tcl-lib.c (Tcl_CreateInterp): Cache of regexp was not
+ 	correctly initialized.
+
+	* STklos/Tk/Composite/Multiwin.stklos: Border width of a Mutiple
+ 	window is fixed to 0. Otherwise, displacement of inner windows is
+ 	"chaotic". This particularly occurs when the user has a default
+ 	border-width defined in its Xdefaults file.
+
+1998-09-19  Erick Gallesio  <eg@unice.fr>
+
+	* Extensions/locale.c: New file. This extensions implement string
+	and character comparisons using locale. The new functions are of 
+	the form string-lo<?, string-lo-ci=?, and so on...
+
+	* Src/str.c (stringcomp): Bug in stringcomp with 8bit characters.
+  	We had (char<? #\é #\e) => #f whereas (string<? "é" "e") => #t
+	Comparison is now done on unsigned chars.	
+
+
+1998-09-17  Erick Gallesio  <eg@unice.fr>
+
+	* Src/argv.c (STk_process_argc_argv): Processing of argument has
+ 	been rewritten.
+
+1998-09-16  Erick Gallesio  <eg@unice.fr>
+
+	* Src/number.c (_STk_do_addition): Bug correction (two small
+ 	giving a bignum in some cases).
+
+1998-09-10  Erick Gallesio  <eg@unice.fr>
+
+	* Lib/tk-unix.stk: completely rewritten. 
+
+	* Doc/Manual/choose-color.n: 
+	* Doc/Manual/message-box.n:  New manual pages
+
+	* STklos/Tk/Tk-classes.stklos : The standard Tk dialog were not
+ 	exported correctly.
+	
+1998-09-09  Erick Gallesio  <eg@unice.fr>
+
+	* Big code cleanup on all STk code. There were problems with
+ 	Alpha, and I hope that this cleanup, will ease to find the
+ 	problems.
+
+1998-08-31  Erick Gallesio  <eg@unice.fr>
+
+	* Tk/unix/tkUnixSend.c (TkGetInterpNames): Bug correction: If the
+ 	number of running intrepreters was 1, the command (winfo 'interps)
+ 	returned a strings instead of a list of length 1.
+
+	* Src/toplevel.c (repl_driver): The interpreter cannot be executed
+ 	if the DISPLAY variable is not set and the option -no-tk has not
+ 	been used. This should avoid me a lot of mail from people which
+ 	install STk and complain of weird message when launching the
+ 	demos...
+
+	* Src/eval.c (STk_eval): Call to apply without parameter
+ 	(i.e. [apply]) yields an error. This was a long standing bug
+ 	signalled by Josh Mc Donald in 1995!!!
+
+1998-08-29  Erick Gallesio  <eg@unice.fr>
+
+	* STklos/Tk/Toplevel.stklos: Two new methods make-transient and 
+	place-toplevel.
+
+	* STklos/stklos.stk (class-methods): New function, which return
+ 	all the methods which have a given class (or a descendant) in its
+ 	specializers.
+
+1998-08-25  Erick Gallesio  <eg@unice.fr>
+
+	* STklos/Tk/Composite/Notepad.stklos: New file which define a
+ 	Note-pad class. 
+
+	* Demos/stklos-widgets.stklos: Added <Notepad> demo
+
+1998-08-24  Erick Gallesio  <eg@unice.fr>
+
+	* STklos/Tk/Composite/Hierarchy.stklos: New file which define 2
+ 	new classes: <Hierarchy-tree> and <Hierarchy-item> which allow to
+ 	display any kind of hierarchy (see the source file for 3 examples
+ 	of use).
+
+	* Demos/stklos-widgets.stklos: Added <hierarchy-tree> demo
+	
+
+1998-08-23  Erick Gallesio  <eg@unice.fr>
+
+	* Tk/generic/tkBind.c (Tk_CreateBinding, FreeTclBinding): Bug
+ 	correction: Bindings on item canvas, were not properly
+ 	garbaged. BTW, the way for keeping track of closures used in
+ 	bindings has been simplified.
+
+	* Tk/generic/tkCmds.c (Tk_BindCmd): Adaptated to the new scheme 
+	for bindings.
+
+1998-08-20  Erick Gallesio  <eg@unice.fr>
+
+	* STklos/Tk/Scrollbar.stklos: Adding exportation of
+ 	STk:{h|v}-scroll-side and STk:{h|v}-scroll-side-set!
+
+1998-07-28  Erick Gallesio  <eg@unice.fr>
+
+	* STklos/stklos.stk (compute-get-n-set): Signaling that an
+ 	allocation scheme is unknown is now done in a method which
+ 	discriminate on <object> instead of <class>. This greatly
+ 	simplifies the usage of meta-classes which use multiple
+ 	inheritance (old code implicitly suppose that a meta-class has a
+ 	CPL of the form [ ... <class> <object> <top>]. With this
+ 	modification, <class> can appear before an "ante-penultiem"
+ 	position.
+
+1998-07-27  Erick Gallesio  <eg@unice.fr>
+
+	* Utils/STk.spec.in: Modified to be more architecture independent
+ 	(as far as possible). In particular Linux PPC should work
+ 	(inspired from a STk.spec file given by Philippe Laliberte
+ 	<arsphl@oeil.qc.ca>).
+
+1998-07-25  Erick Gallesio  <eg@unice.fr>
+
+	* Tk/unix/tkUnixWm.c: Make the result of (wm 'state ...)
+  	consistent. It was, depending the cases, a string or a
+ 	symbol. This is always a string now. THIS COULD BREAK EXISTING
+ 	CODE!
+
+	* Lib/tk-init.stk (*start-withdrawn*): One example of code broken
+ 	by previous modification...	
+
+1998-07-22  Erick Gallesio  <eg@unice.fr>
+
+	* Src/Makefile.in (install.stk.libs): The tcl-glue.h and tk-glue.h
+ 	files were not installed when doing a "make
+ 	install.libs". Corrected now. Thanks to Vincent Granet
+ 	<vg@unice.fr> for signalling it.
+       
+
+1998-07-20  Erick Gallesio  <eg@unice.fr>
+
+	* Src/print.c (printlist_star): Buggy when printing some simple
+ 	dotted pair.  The patch was provided by Ian Wild
+ 	<ian.wild@eurocontrol.be>.
+
+	* Tk/generic/tkFont.c (GetAttributeInfoObj): Bug when reporting
+ 	boolean font attributes. Bug signalled by Vincent Granet
+ 	<vg@unice.fr>
+
+	* Extensions/base64.c: New file which provides base64 file
+ 	encoding and decoding (base64-encoding and base64-decoding)
+
+	* Lib/base64.stk: New file which load the base64 extension. It
+ 	also provides the functions (base64-encoding-string and
+ 	base64-decoding-string)
+	
+1998-07-19  Erick Gallesio  <eg@unice.fr>
+
+	* Src/cont.c (STk_throw): Bug correction: continuation escape
+ 	procedures couldn't take an arbitrary number of arguments. Thanks
+ 	to Michael N. Livshin <mike@olan.com> for the patch.
+
+
+1998-07-17  Erick Gallesio  <eg@unice.fr>
+
+	* Makefile.in: Modified so that all the install paths are relative
+ 	to the value of "prefix". This seems to be useful for people using
+ 	STOW. Suggestion made by Michael N. Livshin <mike@olan.com>.
+
+1998-07-15  Erick Gallesio  <eg@unice.fr>
+
+	* Extensions/hash.c (hash_table_put): Another bug in the hash
+ 	table is corrected. Code for putting values in hash tables whose
+ 	hash function is given by the user has been rewritten. Thanks to
+ 	Brian Denheyer <briand@northwest.com> for pointing this bug.
+
+1998-07-14  Erick Gallesio  <eg@unice.fr>
+
+	* Suppression of the background bitmap for the Web pages. It was
+ 	not easily readable on 8bits displays. Even HTML is hard to port !!
+
+1998-06-27  Erick Gallesio  <eg@unice.fr>
+
+	* Doc/Reference/Appendix-F.tex: Correction of a "bug" for the
+ 	emacs auto-mode-alist variable initialization (signalled by
+	craig dry <ra0531@email.sps.mot.com>)
+
 1998-06-09  Erick Gallesio  <eg@unice.fr>
 
 	* Release 3.99.2
@@ -275,8 +494,9 @@ Mon Feb  2 22:47:52 1998  Erick Gallesio  <eg@unice.fr>
 
 Sun Feb  1 19:16:46 1998  Erick Gallesio  <eg@unice.fr>
 
-	* Lib/tk-unix.stk: New file for the definition of standard messages
-	box. They are simulated on Unix and will be natve (someday) on Windows.
+	* Lib/tk-unix.stk: New file for the definition of standard
+ 	messages box. They are simulated on Unix and will be native
+ 	(someday) on Windows.
 
 	
 	* STklos/Tk/MsgBox.stklos: New Classes: <Tk-message-box> 

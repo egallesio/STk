@@ -16,11 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: cont.c 1.2 Mon, 09 Mar 1998 08:31:40 +0000 eg $
+ * $Id: cont.c 1.3 Sun, 19 Jul 1998 11:14:37 +0200 eg $
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date:  8-Nov-1993 11:34
- * Last file update:  8-Mar-1998 18:46
+ * Last file update: 19-Jul-1998 11:05
  */
 
 #include "stk.h"
@@ -46,6 +46,7 @@ struct cont {
 #define C_STACK(x)	(((struct cont *)((x)->storage_as.cont.data))->stack)
 #define C_WIND_STACK(x)	(((struct cont *)((x)->storage_as.cont.data))->wind_stack)
 
+static SCM values(SCM l, int len);
 
 static SCM call_cc_escaped_value;
 
@@ -111,7 +112,7 @@ SCM STk_do_call_cc(SCM *x)
     return (*x=call_cc_escaped_value);
 }
 
-void STk_throw(SCM fct, SCM val)
+void STk_throw(SCM fct, SCM vals)
 {
   static SCM tmp;
   union {
@@ -122,11 +123,11 @@ void STk_throw(SCM fct, SCM val)
   /* Evaluate room on stack. If not enough call throw again to alloc. a new hole */
   if (&u.stack_end < STk_stack_start_ptr) {
     /* Stack grows downward */
-    if (&u.stack_end > C_START(fct)) STk_throw(fct, val);
+    if (&u.stack_end > C_START(fct)) STk_throw(fct, vals);
   }
   else {
     /* Stack grows upward */
-    if (&u.stack_end < C_START(fct)+ C_LEN(fct)) STk_throw(fct, val);
+    if (&u.stack_end < C_START(fct)+ C_LEN(fct)) STk_throw(fct, vals);
   }
 
   /* Take care of active dynamic-winds */
@@ -134,7 +135,7 @@ void STk_throw(SCM fct, SCM val)
   unwind(tmp, STk_llength(STk_wind_stack) - STk_llength(tmp));
 
   /* Save val in a global and reset stack as it was before calling call/cc */
-  call_cc_escaped_value = val; tmp = fct;
+  call_cc_escaped_value = values(vals, STk_llength(vals)); tmp = fct;
   FLUSH_REGISTERS_WINDOW();
   for(to=C_START(fct), from=C_STACK(fct), i=C_LEN(fct); i--; ) *to++ = *from++;
 
@@ -208,17 +209,30 @@ PRIMITIVE STk_dynamic_wind(SCM thunk1, SCM thunk2, SCM thunk3)
  * 
  ******************************************************************************/
 
-PRIMITIVE STk_values(SCM l, int len)
+static SCM values(SCM l, int len)
 {
-  SCM z;
-  
   if (len == 1)
     return CAR(l);
   else {
+    SCM z;
+    
     NEWCELL(z, tc_values);
     CAR(z) = l;
     return z;
   }
+}
+
+PRIMITIVE STk_values(SCM l, int len)
+{
+  SCM tmp;
+
+  ENTER_PRIMITIVE("values");
+
+  /* check the args for not being multiple-valued */
+  for (tmp = l ; NNULLP(tmp) ; tmp = CDR(tmp))
+    if (TYPEP(CAR(tmp), tc_values)) Serror("bad argument", CAR(tmp));
+
+  return values(l, len);
 }
 
 

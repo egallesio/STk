@@ -139,24 +139,17 @@ Tk_BindCmd(clientData, interp, argc, argv)
 	unsigned long mask;
 
 	if (argv[3][0] == 0) {
-#ifdef STk_CODE
-	  /* delete the old binding from the callback table */
-	  STk_add_callback(argv[1], argv[2], "", STk_get_NIL_value());
-#endif
 	    return Tk_DeleteBinding(interp, winPtr->mainPtr->bindingTable,
 		    object, argv[2]);
 	}
-#ifdef STk_CODE
-	mask = Tk_CreateBinding(interp, winPtr->mainPtr->bindingTable,
-		object, argv[2], argv[3], argv[1], "");
-#else
+#ifndef STk_CODE
 	if (argv[3][0] == '+') {
 	    argv[3]++;
 	    append = 1;
 	}
+#endif
 	mask = Tk_CreateBinding(interp, winPtr->mainPtr->bindingTable,
 		object, argv[2], argv[3], append);
-#endif
 	if (mask == 0) {
 	    return TCL_ERROR;
 	}
@@ -342,7 +335,7 @@ Tk_BindtagsCmd(clientData, interp, argc, argv)
 	} else {
 	    for (i = 0; i < winPtr->numTags; i++) {
 #ifdef STk_CODE
-	        char *s = winPtr->tagPtr[i];
+	        char *s = (char *) winPtr->tagPtr[i];
 		
 		if (*s == '.')
 		  Tcl_AppendResult(interp, " #.", s, NULL);
@@ -509,7 +502,7 @@ Tk_LowerCmd(clientData, interp, argc, argv)
     int argc;			/* Number of arguments. */
     char **argv;		/* Argument strings. */
 {
-    Tk_Window main = (Tk_Window) clientData;
+    Tk_Window mainwin = (Tk_Window) clientData;
     Tk_Window tkwin, other;
 
     if ((argc != 2) && (argc != 3)) {
@@ -518,14 +511,14 @@ Tk_LowerCmd(clientData, interp, argc, argv)
 	return TCL_ERROR;
     }
 
-    tkwin = Tk_NameToWindow(interp, argv[1], main);
+    tkwin = Tk_NameToWindow(interp, argv[1], mainwin);
     if (tkwin == NULL) {
 	return TCL_ERROR;
     }
     if (argc == 2) {
 	other = NULL;
     } else {
-	other = Tk_NameToWindow(interp, argv[2], main);
+	other = Tk_NameToWindow(interp, argv[2], mainwin);
 	if (other == NULL) {
 	    return TCL_ERROR;
 	}
@@ -564,7 +557,7 @@ Tk_RaiseCmd(clientData, interp, argc, argv)
     int argc;			/* Number of arguments. */
     char **argv;		/* Argument strings. */
 {
-    Tk_Window main = (Tk_Window) clientData;
+    Tk_Window mainwin = (Tk_Window) clientData;
     Tk_Window tkwin, other;
 
     if ((argc != 2) && (argc != 3)) {
@@ -573,14 +566,14 @@ Tk_RaiseCmd(clientData, interp, argc, argv)
 	return TCL_ERROR;
     }
 
-    tkwin = Tk_NameToWindow(interp, argv[1], main);
+    tkwin = Tk_NameToWindow(interp, argv[1], mainwin);
     if (tkwin == NULL) {
 	return TCL_ERROR;
     }
     if (argc == 2) {
 	other = NULL;
     } else {
-	other = Tk_NameToWindow(interp, argv[2], main);
+	other = Tk_NameToWindow(interp, argv[2], mainwin);
 	if (other == NULL) {
 	    return TCL_ERROR;
 	}
@@ -1302,7 +1295,7 @@ Tk_WinfoObjCmd(clientData, interp, objc, objv)
 	case WIN_VISUALID: {
 #ifdef STk_CODE
 	    Tcl_SetLongObj(Tcl_GetObjResult(interp),
-			   (unsigned int) XVisualIDFromVisual(Tk_Visual(tkwin)));
+			   (long) XVisualIDFromVisual(Tk_Visual(tkwin)));
 #else
 	    Tcl_ResetResult(interp);
 	    sprintf(buf, "0x%x",
@@ -1623,7 +1616,9 @@ Tk_WinfoObjCmd(clientData, interp, objc, objv)
 	    int count, i;
 	    char visualIdString[16];
 	    int includeVisualId;
+#ifndef STk_CODE
 	    Tcl_Obj *strPtr;
+#endif
 
 	    if (objc == 3) {
 		includeVisualId = 0;

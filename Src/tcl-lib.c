@@ -20,13 +20,14 @@
  *
  *            Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 19-Feb-1993 22:15
- * Last file update:  7-Jun-1998 18:13
+ * Last file update: 25-Sep-1998 20:48
  *
  */
 
 
 #include "stk.h"
 #include "module.h"
+#include "gc.h"
 
 #ifdef USE_TK
 #  include "tk-glue.h"
@@ -66,7 +67,7 @@ int Tcl_GlobalEval(interp, s)
     int len = strlen(s);
     
     if (len > BUFF_SIZE) 
-      ptr = (char *) must_malloc(len+3);
+      ptr = (char *) must_malloc((size_t) len+3);
     sprintf(ptr, "(%s)", s);
     s = ptr;
   }
@@ -201,7 +202,7 @@ char *Tcl_SetVar2(interp, name1, name2, val, flags)
  *
  ******************************************************************************/
 
-int Tcl_internal_DeleteCommand(interp, cmdName)
+int STk_internal_Tcl_DeleteCommand(interp, cmdName)
   Tcl_Interp *interp;
   char *cmdName;
 {
@@ -242,7 +243,7 @@ int Tcl_DeleteCommand(interp, cmdName)
 {
   int result;
 
-  if (result = Tcl_internal_DeleteCommand(interp, cmdName))
+  if (result = STk_internal_Tcl_DeleteCommand(interp, cmdName))
     return result;
   
   /* Undefine "cmdName" by doing a (set! cmdname #<unbound>) */
@@ -428,11 +429,18 @@ Tcl_GetCommandInfo(interp, cmdName, infoPtr)
 Tcl_Interp *Tcl_CreateInterp()
 {
   register Interp *iPtr = (Interp *) ckalloc(sizeof(Interp));
-  
+  int i;
+
   iPtr->result		 = iPtr->resultSpace;
   iPtr->freeProc	 = 0;
   iPtr->errorLine	 = 0;
   iPtr->resultSpace[0]   = 0;
+
+  for (i = 0; i < NUM_REGEXPS; i++) {
+    iPtr->patterns[i] = NULL;
+    iPtr->patLengths[i] = -1;
+    iPtr->regexps[i] = NULL;
+  }
   
   iPtr->appendResult	 = NULL;
   iPtr->appendAvl	 = 0;
@@ -733,7 +741,7 @@ Tcl_GetOpenFile(interp, string, forWriting, checkUsage, filePtr)
 	}
 	
 	/* File is correct; return it in filePtr */
-	*filePtr = PORT_FILE(port);
+	*filePtr = (ClientData) PORT_FILE(port);
 	return TCL_OK;
       }
     }
@@ -775,14 +783,14 @@ int Tcl_Close(Tcl_Interp *interp, Tcl_Channel chan)
 int Tcl_Read(Tcl_Channel chan, char *bufPtr, int toRead)
 {
   clearerr((FILE*) chan);
-  return fread(bufPtr, 1, toRead, (FILE*) chan);
+  return fread(bufPtr, 1, (size_t) toRead, (FILE*) chan);
 }
 
 int Tcl_Write(Tcl_Channel chan, char *s, int slen)
 {
   int len = (slen < 0) ? strlen(s) : slen;
   
-  return fwrite(s, 1, len, (FILE*) chan);
+  return fwrite(s, 1, (size_t) len, (FILE*) chan);
 }
 
 
@@ -849,7 +857,11 @@ Tcl_JoinPath(argc, argv, resultPtr)
     char **argv;
     Tcl_DString *resultPtr;	/* Pointer to previously initialized DString. */
 {
+#ifdef STk_CODE
+    int oldLength, length, i;
+#else
     int oldLength, length, i, needsSep;
+#endif
     Tcl_DString buffer;
     char *p, *dest;
 

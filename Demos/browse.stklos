@@ -7,7 +7,7 @@
 ;;;; directory and allows you to open files or subdirectories by
 ;;;; double-clicking.
 ;;;;
-;;;; $Id: browse.stklos 1.2 Mon, 16 Feb 1998 07:28:39 +0000 eg $
+;;;; $Id: browse.stklos 1.2 Mon, 16 Feb 1998 08:28:39 +0100 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date:  3-Aug-1993 17:33

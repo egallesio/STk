@@ -8,7 +8,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkUnixMenu.c 1.74 97/08/08 17:31:00
+ * SCCS: @(#) tkUnixMenu.c 1.76 97/11/05 09:08:22
  */
 
 #include "tkPort.h"
@@ -900,7 +900,6 @@ TkpComputeMenubarGeometry(menuPtr)
     int x, y, currentRowHeight, currentRowWidth, maxWidth;
     int maxWindowWidth;
     int lastRowBreak;
-    int itemHeight = 0;
     int helpMenuIndex = -1;
     TkMenuEntry *mePtr;
     int lastEntry;
@@ -960,7 +959,7 @@ TkpComputeMenubarGeometry(menuPtr)
 		
 		GetMenuLabelGeometry(mePtr, tkfont, fmPtr,
 			&width, &height);
-		itemHeight = height;
+		mePtr->height = height + 2 * menuPtr->activeBorderWidth + 10;
 		mePtr->width = width;
 		
 		GetMenuIndicatorGeometry(menuPtr, mePtr,
@@ -969,16 +968,7 @@ TkpComputeMenubarGeometry(menuPtr)
 		if (width > 0) {
 		    mePtr->width += width;
 		}
-		if (height > itemHeight) {
-		    itemHeight = height;
-		}
-		itemHeight += 2 * menuPtr->activeBorderWidth;
-		mePtr->width += 2 * menuPtr->activeBorderWidth;
-		if (menuPtr->menuType == MENUBAR) {
-		    itemHeight += 10;
-		    mePtr->width += 10;
-		}
-		mePtr->height = itemHeight;
+		mePtr->width += 2 * menuPtr->activeBorderWidth + 10;
 	    }
 	    if (mePtr->entryFlags & ENTRY_HELP_MENU) {
 		helpMenuIndex = i;
@@ -1001,7 +991,7 @@ TkpComputeMenubarGeometry(menuPtr)
 		    }
 		    lastRowBreak = i;
 		    y += currentRowHeight;
-		    currentRowHeight = itemHeight;
+		    currentRowHeight = mePtr->height;
 		}
 		if (x > maxWidth) {
 		    maxWidth = x;
@@ -1009,8 +999,8 @@ TkpComputeMenubarGeometry(menuPtr)
 		x = menuPtr->borderWidth;
 	    } else {
 		x += mePtr->width;
-		if (itemHeight > currentRowHeight) {
-		    currentRowHeight = itemHeight;
+		if (mePtr->height > currentRowHeight) {
+		    currentRowHeight = mePtr->height;
 		}
 	    } 
 	}

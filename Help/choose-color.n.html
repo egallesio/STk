@@ -1,0 +1,36 @@
+<HTML><HEAD><TITLE>STk procedure - Tk:choose-color manual page</TITLE></HEAD>
+<BR>
+<BODY bgcolor = #c3ffc3>
+<H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageGreen.gif"> Tk:choose-color</H2>
+<I>pops up a dialog box for the user to select a color.</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<P>
+<H3><A NAME="M2">SYNOPSIS</A></H3>
+<B>(tk:choose-Color </B>?<I>option value ...</I>?)<BR>
+<H3><A NAME="M3">DESCRIPTION</A></H3>
+This procedure is part of the STk library. 
+The procedure <B>Tk:choose-color</B> pops up a dialog box for the
+user to select a color. The following <I>option-value</I> pairs are
+possible as command line arguments:
+<P>
+<DL>
+<DT><A NAME="M4"><B>:initial-color</B> <I>color</I></A><DD>
+Specifies the color to display in the color dialog when it pops
+up. 
+<P>
+<DT><A NAME="M5"><B>:title</B> <I>titleString</I></A><DD>
+Specifies a string to display as the title of the dialog box. If this
+option is not specified, then an empty title will be displayed.
+<P>
+</DL>
+<P>
+If the user selects a color, <B>Tk:choose-color</B> will return the
+name of the color.  If the
+user cancels the operation,  <B>Tk:choose-color</B> will return 
+<B>#f</B>
+<H3><A NAME="M6">EXAMPLE</A></H3>
+<PRE>(pack (button '.b :text &quot;foo&quot;
+        :bg (Tk:choose-color :initial-color &quot;gray&quot; 
+                             :title &quot;Choose color&quot;)))</PRE>
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif"><P>
+<A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookGreen.gif"> Back to the <B>STk</B> main page</A>
+</BODY></HTML>

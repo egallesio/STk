@@ -11,7 +11,7 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
-;;;; $Id: bigloo.stk 1.3 Thu, 30 Apr 1998 14:16:40 +0000 eg $
+;;;; $Id: bigloo.stk 1.3 Thu, 30 Apr 1998 16:16:40 +0200 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 28-Oct-1997 11:09

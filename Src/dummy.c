@@ -6,7 +6,7 @@
  *				   Dummy functions are defined here to make the 
  *				   loader happy
  *
- * Copyright © 1993-1997 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -23,7 +23,7 @@
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date:  1-Feb-1995 22:43
- * Last file update:  4-Aug-1997 16:51
+ * Last file update: 10-Sep-1998 14:57
  *
  ******************************************************************************/
 
@@ -32,7 +32,7 @@
 
 #ifndef USE_TK
 
-static Error(char *msg)
+static void Error(char *msg)
 {
   char buffer[100];
 

@@ -17,11 +17,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: dynload.c 1.5 Tue, 09 Jun 1998 07:40:04 +0000 eg $
+ * $Id: dynload.c 1.6 Thu, 10 Sep 1998 23:44:28 +0200 eg $
  * 
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 23-Jan-1994 19:09
- * Last file update:  8-Jun-1998 20:21
+ * Last file update: 10-Sep-1998 12:19
  */
 
 /* Support for HPUX is due to Dipankar Gupta <dg@hplb.hpl.hp.com> */
@@ -135,7 +135,6 @@ static void *find_function(char *path, char *fname, int error_if_absent)
 
 static void load_and_call(char *path, char *fct_name)
 {
-  void *handle;
   void (*init_fct)();
   SCM str = STk_makestring(path);
 
@@ -447,6 +446,7 @@ static SCM call_function(void *fct, int rettype)
     case EXT_VOID:     call_ext_void((void (*) ())fct); return UNDEFINED;
 
     case EXT_CHAR:     return STk_makechar(
+				(unsigned char)
 				call_ext_char((char (*)()) fct));
 
     case EXT_SHORT:    return STk_makeinteger(
@@ -482,6 +482,7 @@ static SCM call_function(void *fct, int rettype)
 
     case EXT_BOOLEAN:  return (call_ext_bool((int (*) ()) fct) ? Truth: Ntruth);
   }
+  return UNDEFINED; /* never reached */
 }
 
 PRIMITIVE STk_external_existsp(SCM entry_name, SCM library)
@@ -500,7 +501,6 @@ PRIMITIVE STk_call_external(SCM l, int len)
   SCM libname, entryname, rettype, argnames, argtypes;
   char *c_entryname, *c_libname;
   int  c_rettype;
-  void *func_ptr;
   
   if (len < 5) Serror("not enough arguments", l);
 
@@ -549,7 +549,6 @@ PRIMITIVE STk_call_external(SCM l, int len)
 PRIMITIVE STk_cstring2string(SCM pointer)
 {
   static char *proc_name = "c-string->string";
-  int length;
   char *str;
   
   if (STRINGP(pointer)) str = CHARS(pointer);

@@ -11,17 +11,18 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
-;;;; $Id: Toplevel.stklos 1.7 Tue, 03 Mar 1998 22:48:24 +0000 eg $
+;;;; $Id: Toplevel.stklos 1.8 Sun, 30 Aug 1998 11:09:20 +0200 eg $
 ;;;;
 ;;;;	       Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;	Creation date:	5-Mar-1994 17:19
-;;;; Last file update:  3-Mar-1998 19:49
+;;;; Last file update: 29-Aug-1998 18:38
 
 (require "Basics")
 
 (select-module STklos+Tk)
 
-(export *top-root* deiconify iconify toplevel-frame toplevel-state withdraw)
+(export *top-root* deiconify iconify toplevel-frame toplevel-state withdraw
+	make-tanscient place-toplevel)
 
 ;=============================================================================
 ;
@@ -201,6 +202,14 @@
 
 (define-method withdraw ((self <Toplevel>))
   (Tk:wm 'withdraw (slot-ref self 'Eid)))
+
+(define-method place-toplevel ((self <Toplevel>) x y)
+  (set! (geometry self) (format #f "+~A+~A"x y)))
+
+(define-method make-transient ((self <Toplevel>))
+  (withdraw self)
+  (slot-set! self 'override #t))
+
 
 ;=============================================================================
 ;

@@ -1,7 +1,7 @@
 ;;;;
 ;;;; Entries bindings and procs
 ;;;;
-;;;; Copyright © 1993-1997 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -17,7 +17,7 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 17-May-1993 12:35
-;;;; Last file update: 27-Aug-1997 15:23
+;;;; Last file update: 27-Sep-1998 12:04
 ;;;;
 
 (select-module Tk)
@@ -334,6 +334,9 @@
 (define-binding "Entry" "<<Clear>>" (|W|)
   (|W| 'delete 'sel.first 'sel.last))
 
+(define-binding "Entry" "<<PasteSelection>>" (|W| x)
+  (when (or *tk-strict-Motif* (not tk::mouse-moved))
+    (Tk:entry-paste |W| x)))
 
 (define-binding "Entry" "<1>" (|W| x)
   (Tk:entry-button-1 |W| x)
@@ -469,10 +472,12 @@
   (bind "Entry" "<KP_Enter>" 		nop)
   (bind "Entry" "<Tab>" 		nop))
 
-
-(define-binding "Entry" "<Insert>" (|W|)
-  (catch 
-    (Tk:entry-insert |W| (selection 'get :displayof |W|))))
+;; On Windows, paste is done using Shift-Insert.  Shift-Insert already
+;; generates the <<Paste>> event, so we don't need to do anything here.
+(if (eqv? (os-kind) 'Unix)
+    (define-binding "Entry" "<Insert>" (|W|)
+      (catch 
+       (Tk:entry-insert |W| (selection 'get :displayof |W|)))))
 
 ;; Additional emacs-like bindings:
 
@@ -531,6 +536,3 @@
       (set! tk::mouse-moved #t))
   (|W| 'scan 'dragto x))
 
-(define-binding "Entry" "<ButtonRelease-2>" (|W| x)
-  (when (or *tk-strict-Motif* (not tk::mouse-moved))
-    (Tk:entry-paste |W| x)))

@@ -23,9 +23,11 @@
                             File-box 
 			    Gauge
 			    Help-Balloon
+			    Hierarchy-Tree
                             Labeled-Entry 
 			    Labeled-Frame
 			    Multiple-Window
+			    Notepad
                             Paned 
 			    Scroll-Canvas
                             Scroll-Listbox
@@ -217,3 +219,53 @@
       (slot-set! g 'value i)
       (after 5)
       (update))))
+
+;=============================================================================
+(define (demo-hierarchy-tree)
+ (let* ((top (make <Toplevel> :title "Hierarchy Tree Demo"))
+	(T   (make <Hierarchy-tree> :parent top :width 400 :height 300)))
+    (pack T :expand #t :fill "both")
+    
+    (define d1 (add-node  T #f "dir1"))
+    (define d2 (add-node  T #f "dir2"))
+    (define d3 (add-node  T d1 "dir3"))
+    
+    (add-leave T d1 "file2")
+    (add-leave T d1 "file1")
+    (add-leave T d3 "file3")
+    (add-leave T d2 "file4")))
+
+;=============================================================================
+(define (demo-notepad)
+  ;;
+  ;; Fist define the actions associated to the tab
+  ;;
+  (define (Host parent tab)
+    (unless (page tab)      	; First call. Create the interface
+      (let* ((f  (make <Frame>  :parent parent :border-width 3 
+			        :background "darkgray" :relief "groove"))
+	     (b1 (make <Labeled-Entry> :parent f :title "Host: ")) 
+	     (b2 (make <Labeled-Entry> :parent f :title "Port: ")))
+	(pack b1 b2 :fill 'x :padx 10 :pady 10)
+	(set! (page tab) f)))
+    (pack (page tab) :padx 10 :pady 10 :fill "both" :expand #t))
+  
+  (define (Mess parent tab)
+    (unless (page tab)      	; First call. Create the interface
+      (let ((m (make <Message> :parent parent :border-width 3 
+		     	       :relief "groove" :background "darkgray" :aspect 300
+			       :justify "center" :font "10x20" 
+			       :text "This is a simple demonstration.")))
+	(pack m :expand #t :fill "both")
+	(set! (page tab) m)))
+    (pack (page tab) :padx 10 :pady 10 :fill "both" :expand #t))
+  
+  (let* ((top (make <Toplevel> :title "Note Pad Widget Demo"))
+	 (f   (make <NotePad> :parent top :width 450 :height 150)))
+    (pack f :expand #t :fill "both" :padx 2 :pady 2)
+    
+    (make <Notepad-Tab> :parent f :text "host1"             :action Host)
+    (make <Notepad-Tab> :parent f :text "host2"             :action Host)
+    (make <Notepad-Tab> :parent f :text "Multi-line\nlabel" :action Mess)
+    (make <Notepad-Tab> :parent f :bitmap "questhead" :width 30 :action Host)))
+ 

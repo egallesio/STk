@@ -16,17 +16,19 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: tcl-glue.c 1.6 Tue, 19 May 1998 10:44:58 +0000 eg $
+ * $Id: tcl-glue.c 1.7 Thu, 10 Sep 1998 23:44:28 +0200 eg $
  *
  *            Author: Erick Gallesio [eg@unice.fr]
  *    Creation date:  6-Aug-1997 12:48
- * Last file update: 19-May-1998 12:16
+ * Last file update: 10-Sep-1998 15:13
  *
  */
 
 #include "stk.h"
 #include "tcl-glue.h"
 #include "module.h"
+#include "gc.h"
+#include "extend.h"
 
 #ifdef USE_TK
 extern SCM STk_root_window;
@@ -35,10 +37,12 @@ extern SCM STk_root_window;
 SCM STk_convert_Tcl_string2list(char *s)
 {
   register SCM tmp1, tmp2, z, port;
-  SCM module, result = NIL;
+  SCM result = NIL;
   int eof;
   
 #ifdef USE_TK
+  SCM module;
+
   /* Evaluation takes place in the Tk module (for '#.' objects mainly) */
   module              = STk_selected_module;  
   STk_selected_module = STk_Tk_module;
@@ -149,7 +153,7 @@ int STk_valid_environment(char *s, void **env)
   int l = strlen(s);
   char *p;
 
-  if (l == 0 || l == 2 && s[0] == '#' && s[1] == 'f') {
+  if (l == 0 || (l == 2 && s[0] == '#' && s[1] == 'f')) {
 #ifdef USE_TK    
     *env = STk_makeenv(MOD_ENV(STk_Tk_module), 0);
 #else

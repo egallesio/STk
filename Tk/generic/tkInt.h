@@ -6,11 +6,12 @@
  *
  * Copyright (c) 1990-1994 The Regents of the University of California.
  * Copyright (c) 1994-1997 Sun Microsystems, Inc.
+ * Copyright (c) 1998 by Scriptics Corporation.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkInt.h 1.201 97/08/11 15:53:39
+ * SCCS: @(#) tkInt.h 1.6 98/08/04 12:19:22
  */
 
 #ifndef _TKINT
@@ -24,6 +25,11 @@
 #endif
 #ifndef _TKPORT
 #include <tkPort.h>
+#endif
+
+#ifdef BUILD_tk
+# undef TCL_STORAGE_CLASS
+# define TCL_STORAGE_CLASS DLLEXPORT
 #endif
 
 /*
@@ -286,6 +292,14 @@ typedef struct TkDisplay {
 				 * than via a FocusIn event), this points
 				 * to the toplevel window.  Otherwise it is
 				 * NULL. */
+    struct TkWindow *focusPtr;	/* Points to the window on this display that
+				 * should be receiving keyboard events.  When
+				 * multiple applications on the display have
+				 * the focus, this will refer to the
+				 * innermost window in the innermost
+				 * application.  This information isn't used
+				 * under Unix or Windows, but it's needed on
+				 * the Macintosh. */
 
     /*
      * Used by tkColor.c only:
@@ -410,27 +424,16 @@ typedef struct TkMainInfo {
      * Information used only by tkFocus.c and tk*Embed.c:
      */
 
-    struct TkFocusInfo *focusPtr;
+    struct TkToplevelFocusInfo *tlFocusPtr;
 				/* First in list of records containing focus
 				 * information for each top-level in the
 				 * application.  Used only by tkFocus.c. */
-    struct TkWindow *focusWinPtr;
-				/* Window that currently has the focus for
-				 * this application, or NULL if none. */
-    unsigned long focusSerial;	/* Serial number of last request we made to
-				 * change the focus.  Used to identify
-				 * stale focus notifications coming from the
-				 * X server. */
-    struct TkWindow *focusOnMapPtr;
-				/* This points to a toplevel window that is
-				 * supposed to receive the X input focus as
-				 * soon as it is mapped (needed to handle the
-				 * fact that X won't allow the focus on an
-				 * unmapped window).  NULL means no delayed
-				 * focus op in progress. */
-    int forceFocus;		/* Associated with focusOnMapPtr:  non-zero
-				 * means claim the focus even if some other
-				 * application currently has it. */
+    struct TkDisplayFocusInfo *displayFocusPtr;
+				/* First in list of records containing focus
+				 * information for each display that this
+				 * application has ever used.  Used only
+				 * by tkFocus.c. */
+
     struct ElArray *optionRootPtr;
 				/* Top level of option hierarchy for this
 				 * main window.  NULL means uninitialized.
@@ -739,6 +742,9 @@ EXTERN unsigned long	TkCreateBindingProcedure _ANSI_ARGS_((
 			    ClientData object, char *eventString,
 			    TkBindEvalProc *evalProc, TkBindFreeProc *freeProc,
 			    ClientData clientData));
+EXTERN Pixmap		TkCreateBitmapFromData _ANSI_ARGS_((Display* display,
+			    Drawable d, CONST char* data,
+			    unsigned int width, unsigned int height));
 EXTERN TkCursor *	TkCreateCursorFromData _ANSI_ARGS_((Tk_Window tkwin,
 			    char *source, char *mask, int width, int height,
 			    int xHot, int yHot, XColor fg, XColor bg));
@@ -799,6 +805,7 @@ EXTERN TkDisplay *	TkGetDisplay _ANSI_ARGS_((Display *display));
 EXTERN int		TkGetDisplayOf _ANSI_ARGS_((Tcl_Interp *interp,
 			    int objc, Tcl_Obj *CONST objv[],
 			    Tk_Window *tkwinPtr));
+EXTERN TkWindow *	TkGetFocusWin _ANSI_ARGS_((TkWindow *winPtr));
 EXTERN int		TkGetInterpNames _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tk_Window tkwin));
 EXTERN int		TkGetMiterPoints _ANSI_ARGS_((double p1[], double p2[],
@@ -845,15 +852,13 @@ EXTERN int		TkMakeBezierCurve _ANSI_ARGS_((Tk_Canvas canvas,
 EXTERN void		TkMakeBezierPostscript _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tk_Canvas canvas, double *pointPtr,
 			    int numPoints));
-EXTERN void		TkMakeMenuWindow _ANSI_ARGS_((Tk_Window tkwin,
-			    int transient));
 EXTERN void		TkOptionClassChanged _ANSI_ARGS_((TkWindow *winPtr));
 EXTERN void		TkOptionDeadWindow _ANSI_ARGS_((TkWindow *winPtr));
 EXTERN int		TkOvalToArea _ANSI_ARGS_((double *ovalPtr,
 			    double *rectPtr));
 EXTERN double		TkOvalToPoint _ANSI_ARGS_((double ovalPtr[4],
 			    double width, int filled, double pointPtr[2]));
-EXTERN void		TkpChangeFocus _ANSI_ARGS_((TkWindow *winPtr,
+EXTERN int		TkpChangeFocus _ANSI_ARGS_((TkWindow *winPtr,
 			    int force));
 EXTERN void		TkpCloseDisplay _ANSI_ARGS_((TkDisplay *dispPtr));
 EXTERN void		TkpClaimFocus _ANSI_ARGS_((TkWindow *topLevelPtr,
@@ -884,6 +889,8 @@ EXTERN int		TkpInit _ANSI_ARGS_((Tcl_Interp *interp));
 EXTERN void		TkpInitializeMenuBindings _ANSI_ARGS_((
 			    Tcl_Interp *interp, Tk_BindingTable bindingTable));
 EXTERN void		TkpMakeContainer _ANSI_ARGS_((Tk_Window tkwin));
+EXTERN void		TkpMakeMenuWindow _ANSI_ARGS_((Tk_Window tkwin,
+			    int transient));
 EXTERN Window		TkpMakeWindow _ANSI_ARGS_((TkWindow *winPtr,
 			    Window parent));
 EXTERN void		TkpMenuNotifyToplevelCreate _ANSI_ARGS_((
@@ -932,6 +939,12 @@ EXTERN void		TkpWmSetState _ANSI_ARGS_((TkWindow *winPtr,
 			    int state));
 EXTERN void		TkQueueEventForAllChildren _ANSI_ARGS_((
 			    TkWindow *winPtr, XEvent *eventPtr));
+EXTERN int		TkReadBitmapFile _ANSI_ARGS_((Display* display,
+			    Drawable d, CONST char* filename,
+			    unsigned int* width_return,
+			    unsigned int* height_return,
+			    Pixmap* bitmap_return,
+			    int* x_hot_return, int* y_hot_return));
 #ifndef TkRectInRegion
 EXTERN int		TkRectInRegion _ANSI_ARGS_((TkRegion rgn,
 			    int x, int y, unsigned int width,
@@ -988,5 +1001,8 @@ EXTERN int		TkXFileProc _ANSI_ARGS_((ClientData clientData,
  */
 EXTERN int		TkUnsupported1Cmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int argc, char **argv));
+
+# undef TCL_STORAGE_CLASS
+# define TCL_STORAGE_CLASS DLLIMPORT
 
 #endif  /* _TKINT */

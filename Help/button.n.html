@@ -167,24 +167,29 @@ This procedure is ignored if the button's state is <B>disabled</B>.
 <H3><A NAME="M39">DEFAULT BINDINGS</A></H3>
 Tk automatically creates class bindings for buttons that give them
 default behavior:
-<OL>
-<LI>
+<P>
+<DL>
+<DT><A NAME="M40">{[1]}</A><DD>
 A button activates whenever the mouse passes over it and deactivates
 whenever the mouse leaves the button.
 Under Windows, this binding is only active when mouse button 1 has
 been pressed over the button.
-<LI>
+<P>
+<DT><A NAME="M41">{[2]}</A><DD>
 A button's relief is changed to sunken whenever mouse button 1 is
 pressed over the button, and the relief is restored to its original
 value when button 1 is later released.
-<LI>
+<P>
+<DT><A NAME="M42">{[3]}</A><DD>
 If mouse button 1 is pressed over a button and later released over
 the button, the button is invoked.  However, if the mouse is not
 over the button when button 1 is released, then no invocation occurs.
-<LI>
+<P>
+<DT><A NAME="M43">{[4]}</A><DD>
 When a button has the input focus, the space key causes the button
 to be invoked.
-</OL>
+<P>
+</DL>
 <P>
 If the button's state is <B>disabled</B> then none of the above
 actions occur:  the button is completely non-responsive.
@@ -192,7 +197,7 @@ actions occur:  the button is completely non-responsive.
 The behavior of buttons can be changed by defining new bindings for
 individual widgets or by redefining the class bindings.
 
-<H3><A NAME="M40">SEE ALSO</A></H3>
+<H3><A NAME="M44">SEE ALSO</A></H3>
 <B><A HREF="./checkbutton.n.html">checkbutton</A></B>, <B><A HREF="./radiobutton.n.html">radiobutton</A></B>
 <P><IMG ALIGN=TOP SRC="./Img/line-red.gif"><P>
 <A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookBlue.gif"> Back to the <B>STk</B> main page</A>

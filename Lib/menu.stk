@@ -15,7 +15,7 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 17-May-1993 12:35
-;;;; Last file update: 27-Apr-1998 12:34
+;;;; Last file update: 27-Sep-1998 12:14
 ;;;;
 
 (select-module Tk)
@@ -659,23 +659,25 @@
       ;; Can't traverse into or out of a cascaded menu.  Go to the next
       ;; or previous menubutton, if that makes sense.
       (let* ((buttons (winfo 'children [winfo 'parent tk::posted-mb]))
-	     (len     (length buttons)))
-	(let loop ((i (- count (length (member tk::posted-mb buttons)))))
-	  (while (< i 0)     (set! i (+ i len)))
-
-	  (while (>=  i len) (set! i (- i len)))
-
+	     (len     (length buttons))
+	     (i       (do ((i 0 (+ i 1))) 
+			  ((eq? tk::posted-mb (list-ref buttons i)) i)
+			'nothing)))
+	(let loop ((i   (modulo (+ i count) len))
+		   (cnt 0))
 	  (let ((mb (list-ref buttons i)))
-	    (unless (and (string=? [winfo 'class mb] "Menubutton")
+	    (if (or (and (string=? [winfo 'class mb] "Menubutton")
 			 (not (string=? [tk-get mb :state] "disabled"))
 			 (tk-get mb :menu)
 			 (not (equal? ((tk-get mb :menu) 'index 'last) "none")))
-	      (when (eq? mb tk::posted-mb)
-		(set! continue #f))))
-	  (loop (+ i count))))
-      (when continue
-	(Tk:menu-button-post mb)
-	(Tk:menu-first-entry (tk-get mb :menu))))))
+		    (eq? mb tk::posted-mb))
+		;; found a menu to post
+		(begin 
+		  (Tk:menu-button-post mb)
+		  (Tk:menu-first-entry (tk-get mb :menu)))
+		;; no menu, search another one, if possible
+		(if (< cnt len)
+		    (loop (modulo (+ i count) len)   (+ cnt 1))))))))))
 
 ;; Tk:menu-next-entry --
 ;; Activate the next higher or lower entry in the posted menu,
@@ -1136,7 +1138,8 @@
 				  :relief "raised"
 				  :borderwidth 2 
 				  :highlightthickness 2
-				  :anchor "c"))
+				  :anchor "c"
+				  :direction "flush"))
 	 (m	    (menu menu-name :tearoff #f)))
     (for-each (lambda (x)
 		(m 'add 'radiobutton :label x :variable var-name :environment env))

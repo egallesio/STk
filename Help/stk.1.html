@@ -14,61 +14,61 @@ abbreviations for the <B>-help</B> option).
 
 <P>
 <DL>
-<DT><A NAME="M4"><B>-colormap new</B></A><DD>
+<DT><A NAME="M4">{B-colormap BnewR}</A><DD>
 Specifies that the window should have a new private colormap instead of
 using the default colormap for the screen.
 <P>
-<DT><A NAME="M5"><B>-display </B><I>display</I></A><DD>
+<DT><A NAME="M5">{B-display IdisplayR}</A><DD>
 Display (and screen) on which to display window.
 <P>
-<DT><A NAME="M6"><B>-file </B><I>fileName</I></A><DD>
+<DT><A NAME="M6">{B-file IfileNameR}</A><DD>
 Read commands from <I>fileName</I> rather than standard input.  The
 last element in <I>fileName</I> will be used as the title for the
 application and name of its interpreter for <B><A HREF="./send.n.html">send</A></B>
 commands (unless overridden by the <B>-name</B> option\fR).
 <P>
-<DT><A NAME="M7"><B>-geometry </B><I>geometry</I></A><DD>
+<DT><A NAME="M7">{B-geometry IgeometryR}</A><DD>
 Initial geometry to use for window.
 <P>
-<DT><A NAME="M8"><B>-name </B><I>name</I></A><DD>
+<DT><A NAME="M8">{B-name InameR}</A><DD>
 Use <I>name</I> as the title to be displayed in the window, and
 as the name of the interpreter for <B><A HREF="./send.n.html">send</A></B> commands.
 <P>
-<DT><A NAME="M9"><B>-sync</B></A><DD>
+<DT><A NAME="M9">{B-syncR}</A><DD>
 Execute all X server commands synchronously, so that errors
 are reported immediately.  This will result in much slower
 execution, but it is useful for debugging.
 <P>
-<DT><A NAME="M10"><B>-visual </B><I>visual</I></A><DD>
+<DT><A NAME="M10">{B-visual IvisualR}</A><DD>
 Specifies the visual to use for the window.<I>Visual</I> may be one of the following:
 <I>best</I>, <I>directcolor</I>, <I>grayscale</I>, <I>greyscale</I>, 
 <I>pseudocolor</I>, <I>staticcolor</I>, <I>staticgray</I>, 
 <I>staticgrey</I>, <I>truecolor</I>, or <I>default</I>
 <P>
-<DT><A NAME="M11"><B>-no-tk</B></A><DD>
+<DT><A NAME="M11">{B-no-tkR}</A><DD>
 Don't initialize the Tk toolkit
 <P>
-<DT><A NAME="M12"><B>-load </B><I>fileName</I></A><DD>
+<DT><A NAME="M12">{B-load IfileNameR}</A><DD>
 Evaluate expressions contained in <I>fileName</I> before reading 
 expressions from standard input.
 <P>
-<DT><A NAME="M13"><B>-image </B><I>fileName</I></A><DD>
+<DT><A NAME="M13">{B-image IfileNameR}</A><DD>
 Restore the state saved in <I>fileName</I> by the <I>dump</I> primitive
 (Note: For now, <I>dump</I> works only on SunOS 4.1.x, Linux 1.x (a.out format) 
 and FreeBSD).
 <P>
-<DT><A NAME="M14"><B>-cells </B><I>number</I></A><DD>
+<DT><A NAME="M14">{B-cells InumberR}</A><DD>
 Set the default size for the heap to <I>number</I> cells. The given number is
 also the amount of cells used when extending the heap. Default value is 20000.
 <P>
-<DT><A NAME="M15"><B>-interactive</B></A><DD>
+<DT><A NAME="M15">{B-interactiveR}</A><DD>
 Tell the interpreter that it is used interactively (even if it doesn't
 think so).  
 <P>
-<DT><A NAME="M16"><B>-help</B></A><DD>
+<DT><A NAME="M16">{B-helpR}</A><DD>
 Print a summary of the command-line options and exit.
 <P>
-<DT><A NAME="M17"><B>--</B></A><DD>
+<DT><A NAME="M17">{B-|-R}</A><DD>
 Pass all remaining arguments through to the script's <B>argv</B>
 variable without interpreting them.
 This provides a mechanism for passing arguments such as <B>-name</B>
@@ -146,21 +146,21 @@ is no more necessary and can be omitted.
 <B>stk</B> uses the following shell variables:
 <P>
 <DL>
-<DT><A NAME="M25"><I>STK_LIBRARY</I></A><DD>
+<DT><A NAME="M25">{ISTK_LIBRARYR}</A><DD>
 This variable indicates where the library files are located. This variable
 allows to overload the default value of the Scheme variable <I>*stk-library*</I> 
 which is automatically calculated by the interpreter.(i.e. <I>stk</I> or <I>snow</I>).
 <P>
-<DT><A NAME="M26"><I>STK_LOAD_PATH</I></A><DD>
+<DT><A NAME="M26">{ISTK_LOAD_PATHR}</A><DD>
 This variable serves to initialize the <I>*load-path*</I> Scheme variable. This
 variable is a list of paths to try when in a load command. 
 <P>
-<DT><A NAME="M27"><I>STK_HELP_PATH</I></A><DD>
+<DT><A NAME="M27">{ISTK_HELP_PATHR}</A><DD>
 This variable serves to initialize the <I>*help-path*</I> Scheme variable. It 
 must contain a list of documentation directories. This variable is used by the help 
 procedure.
 <P>
-<DT><A NAME="M28"><I>STK_IMAGE_PATH</I></A><DD>
+<DT><A NAME="M28">{ISTK_IMAGE_PATHR}</A><DD>
 This variable serves to initialize the <I>*image-path*</I> Scheme variable. It 
 must contain a list of images directories. This variable is used by the make-image 
 procedure.
@@ -170,8 +170,8 @@ procedure.
 </DL>
 <H3><A NAME="M29">FILES</A></H3>
 <DL>
-<DT><A NAME="M30"><I>./init.stk</I></A><DD>
-<DT><A NAME="M31"><I>$STK_LIBRARY/STk/init.stk</I></A><DD>
+<DT><A NAME="M30">{I./init.stkR}</A><DD>
+<DT><A NAME="M31">{I$STK_LIBRARY/STk/init.stkR}</A><DD>
 When <B>stk</B> starts running, it tries to load the file <I>init.stk</I>
 in the current directory. If this file is not present, it tries to load 
 this file in the <B>STk_LIBRARY</B> directory (the value of <B>STk_LIBRARY</B>
@@ -179,7 +179,7 @@ is automatically computed to be in a sibling directory of the interpreter
 executable.
 
 <P>
-<DT><A NAME="M32"><I>~/.stkrc</I></A><DD>
+<DT><A NAME="M32">{I~/.stkrcR}</A><DD>
 Standard <I>init.stk</I> file tries to load the file <I>~/.stkrc</I>. This file 
 can be used to store functions definitions or variables settings that you want
 to be executed at each interpreter invocation.

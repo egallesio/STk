@@ -10,7 +10,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkUnixDefault.h 1.104 97/06/18 15:44:41
+ * SCCS: @(#) tkUnixDefault.h 1.105 97/10/09 17:45:10
  */
 
 #ifndef _TKUNIXDEFAULT
@@ -550,6 +550,12 @@
 #define DEF_TEXT_WRAP			"char"
 #define DEF_TEXT_XSCROLL_COMMAND	""
 #define DEF_TEXT_YSCROLL_COMMAND	""
+
+/*
+ * Defaults for canvas text:
+ */
+
+#define DEF_CANVTEXT_FONT		"Helvetica -12"
 
 /*
  * Defaults for toplevels (most of the defaults for frames also apply

@@ -551,17 +551,14 @@ CanvasWidgetCmd(clientData, interp, argc, argv)
 		goto done;
 	    }
 
-#ifdef STk_CODE
-	    mask = Tk_CreateBinding(interp, canvasPtr->bindingTable,
-		    object, argv[3], argv[4], argv[0], argv[2]);
-#else
+#ifndef STk_CODE
 	    if (argv[4][0] == '+') {
 		argv[4]++;
 		append = 1;
 	    }
+#endif
 	    mask = Tk_CreateBinding(interp, canvasPtr->bindingTable,
 		    object, argv[3], argv[4], append);
-#endif
 	    if (mask == 0) {
 		goto error;
 	    }

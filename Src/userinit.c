@@ -3,7 +3,7 @@
  * u s e r i n i t . c			-- The place where user put his/her
  *					   initialization
  *
- * Copyright © 1993-1997 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -20,7 +20,7 @@
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 23-Jan-1994 19:09
- * Last file update: 14-Apr-1997 14:55
+ * Last file update: 19-Sep-1998 13:05
  */
 
 #include "stk.h"

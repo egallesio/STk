@@ -1,0 +1,239 @@
+;;;;
+;;;; c l a s s - b r o w s e r . s t k l o s 		-- Class browser
+;;;;
+;;;; Copyright © 1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; $Id: class-browser.stklos 1.1 Sat, 26 Sep 1998 19:19:52 +0200 eg $
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 25-Aug-1998 20:12
+;;;; Last file update: 26-Sep-1998 19:07
+
+(require "Tk-classes")
+(require "method-editor")
+
+(define-module class-browser
+  (import STklos STklos+Tk Tk)
+  (export class-browser browse-class)
+
+  (define *browser-current*   #f)
+  (define *browser-notepad*   #f)
+  (define *browser-tree*      #f)
+  (define *browser-window*    #f)
+
+  (define-class <Inheritance-item> (<Hierarchy-item>)  ())
+
+  (define-class <Inheritance-tree> (<Hierarchy-tree>)
+    ((entry         :init-form #f)
+     (items-type    :init-form <Inheritance-item>)))
+
+  (define-method open-item((self <Inheritance-item>))
+    (unless (slot-ref self 'open)
+      (let* ((data       (slot-ref self 'data))
+	     (children   (slot-ref self 'children))
+	     (hierarchy  (slot-ref self 'parent))
+	     (subclasses (class-direct-subclasses data)))
+	(when (and (null? children) (not (null? subclasses)))
+	  (for-each (lambda (x)
+		      (if (null? (class-direct-subclasses x))
+			  (add-leave hierarchy self x)
+			  (add-node  hierarchy self x)))
+		    (sort subclasses
+			  (lambda (x y) 
+			    (string<? (symbol->string (class-name x))
+				      (symbol->string (class-name y))))))))
+      ;; Do the redisplay
+      (next-method)))
+
+  (define-method close-item((self <Inheritance-item>))
+    (slot-set! self 'children '())
+    (next-method))
+
+  (define-method label-item((self <Inheritance-item>))
+    (let* ((data (slot-ref self 'data))
+	   (len  (length (class-direct-supers data)))
+	   (name (class-name data)))
+      (if (> len 2)
+	  (format #f "~A : ~A" name len) ; class has multiple super-classes 
+	  name)))
+
+  (define-method select-item ((self <Inheritance-item>))
+    (let* ((data   (slot-ref self 'data))
+	   (parent (slot-ref self 'parent))
+	   (entry  (slot-ref parent 'entry)))
+      (unless (equal? data *browser-current*)
+	(set! *browser-current* data)
+	;; Update all the listboxes with information relative to the current class
+	(select-tab (current-tab *browser-notepad*))
+	(slot-set! entry  'value (class-name data))
+	(next-method))))
+
+  (define (create-hierarchy top)
+    (let* ((f (make <Frame> :parent top))
+	   (e (make <Labeled-Entry> :parent f :title "Current Class"
+		    :relief "ridge" :border-width 2))
+	   (h (make <Inheritance-tree> :parent f :relief "raised" :border-width 2)))
+      (pack e :expand #f :fill "x" :padx 3 :pady 3)
+      (pack h :expand #t :fill "both")
+      (slot-set! h 'entry e)
+      (add-node h #f <top>)
+      (set! *browser-tree* h)
+      f))
+
+  ;=============================================================================
+
+  (define (create-notepad toplevel)
+    (define lbs   (make-vector 8))
+    (define n     (make <Notepad> :parent toplevel))
+    (define index 0)
+
+    (define (create-listbox parent txt index)
+      (let* ((f  (make <Frame> :parent parent))
+	     (l  (make <Label> :parent f :text txt))
+	     (lb (make <Scroll-listbox> :parent f)))
+	(set! (background (listbox-of lb)) "white")
+	(pack l :fill "x" :expand #f)
+	(pack lb :fill "both" :expand #t)
+	(vector-set! lbs index lb)
+	f))
+
+    (define (internal-page index txt1 txt2 proc1 proc2)
+      (lambda (parent tab)
+	;; If this is the first call for this page, instanciante it
+	(unless (page tab)
+	  (let* ((paned (make <HPaned> :parent parent))
+		 (f1    (create-listbox (top-frame-of paned)    txt1 index))
+		 (f2    (create-listbox (bottom-frame-of paned) txt2 (+ index 1))))
+	    (pack f1 f2 :expand #t :fill "both")
+	    (set! (page tab) paned)))
+	;; Executed each time we select this page
+	(pack (page tab) :pady 5 :padx 3 :fill "both" :expand #t)
+	(when *browser-current*
+	  (proc1) 		;; To fill the upper part of the page
+	  (proc2)))) 		;; ........... lower ................
+
+    (define (new label txt1 txt2 proc1 proc2)
+      (let ((index (- index 2))) ; UGLY! we know index has been ++ by fill-lisbox
+	(make  <Notepad-Tab> 
+	       :parent n :text label :font '(Helvetica 10 Bold)  
+	       :action (internal-page index txt1 txt2 proc1 proc2))))
+
+    (define convert-method
+      (lambda (m)
+	(format #f "~A ~S" (generic-function-name(method-generic-function m))
+		(map* class-name (method-specializers m)))))
+
+    (define (sort-symbols l)
+      (sort l (lambda (s1 s2) 
+		(string<? (symbol->string (cdr s1)) (symbol->string (cdr s2))))))
+    
+    (define (sort-strings l)
+      (sort l (lambda (s1 s2) (string<? (cdr s1) (cdr s2)))))
+
+    (define (show-slot s)
+      (let* ((top  (make <Toplevel> :title "Slot Description"))
+	     (edit (make <Scheme-text> :parent top :relief "ridge" :border-width 3))
+	     (quit (make <Button> :parent top :text "Quit" 
+			 :command (lambda () (destroy top)))))
+	(set! (value edit) (format #f "Slot ``~A'' is defined as:\n\n~A" 
+				   (slot-definition-name s) (pp s 50 #f)))
+	(set! (background (text-of edit)) "white")
+	;; change title to differentiate it from the body
+	(tag-add (make <Text-tag> :parent edit :underline #t :foreground "brown3")
+		 "0.0" "2.0")
+	;; pack everybody
+	(pack edit :expand #t :fill   'both)
+	(pack quit :expand #f :anchor 'w :ipadx 20)))
+
+
+    (define (fill-listbox convert build-list sortproc selectproc)
+      (let* ((idx index)
+	     (res (lambda ()
+		    (let* ((lb (vector-ref lbs idx))
+			   (l1 (build-list  *browser-current*))
+			   (l2 (map convert l1))
+			   (l3 (sortproc (map cons l1 l2))))
+		      ;; l1 is the list of objects. l2 is the list of the names of
+		      ;; these objects (to be inserted in the listbox). l3 is the 
+		      ;; a A-list built from l1 and l2. l3 is sorted on the values 
+		      ;; of l2.
+		      (bind lb "<Double-1>"
+			    (lambda ()
+			      (let ((active (listbox-index lb "active")))
+				(selectproc (car (list-ref l3 active))))))
+		      (set! (value lb) (map cdr l3))))))
+	(set! index (+ index 1))
+	res))
+
+    ;; 
+    ;; Create-notepad starts here
+    ;;
+    (new "Super\nClasses" "Direct Super Classes" "Class Precedence List"
+	 (fill-listbox class-name class-direct-supers sort-symbols   browse-class)
+	 (fill-listbox class-name class-precedence-list (lambda(l)l) browse-class))
+
+    (new  "Sub\nClasses" "Direct Subclasses" "All Subclasses"
+	  (fill-listbox class-name class-direct-subclasses sort-symbols 
+			browse-class)
+	  (fill-listbox class-name class-subclasses sort-symbols browse-class))
+    
+    (new  "Slots" "Direct Slots" "All Slots"
+	  (fill-listbox slot-definition-name class-direct-slots sort-symbols 
+			show-slot)
+	  (fill-listbox slot-definition-name class-slots sort-symbols show-slot))
+
+    (new  "Methods" "Direct Methods" "All Methods"
+	  (fill-listbox convert-method class-direct-methods sort-strings 
+			method-editor)
+	  (fill-listbox convert-method class-methods sort-strings method-editor))
+
+    (set! *browser-notepad* n)
+    n)
+
+  ;=============================================================================
+
+  (define (init-class-browser . parent)
+    (let* ((top   (if (null? parent)
+		      (make <Toplevel> :title "** STklos Class browser **")
+		      (car parent)))		  
+	   (paned (make <VPaned> :parent top :width 700 :height 400 :fraction .4))
+	   (h	  (create-hierarchy (left-frame-of  paned)))
+	   (pad   (create-notepad   (right-frame-of paned)))
+	   (quit  (make <Button> :parent top :text "Quit" 
+				 :command (lambda() (destroy top)))))
+
+      (pack h pad paned :fill 'both :expand #t)
+      (pack quit :anchor 'w :ipadx 20)
+      (wm 'protocol (Id top) "WM_DELETE_WINDOW" (lambda () 
+						  (set! *browser-window* #f) 
+						  (destroy top)))
+      (set! *browser-window* top)))
+
+  (define (browse-class class)
+    (unless *browser-window* (init-class-browser))
+    (let* ((cpl (reverse (class-precedence-list class)))
+	   (proc (lambda (i)
+		   (let ((data (slot-ref i 'data)))
+		     (when (memq data cpl)
+		       (open-item i)
+		       (if (eq? data class) (select-item i)))))))
+      (walk-hierarchy *browser-tree* proc)))
+
+  (define (class-browser . parent)
+    (apply init-class-browser parent)
+    (browse-class <top>))
+)
+
+(import class-browser)
+
+(define class-browser (with-module class-browser class-browser))
+
+(provide "class-browser")

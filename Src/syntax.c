@@ -19,7 +19,7 @@
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 25-Oct-1993 23:39
- * Last file update: 14-May-1998 22:55
+ * Last file update: 10-Sep-1998 14:12
  */
 
 /* Notes:
@@ -41,6 +41,7 @@
 
 #include "stk.h"
 #include "module.h"
+#include "extend.h"
 
 #ifdef COMPACT_SMALL_CST
 #   define makecell(type) ((SCM) MAKE_SMALL_CST(0, type))
@@ -67,6 +68,7 @@ static SCM define2lambda(SCM l, int len)
     if (len == 2) return l;
 Error:
   Err("define: bad definition", l);
+  return UNDEFINED; /* never reached */
 }
 
 PRIMITIVE STk_syntax_quote(SCM *pform, SCM env, int len)
@@ -240,6 +242,7 @@ static SCM syntax_let_family(SCM *pform, SCM env, char *who, int type, int len)
 Error:
   sprintf(buffer, "%s: incorrect number of subforms", who);
   Err(buffer, *pform);
+  return UNDEFINED; /* never reached */
 }
 
 

@@ -11,11 +11,11 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
-;;;; $Id: Tk-classes.stklos 1.13 Thu, 28 May 1998 20:07:43 +0000 eg $
+;;;; $Id: Tk-classes.stklos 1.17 Sat, 26 Sep 1998 19:19:52 +0200 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 19-Sep-1994 16:00
-;;;; Last file update: 22-May-1998 10:43
+;;;; Last file update: 26-Sep-1998 16:00
 
 
 (require "Tk-meta")	; for all the Tk meta classes
@@ -23,14 +23,18 @@
 
 (with-module STklos+Tk
 
-  (define-macro (make-autoload name . l)
-    ;; make 'name' autoload iff not already provided.
-    `(unless (provided? ,name)
+  (define-macro (add-autoload name . l)
+    `(begin
        ;; Specify a suffix for autoload because filenames are not case
        ;; sensitive under Win32!
        (autoload ,(string-append name ".stklos") ,@l)
-       (provide ,name)  ;; to avoid double definition. This is ugly
        (export ,@l)))
+
+  (define-macro (make-autoload name . l)
+    ;; make 'name' autoload iff not already provided.
+    `(unless (provided? ,name)
+       (add-autoload ,name ,@l)
+       (provide ,name)))  	;; to avoid double definition. This is ugly
 
   ;====  Basic Tk widgets
   (make-autoload "Basics"  	<Tk-composite-widget> <Tk-composite-toplevel> 
@@ -53,6 +57,7 @@
   (make-autoload "Defbutton"	<Default-button>)
   (make-autoload "Filebox"	<File-box> make-file-box)
   (make-autoload "Gauge"	<Gauge> <Valued-gauge>)
+  (make-autoload "Hierarchy"	<Hierarchy-tree> <Hierarchy-item>)
   (make-autoload "Lentry"	<Labeled-entry>)
   (make-autoload "Lframe"	<Labeled-frame>)
   (make-autoload "Msgbox"	<Tk-message-box> <Abort-retry-ignore-message-box>
@@ -60,7 +65,9 @@
 				<Ok-cancel-message-box> <Retry-cancel-message-box>
 				<Yes-no-message-box> <Yes-no-cancel-message-box>)
   (make-autoload "Multiwin"	<Multiple-window> <Inner-window>)
+  (make-autoload "Notepad"	<Notepad> <Notepad-tab>)
   (make-autoload "Paned"	<HPaned> <VPaned>)
+  (make-autoload "Schemetext"	<Scheme-text>)
   (make-autoload "Scrollbox"	<Scroll-Listbox>)
   (make-autoload "Scrollcanvas"	<Scroll-Canvas>)
   (make-autoload "Scrolltext"	<Scroll-Text>)
@@ -69,9 +76,9 @@
   (make-autoload "Tk-active"	<Tk-active-metaclass>)
 
   ;==== OS dependent part
-  (when (eqv? (os-kind) 'Unix)
-    (make-autoload "Colorbox"  Tk:choose-color)
-    (make-autoload "Msgbox"    Tk:message-box)
-    (make-autoload "Filebox"   Tk:get-file Tk:get-open-file Tk:get-save-file)))
+  (when (eq? (os-kind) 'Unix)
+    (add-autoload "Colorbox"  Tk:choose-color)
+    (add-autoload "Msgbox"    Tk:message-box)
+    (add-autoload "Filebox"   Tk:get-file Tk:get-open-file Tk:get-save-file)))
 
 (provide "Tk-classes")

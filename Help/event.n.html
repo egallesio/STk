@@ -12,7 +12,7 @@ events.  The procedure has several different forms, determined by the
 first argument.  The following forms are currently supported:
 <P>
 <DL>
-<DT><A NAME="M4">(<B>event 'add &quot;&lt;&lt;</B><I>virtual</I><B>&gt;&gt;&quot;</B><I> sequence </I>?<I>sequence ...</I>?)</A><DD>
+<DT><A NAME="M4">(<B>event 'add {&quot;&lt;&lt;</B><I>virtual</I><B>&gt;&gt;&quot;</B><I>} sequence </I>?<I>sequence ...</I>?)</A><DD>
 Associates the virtual event <I>virtual</I> with the physical
 event sequence(s) given by the <I>sequence</I> arguments, so that
 the virtual event will trigger whenever any one of the <I>sequence</I>s
@@ -23,7 +23,7 @@ any of the values allowed for the <I>sequence</I> argument to the
 If <I>virtual</I> is already defined, the new physical event sequences
 add to the existing sequences for the event.
 <P>
-<DT><A NAME="M5">(<B>event 'delete &quot;&lt;&lt;</B><I>virtual</I><B>&gt;&gt;&quot; </B>?<I>sequence sequence ...</I>?)</A><DD>
+<DT><A NAME="M5">(<B>event 'delete {&quot;&lt;&lt;</B><I>virtual</I><B>&gt;&gt;&quot;} </B>?<I>sequence</I> <I>sequence ...</I>?)</A><DD>
 Deletes each of the <I>sequence</I>s from those associated with
 the virtual event given by <I>virtual</I>.
 <I>Virtual</I> may be any string value and <I>sequence</I> may have
@@ -55,8 +55,8 @@ will complete before the <B>event generate</B> procedure returns.
 If the <B>:when</B> option is specified then it determines when the
 event is processed.
 <P>
-<DT><A NAME="M7">(\fBevent 'info)</A><DD>
-<DT><A NAME="M8">(<B>event 'info </B>&quot;&lt;&lt;<I>virtual</I><B>&gt;&gt;&quot;</B>)</A><DD>
+<DT><A NAME="M7">{(Bevent} 'info)</A><DD>
+<DT><A NAME="M8">(<B>event 'info {</B>&quot;&lt;&lt;<I>virtual</I><B>&gt;&gt;&quot;</B>)}</A><DD>
 Returns information about virtual events.
 If the &quot;<B>&lt;&lt;</B><I>virtual</I><B>&gt;&gt;</B>&quot; argument is omitted, the return value
 is a list of all the virtual events that are currently defined.
@@ -225,19 +225,19 @@ of the following values:
 <P>
 <P>
 <DL>
-<DT><A NAME="M32"><B>now</B></A><DD>
+<DT><A NAME="M32">{BnowR}</A><DD>
 Process the event immediately, before the procedure returns.
 This also happens if the <B>:when</B> option is omitted.
 <P>
-<DT><A NAME="M33"><B>tail</B></A><DD>
+<DT><A NAME="M33">{BtailR}</A><DD>
 Place the event on STk's event queue behind any events already
 queued for this application.
 <P>
-<DT><A NAME="M34"><B>head</B></A><DD>
+<DT><A NAME="M34">{BheadR}</A><DD>
 Place the event at the front of STk's event queue, so that it
 will be handled before any other events already queued.
 <P>
-<DT><A NAME="M35"><B>mark</B></A><DD>
+<DT><A NAME="M35">{BmarkR}</A><DD>
 Place the event at the front of STk's event queue but behind any
 other events already queued with <B>:when mark</B>.
 This option is useful when generating a series of events that should

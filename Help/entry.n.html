@@ -328,44 +328,53 @@ the following default behavior.
 In the descriptions below, ``word'' refers to a contiguous group
 of letters, digits, or ``_'' characters, or any single character
 other than these.
-<OL>
-<LI>
+<P>
+<DL>
+<DT><A NAME="M65">{[1]}</A><DD>
 Clicking mouse button 1 positions the insertion cursor
 just before the character underneath the mouse cursor, sets the
 input focus to this widget, and clears any selection in the widget.
 Dragging with mouse button 1 strokes out a selection between
 the insertion cursor and the character under the mouse.
-<LI>
+<P>
+<DT><A NAME="M66">{[2]}</A><DD>
 Double-clicking with mouse button 1 selects the word under the mouse
 and positions the insertion cursor at the beginning of the word.
 Dragging after a double click will stroke out a selection consisting
 of whole words.
-<LI>
+<P>
+<DT><A NAME="M67">{[3]}</A><DD>
 Triple-clicking with mouse button 1 selects all of the text in the
 entry and positions the insertion cursor before the first character.
-<LI>
+<P>
+<DT><A NAME="M68">{[4]}</A><DD>
 The ends of the selection can be adjusted by dragging with mouse
 button 1 while the Shift key is down;  this will adjust the end
 of the selection that was nearest to the mouse cursor when button
 1 was pressed.
 If the button is double-clicked before dragging then the selection
 will be adjusted in units of whole words.
-<LI>
+<P>
+<DT><A NAME="M69">{[5]}</A><DD>
 Clicking mouse button 1 with the Control key down will position the
 insertion cursor in the entry without affecting the selection.
-<LI>
+<P>
+<DT><A NAME="M70">{[6]}</A><DD>
 If any normal printing characters are typed in an entry, they are
 inserted at the point of the insertion cursor.
-<LI>
+<P>
+<DT><A NAME="M71">{[7]}</A><DD>
 The view in the entry can be adjusted by dragging with mouse button 2.
 If mouse button 2 is clicked without moving the mouse, the selection
 is copied into the entry at the position of the mouse cursor.
-<LI>
+<P>
+<DT><A NAME="M72">{[8]}</A><DD>
 If the mouse is dragged out of the entry on the left or right sides
 while button 1 is pressed, the entry will automatically scroll to
 make more text visible (if there is more text off-screen on the side
 where the mouse left the window).
-<LI>
+<P>
+<DT><A NAME="M73">{[9]}</A><DD>
 The Left and Right keys move the insertion cursor one character to the
 left or right;  they also clear any selection in the entry and set
 the selection anchor.
@@ -377,60 +386,76 @@ by words and also extend the selection.
 Control-b and Control-f behave the same as Left and Right, respectively.
 Meta-b and Meta-f behave the same as Control-Left and Control-Right,
 respectively.
-<LI>
+<P>
+<DT><A NAME="M74">{[10]}</A><DD>
 The Home key, or Control-a, will move the insertion cursor to the
 beginning of the entry and clear any selection in the entry.
 Shift-Home moves the insertion cursor to the beginning of the entry
 and also extends the selection to that point.
-<LI>
+<P>
+<DT><A NAME="M75">{[11]}</A><DD>
 The End key, or Control-e, will move the insertion cursor to the
 end of the entry and clear any selection in the entry.
 Shift-End moves the cursor to the end and extends the selection
 to that point.
-<LI>
+<P>
+<DT><A NAME="M76">{[12]}</A><DD>
 The Select key and Control-Space set the selection anchor to the position
 of the insertion cursor.  They don't affect the current selection.
 Shift-Select and Control-Shift-Space adjust the selection to the
 current position of the insertion cursor, selecting from the anchor
 to the insertion cursor if there was not any selection previously.
-<LI>
+<P>
+<DT><A NAME="M77">{[13]}</A><DD>
 Control-/ selects all the text in the entry.
-<LI>
+<P>
+<DT><A NAME="M78">{[14]}</A><DD>
 Control-&#92; clears any selection in the entry.
-<LI>
+<P>
+<DT><A NAME="M79">{[15]}</A><DD>
 The F16 key (labelled Copy on many Sun workstations) or Meta-w
 copies the selection in the widget to the clipboard, if there is a selection.
-<LI>
+<P>
+<DT><A NAME="M80">{[16]}</A><DD>
 The F20 key (labelled Cut on many Sun workstations) or Control-w
 copies the selection in the widget to the clipboard and deletes
 the selection.
 If there is no selection in the widget then these keys have no effect.
-<LI>
+<P>
+<DT><A NAME="M81">{[17]}</A><DD>
 The F18 key (labelled Paste on many Sun workstations) or Control-y
 inserts the contents of the clipboard at the position of the
 insertion cursor.
-<LI>
+<P>
+<DT><A NAME="M82">{[18]}</A><DD>
 The Delete key deletes the selection, if there is one in the entry.
 If there is no selection, it deletes the character to the right of
 the insertion cursor.
-<LI>
+<P>
+<DT><A NAME="M83">{[19]}</A><DD>
 The BackSpace key and Control-h delete the selection, if there is one
 in the entry.
 If there is no selection, it deletes the character to the left of
 the insertion cursor.
-<LI>
+<P>
+<DT><A NAME="M84">{[20]}</A><DD>
 Control-d deletes the character to the right of the insertion cursor.
-<LI>
+<P>
+<DT><A NAME="M85">{[21]}</A><DD>
 Meta-d deletes the word to the right of the insertion cursor.
-<LI>
+<P>
+<DT><A NAME="M86">{[22]}</A><DD>
 Control-k deletes all the characters to the right of the insertion
 cursor.
-<LI>
+<P>
+<DT><A NAME="M87">{[23]}</A><DD>
 Control-w deletes the word to the left of the insertion cursor.
-<LI>
+<P>
+<DT><A NAME="M88">{[24]}</A><DD>
 Control-t reverses the order of the two characters to the right of
 the insertion cursor.
-</OL>
+<P>
+</DL>
 <P>
 If the entry is disabled using the <B>:state</B> option, then the entry's
 view can still be adjusted and text in the entry can still be selected,

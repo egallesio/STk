@@ -277,23 +277,27 @@ modifying its associated variable to reflect the new state.
 <H3><A NAME="M49">BINDINGS</A></H3>
 Tk automatically creates class bindings for checkbuttons that give them
 the following default behavior:
-<OL>
-<LI>
+<P>
+<DL>
+<DT><A NAME="M50">{[1]}</A><DD>
 On Unix systems, a checkbutton activates whenever the mouse passes
 over it and deactivates whenever the mouse leaves the checkbutton.  On
 Windows systems, when mouse button 1 is pressed over a
 checkbutton, the button activates whenever the mouse pointer is inside
 the button, and deactivates whenever the mouse pointer leaves the
 button.
-<LI>
+<P>
+<DT><A NAME="M51">{[2]}</A><DD>
 When mouse button 1 is pressed over a checkbutton, it is invoked (its
 selection state toggles and the procedure associated with the button is
 invoked, if there is one).
-<LI>
+<P>
+<DT><A NAME="M52">{[3]}</A><DD>
 When a checkbutton has the input focus, the space key causes the checkbutton
 to be invoked.  Under Windows, there are additional key bindings; plus
 (+) and equal (=) select the button, and minus (-) deselects the button.
-</OL>
+<P>
+</DL>
 <P>
 If the checkbutton's state is <B>disabled</B> then none of the above
 actions occur:  the checkbutton is completely non-responsive.
@@ -301,7 +305,7 @@ actions occur:  the checkbutton is completely non-responsive.
 The behavior of checkbuttons can be changed by defining new bindings for
 individual widgets or by redefining the class bindings.
 
-<H3><A NAME="M50">SEE ALSO</A></H3>
+<H3><A NAME="M53">SEE ALSO</A></H3>
 <B><A HREF="./button.n.html">button</A></B>, <B><A HREF="./radiobutton.n.html">radiobutton</A></B>
 <P><IMG ALIGN=TOP SRC="./Img/line-red.gif"><P>
 <A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookBlue.gif"> Back to the <B>STk</B> main page</A>

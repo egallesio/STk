@@ -20,7 +20,7 @@
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 15-Mar-1995 11:31
- * Last file update: 16-Jan-1998 22:09
+ * Last file update: 10-Sep-1998 12:24
  */
 
 #include "stk.h"
@@ -148,7 +148,8 @@ static STk_disp_function *display_array = NULL;
 
 static void Cpointer_default_display(SCM obj, SCM port, int mode)
 {
-  sprintf(STk_tkbuffer, "#<C-pointer %d %lx>", EXTID(obj), EXTDATA(obj));
+  sprintf(STk_tkbuffer, "#<C-pointer %d %lx>", EXTID(obj), 
+	  				       (unsigned long) EXTDATA(obj));
   Puts(STk_tkbuffer, PORT_FILE(port));
 }
 

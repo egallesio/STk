@@ -1,17 +1,17 @@
 %define		release 1
 Summary: 	Scheme Interpreter with access to the Tk toolkit
 Name:    	STk
-Version: 	3.99.2
+Version: 	3.99.3
 Release: 	%{release}
 Copyright: 	distributable
-Source: 	STk-3.99.2.tar.gz
+Source: 	STk-3.99.3.tar.gz
 Group:		Development/Languages
 Packager:	Erick Gallesio <eg@unice.fr>
 
 %package devel
-Summary: 	Header files and libraries for STk
+Summary: 	Header files and libraries for STkq
 Group: 		Development/Libraries
-Requires:	STk = 3.99.2
+Requires:	STk = 3.99.3
 
 %description
 STk is a R4RS Scheme interpreter which can access the Tk graphical
@@ -30,6 +30,16 @@ This package contains the files necessary for extending, in C, the
 STk interpeter. If you don't need to write some C code for extending
 the interpreter, you don't need to install this package.
 
+
+%ifarch i386
+%define machine Linux-2.X-ix86
+%else
+%ifarch ppc
+%define machine Linux-2.X-ppc
+%else
+%define machine Linux-2.X-ix86
+%endif
+%endif
 
 
 %prep
@@ -60,22 +70,24 @@ rm -f /usr/local/lib/stk/include
 
 %files
 %doc README INSTALL CHANGES ChangeLog
-/usr/local/lib/stk/3.99.2/Demos
-/usr/local/lib/stk/3.99.2/Help
-/usr/local/lib/stk/3.99.2/Images
-/usr/local/lib/stk/3.99.2/Linux-2.X-ix86/stk
-/usr/local/lib/stk/3.99.2/Linux-2.X-ix86/snow
-/usr/local/lib/stk/3.99.2/Linux-2.X-ix86/*.so
-/usr/local/lib/stk/3.99.2/STk
-/usr/local/lib/stk/3.99.2/include
-/usr/local/lib/stk/3.99.2/man
-/usr/local/bin/stk-3.99.2
-/usr/local/bin/snow-3.99.2
+/usr/local/lib/stk/3.99.3/Demos
+/usr/local/lib/stk/3.99.3/Help
+/usr/local/lib/stk/3.99.3/Images
+/usr/local/lib/stk/3.99.3/%{machine}/stk
+/usr/local/lib/stk/3.99.3/%{machine}/snow
+/usr/local/lib/stk/3.99.3/%{machine}/*.so
+
+
+/usr/local/lib/stk/3.99.3/STk
+/usr/local/lib/stk/3.99.3/include
+/usr/local/lib/stk/3.99.3/man
+/usr/local/bin/stk-3.99.3
+/usr/local/bin/snow-3.99.3
 /usr/local/bin/stk
 /usr/local/bin/snow
 
 
 
 %files devel
-/usr/local/lib/stk/3.99.2/Linux-2.X-ix86/Config
-/usr/local/lib/stk/3.99.2/Linux-2.X-ix86/Libs
+/usr/local/lib/stk/3.99.3/%{machine}/Config
+/usr/local/lib/stk/3.99.3/%{machine}/Libs

@@ -4,7 +4,7 @@
 ;;;;					   For backward compatibility ...
 ;;;;
 ;;;;
-;;;; Copyright © 1993-1997 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -16,7 +16,7 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 16-Jun-1996 22:37
-;;;; Last file update: 27-Aug-1997 18:34
+;;;; Last file update: 21-Jul-1998 12:48
 
 (select-module Tk)
 
@@ -38,5 +38,6 @@
 	   ((string? s)       (if (string=? s "") (fct file #f) (err)))
 	   (ELSE	      (err)))))))
 
+(define Tk:fileevent fileevent)
 
        

@@ -428,7 +428,7 @@ DoConfig(interp, tkwin, specPtr, value, valueIsUid, widgRec)
 		  }
 		  if (p != NULL) {
 		    if (menu_addr != NULL) {
-		      sprintf(buffer, "%x", menu_addr);
+		      sprintf(buffer, "%lx", (unsigned long) menu_addr);
 		      s = buffer;
 		    }
 		    
@@ -802,7 +802,7 @@ FormatConfigInfo(interp, tkwin, specPtr, widgRec)
 #ifdef STk_CODE
 #   define MAX_BUFFER 200
     char buffer[MAX_BUFFER], dflt[MAX_BUFFER];
-    int len;
+    size_t len;
 #else
     char buffer[200];
 #endif
@@ -1109,7 +1109,7 @@ FormatConfigValue(interp, tkwin, specPtr, widgRec, buffer, freeProcPtr)
     }
     else {
       register char *s, *d;
-      int len;
+      size_t len;
       char *r      	    = buffer;
       Tcl_FreeProc *oldFree = *freeProcPtr;
 

@@ -15,11 +15,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: slib.c 1.8 Tue, 09 Jun 1998 07:40:04 +0000 eg $
+ * $Id: slib.c 1.11 Wed, 16 Sep 1998 14:57:37 +0200 eg $
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: ??-Oct-1993 ??:?? 
- * Last file update:  7-Jun-1998 17:34
+ * Last file update: 15-Sep-1998 16:13
  *
  */
 
@@ -59,7 +59,7 @@
 
 #define MAX_MALLOC_BEFORE_GC 1<<20	/* 1 Mb should suffice before calling GC */
 
-static unsigned long malloc_count = 0;
+static size_t malloc_count = 0;
 
 
 static void cannot_allocate()
@@ -75,7 +75,7 @@ static void cannot_allocate()
   Err("", NIL);
 }
 
-void *STk_must_malloc(unsigned long size)
+void *STk_must_malloc(size_t size)
 {
   void *tmp;
 
@@ -100,7 +100,7 @@ void *STk_must_malloc(unsigned long size)
   return tmp;
 }
 
-void *STk_must_realloc(void *ptr, unsigned long size)
+void *STk_must_realloc(void *ptr, size_t size)
 {
   void *tmp;
 
@@ -128,7 +128,7 @@ void *STk_must_realloc(void *ptr, unsigned long size)
 
 SCM STk_internal_eval_string(char *s, long context, SCM env)
 {
-  jmp_buf jb, *prev_jb = Top_jmp_buf;
+  Jmp_Buf jb, *prev_jb = Top_jmp_buf;
   long prev_context     = Error_context;
   SCM result, port;
   int k;
@@ -138,7 +138,7 @@ SCM STk_internal_eval_string(char *s, long context, SCM env)
 
   /* save normal error jmpbuf  so that eval error don't lead to toplevel */
   /* If in a "catch", keep the ERR_IGNORED bit set */
-  if ((k = setjmp(jb)) == 0) {
+  if ((k = setjmp(jb.j)) == 0) {
     Top_jmp_buf   = &jb;
     Error_context = (Error_context & ERR_IGNORED) | context;
     result = STk_eval(STk_readf(PORT_FILE(port), FALSE), env);
@@ -152,20 +152,20 @@ SCM STk_internal_eval_string(char *s, long context, SCM env)
    *    - we are in a catch. Do a longjump to the catch to signal it a fail
    *    - otherwise error has already signaled, just return EVAL_ERROR
    */
-  if (Error_context & ERR_IGNORED) longjmp(*Top_jmp_buf, k);
+  if (Error_context & ERR_IGNORED) longjmp(Top_jmp_buf->j, k);
   return EVAL_ERROR;
 }
 
 
 PRIMITIVE STk_catch(SCM expr, SCM env, int unused_len)
 {
-  jmp_buf jb, *prev_jb = Top_jmp_buf;
+  Jmp_Buf jb, *prev_jb = Top_jmp_buf;
   long prev_context     = Error_context;
   SCM l;
   int k;
 
   /* save normal error jmpbuf  so that eval error don't lead to toplevel */
-  if ((k = setjmp(jb)) == 0) {
+  if ((k = setjmp(jb.j)) == 0) {
     Top_jmp_buf   = &jb;
     Error_context |= ERR_IGNORED;
     /* Evaluate the list of expressions */
@@ -228,7 +228,7 @@ PRIMITIVE STk_random(SCM n)
 PRIMITIVE STk_set_random_seed(SCM n)
 {
   if (NEXACTP(n)) Err("set-random-seed!: bad number", n);
-  srand(STk_integer_value_no_overflow(n));
+  srand((unsigned int) STk_integer_value_no_overflow(n));
   return UNDEFINED;
 }
 
@@ -417,37 +417,16 @@ PRIMITIVE STk_uncode(SCM expr)
   }
 }
 
-/* 
- * A Panic procedure.
- */
-void STk_panic TCL_VARARGS_DEF(char *,arg1)
-{
-  va_list argList;
-  char buf[1024];
-  char *format;
-	 
-  format = TCL_VARARGS_START(char *,arg1,argList);
-  vsprintf(buf, format, argList);
-
-#ifdef WIN32
-  MessageBeep(MB_ICONEXCLAMATION);
-  MessageBox(NULL, buf, "Fatal error in STk", 
-	     MB_ICONSTOP | MB_OK | MB_TASKMODAL | MB_SETFOREGROUND);
-#else
-  fprintf(STk_stderr, "\n**** Fatal error in STk:\n**** %s\n**** ABORT.\n", buf);
-  fflush(STk_stderr);
-#endif
-  exit(1);
-}
-
 
 #ifdef DEBUG_STK
 
 /* Debug code to use with debugger */
+void dbg(SCM obj); 
+void dbgeval(void);
 
 void dbg(SCM obj)
 {
-  fprintf(STk_stderr, " <<#p%lx>> ", obj);
+  fprintf(STk_stderr, " <<#p%lx>> ", (unsigned long) obj);
   STk_print(obj, STk_curr_eport, WRT_MODE);
   fprintf(STk_stderr, " \n");
 }

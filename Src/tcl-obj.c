@@ -19,7 +19,7 @@
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date:  8-Jul-1997 10:33
- * Last file update: 26-Apr-1998 18:42
+ * Last file update: 15-Sep-1998 14:45
  *
  */
 
@@ -176,6 +176,7 @@ Tcl_ListObjReplace(interp, listPtr, first, count, objc, objv)
   else {
     panic("Problem in Tcl_ListObjReplace");
   }
+  return 0; /* never reached */
 }
 
 int
@@ -185,7 +186,7 @@ Tcl_ListObjIndex(interp, listPtr, index, objPtrPtr)
     register int index;		/* Index of element to return. */
     Tcl_Obj **objPtrPtr;	/* The resulting Tcl_Obj* is stored here. */
 {
-  SCM z, data = TCLOBJDATA((SCM) listPtr);
+  SCM data = TCLOBJDATA((SCM) listPtr);
   int len;
 
   if (!data) 
@@ -219,7 +220,6 @@ Tcl_ListObjGetElements(interp, listPtr, objcPtr, objvPtr)
     Tcl_Obj ***objvPtr;		/* Where to store the pointer to an array
 				 * of pointers to the list's objects. */
 {
-  register List *listRepPtr;
   static Tcl_Obj *obj[100];
   int i, len;
   SCM data = TCLOBJDATA((SCM) listPtr);
@@ -289,7 +289,7 @@ Tcl_AppendToObj(objPtr, bytes, length)
 
   if (length < 0) length = strlen(bytes);
   len = STRSIZE(str) + length;	
-  s = STk_must_malloc(len + 1);		/* +1 for the null  */
+  s = STk_must_malloc((size_t) len + 1);		/* +1 for the null  */
 
   sprintf(s, "%s%s", CHARS(str), bytes);
   TCLOBJDATA((SCM) objPtr) = STk_makestrg(len, s);
@@ -391,7 +391,7 @@ Tcl_AppendStringsToObj TCL_VARARGS_DEF(Tcl_Obj *,arg1)
     }
 
 #ifdef STk_CODE
-    CHARS(data) = (char *) STk_must_realloc(CHARS(data), newLength + 1);
+    CHARS(data) = (char *) STk_must_realloc(CHARS(data),(size_t)newLength+1);
 #else
     if ((long)newLength > objPtr->internalRep.longValue) {
 	/*
@@ -723,14 +723,14 @@ Tcl_EvalObj(interp, objPtr)
 
   if (cmd) {
     SCM expr		 = STk_convert_tcl_list_to_scheme(cmd);
-    jmp_buf jb, *prev_jb = Top_jmp_buf;
+    Jmp_Buf jb, *prev_jb = Top_jmp_buf;
     long prev_context    = Error_context;
-    SCM result, port;
+    SCM result;
     int k;
 
     /* save normal error jmpbuf  so that eval error don't lead to toplevel */
     /* If in a "catch", keep the ERR_IGNORED bit set */
-    if ((k = setjmp(jb)) == 0) {
+    if ((k = setjmp(jb.j)) == 0) {
       Top_jmp_buf   = &jb;
       Error_context = (Error_context & ERR_IGNORED) | ERR_TCL_BACKGROUND;
       result        = STk_eval(expr, NIL);
@@ -748,7 +748,7 @@ Tcl_EvalObj(interp, objPtr)
      *    - we are in a catch. Do a longjump to the catch to signal it a fail
      *    - otherwise error has already signaled, just return EVAL_ERROR
      */
-    if (Error_context & ERR_IGNORED) longjmp(*Top_jmp_buf, k);
+    if (Error_context & ERR_IGNORED) longjmp(Top_jmp_buf->j, k);
     return TCL_ERROR;
   }
   return TCL_OK;

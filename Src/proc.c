@@ -16,11 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: proc.c 1.3 Mon, 09 Mar 1998 08:31:40 +0000 eg $
+ * $Id: proc.c 1.4 Thu, 10 Sep 1998 23:44:28 +0200 eg $
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 15-Nov-1993 22:02
- * Last file update:  8-Mar-1998 11:58
+ * Last file update: 10-Sep-1998 12:15
  */
 
 #include "stk.h"
@@ -130,6 +130,7 @@ error:
     sprintf(buff, "%s: malformed list", map? "map" : "for-each");
     Err(buff, l);
   }
+  return UNDEFINED; /* never reached */
 }
 
 PRIMITIVE STk_map(SCM l, int len)

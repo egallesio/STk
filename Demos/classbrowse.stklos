@@ -1,0 +1,22 @@
+#!/bin/sh
+:;exec /usr/local/bin/stk -f "$0" "$@"
+;;;; classbrowse.stk 		-- Demonstration of the STk class browser
+;;;;
+;;;; Copyright © 1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; $Id: classbrowse.stklos 1.1 Sat, 26 Sep 1998 19:19:52 +0200 eg $
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 26-Sep-1998 19:12
+;;;; Last file update: 26-Sep-1998 19:13
+
+;; A Demo which is quite easy to write
+(class-browser *top-root*) 

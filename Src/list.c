@@ -2,7 +2,7 @@
  *
  * l i s t . c			-- Lists procedures
  *
- * Copyright © 1993-1997 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -19,7 +19,7 @@
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: ??-Oct-1993 21:37
- * Last file update: 10-Nov-1997 11:37
+ * Last file update: 10-Sep-1998 12:06
  */
 
 #include "stk.h"
@@ -42,12 +42,14 @@ PRIMITIVE STk_car(SCM x)
 {
   if (TYPEP(x, tc_cons)) return CAR(x);
   Err("car: wrong type of argument", x);
+  return UNDEFINED; /* never reached */
 }
 
 PRIMITIVE STk_cdr(SCM x)
 {
   if (TYPEP(x, tc_cons)) return CDR(x);
   Err("cdr: wrong type of argument", x);
+  return UNDEFINED; /* never reached */
 }
 
 PRIMITIVE STk_setcar(SCM cell, SCM value)
@@ -143,6 +145,7 @@ PRIMITIVE STk_list_length(SCM l)
   int len = STk_llength(l);
   if (len >= 0) return STk_makeinteger((long) len);
   Err("length: not calculable.", NIL);
+  return UNDEFINED; /* never reached */
 }
 
 SCM STk_append2(SCM l1, SCM l2)
@@ -169,7 +172,8 @@ SCM STk_append2(SCM l1, SCM l2)
   CDR(p) = l2;
   return res;
 Error: 
-   Err("append: argument is not a list", l1);
+  Err("append: argument is not a list", l1);
+  return UNDEFINED; /* never reached */
 }
 
 PRIMITIVE STk_append(SCM l, int len)
@@ -209,6 +213,7 @@ PRIMITIVE STk_list_tail(SCM list, SCM k)
     return l;
   }
   Err("list-tail: index must be exact positive integer", k);
+  return UNDEFINED; /* never reached */
 }
 
 PRIMITIVE STk_list_ref(SCM list, SCM k)
@@ -230,6 +235,7 @@ PRIMITIVE STk_list_ref(SCM list, SCM k)
     Err("list-ref: list too short", list);
   }
   Err("list-ref: index must be exact positive integer", k);
+  return UNDEFINED; /* never reached */
 }
 
 static SCM lmember(SCM obj, SCM list, SCM (*predicate)(SCM, SCM) )
@@ -249,6 +255,7 @@ static SCM lmember(SCM obj, SCM list, SCM (*predicate)(SCM, SCM) )
   return Ntruth;
 Error:
   Err("member: Bad list", list);
+  return UNDEFINED; /* never reached */
 }
 
 PRIMITIVE STk_memq  (SCM obj, SCM list)	{return lmember(obj, list, STk_eq);   }
@@ -267,6 +274,7 @@ static SCM lassoc(SCM obj, SCM alist, SCM (*predicate)(SCM, SCM))
   if (NULLP(l)) return(Ntruth);
 Error:
   Err("assoc function: improper list", alist);
+  return UNDEFINED; /* never reached */
 }
 
 PRIMITIVE STk_assq (SCM obj, SCM alist){return lassoc(obj, alist, STk_eq);   }
@@ -335,6 +343,7 @@ static SCM lremove(SCM obj, SCM list, SCM (*predicate)(SCM, SCM) )
   return result;
 Error:
   Err("remove: Bad list", list);
+  return UNDEFINED; /* never reached */
 }
 
 PRIMITIVE STk_remq  (SCM obj, SCM list)	{return lremove(obj, list, STk_eq);   }
@@ -360,6 +369,7 @@ SCM STk_dappend2(SCM l1, SCM l2)
     }
   }
   Err("append!: argument is not a list", tmp);
+  return UNDEFINED; /* never reached */
 }
 
 PRIMITIVE STk_dappend(SCM l, int len)

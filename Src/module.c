@@ -16,15 +16,16 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: module.c 1.9 Sun, 31 May 1998 17:22:09 +0000 eg $
+ * $Id: module.c 1.12 Mon, 14 Sep 1998 15:36:17 +0200 eg $
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 13-Mar-1997 20:11
- * Last file update: 31-May-1998 18:51
+ * Last file update: 14-Sep-1998 13:53
  */
 
 #include "stk.h"
 #include "module.h"
+#include "extend.h"
 
 /* FIXME:
  * STk_memq -> member
@@ -190,7 +191,7 @@ void STk_define_public_var(SCM module, SCM var, SCM value)
 
 SCM STk_modulevalue(SCM obj)
 {
-  return Tcl_GetHashValue((Tcl_HashEntry *) CDR(obj));
+  return (SCM) Tcl_GetHashValue((Tcl_HashEntry *) CDR(obj));
 }
 
 
@@ -231,10 +232,10 @@ SCM STk_module_env2list(SCM module)
 }
 
 
-SCM module_body(SCM module, SCM l)
+static SCM module_body(SCM module, SCM l)
 {
   SCM env, res, prev_module;
-  jmp_buf jb, *prev_jb;
+  Jmp_Buf jb, *prev_jb;
   long prev_context;
   int k;
 
@@ -244,7 +245,7 @@ SCM module_body(SCM module, SCM l)
   Top_jmp_buf 		= &jb;
 
   /* Execute body in given environment */
-  if ((k = setjmp(jb)) == 0) {
+  if ((k = setjmp(jb.j)) == 0) {
     STk_selected_module = module;
     env 		= MOD_ENV(module);
 
@@ -257,7 +258,7 @@ SCM module_body(SCM module, SCM l)
   Error_context 	= prev_context;
   STk_selected_module   = prev_module;
 
-  if (k) /* propagate error */ longjmp(*Top_jmp_buf, k);
+  if (k) /* propagate error */ longjmp(Top_jmp_buf->j, k);
   return res;
 }
 
@@ -386,7 +387,7 @@ PRIMITIVE STk_export_all_symbols(void)
  ******************************************************************************/
 PRIMITIVE STk_select_module(SCM l, SCM env, int len)
 {
-  SCM name, module, current_module;
+  SCM name, module;
 
   ENTER_PRIMITIVE("select-module");
   if (NNULLP(env) && NMODULEP(CAR(env)))

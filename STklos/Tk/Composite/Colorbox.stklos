@@ -11,11 +11,11 @@
 ;;;;  permission of the copyright holder.  
 ;;;;  This software is provided ``as is'' without express or implied warranty.
 ;;;;
-;;;; $Id: Colorbox.stklos 1.2 Mon, 16 Feb 1998 07:28:39 +0000 eg $
+;;;; $Id: Colorbox.stklos 1.3 Thu, 10 Sep 1998 23:44:28 +0200 eg $
 ;;;; 
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date:  2-Jan-1998 14:00
-;;;; Last file update: 12-Feb-1998 15:50
+;;;; Last file update: 10-Sep-1998 17:56
 
 (require "Basics")
 

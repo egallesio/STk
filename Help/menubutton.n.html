@@ -176,47 +176,57 @@ command.
 <H3><A NAME="M39">DEFAULT BINDINGS</A></H3>
 Tk automatically creates class bindings for menubuttons that give them
 the following default behavior:
-<OL>
-<LI>
+<P>
+<DL>
+<DT><A NAME="M40">{[1]}</A><DD>
 A menubutton activates whenever the mouse passes over it and deactivates
 whenever the mouse leaves it.
-<LI>
+<P>
+<DT><A NAME="M41">{[2]}</A><DD>
 Pressing mouse button 1 over a menubutton posts the menubutton:
 its relief changes to raised and its associated menu is posted
 under the menubutton.  If the mouse is dragged down into the menu
 with the button still down, and if the mouse button is then
 released over an entry in the menu, the menubutton is unposted
 and the menu entry is invoked.
-<LI>
+<P>
+<DT><A NAME="M42">{[3]}</A><DD>
 If button 1 is pressed over a menubutton and then released over that
 menubutton, the menubutton stays posted: you can still move the mouse
 over the menu and click button 1 on an entry to invoke it.
 Once a menu entry has been invoked, the menubutton unposts itself.
-<LI>
+<P>
+<DT><A NAME="M43">{[4]}</A><DD>
 If button 1 is pressed over a menubutton and then dragged over some
 other menubutton, the original menubutton unposts itself and the
 new menubutton posts.
-<LI>
+<P>
+<DT><A NAME="M44">{[5]}</A><DD>
 If button 1 is pressed over a menubutton and released outside
 any menubutton or menu, the menubutton unposts without invoking
 any menu entry.
-<LI>
+<P>
+<DT><A NAME="M45">{[6]}</A><DD>
 When a menubutton is posted, its associated menu claims the input
 focus to allow keyboard traversal of the menu and its submenus.
 See the <B><A HREF="./menu.n.html">menu</A></B> manual entry for details on these bindings.
-<LI>
+<P>
+<DT><A NAME="M46">{[7]}</A><DD>
 If the <B>underline</B> option has been specified for a menubutton
 then keyboard traversal may be used to post the menubutton:
 Alt+<I>x</I>, where <I>x</I> is the underlined character (or its
 lower-case or upper-case equivalent), may be typed in any window
 under the menubutton's toplevel to post the menubutton.
-<LI>
+<P>
+<DT><A NAME="M47">{[8]}</A><DD>
 The F10 key may be typed in any window to post the first menubutton
 under its toplevel window that isn't disabled.
-<LI>
+<P>
+<DT><A NAME="M48">{[9]}</A><DD>
 If a menubutton has the input focus, the space and return keys
 post the menubutton.
-</OL>
+<P>
+</DL>
 <P>
 If the menubutton's state is <B>disabled</B> then none of the above
 actions occur:  the menubutton is completely non-responsive.
@@ -224,7 +234,7 @@ actions occur:  the menubutton is completely non-responsive.
 The behavior of menubuttons can be changed by defining new bindings for
 individual widgets or by redefining the class bindings.
 
-<H3><A NAME="M40">SEE ALSO</A></H3>
+<H3><A NAME="M49">SEE ALSO</A></H3>
 <B>menu option-menu</B>
 <P><IMG ALIGN=TOP SRC="./Img/line-red.gif"><P>
 <A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookBlue.gif"> Back to the <B>STk</B> main page</A>

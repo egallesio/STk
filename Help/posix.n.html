@@ -6,14 +6,14 @@
 <H3><A NAME="M2">SYNOPSIS</A></H3>
 <P>
 <DL>
-<DT><A NAME="M3"><I>ERROR&nbsp;MANAGEMENT</I></A><DD>
+<DT><A NAME="M3">{<I>ERROR&nbsp;MANAGEMENT</I>}</A><DD>
 <B>*errno*</B>
 <P>
 <P>
 <P>
 (<B>posix-perror</B> <I>str</I>)
 <P>
-<DT><A NAME="M4"><I>FILES&nbsp;AND&nbsp;DIRECTORIES</I></A><DD>
+<DT><A NAME="M4">{<I>FILES&nbsp;AND&nbsp;DIRECTORIES</I>}</A><DD>
 (<B>posix-stat</B> <I>filename</I>)
 <P>
 <P>
@@ -28,7 +28,7 @@
 <P>
 (<B>posix-pipe</B>)
 <P>
-<DT><A NAME="M5"><I>TIME&nbsp;FUNCTIONS</I></A><DD>
+<DT><A NAME="M5">{<I>TIME&nbsp;FUNCTIONS</I>}</A><DD>
 (<B>posix-time</B>)
 <P>
 <P>
@@ -75,7 +75,7 @@
 <P>
 (<B>posix-strftime</B> <I>format time</I>)
 <P>
-<DT><A NAME="M6"><I>PROCESSES&nbsp;FUNCTIONS</I></A><DD>
+<DT><A NAME="M6">{<I>PROCESSES&nbsp;FUNCTIONS</I>}</A><DD>
 <P>
 <P>
 (<B>posix-fork</B>)
@@ -84,7 +84,7 @@
 <P>
 (<B>posix-wait</B>)
 <P>
-<DT><A NAME="M7"><I>SYSTEM&nbsp;INFORMATIONS</I></A><DD>
+<DT><A NAME="M7">{<I>SYSTEM&nbsp;INFORMATIONS</I>}</A><DD>
 <P>
 <P>
 (<B>posix-uname</B>)
@@ -107,7 +107,7 @@ manual page or to the POSIX.1 document.
 
 <P>
 <DL>
-<DT><A NAME="M9"><I>ERROR&nbsp;MANAGEMENT</I></A><DD>
+<DT><A NAME="M9">{<I>ERROR&nbsp;MANAGEMENT</I>}</A><DD>
 </DL>
 <P>
 <P>
@@ -124,7 +124,7 @@ the error message.
 See <B>perror(3)</B>.
 
 <P>
-<DT><A NAME="M12"><I>FILES&nbsp;AND&nbsp;DIRECTORIES</I></A><DD>
+<DT><A NAME="M12">{<I>FILES&nbsp;AND&nbsp;DIRECTORIES</I>}</A><DD>
 </DL>
 <P>
 <P>
@@ -135,7 +135,7 @@ structure is not viewable by itself. Use, <B>posix-stat-&gt;vector</B>
 to access its content in Scheme.If <I>filename</I> does not exists, this procedure
 returns <I>#f</I>.
 <P>
-<DT><A NAME="M14">(<B>posix-stat-&gt;vector</B> <I>descr</I>)</A><DD>
+<DT><A NAME="M14">{(<B>posix-stat-&gt;vector</B>} <I>descr</I>)</A><DD>
 transforms a file description sructure obtained by <B>posix-stat</B> to a Scheme 
 vector. The components of the vector are given here with their index:
 <P>

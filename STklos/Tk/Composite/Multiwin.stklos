@@ -20,11 +20,11 @@
 ;;;; Original package is GPL'ed. However, code and way to implement
 ;;;; multiple windows and mdw_lib are completely different.
 ;;;;
-;;;; $Id: Multiwin.stklos 1.7 Fri, 10 Apr 1998 07:13:18 +0000 eg $
+;;;; $Id: Multiwin.stklos 1.8 Sat, 26 Sep 1998 19:19:52 +0200 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date:  5-Apr-1996 18:04
-;;;; Last file update:  8-Apr-1998 12:10
+;;;; Last file update: 25-Sep-1998 12:42
 
 (require "Basics")
 (select-module STklos+Tk)
@@ -74,6 +74,12 @@ static unsigned char min_bits[] = {
   (if (zero? (width self))  (set! (width  self) 640))
   (if (zero? (height self)) (set! (height self) 480))
   (pack 'propagate self #f)
+
+  ;; Ignore the border-width or highlight-thickness given (or implied
+  ;; by a .Xdefaults configuration) to ease window movement in. This
+  ;; is clearly not correct but user should not see the trick
+  (slot-set! self 'border-width 0)
+  (slot-set! self 'highlight-thickness 0)
 
   ;; Create the bottom bar
   (let* ((bb (make <Frame> :parent self :border-width 3 :relief "groove"))
@@ -133,7 +139,7 @@ static unsigned char min_bits[] = {
     (slot-set! self 'maximize-button b2)
     (slot-set! self 'internal-frame  int)
 
-    ;; Initialze slots
+    ;; Initialize slots
     (if (zero? (width parent))  (set! (width  parent) 500))
     (if (zero? (height parent)) (set! (height parent) 300))
     (slot-set! parent 'border-width  3)

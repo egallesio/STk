@@ -19,10 +19,13 @@
  *
  *            Author: Erick Gallesio [eg@unice.fr]
  *    Creation date:  6-Aug-1997 12:48
- * Last file update:  8-Feb-1998 18:26
+ * Last file update:  8-Sep-1998 23:41
  *
  *
  */
+
+#ifndef _TCL_GLUE_
+#define _TCL_GLUE_
 
 SCM      STk_convert_Tcl_string2list(char *s);
 char    *STk_convert_for_Tcl(SCM obj, SCM *res);
@@ -38,3 +41,4 @@ char *STk_tcl_getvar2(char *name1, char *name2, char *env);
 char *STk_tcl_setvar(char *var, char *val, int flags, char *env);
 char *STk_tcl_setvar2(char *name1, char *name2, char *val, int flags, char *env);
 
+#endif /* _TCL_GLUE */

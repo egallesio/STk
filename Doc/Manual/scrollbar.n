@@ -204,7 +204,7 @@ document.  1.0 refers to the end of the document, 0.333
 refers to a point one-third of the way through the document,
 and so on.
 .TP
-'\fBscroll \fInumber '\fBunit\fR
+'\fBscroll \fInumber '\fBunits\fR
 The widget should adjust its view by \fInumber\fR units.
 The units are defined in whatever way makes sense for the widget,
 such as characters or lines in a text widget.
@@ -212,7 +212,7 @@ such as characters or lines in a text widget.
 the top or left of the window, or \-1, which means that one unit
 should scroll off the bottom or right of the window.
 .TP
-'\fBscroll \fInumber '\fBpage\fR
+'\fBscroll \fInumber '\fBpages\fR
 The widget should adjust its view by \fInumber\fR pages.
 It is up to the widget to define the meaning of a page;  typically
 it is slightly less than what fits in the window, so that there

@@ -1,6 +1,6 @@
-		    +----------------------------+
-		    | STk 3.1 Installation notes |
-		    +----------------------------+
+		    +-----------------------------+
+		    | STk 3.99 Installation notes |
+		    +-----------------------------+
 
 
 IMPORTANT NOTE - IMPORTANT NOTE - IMPORTANT NOTE
@@ -112,6 +112,11 @@ available when compiling STk and their default value.
   | posix	| enabled | Add support for POSIX.1 functions.	  |
   |		|	  | Support is very incmplete but will	  |
   |		|	  | grow				  |
+  |-------------|-------------------------------------------------|
+  | base64	| enabled | Compile support for Base64 encoding	  |
+  |-------------|-------------------------------------------------|
+  | locale	| enabled | Compile support for locale in string  |
+  |		|         | comparisons				  |
   |_____________|_________|_______________________________________|
 		      
 For instance

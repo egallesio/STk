@@ -19,7 +19,7 @@
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 13-Mar-1997 20:11
- * Last file update: 16-Jan-1998 14:56
+ * Last file update: 14-Sep-1998 13:49
  */
 
 struct module_info {
@@ -42,7 +42,7 @@ struct module_info {
 #define MOD_REFMOD(x)		(LMOD_INFO(x)->ref_module)
 #define MOD_EXPORTALL(x)	(LMOD_INFO(x)->export_all)
 #ifdef USE_STKLOS
-  #define MOD_CLASSES(x)	(LMOD_INFO(x)->classes)
+#  define MOD_CLASSES(x)	(LMOD_INFO(x)->classes)
 #endif
 #define FAKE_MODULEP(x)		(!MOD_TABLE(x))
 #define FIND_TABLE(m)		(MOD_TABLE(MOD_TABLE(m) ? m : MOD_REFMOD(m)))

@@ -16,11 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: primitives.c 1.10 Fri, 10 Apr 1998 07:13:18 +0000 eg $
+ * $Id: primitives.c 1.13 Sat, 26 Sep 1998 19:19:52 +0200 eg $
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: ??????
- * Last file update: 28-Mar-1998 21:05
+ * Last file update: 19-Sep-1998 13:11
  */
 
 
@@ -59,6 +59,25 @@ extern PRIMITIVE STk_init_pixmap(void);
 #ifdef USE_JPEG
 extern PRIMITIVE STk_init_jpeg(void);
 #endif
+#ifdef USE_BASE64
+extern PRIMITIVE STk_init_base64(void);
+#endif
+#ifdef USE_LOCALE
+extern PRIMITIVE STk_init_locale(void);
+#endif
+
+#ifdef DEBUG_STK
+static PRIMITIVE STk_test_proc(SCM l, int len)
+{
+  /* This procedure is a placeholder to make tests from the Scheme prompt */
+  /* It does not appear in a non debug interpreter			 */
+
+
+  return UNDEFINED;
+}
+#endif
+  
+
 
 static struct Primitive Scheme_primitives[] = { 
 
@@ -457,8 +476,9 @@ static struct Primitive Scheme_primitives[] = {
   {"%library-location",	    tc_subr_0,	    STk_library_location},	/* Undoc */
   {"%procedure-arity",	    tc_subr_1,	    STk_procedure_arity},	/* Undoc */
 #ifdef DEBUG_STK
-  {"%find-cells",	    tc_subr_1,	    STk_find_cells},     /* for debug*/
-  {"%get-environment",	    tc_subr_1,	    STk_get_environment},/* for debug*/
+  {"%find-cells",	    tc_subr_1,	    STk_find_cells},     /* for debug */
+  {"%get-environment",	    tc_subr_1,	    STk_get_environment},/* for debug */
+  {"%test-proc",	    tc_lsubr,	    STk_test_proc},	 /* for debug */
 #endif
 
 
@@ -492,6 +512,12 @@ static struct Primitive Scheme_primitives[] = {
 #endif
 #if defined(USE_TK) && defined(USE_JPEG)
   {"%init-jpeg",	    tc_subr_0,	    STk_init_jpeg},
+#endif
+#ifdef USE_BASE64
+  {"%init-base64",	    tc_subr_0,	    STk_init_base64},
+#endif
+#ifdef USE_locale
+  {"%init-locale",	    tc_subr_0,	    STk_init_locale},
 #endif
   { "", 0, (SCM (*)()) NULL }
 };

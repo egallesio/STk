@@ -9,7 +9,7 @@ Group:		Development/Languages
 Packager:	Erick Gallesio <eg@unice.fr>
 
 %package devel
-Summary: 	Header files and libraries for STk
+Summary: 	Header files and libraries for STkq
 Group: 		Development/Libraries
 Requires:	STk = @VERSION@
 
@@ -30,6 +30,16 @@ This package contains the files necessary for extending, in C, the
 STk interpeter. If you don't need to write some C code for extending
 the interpreter, you don't need to install this package.
 
+
+%ifarch i386
+%define machine Linux-2.X-ix86
+%else
+%ifarch ppc
+%define machine Linux-2.X-ppc
+%else
+%define machine @MACHINE@
+%endif
+%endif
 
 
 %prep
@@ -63,9 +73,11 @@ rm -f @prefix@/lib/stk/include
 @prefix@/lib/stk/@VERSION@/Demos
 @prefix@/lib/stk/@VERSION@/Help
 @prefix@/lib/stk/@VERSION@/Images
-@prefix@/lib/stk/@VERSION@/@MACHINE@/stk
-@prefix@/lib/stk/@VERSION@/@MACHINE@/snow
-@prefix@/lib/stk/@VERSION@/@MACHINE@/*.so
+@prefix@/lib/stk/@VERSION@/%{machine}/stk
+@prefix@/lib/stk/@VERSION@/%{machine}/snow
+@prefix@/lib/stk/@VERSION@/%{machine}/*.so
+
+
 @prefix@/lib/stk/@VERSION@/STk
 @prefix@/lib/stk/@VERSION@/include
 @prefix@/lib/stk/@VERSION@/man
@@ -77,5 +89,5 @@ rm -f @prefix@/lib/stk/include
 
 
 %files devel
-@prefix@/lib/stk/@VERSION@/@MACHINE@/Config
-@prefix@/lib/stk/@VERSION@/@MACHINE@/Libs
+@prefix@/lib/stk/@VERSION@/%{machine}/Config
+@prefix@/lib/stk/@VERSION@/%{machine}/Libs

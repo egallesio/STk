@@ -34,10 +34,11 @@
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 12-May-1993 10:34
- * Last file update:  7-Jan-1998 18:44
+ * Last file update: 16-Sep-1998 14:17
  */
 
 #include "stk.h"
+
 
 #define SMALLNUMP(x)	(fabs(x) <= SMALLINT_MAX)
 #define ISINT(x)	(floor(x) == (x))
@@ -57,7 +58,12 @@
 #define bignum2double 	_STk_bignum2double
 
 
+void _STk_do_multiply(SCM *x, SCM y);
+void _STk_do_addition(SCM *x, SCM y);
 static double do_compare(SCM x, SCM y);
+
+
+
 
 static SCM makesmallint(long x)
 {
@@ -86,7 +92,7 @@ static SCM makebignum(char *s)
  *
  ******************************************************************************/
 
-static int digitp(char c, int base)
+static int digitp(char c, long base)
 {
   c = ('0' <= c && c <= '9') ? c - '0':
       ('a' <= c && c <= 'f') ? c - 'a' + 10:
@@ -125,7 +131,8 @@ static double bignum2double(MP_INT *bn)
 
 static SCM double2integer(double n)	/* small or big depending of n's size */
 {
-  int i, j, size = 20;
+  int i, j;
+  size_t size = 20;
   char *tmp = NULL;
   SCM z;
 
@@ -258,7 +265,7 @@ SCM STk_Cstr2number(char *str, long base)
     if (mpz_cmp_si(&n, SMALLINT_MIN) >=0 && mpz_cmp_si(&n, SMALLINT_MAX) <= 0) {
       long num = mpz_get_si(&n);
       mpz_clear(&n);
-      return (exact == 'i') ? STk_makenumber(num) : makesmallint(num);
+      return (exact == 'i') ? STk_makenumber((double) num) : makesmallint(num);
     }
     /* It's a bignum */
     if (exact == 'i') return STk_makenumber(bignum2double(&n));
@@ -352,7 +359,7 @@ SCM STk_makeinteger(long x)
 
 SCM STk_makeunsigned(unsigned long x)
 {
-  return (SMALLINT_MIN <= x && x <= SMALLINT_MAX) ? makesmallint(x): uint2bignum(x);
+  return (x <= SMALLINT_MAX) ? makesmallint(x): uint2bignum(x);
 }
 
 
@@ -450,12 +457,13 @@ void _STk_do_addition(SCM *x, SCM y)
          switch (TYPE(y)) {
 	   case tc_integer:
 	        {
-		  double add;
-		  if (SMALLNUMP(add=(double) INTEGER(*x) + INTEGER(y)))
+		  double add =(double) INTEGER(*x) + INTEGER(y);
+
+		  if (SMALLNUMP(add))
 		    SET_INTEGER(*x, (long) add);
 		  else {
 		    *x = int2bignum(INTEGER(*x));
-		    mpz_add_ui(BIGNUM(*x), BIGNUM(*x), INTEGER(y));
+		    mpz_add(BIGNUM(*x), BIGNUM(*x), BIGNUM(int2bignum(INTEGER(y))));
 		  }
 		}
 		break;
@@ -507,12 +515,12 @@ static void _STk_do_substract(SCM *x, SCM y)
          switch (TYPE(y)) {
 	   case tc_integer:
 	        {
-		  double add;
-		  if (SMALLNUMP(add=(double) INTEGER(*x) - INTEGER(y)))
+		  double add = (double) INTEGER(*x) - INTEGER(y);
+		  if (SMALLNUMP(add))
 		    SET_INTEGER(*x,(long) add);
 		  else {
 		    *x = int2bignum(INTEGER(*x));
-		    mpz_sub_ui(BIGNUM(*x), BIGNUM(*x), INTEGER(y));
+		    mpz_sub(BIGNUM(*x), BIGNUM(*x), BIGNUM(int2bignum(INTEGER(y))));
 		  }
 		}
 		break;

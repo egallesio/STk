@@ -15,11 +15,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: read.c 1.4 Thu, 28 May 1998 20:07:43 +0000 eg $
+ * $Id: read.c 1.5 Thu, 10 Sep 1998 23:44:28 +0200 eg $
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: ??-Oct-1993 ??:?? 
- * Last file update: 25-May-1998 20:26
+ * Last file update: 10-Sep-1998 15:31
  *
  */
 
@@ -201,7 +201,8 @@ static SCM read_cycle(FILE *f, int c, int case_significant)
 
 static SCM read_string(FILE *f)
 {
-  int j, k ,c,n,len;
+  int j, k ,c,n;
+  size_t len;
   char *p, *buffer;
   SCM z;
 
@@ -343,7 +344,6 @@ static SCM read_rec(FILE *f, int case_significant)
 SCM STk_readf(FILE *f, int case_significant)
 {
   int c;
-  SCM sexpr, key;
 
   if (cycles == NULL) STk_gc_protect(&cycles);
   cycles = NIL;

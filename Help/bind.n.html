@@ -182,27 +182,27 @@ types of events the value substituted is undefined.
 
 <P>
 <DL>
-<DT><A NAME="M8"><B>%</B></A><DD>
+<DT><A NAME="M8">{B%R}</A><DD>
 Replaced with a single percent.
 <P>
-<DT><A NAME="M9"><B>#</B></A><DD>
+<DT><A NAME="M9">{B#R}</A><DD>
 The number of the last client request processed by the server
 (the <I>serial</I> field from the event).  Valid for all event
 types.
 <P>
-<DT><A NAME="M10"><B>a</B></A><DD>
+<DT><A NAME="M10">{BaR}</A><DD>
 The <I>above</I> field from the event,
 formatted as a hexadecimal number.
 Valid only for <B>Configure</B> events.
 <P>
-<DT><A NAME="M11"><B>b</B></A><DD>
+<DT><A NAME="M11">{BbR}</A><DD>
 The number of the button that was pressed or released.  Valid only
 for <B>ButtonPress</B> and <B>ButtonRelease</B> events.
 <P>
-<DT><A NAME="M12"><B>c</B></A><DD>
+<DT><A NAME="M12">{BcR}</A><DD>
 The <I>count</I> field from the event.  Valid only for <B>Expose</B> events.
 <P>
-<DT><A NAME="M13"><B>d</B></A><DD>
+<DT><A NAME="M13">{BdR}</A><DD>
 The <I>detail</I> field from the event.  The <B>d</B> is replaced by
 a string identifying the detail.  For <B>Enter</B>,
 <B>Leave</B>, <B>FocusIn</B>, and <B>FocusOut</B> events,
@@ -215,34 +215,34 @@ NotifyInferior	NotifyPointerRoot
 NotifyNonlinear	NotifyVirtual</B></PRE>
 For events other than these, the substituted string is undefined.
 </UL>
-<DT><A NAME="M14"><B>f</B></A><DD>
+<DT><A NAME="M14">{BfR}</A><DD>
 The <I>focus</I> field from the event (<B>#f</B> or <B>#t</B>).  Valid only
 for <B>Enter</B> and <B>Leave</B> events.
 <P>
-<DT><A NAME="M15"><B>h</B></A><DD>
+<DT><A NAME="M15">{BhR}</A><DD>
 The <I>height</I> field from the event.  Valid only for <B>Configure</B> and
 <B>Expose</B> events.
 <P>
-<DT><A NAME="M16"><B>k</B></A><DD>
+<DT><A NAME="M16">{BkR}</A><DD>
 The <I>keycode</I> field from the event.  Valid only for <B>KeyPress</B>
 and <B>KeyRelease</B> events.
 <P>
-<DT><A NAME="M17"><B>m</B></A><DD>
+<DT><A NAME="M17">{BmR}</A><DD>
 The <I>mode</I> field from the event.  The substituted string is one of
 <B>NotifyNormal</B>, <B>NotifyGrab</B>, <B>NotifyUngrab</B>, or
 <B>NotifyWhileGrabbed</B>.  Valid only for <B>Enter</B>,
 <B>FocusIn</B>, <B>FocusOut</B>, and <B>Leave</B> events.
 <P>
-<DT><A NAME="M18"><B>o</B></A><DD>
+<DT><A NAME="M18">{BoR}</A><DD>
 The <I>override_redirect</I> field from the event.  Valid only for
 <B>Map</B>, <B>Reparent</B>, and <B>Configure</B> events.
 <P>
-<DT><A NAME="M19"><B>p</B></A><DD>
+<DT><A NAME="M19">{BpR}</A><DD>
 The <I>place</I> field from the event, substituted as one of the
 strings <B>PlaceOnTop</B> or <B>PlaceOnBottom</B>.  Valid only
 for <B>Circulate</B> events.
 <P>
-<DT><A NAME="M20"><B>s</B></A><DD>
+<DT><A NAME="M20">{BsR}</A><DD>
 The <I>state</I> field from the event.  For <B>ButtonPress</B>,
 <B>ButtonRelease</B>, <B>Enter</B>, <B>KeyPress</B>, <B>KeyRelease</B>,
 <B>Leave</B>, and <B>Motion</B> events, a decimal string
@@ -250,62 +250,62 @@ is substituted.  For <B>Visibility</B>, one of the strings
 <B>VisibilityUnobscured</B>, <B>VisibilityPartiallyObscured</B>,
 and <B>VisibilityFullyObscured</B> is substituted.
 <P>
-<DT><A NAME="M21"><B>t</B></A><DD>
+<DT><A NAME="M21">{BtR}</A><DD>
 The <I>time</I> field from the event.  Valid only for events that
 contain a <I>time</I> field.
 <P>
-<DT><A NAME="M22"><B>w</B></A><DD>
+<DT><A NAME="M22">{BwR}</A><DD>
 The <I>width</I> field from the event.  Valid only for
 <B>Configure</B> and <B>Expose</B> events.
 <P>
-<DT><A NAME="M23"><B>x</B></A><DD>
+<DT><A NAME="M23">{BxR}</A><DD>
 The <I>x</I> field from the event.  Valid only for events containing
 an <I>x</I> field.
 <P>
-<DT><A NAME="M24"><B>y</B></A><DD>
+<DT><A NAME="M24">{ByR}</A><DD>
 The <I>y</I> field from the event.  Valid only for events containing
 a <I>y</I> field.
 <P>
-<DT><A NAME="M25"><B>A</B></A><DD>
+<DT><A NAME="M25">{BAR}</A><DD>
 Substitutes the ASCII character corresponding to the event, or
 the empty string if the event doesn't correspond to an ASCII character
 (e.g. the shift key was pressed).  <B>XLookupString</B> does all the
 work of translating from the event to an ASCII character.
 Valid only for <B>KeyPress</B> and <B>KeyRelease</B> events.
 <P>
-<DT><A NAME="M26"><B>B</B></A><DD>
+<DT><A NAME="M26">{BBR}</A><DD>
 The <I>border_width</I> field from the event.  Valid only for
 <B>Configure</B> events.
 <P>
-<DT><A NAME="M27"><B>E</B></A><DD>
+<DT><A NAME="M27">{BER}</A><DD>
 The <I>send_event</I> field from the event.  Valid for all event types.
 <P>
-<DT><A NAME="M28"><B>K</B></A><DD>
+<DT><A NAME="M28">{BKR}</A><DD>
 The keysym corresponding to the event, substituted as a textual
 string.  Valid only for <B>KeyPress</B> and <B>KeyRelease</B> events.
 <P>
-<DT><A NAME="M29"><B>N</B></A><DD>
+<DT><A NAME="M29">{BNR}</A><DD>
 The keysym corresponding to the event, substituted as
 a decimal
 number.  Valid only for <B>KeyPress</B> and <B>KeyRelease</B> events.
 <P>
-<DT><A NAME="M30"><B>R</B></A><DD>
+<DT><A NAME="M30">{BRR}</A><DD>
 The <I>root</I> window identifier from the event.  Valid only for
 events containing a <I>root</I> field.
 <P>
-<DT><A NAME="M31"><B>S</B></A><DD>
+<DT><A NAME="M31">{BSR}</A><DD>
 The <I>subwindow</I> window identifier from the event,
 formatted as a hexadecimal number.
 Valid only for events containing a <I>subwindow</I> field.
 <P>
-<DT><A NAME="M32"><B>T</B></A><DD>
+<DT><A NAME="M32">{BTR}</A><DD>
 The <I>type</I> field from the event.  Valid for all event types.
 <P>
-<DT><A NAME="M33"><B>W</B></A><DD>
+<DT><A NAME="M33">{BWR}</A><DD>
 The path name of the window to which the event was reported (the
 <I>window</I> field from the event).  Valid for all event types.
 <P>
-<DT><A NAME="M34"><B>X</B></A><DD>
+<DT><A NAME="M34">{BXR}</A><DD>
 The <I>x_root</I> field from the event.
 If a virtual-root window manager is being used then the substituted
 value is the corresponding x-coordinate in the virtual root.
@@ -313,7 +313,7 @@ Valid only for
 <B>ButtonPress</B>, <B>ButtonRelease</B>, <B>KeyPress</B>, <B>KeyRelease</B>,
 and <B>Motion</B> events.
 <P>
-<DT><A NAME="M35"><B>Y</B></A><DD>
+<DT><A NAME="M35">{BYR}</A><DD>
 The <I>y_root</I> field from the event.
 If a virtual-root window manager is being used then the substituted
 value is the corresponding y-coordinate in the virtual root.

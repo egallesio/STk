@@ -256,7 +256,7 @@ For each item that meets the constraints specified by
 \fItag\fR to the list of tags associated with the item if it
 isn't already present on that list.
 It is possible that no items will satisfy the constraints
-given by \fIsearchSpec and \fIarg\fRs, in which case the
+given by \fIsearchSpec\fR and \fIarg\fRs, in which case the
 procedure has no effect.
 This procedure returns an empty list as result.
 \fISearchSpec\fR and \fIarg\fR's may take any of the following

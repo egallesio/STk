@@ -974,7 +974,7 @@ there are multiple marks at the same index.
 These semantics mean that the \fBmark next\fP operation can be used to
 step through all the marks in a text widget in the same order
 as the mark information returned by the \fBdump\fP operation.
-If a mark has been set to the special \fBend\fB index,
+If a mark has been set to the special \fBend\fP index,
 then it appears to be \fIafter\fP \fBend\fP with respect to the \fBmark next\fP operation.
 An empty list is returned if there are no marks after \fIindex\fR.
 .TP
@@ -1064,6 +1064,8 @@ The argument following \fB:count\fR gives the name of a variable;
 if a match is found, the number of characters in the matching
 range will be stored in the variable.
 .TP
+\fB:environment\fI env\fR
+The argument following \fB:environment\fR gives the definition environment of the variable counting matches (i.e. the one given to the  \fB:count\fR option).
 \fB:\-\fR
 This switch has no effect except to terminate the list of switches:
 the next argument will be treated as \fIpattern\fR even if it starts

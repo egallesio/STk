@@ -19,7 +19,7 @@
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 29-Mar-1994 10:57
- * Last file update: 17-Apr-1998 12:17
+ * Last file update: 27-Sep-1998 16:28
  */
 #ifndef WIN32
 #  include <unistd.h>
@@ -109,7 +109,7 @@ static char *tilde_expand(char *name, char *result)
       /* Null body;  just find end of name. */
     }
     len = p-(name+1);
-    strncpy(result, name+1, len);
+    strncpy(result, name+1, (size_t) len);
     result[len] = '\0';
 
     pwPtr = getpwnam(result);
@@ -510,6 +510,10 @@ void STk_whence(char *exec, char *path)
 #endif
 
   p = getenv("PATH");
+  if (p == NULL) {
+    p = "/bin:/usr/bin";
+  }
+
   while (*p) {
     /* Copy the stuck of path in dir */
     for (q = dir; *p && *p != PATHSEP; p++, q++) *q = *p;
@@ -653,6 +657,7 @@ static SCM my_stat(SCM path, int mode, char *who)
     case 1: return (S_ISDIR(info.st_mode)) ? Truth : Ntruth;
     case 2: return (S_ISREG(info.st_mode)) ? Truth : Ntruth;
   }
+  return UNDEFINED; /* never reached */
 }
 
 PRIMITIVE STk_file_is_directoryp(SCM f)
@@ -725,7 +730,6 @@ PRIMITIVE STk_temporary_file_name(void)
 {
   char *s;
 
-  ENTER_PRIMITIVE("temporary-file-name");
   s = tmpnam(NULL);
   return s ? STk_makestring(s) : Ntruth;
 }

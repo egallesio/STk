@@ -94,3 +94,5 @@ Hereafter are simple uses of the \fBSTk:make-dialog\fR procedure
                                 (list "baz" (lambda ()
                                               (display "baz\n")))))
 .CE
+.SH SEE ALSO
+message-box

@@ -3,7 +3,7 @@
  *  a d d r e s s . c			-- Addresses management
  *
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -20,7 +20,7 @@
  *
  *            Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 16-Mar-1994 10:34
- * Last file update: 22-Feb-1996 23:05
+ * Last file update: 10-Sep-1998 12:17
  *
  *
  */
@@ -32,7 +32,7 @@ SCM STk_address2object(char *buffer)
 {
   SCM address;
 
-  sscanf(buffer, "%lx", &address);
+  sscanf(buffer, "%lx", (unsigned long *) &address);
   if (!STk_valid_address(address)) 
     Err("bad address", STk_makestring(buffer));
   return address;

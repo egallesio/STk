@@ -164,8 +164,9 @@ This area is called the <I>cavity</I>;  for the first slave it
 is the entire area of the master.
 <P>
 For each slave the packer carries out the following steps:
-<OL>
-<LI>
+<P>
+<DL>
+<DT><A NAME="M26">{[1]}</A><DD>
 The packer allocates a rectangular <I>parcel</I> for the slave
 along the side of the cavity given by the slave's <B>:side</B> option.
 If the side is top or bottom then the width of the parcel is
@@ -176,7 +177,8 @@ the height of the cavity and the width is the requested width
 of the slave plus the <B>:ipadx</B> and <B>:padx</B> options.
 The parcel may be enlarged further because of the <B>:expand</B>
 option (see ``EXPANSION'' below)
-<LI>
+<P>
+<DT><A NAME="M27">{[2]}</A><DD>
 The packer chooses the dimensions of the slave.
 The width will normally be the slave's requested width plus
 twice its <B>:ipadx</B> option and the height will normally be
@@ -188,14 +190,16 @@ minus twice the <B>:padx</B> option.
 If the <B>:fill</B> option is <B>y</B> or <B>both</B>
 then the height of the slave is expanded to fill the width of the parcel,
 minus twice the <B>:pady</B> option.
-<LI>
+<P>
+<DT><A NAME="M28">{[3]}</A><DD>
 The packer positions the slave over its parcel.
 If the slave is smaller than the parcel then the <B>:anchor</B>
 option determines where in the parcel the slave will be placed.
 If <B>:padx</B> or <B>:pady</B> is non-zero, then the given
 amount of external padding will always be left between the
 slave and the edges of the parcel.
-</OL>
+<P>
+</DL>
 <P>
 Once a given slave has been packed, the area of its parcel
 is subtracted from the cavity, leaving a smaller rectangular
@@ -209,7 +213,7 @@ If the cavity shrinks to zero size, then all remaining slaves
 on the packing list will be unmapped from the screen until
 the master window becomes large enough to hold them again.
 
-<H3><A NAME="M26">EXPANSION</A></H3>
+<H3><A NAME="M29">EXPANSION</A></H3>
 If a master window is so large that there will be extra space
 left over after all of its slaves have been packed, then the
 extra space is distributed uniformly among all of the slaves
@@ -219,7 +223,7 @@ slaves whose <B>:side</B> is <B>left</B> or <B>right</B>,
 and extra vertical space is distributed among the expandable
 slaves whose <B>:side</B> is <B>top</B> or <B>bottom</B>.
 
-<H3><A NAME="M27">GEOMETRY PROPAGATION</A></H3>
+<H3><A NAME="M30">GEOMETRY PROPAGATION</A></H3>
 The packer normally computes how large a master must be to
 just exactly meet the needs of its slaves, and it sets the
 requested width and height of the master to these dimensions.
@@ -233,14 +237,14 @@ the requested width and height of the packer.
 This may be useful if, for example, you wish for a master
 window to have a fixed size that you specify.
 
-<H3><A NAME="M28">RESTRICTIONS ON MASTER WINDOWS</A></H3>
+<H3><A NAME="M31">RESTRICTIONS ON MASTER WINDOWS</A></H3>
 The master for each slave must either be the slave's parent
 (the default) or a descendant of the slave's parent.
 This restriction is necessary to guarantee that the
 slave can be placed over any part of its master that is
 visible without danger of the slave being clipped by its parent.
 
-<H3><A NAME="M29">PACKING ORDER</A></H3>
+<H3><A NAME="M32">PACKING ORDER</A></H3>
 If the master for a slave is not its parent then you must make sure
 that the slave is higher in the stacking order than the master.
 Otherwise the master will obscure the slave and it will appear as
@@ -251,7 +255,7 @@ will be highest in the stacking order.
 Or, you can use the <B><A HREF="./raise.n.html">raise</A></B> and <B><A HREF="./lower.n.html">lower</A></B> procedures to change
 the stacking order of either the master or the slave.
 
-<H3><A NAME="M30">SEE ALSO</A></H3>
+<H3><A NAME="M33">SEE ALSO</A></H3>
 <B><A HREF="./grid.n.html">grid</A></B>, <B><A HREF="./place.n.html">place</A></B>
 <P><IMG ALIGN=TOP SRC="./Img/line-red.gif"><P>
 <A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookBlue.gif"> Back to the <B>STk</B> main page</A>

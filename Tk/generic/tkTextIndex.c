@@ -302,7 +302,7 @@ TkTextGetIndex(interp, textPtr, string, indexPtr)
 	goto gotBase; 
     }
 #ifdef STk_CODE
-    if (string[0] == '(' && isdigit(UCHAR(string[1])) || (string[1] == '-')) {
+    if ((string[0] == '(' && isdigit(UCHAR(string[1]))) || (string[1] == '-')) {
 	int lineIndex, charIndex;
 
 	/*

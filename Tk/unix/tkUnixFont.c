@@ -9,7 +9,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkUnixFont.c 1.15 97/05/19 13:48:45
+ * SCCS: @(#) tkUnixFont.c 1.16 97/10/23 12:47:53
  */
  
 #include "tkPort.h"
@@ -502,7 +502,6 @@ TkpGetFontFamilies(interp, tkwin)
 	}
 	Tcl_CreateHashEntry(&familyTable, family, &new);
     }
-    XFree(nameList);
 
     hPtr = Tcl_FirstHashEntry(&familyTable, &search);
 
@@ -515,6 +514,7 @@ TkpGetFontFamilies(interp, tkwin)
 	hPtr = Tcl_NextHashEntry(&search);
     }
     Tcl_DeleteHashTable(&familyTable);
+    XFreeFontNames(nameList);
 }
 
 /*
@@ -726,7 +726,26 @@ DrawChars(display, drawable, gc, fontPtr, source, numChars, x, y)
     int numChars;		/* Number of characters in string. */
     int x, y;			/* Coordinates at which to place origin of
 				 * string when drawing. */
-{		
+{
+    /*
+     * Perform a quick sanity check to ensure we won't overflow the X
+     * coordinate space.
+     */
+    
+    if ((x + (fontPtr->fontStructPtr->max_bounds.width * numChars) > 0x7fff)) {
+	int length;
+
+	/*
+	 * The string we are being asked to draw is too big and would overflow
+	 * the X coordinate space.  Unfortunatley X servers aren't too bright
+	 * and so they won't deal with this case cleanly.  We need to truncate
+	 * the string before sending it to X.
+	 */
+
+	numChars = Tk_MeasureChars((Tk_Font) fontPtr, source, numChars,
+		0x7fff - x, 0, &length);
+    }
+
     XDrawString(display, drawable, gc, x, y, source, numChars);
 
     if (fontPtr->font.fa.underline != 0) {

@@ -14,6 +14,9 @@
 
 #include "tclInt.h"
 #include "tclPort.h"
+#ifdef STk_CODE
+#  include "tk-glue.h"
+#endif
 
 /*
  * This flag indicates whether this module has been initialized.
@@ -115,8 +118,10 @@ static int idleGeneration;	/* Used to fill in the "generation" fields
  * Prototypes for procedures referenced only in this file:
  */
 
+#ifndef STk_CODE
 static void		AfterCleanupProc _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp));
+#endif
 static void		AfterProc _ANSI_ARGS_((ClientData clientData));
 static void		FreeAfterPtr _ANSI_ARGS_((AfterInfo *afterPtr));
 static AfterInfo *	GetAfterEvent _ANSI_ARGS_((AfterAssocData *assocPtr,
@@ -739,8 +744,8 @@ Tcl_AfterCmd(clientData, interp, argc, argv)
     AfterAssocData *assocPtr = &After_list;
 #else
     AfterAssocData *assocPtr = (AfterAssocData *) clientData;
-#endif
     Tcl_CmdInfo cmdInfo;
+#endif
     size_t length;
 
     if (argc < 2) {
@@ -824,7 +829,7 @@ Tcl_AfterCmd(clientData, interp, argc, argv)
 	sprintf(interp->result, "after#%d", afterPtr->id);
 #ifdef STk_CODE
 	if (closure != NULL)
-	  /* Register the callback to prinevent it to be GC'ed */
+	  /* Register the callback to prevent it to be GC'ed */
 	  STk_add_callback(interp->result, "", "", closure);
 #endif
     } else if (strncmp(argv[1], "cancel", length) == 0) {

@@ -544,6 +544,9 @@
 
 (printer-add 'define *pp:print-sform*)
 (printer-add 'define-macro *pp:print-sform*)
+(printer-add 'define-class *pp:print-sform*)
+(printer-add 'define-method *pp:print-sform*)
+
 (printer-add 'extend-syntax *pp:print-sform*)
 (printer-add 'when *pp:print-sform*)
 (printer-add 'unless *pp:print-sform*)

@@ -17,7 +17,7 @@
  *
  *	     Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: ????
- * Last file update:  8-Jun-1998 23:03
+ * Last file update: 15-Sep-1998 14:43
  */
 
 #ifdef WIN32
@@ -79,10 +79,10 @@ static void badport(int read)
       NIL);
 }
 
-static int nop(Tcl_Event *unused1, int unused2){ }
-
 #ifdef WIN32
-#ifndef CYGWIN32
+#  ifndef CYGWIN32
+static int nop(Tcl_Event *unused1, int unused2) { return 0;}
+
 static insert_dummy_event(void)
 {
   struct Tcl_Event *p;
@@ -105,7 +105,7 @@ static DWORD Kbd_Thread(LPDWORD dumb)
   /* Never readched */
   return 0;
 }
-#endif
+#  endif
 #endif
 
 void STk_StdinProc()
@@ -198,7 +198,7 @@ int STk_putc(int c, FILE *f)
 {
   if (STRING_PORTP(f)) {
     register struct str_iob *g = (struct str_iob *)f;
-    register int tmp;
+    register unsigned int tmp;
     
     if (!(g->flag & WRITING)) badport(FALSE);
     if (++g->cnt == g->bufsiz) {
@@ -293,7 +293,7 @@ char * STk_line_bufferize_io(FILE *f)
 #endif
     }
     else
-      STk_panic("Cannot create Win32 console");
+      panic("Cannot create Win32 console");
 #endif
   }
 #endif
