@@ -1,0 +1,154 @@
+;;;;
+;;;; G a u g e . s t k l o s  	  --  Gauges class definition
+;;;;
+;;;; Copyright © 1996-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; $Id: Gauge.stklos 1.1 Wed, 04 Feb 1998 11:34:59 +0100 eg $
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 17-Oct-1996 14:53
+;;;; Last file update:  4-Feb-1998 10:23
+;;;
+
+(require "Basics")
+(select-module STklos+Tk)
+
+;=============================================================================
+;
+; 				< G a u g e > 
+;
+;=============================================================================
+
+;;
+;; Resources
+;;
+
+;; We don't use the <Canvas> class for implementing gauges to avoid
+;; to load <Canvas> (which is rather long to load if no <Canvas> are
+;; used elsewhere). BTW, only a little bit of canvas capabilities are
+;; used here
+
+
+(define-class <Gauge> (<Tk-simple-widget>)
+  ( priv-box     ;; The Cid of the box used in the canvas to represent the gauge
+   (foreground   :accessor        foreground 
+		 :initform        "#3a5fcd"   ; RoyalBlue3
+		 :init-keyword    :foreground
+		 :allocation      :active
+		 :after-slot-set! (lambda(o v) 
+				    (when (slot-bound? o 'priv-box)
+				      ((Id o) 'itemconfigure (slot-ref o 'priv-box)
+					      :fill v :outline v))))
+   (height 	  :accessor 	   height 
+		  :init-keyword    :height 
+		  :init-form	   20
+		  :allocation      :tk-virtual)
+   (value         :accessor        value
+		  :init-keyword    :value
+		  :initform	   0
+		  :allocation      :active
+		  :after-slot-set! (lambda(o v) (configure-gauge o)))
+   (width  	  :accessor 	   width  
+		  :init-keyword    :width
+		  :init-form	   200
+		  :allocation 	   :tk-virtual))
+  :metaclass <Tk-active-metaclass>)
+
+
+(define-method tk-constructor ((self <Gauge>))  Tk:canvas)
+
+;;;;
+;;;; Initialize
+;;;;
+(define-method initialize ((self <Gauge>) initargs)
+  (next-method)
+  (let ((Id (slot-ref self 'Id))
+	(fg (foreground self)))
+    (slot-set! self 'highlight-thickness 0)
+    (slot-set! self 'relief "raised")
+    (slot-set! self 'priv-box
+	       (Id 'create 'rectangle 0 0 0 0 :outline fg :fill fg))
+    (bind self "<Configure>" (lambda () (configure-gauge self)))))
+
+;;;;
+;;;; configure-gauge
+;;;;
+(define-method configure-gauge ((self <Gauge>))
+  (when (slot-bound? self 'priv-box)
+    (let ((width  (winfo 'width  self))
+	  (height (winfo 'height self)))
+      ((Id self) 'coords (slot-ref self 'priv-box) 
+	  	  0 0 
+		  (quotient (* width (value self)) 100) height))))
+
+;=============================================================================
+;
+; 			    < V a l u e d - G a u g e >
+;
+;=============================================================================
+
+(define-class <Valued-Gauge> (<Gauge>)
+  ( priv-txt
+   (text-font  	    :accessor 	     text-font
+		    :initform  	     '(Helvetica -14 bold)
+		    :allocation      :active
+		    :after-slot-set! (lambda(o v) 
+				       (when (slot-bound? o 'priv-txt)
+					 ((Id o) 'itemconfigure 
+						 (slot-ref o 'priv-txt)
+						 :font v))))
+   (text-foreground :accessor 	     text-foreground
+	       	    :initform 	     "black"
+		    :allocation      :active
+		    :after-slot-set! (lambda(o v)
+				       (when (slot-bound? o 'priv-txt)
+					 ((Id o) 'itemconfigure 
+						 (slot-ref o 'priv-txt)
+						 :fill v))))))
+;;;;
+;;;; Initialize
+;;;;
+(define-method initialize ((self <Valued-Gauge>) initargs)
+  (next-method)
+  (let* ((Id (slot-ref self 'Id))
+	 (fg (slot-ref self 'text-foreground))
+	 (fn (slot-ref self 'text-font)))
+    (slot-set! self 'priv-txt 
+	       (Id 'create 'text 10 10 
+		   :anchor "nw" :text "XX%" :fill fg :font fn))))
+
+(define-method configure-gauge ((self <Valued-Gauge>) . val)
+  (next-method)
+  (when (slot-bound? self 'priv-txt)
+    (let* ((Id    (Id self))
+	   (txt   (slot-ref self 'priv-txt))
+	   (bbox  (Id 'bbox txt))
+	   (wtxt  (- (list-ref bbox 2) (list-ref bbox 0)))
+	   (htxt  (- (list-ref bbox 3) (list-ref bbox 1))))
+      (Id 'coords txt (/ (- (winfo 'width  self) wtxt) 2)
+	  	      (/ (- (winfo 'height self) htxt) 2))
+      (Id 'itemconfigure (slot-ref self 'priv-txt)
+	  :text (format #f "~A%" (value self))))))
+
+(provide "Gauge")
+
+#|
+   Example:
+
+	(define g1 (make <Gauge> :border-width 2 :relief "raised"))
+	(define g2 (make <Valued-Gauge> :border-width 2 :relief "raised"))
+	(pack g1 g2)
+	(dotimes (i 101)
+	  (set! (value g1) i)
+	  (set! (value g2) (- 100 i))
+	  (update 'idle)
+	  (after 60))
+|#

@@ -2,7 +2,7 @@
 ;;;; B u t t o n . s t k 	  --  Label, Button, Check button and Radio button
 ;;;;				      class definitions
 ;;;;
-;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -12,31 +12,49 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
+;;;; $Id: Button.stklos 1.3 Fri, 23 Jan 1998 18:46:19 +0100 eg $
+;;;;
 ;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;    Creation date: 30-Mar-1993 15:39
-;;;; Last file update: 21-Dec-1995 18:19
+;;;; Last file update: 23-Jan-1998 11:41
 
 
 (require "Basics")
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;
-;;;; <Label> class
-;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(select-module STklos+Tk)
+
+(export flash invoke
+	select deselect 
+	toggle)
+
+;=============================================================================
+;
+;				    <Label>
+;
+;=============================================================================
 (define-class <Label>(<Tk-simple-widget> <Tk-simple-text> <Tk-sizeable> <Tk-bitmap>)
   ())
 
 (define-method tk-constructor ((self <Label>))
   Tk:label)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;
-;;;; <Button> class
-;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(define-class <Button> (<Label> <Tk-reactive>)
+;=============================================================================
+;
+;				<Tk-simple-button>
+;
+;=============================================================================
+(define-class <Tk-simple-button> (<Label> <Tk-reactive>)
   ())
+
+;=============================================================================
+;
+;				    <Button>
+;
+;=============================================================================
+(define-class <Button> (<Tk-simple-button>)
+  ((default :accessor     default
+            :init-keyword :default
+	    :allocation   :tk-virtual)))
 
 (define-method tk-constructor ((self <Button>))
   Tk:button)
@@ -51,12 +69,12 @@
 (define-method invoke ((self <Button>))
   ((slot-ref self 'Id) 'invoke))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;
-;;;; <Tk-complex-button>
-;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(define-class <Tk-complex-button> (<Button>)
+;=============================================================================
+;
+;			    <Tk-complex-button>
+;
+;=============================================================================
+(define-class <Tk-complex-button> (<Tk-simple-button>)
   ((indicator-on	:accessor     indicator-on
 			:init-keyword :indicator-on
 			:tk-name      indicatoron
@@ -86,15 +104,15 @@
 (define-method deselect ((self <Tk-complex-button>))
   ((slot-ref self 'Id) 'deselect))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;
-;;;; <Check-button> class definition
-;;;;
-;;;; Define a fictive slot ``value''. This slots permits to initialize
-;;;; the check button at creation time -- i.e you can do
-;;;; 	(define c (make <Check-button> :text "Test" :value #t))
-;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;=============================================================================
+;
+;			    <Check-button> 
+;
+;
+; Define a fictive slot ``value''. This slots permits to initialize
+; the check button at creation time -- i.e you can do
+; 	(define c (make <Check-button> :text "Test" :value #t))
+;=============================================================================
 
 
 (define-class <Check-button> (<Tk-complex-button>)
@@ -132,15 +150,14 @@
   ((slot-ref self 'Id) 'toggle))
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;
-;;;; <Radio-button> class definition
-;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;=============================================================================
+;
+;			 	<Radio-button>
+;
+;=============================================================================
 
 (define-class <Radio-button> (<Tk-complex-button>)
   ((value   :accessor value :init-keyword :value :allocation :tk-virtual)))
-
 
 (define-method tk-constructor ((self <Radio-button>))
   Tk:radiobutton)

@@ -17,7 +17,7 @@
  *
  *	     Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: ????
- * Last file update: 26-Sep-1996 21:29
+ * Last file update: 19-Dec-1996 23:48
  */
 
 #ifdef WIN32
@@ -65,11 +65,11 @@
 #endif
 
 static char buffer[BUFFER_SIZE+1];
-static int  bufidx=0;
-static int  count=-1;
-static int  previous_char;
-static int  ungetted = 0;
-static int  filled=0;
+static int bufidx=0;
+static int count=-1;
+static int previous_char;
+static int ungetted = 0;
+static int filled=0;
 
 
 static void badport(int read)
@@ -79,7 +79,7 @@ static void badport(int read)
       NIL);
 }
 
-static int nop(Tcl_Event *unused1, int unused2){ printf("Hello from new event\n"); }
+static int nop(Tcl_Event *unused1, int unused2){ }
 
 #ifdef WIN32
 static insert_dummy_event(void)
@@ -164,7 +164,11 @@ int STk_getc(FILE *f)
     }
     else {
       int result;
-      SYSTEM(result=getc(f));
+
+      for ( ; ; ) {
+	SYSTEM(result=getc(f));
+	if (result != EOF || errno != EINTR) break;
+      }
       return result;
     }
 }
@@ -202,7 +206,7 @@ int STk_putc(int c, FILE *f)
       g->ptr	 = g->base + g->bufsiz - 1; /* since base can have been moved */
       g->bufsiz	 = tmp;
     }
-    *g->ptr++ = (char) c;
+    *g->ptr++ = (unsigned char) c;
   }
   else {
     SYSTEM(c=fputc(c, f));

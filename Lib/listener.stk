@@ -2,7 +2,7 @@
 ;;;; l i s t e n e r . s t k 		-- A listener "widget"
 ;;;;
 ;;;;
-;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1997 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -14,7 +14,9 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 11-Sep-1995 10:16
-;;;; Last file update: 19-Jul-1996 15:37
+;;;; Last file update: 27-Aug-1997 19:08
+
+(select-module Tk)
 
 ;;;; Listener
 ;;;; A new widget which is dedicated to interactive I/O. We have 4 new options:

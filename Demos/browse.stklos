@@ -7,10 +7,11 @@
 ;;;; directory and allows you to open files or subdirectories by
 ;;;; double-clicking.
 ;;;;
+;;;; $Id: browse.stklos 1.2 Mon, 16 Feb 1998 08:28:39 +0100 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date:  3-Aug-1993 17:33
-;;;; Last file update: 18-Sep-1995 14:25
+;;;; Last file update: 12-Feb-1998 11:28
 
 (require "Tk-classes")
 (require "unix")

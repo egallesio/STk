@@ -1,7 +1,7 @@
 ;;;;
-;;;; T k - c l a s s e s . s t k	-- A set of autoloads for Tk classes
+;;;; T k - c l a s s e s . s t k l o s	-- A set of autoloads for Tk classes
 ;;;;
-;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -11,46 +11,65 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
+;;;; $Id: Tk-classes.stklos 1.11 Sun, 22 Mar 1998 20:42:56 +0100 eg $
+;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 19-Sep-1994 16:00
-;;;; Last file update: 17-Aug-1996 17:14
+;;;; Last file update: 22-Mar-1998 18:31
 
 
-(let ()
+(require "Tk-meta")	; for all the Tk meta classes
+
+
+(with-module STklos+Tk
+
   (define-macro (make-autoload name . l)
     ;; make 'name' autoload iff not already provided.
     `(unless (provided? ,name)
        ;; Specify a suffix for autoload because filenames are not case
        ;; sensitive under Win32!
-       (autoload ,(string-append name ".stklos") ,@l)))
+       (autoload ,(string-append name ".stklos") ,@l)
+       (provide ,name)  ;; to avoid double definition. This is ugly
+       (export ,@l)))
 
-
+  ;====  Basic Tk widgets
   (make-autoload "Button"  	<Label> <Button> <Check-button> <Radio-button>)
-  (make-autoload "Canvas"  	<Canvas> <Canvas-group> <Arc> <Bitmap-item> 
-				<Line> <Oval> <Polygon> <Rectangle> <Text-item>
-				<Window>)
+  (make-autoload "Canvas"  	<Canvas>)
   (make-autoload "Entry"   	<Entry>)
-  (make-autoload "Frame"   	<Frame>)
   (make-autoload "Listbox"  	<Listbox>)
   (make-autoload "Menu"    	<Menu> <Menu-button> make-menubar)
   (make-autoload "Message" 	<Message>)
   (make-autoload "Scale"   	<Scale>)
   (make-autoload "Scrollbar" 	<Scrollbar>)
   (make-autoload "Text"	 	<Text>)
-  (make-autoload "Toplevel"	<Toplevel> *top-root* deiconify iconify withdraw
-	  			toplevel-frame toplevel-state)
+  (make-autoload "Toplevel"	<Frame> <Toplevel> *top-root*)
+
+  ;==== Composite widgets
+  (make-autoload "Balloon"	<Help-Balloon>)
   (make-autoload "Choicebox"	<Choice-box>)
+  (make-autoload "Colorbox"	<Color-box>)
   (make-autoload "Defbutton"	<Default-button>)
   (make-autoload "Filebox"	<File-box> make-file-box)
+  (make-autoload "Gauge"	<Gauge> <Valued-gauge>)
   (make-autoload "Lentry"	<Labeled-entry>)
+  (make-autoload "Lframe"	<Labeled-frame>)
+  (make-autoload "Msgbox"	<Tk-message-box> <Abort-retry-ignore-message-box>
+		 		<Ok-message-box> <Ok-cancel-message-box>
+				<Ok-cancel-message-box> <Retry-cancel-message-box>
+				<Yes-no-message-box> <Yes-no-cancel-message-box>)
   (make-autoload "Multiwin"	<Multiple-window> <Inner-window>)
-  (make-autoload "Multipaned"	<MultiPaned>)
   (make-autoload "Paned"	<HPaned> <VPaned>)
   (make-autoload "Scrollbox"	<Scroll-Listbox>)
   (make-autoload "Scrollcanvas"	<Scroll-Canvas>)
   (make-autoload "Scrolltext"	<Scroll-Text>)
-  (make-autoload "Image" 	<Bitmap-image> <Photo-image>)
+  (make-autoload "Image" 	<Image> <Bitmap-image> <Photo-image> <Pixmap-Image>)
 
-  (make-autoload "Basics"	<Tk-widget> <Tk-Composite-Widget>))
+  (make-autoload "Tk-active"	<Tk-active-metaclass>)
+
+  ;==== OS dependent part
+  (when (eqv? (os-kind) 'Unix)
+    (make-autoload "Colorbox"  Tk:choose-color)
+    (make-autoload "Msgbox"    Tk:message-box)
+    (make-autoload "Filebox"   Tk:get-file Tk:get-open-file Tk:get-save-file)))
 
 (provide "Tk-classes")

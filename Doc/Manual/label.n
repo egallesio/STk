@@ -23,6 +23,13 @@ label \- Create and manipulate label widgets
 :cursor	:highlightthickness	:relief	:wraplength
 .SE
 .SH "WIDGET-SPECIFIC OPTIONS"
+.VS
+.VS
+.VS
+.OP :environment environment Environment environment
+Specifies the environment in which the \fB:textvariable\fR must be taken. 
+By default, the value of this option is the STk global environment.
+.VE
 .OP :height height Height height
 Specifies a desired height for the label.
 If an image or bitmap is being displayed in the label then the value is in

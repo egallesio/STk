@@ -1,0 +1,89 @@
+;;;;
+;;;; b i g l o o . s t k			-- Bigloo compatibility file
+;;;;
+;;;; Copyright © 1997-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; $Id: bigloo.stk 1.2 Wed, 14 Jan 1998 14:58:05 +0100 eg $
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 28-Oct-1997 11:09
+;;;; Last file update: 14-Jan-1998 11:05
+
+
+;;;
+;;; define-inline 
+;;;
+
+#|
+(define-macro (define-inline args . body)
+  `(define-macro ,args
+     (list (lambda ,(copy-tree (cdr args)) ,@body) ,@(cdr args))))
+
+  This definition works but is not more efficient than not inlining the function
+  (since it calls in fact an internal lambda)
+|#
+
+(define define-inline define)
+
+
+;;;
+;;; labels
+;;;
+
+(define-macro (labels bindings . body)
+  (define (expand binding)
+    (when (< (length binding) 3)
+      (error "labels: bad binding ~S" binding))
+    `(,(car binding) (lambda ,(cadr binding) ,@(cddr binding))))
+
+  `(letrec ,(map expand bindings)
+     ,@body))
+
+;;;
+;;; A macro for parsing the Bigloo MODULE directive
+;;; This macro has been written for the MATCH-CASE and MATCH-LAMBDA
+;;; primitives.
+;;; Alas, the problem is that we don't have match-case here :-)
+;;;
+
+(define-macro (module name . clauses)
+  (define (import-directive x)
+    `(import ,@(map (lambda (x) (if (pair? x) (car x) x)) x)))
+
+  (define (export-directive x)
+    `(export ,@(map (lambda (x) 
+		      (if (pair? x) 
+			  ( (if (eq? (car x) 'inline) cadr car)  x)
+			  x)) 
+		    x)))
+
+  `(define-module ,name
+     ,@(map (lambda (clause)
+	     (case (car clause)
+	       ((export) (export-directive (cdr clause)))
+	       ((import) (import-directive (cdr clause)))
+	       ((use)    '())
+	       (else     (error "module" "Unknown clause" (cons name clause)))))
+	    clauses)
+     (define error bigloo:error)
+     (select-module ,name)))
+
+
+;;;
+;;; Error
+;;;
+(define (bigloo:error proc msg obj)
+  (error "~A: ~A ~S" proc msg obj))
+
+(define-module __error)
+
+
+(provide "bigloo")

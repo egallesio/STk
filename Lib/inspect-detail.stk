@@ -33,7 +33,7 @@
 
 (define (detail obj)
   (if (member (inspect::typeof (inspect::eval obj))
-	      '(list pair vector closure widget))
+	      '(list pair vector closure widget stklos))
       [unless (detailed? obj) (detail-object obj)]
       [error "The object ~s can not be detailed" obj]))
 
@@ -44,10 +44,14 @@
 	  (if (symbol? obj) (trace-var obj `(update-object ',obj))))
   (let ((obj-val (inspect::eval obj)))
     (case (inspect::typeof obj-val)
-      ((list pair vector) (detail-VPL obj))
-      ((closure)          (detail-procedure obj))
-      ((widget) 	  (when (= (winfo 'exists (detail-tl-wid obj-val)) 0)
-				(detail-widget obj))))))
+      ((list pair vector)
+       (detail-VPL obj))
+      ((closure)
+       (detail-procedure obj))
+      ((widget)
+       (when (winfo 'exists (detail-tl-wid obj-val)) (detail-widget obj)))
+      ((stklos)
+       (detail-stklos obj)))))
 
 (define (undetail obj)
   (if (detailed? obj) (undetail-object obj)))
@@ -55,20 +59,23 @@
 (define (undetail-object obj)
   (let ((top (detail-tl-wid obj)))
     (set! detailed-objects-list (list-remove obj detailed-objects-list))
-    (if (inspected? obj) ((inspect-m-wid obj) 'enable "Detail"))
-    (if (viewed? obj) ((view-m-wid obj) 'enable "Detail"))
+    (if (inspected? obj)
+	((inspect-m-wid obj) 'entryconfigure "Detail" :state 'normal))
+    (if (viewed? obj)
+	((view-m-wid obj) 'entryconfigure "View" :state 'normal))
     (unless (or (inspected? obj) (viewed? obj))
 	    (remove-object-infos obj)
 	    (if (symbol? obj) (untrace-var obj)))
     ;; If toplevel exists (i.e. it is not a <Destroy> event) destroy it
-    (if (= (winfo 'exists top) 1)
+    (if (winfo 'exists top)
 	(destroy top))))
 
 (define (detail-display obj)
   (case (inspect::typeof (inspect::eval obj))
     ((vector pair list) (detail-VPL-display obj))
     ((closure) (detail-procedure-display obj))
-    ((widget) (detail-widget-display obj))))
+    ((widget) (detail-widget-display obj))
+    ((stklos) (detail-stklos-display obj))))
 
 
 ;---- Detailer menu -----------------------------------------------------------
@@ -82,16 +89,18 @@
 (define (detail-menu-Inspect key)
   (let ((obj (find-object-infos key)))
     (inspect obj)
-    ((widget (detail-tl-str obj) ".menu.command.m") 'disable "Inspect")
-    (if (viewed? obj) ((view-w-wid obj) 'disable "Inspect"))))
+    ((widget (detail-tl-str obj) ".menu.command.m") 'entryconfigure "Inspect" :state 'disabled)
+    (if (viewed? obj)
+	((view-w-wid obj) 'entryconfigure "Inspect" :state 'disabled))))
 
 (define (detail-menu-Undetail key) (undetail (find-object-infos key)))
 
 (define (detail-menu-View key)
   (let ((obj (find-object-infos key)))
     (view obj)
-    ((widget (detail-tl-str obj) ".menu.command.m") 'disable "View")
-    (if (inspected? obj) ((inspect-m-wid obj) 'disable "View"))))
+    ((widget (detail-tl-str obj) ".menu.command.m") 'entryconfigure "View" :state 'disabled)
+    (if (inspected? obj)
+	((inspect-m-wid obj) 'entryconfigure "View" :state 'disabled))))
 
 
 ;---- VPL menu ----------------------------------------------------------------
@@ -145,13 +154,13 @@
   (define cmd-w (eval [menu (& menu-w ".command.m")]))
   (tk-set! (widget menu-w ".command") :menu cmd-w)
   (cmd-w 'add 'command :label "Inspect" 
-	 	       :command `(detail-menu-Inspect ',(object-symbol obj)))
-  (if (inspected? obj) (cmd-w 'disable "Inspect"))
+	 	       :command `(detail-menu-Inspect ',(object-symbol obj))
+		       :state (if (inspected? obj) 'disabled 'normal))
   (cmd-w 'add 'command :label "Undetail"
 	 	       :command `(detail-menu-Undetail ',(object-symbol obj)))
   (cmd-w 'add 'command :label "View" 
-		       :command `(detail-menu-View ',(object-symbol obj)))
-  (if (viewed? obj) (cmd-w 'disable "View"))
+		       :command `(detail-menu-View ',(object-symbol obj))
+		       :state (if (viewed? obj) 'disabled 'normal))
 
   (if (modifiable-object? obj)
       [begin
@@ -176,12 +185,17 @@
   (pack [entry (& w ".value.e") :relief "sunken" :bd 2] :fill "x")
   (pack [frame (& w ".list") :relief "sunken" :bd 2]
 	:fill "both" :expand "yes" :padx 4 :pady 2)
+; geometry option is not valid
+;  (pack [scrollbar (& w ".list.vsb") :orient "vertical"]
+;	[listbox (& w ".list.lb1") :relief "raised" :bd 2 :geometry "4x8"]
+;	:side "left" :fill "y")
   (pack [scrollbar (& w ".list.vsb") :orient "vertical"]
-	[listbox (& w ".list.lb1") :relief "raised" :bd 2 :geometry "4x8"]
+	[listbox (& w ".list.lb1") :relief "raised" :bd 2]
 	:side "left" :fill "y")
   (pack [listbox (& w ".list.lb2") :relief "raised" :bd 2]
 	:fill "both" :expand "yes")
-  (tk-listbox-single-select (& w ".list.lb1") (& w ".list.lb2"))
+; what's this do ??
+;  (tk-listbox-single-select (& w ".list.lb1") (& w ".list.lb2"))
   (if (modifiable-object? obj)
       [begin
 	(bind (widget w ".value.e") "<Return>" `(VPL-menu-Eval ',obj))
@@ -190,9 +204,18 @@
 
   (bind (widget w ".list.lb1") "<Button-1>" `(VPL-select ',obj %y))
   (bind (widget w ".list.lb2") "<Button-1>" `(VPL-select ',obj %y))
-  (tk-set! (widget w ".list.vsb") :command (& "scroll-VPL " w))
-  (tk-set! (widget w ".list.lb2") :yscroll (& w ".list.vsb 'set"))
+
+  ; set the scroll command for the listbox
+  (tk-set! (widget w ".list.lb1")
+	   :yscroll (& w ".list.vsb 'set"))
+
+  ; set up the scroll command for the scrollbar to adjust the view in
+  ; BOTH listboxes
+  (tk-set! (widget w ".list.vsb")
+	   :command (lambda l (apply (widget w ".list.lb1") 'yview l)
+		      (apply (widget w ".list.lb2") 'yview l)))
   (detail-VPL-display obj))
+
 
 (define (VPL-select obj y)
   (let ((index-w (VPL-ilb-wid obj))
@@ -337,8 +360,122 @@
     (set! cmd (string-append cmd "))"))
     (eval-string cmd)))
 
+;; ------------------ stklos detailer --------------------------
 
+;; a shameless rip-off of the VPL procedures.  I'm sure there is some
+;; clever way of integrating it into the VPL procedures but I didn't
+;; feel like thinking too hard...
 
+;; mostly just Tk display widget set-up
+
+(define (stklos-l-wid obj) (widget (detail-tl-str obj) ".value.l"))
+(define (stklos-l-str obj) (& (detail-tl-str obj) ".value.l"))
+(define (stklos-e-wid obj) (widget (detail-tl-str obj) ".value.e"))
+(define (stklos-e-str obj) (& (detail-tl-str obj) ".value.e"))
+(define (stklos-ilb-wid obj) (widget (detail-tl-str obj) ".list.lb1"))
+(define (stklos-ilb-str obj) (& (detail-tl-str obj) ".list.lb1"))
+(define (stklos-vlb-wid obj) (widget (detail-tl-str obj) ".list.lb2"))
+(define (stklos-vlb-str obj) (& (detail-tl-str obj) ".list.lb2"))
+
+(define (get-stklos-index obj)
+  (let ((s (tk-get (stklos-l-wid obj) :text)))
+    (string->number (substring s 6 (string-length s)))))
+
+(define (get-stklos-value obj) [(stklos-e-wid obj) 'get])
+
+(define (set-stklos-index&value obj index)
+  (tk-set! (stklos-l-wid obj) :text (& "Value " index))
+  (let ((value-w (stklos-e-wid obj)))
+    (value-w 'delete 0 'end)
+    (value-w 'insert 0
+	     (->object (Bug-correction [(stklos-vlb-wid obj) 'get index])))))
+
+(define (detail-stklos obj)
+  (define w (create-detail-toplevel-widget obj))
+  ((widget w ".menu.help.m") 'add 'command)
+  (tk-set! (widget w ".id.f1.l2") :width 20)
+  (wm 'maxsize w SCREEN_WIDTH SCREEN_HEIGHT)
+  (pack [frame (& w ".value")] :side "top" :fill "x" :padx 4 :pady 2)
+  (pack [label (& w ".value.l") :text "Value 0"] :side "left")
+  (pack [entry (& w ".value.e") :relief "sunken" :bd 2] :fill "x")
+  (pack [frame (& w ".list") :relief "sunken" :bd 2]
+	:fill "both" :expand "yes" :padx 4 :pady 2)
+; geometry option is not valid
+;  (pack [scrollbar (& w ".list.vsb") :orient "vertical"]
+;	[listbox (& w ".list.lb1") :relief "raised" :bd 2 :geometry "4x8"]
+;	:side "left" :fill "y")
+  (pack [scrollbar (& w ".list.vsb") :orient "vertical"]
+	[listbox (& w ".list.lb1") :relief "raised" :bd 2]
+	:side "left" :fill "y")
+  (pack [listbox (& w ".list.lb2") :relief "raised" :bd 2]
+	:fill "both" :expand "yes")
+; what's this do ??
+;  (tk-listbox-single-select (& w ".list.lb1") (& w ".list.lb2"))
+  (if (modifiable-object? obj)
+      [begin
+	(bind (widget w ".value.e") "<Return>" `(stklos-menu-Eval ',obj))
+	(bind (widget w ".value.e") "<Shift-Return>" `(stklos-menu-Quote ',obj))]
+      [inspect::shadow-entry (widget w ".value.e")])
+
+  (bind (widget w ".list.lb1") "<Button-1>" `(stklos-select ',obj %y))
+  (bind (widget w ".list.lb2") "<Button-1>" `(stklos-select ',obj %y))
+
+  ; set the scroll command for the listbox
+  (tk-set! (widget w ".list.lb1")
+	   :yscroll (& w ".list.vsb 'set"))
+
+  ; set up the scroll command for the scrollbar to adjust the view in
+  ; BOTH listboxes
+  (tk-set! (widget w ".list.vsb")
+	   :command (lambda l (apply (widget w ".list.lb1") 'yview l)
+		      (apply (widget w ".list.lb2") 'yview l)))
+
+  (detail-stklos-display obj))
+
+;; this does the actual display of of the STklos object. It actually
+;; displays the slot information as well as the value of the slot.
+
+(define (detail-stklos-display obj)
+  (define id-w (& (detail-tl-str obj) ".id"))
+  (set-id-object id-w (->object obj))
+  (set-id-value id-w (->object (inspect::eval obj)))
+
+  (define w (detail-tl-wid obj))
+  (wm 'title w "STklos detailer")
+  ((widget w ".menu.help.m") 'entryconfig 2 :label "stklos detailer"
+			     :command '(stk:make-help List-detailer-help))
+
+  (let* ((obj-val (class-slots (class-of obj)))
+	(slot-name-w (stklos-ilb-wid obj))
+	(value-w (stklos-vlb-wid obj))
+	(slot (caar obj-val)))
+    (slot-name-w 'delete 0 'end)
+    (value-w 'delete 0 'end)
+    (until (null? obj-val)
+	   (set! slot (caar obj-val))
+
+	   ;; insert the slot information
+	   (slot-name-w 'insert 'end slot)
+
+	   ;; now insert the actual value of the slot
+	   (value-w 'insert 'end (->object
+				  (if (slot-bound? obj slot)
+				      (slot-ref obj slot)
+				    "#[unbound]")))
+	   ;; add the rest of the slot information (i.e. accessors',
+	   ;; init-keywords, etc...  use this sleazy until loop to go
+	   ;; throught the list two-elements at a time
+	   (let ((slot-info (cdar obj-val)))
+	     (until (null? slot-info)
+		    (slot-name-w 'insert 'end (->object (car slot-info)))
+		    (value-w 'insert 'end (->object (cadr slot-info)))
+		    (set! slot-info (cddr slot-info))))
+
+	   (set! obj-val (cdr obj-val))))
+
+  (let ((index (get-stklos-index obj)))
+    (if (< index [(stklos-ilb-wid obj) 'size])
+	(set-stklos-index&value obj index))))
 
 ;---- Procedure detailer ------------------------------------------------------
 
@@ -360,7 +497,8 @@
 	:fill "both" :expand "yes" :padx 4 :pady 2)
   (pack [scrollbar (& w ".body.vsb")
 		   :orient "vertical"
-		   :command (format #f "~a 'yview" (& w ".body.t"))]
+		   :command (lambda l
+			      (apply (string->widget (& w ".body.t")) 'yview l))]
 	:side "left" :fill "y")
   (pack [text (& w ".body.t")
 	      :relief "raised" :bd 2 :width 60 :height 16
@@ -539,6 +677,4 @@
 	        obj
 		(tk-get (widget parent ".l") :text)
 		(window 'get)))))
-
-
 

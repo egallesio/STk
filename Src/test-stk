@@ -3,9 +3,20 @@
 # A simple shell script to test stk without installing it
 #
 
-STK_LIBRARY=../Lib 
-STK_LOAD_PATH=$STK_LIBRARY:../STklos:../STklos/Tk:../STklos/Tk/Composite:../Extensions
-STK_HELP_PATH=../Help
+if test -x ../Src/stk
+then 
+   D=..
+else
+   D=../..
+fi
+
+
+STK_LIBRARY=$D/Lib 
+
+STK_LOAD_PATH=$STK_LIBRARY:$D/STklos:$D/STklos/Tk:$D/STklos/Tk/Composite
+STK_LOAD_PATH=$STK_LOAD_PATH:$D/STklos/Tk/Widget:$D/Extensions
+
+STK_HELP_PATH=$D/Help
 
 export STK_LIBRARY STK_LOAD_PATH STK_HELP_PATH
-exec ../Src/stk "$@"
+exec $D/Src/stk "$@"

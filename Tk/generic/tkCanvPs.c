@@ -11,10 +11,9 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkCanvPs.c 1.48 96/05/20 13:13:09
+ * SCCS: @(#) tkCanvPs.c 1.56 97/04/25 16:51:08
  */
 
-#include <stdio.h>
 #include "tkInt.h"
 #include "tkCanvas.h"
 #include "tkPort.h"
@@ -59,7 +58,9 @@ typedef struct TkPostscriptInfo {
     char *fileName;		/* Name of file in which to write Postscript;
 				 * NULL means return Postscript info as
 				 * result. Malloc'ed. */
-    FILE *f;			/* Open file corresponding to fileName. */
+    char *channelName;		/* If -channel is specified, the name of
+                                 * the channel to use. */
+    Tcl_Channel chan;		/* Open channel corresponding to fileName. */
     Tcl_HashTable fontTable;	/* Hash table containing names of all font
 				 * families used in output.  The hash table
 				 * values are not used. */
@@ -82,6 +83,8 @@ static Tk_ConfigSpec configSpecs[] = {
 	"", Tk_Offset(TkPostscriptInfo, colorMode), 0},
     {TK_CONFIG_STRING, "-file", (char *) NULL, (char *) NULL,
 	"", Tk_Offset(TkPostscriptInfo, fileName), 0},
+    {TK_CONFIG_STRING, "-channel", (char *) NULL, (char *) NULL,
+	"", Tk_Offset(TkPostscriptInfo, channelName), 0},
     {TK_CONFIG_STRING, "-fontmap", (char *) NULL, (char *) NULL,
 	"", Tk_Offset(TkPostscriptInfo, fontVar), 0},
     {TK_CONFIG_PIXELS, "-height", (char *) NULL, (char *) NULL,
@@ -145,16 +148,14 @@ TkCanvPostscriptCmd(canvasPtr, interp, argc, argv)
 					 * "postscript". */
 {
     TkPostscriptInfo psInfo, *oldInfoPtr;
-    int result = TCL_ERROR;
+    int result;
     Tk_Item *itemPtr;
 #define STRING_LENGTH 400
     char string[STRING_LENGTH+1], *p;
-    char *prologPathParts[2];
     time_t now;
 #if !(defined(__WIN32__) || defined(MAC_TCL))
     struct passwd *pwPtr;
 #endif /* __WIN32__ || MAC_TCL */
-    FILE *f;
     size_t length;
     int deltaX = 0, deltaY = 0;		/* Offset of lower-left corner of
 					 * area to be marked up, measured
@@ -165,8 +166,7 @@ TkCanvPostscriptCmd(canvasPtr, interp, argc, argv)
 					 * warnings. */
     Tcl_HashSearch search;
     Tcl_HashEntry *hPtr;
-    Tcl_DString buffer, buffer2;
-    char *libDir;
+    Tcl_DString buffer;
 
     /*
      *----------------------------------------------------------------
@@ -195,7 +195,8 @@ TkCanvPostscriptCmd(canvasPtr, interp, argc, argv)
     psInfo.colorMode = NULL;
     psInfo.colorLevel = 0;
     psInfo.fileName = NULL;
-    psInfo.f = NULL;
+    psInfo.channelName = NULL;
+    psInfo.chan = NULL;
     psInfo.prepass = 0;
     Tcl_InitHashTable(&psInfo.fontTable, TCL_STRING_KEYS);
     result = Tk_ConfigureWidget(canvasPtr->interp, canvasPtr->tkwin,
@@ -296,20 +297,65 @@ TkCanvPostscriptCmd(canvasPtr, interp, argc, argv)
     }
 
     if (psInfo.fileName != NULL) {
+
+        /*
+         * Check that -file and -channel are not both specified.
+         */
+
+        if (psInfo.channelName != NULL) {
+            Tcl_AppendResult(canvasPtr->interp, "can't specify both -file",
+                    " and -channel", (char *) NULL);
+            result = TCL_ERROR;
+            goto cleanup;
+        }
+
+        /*
+         * Check that we are not in a safe interpreter. If we are, disallow
+         * the -file specification.
+         */
+
+        if (Tcl_IsSafe(canvasPtr->interp)) {
+            Tcl_AppendResult(canvasPtr->interp, "can't specify -file in a",
+                    " safe interpreter", (char *) NULL);
+            result = TCL_ERROR;
+            goto cleanup;
+        }
+        
 	p = Tcl_TranslateFileName(canvasPtr->interp, psInfo.fileName, &buffer);
 	if (p == NULL) {
 	    goto cleanup;
 	}
-	psInfo.f = fopen(p, "w");
+	psInfo.chan = Tcl_OpenFileChannel(canvasPtr->interp, p, "w", 0666);
 	Tcl_DStringFree(&buffer);
-	if (psInfo.f == NULL) {
-	    Tcl_AppendResult(canvasPtr->interp, "couldn't write file \"",
-		    psInfo.fileName, "\": ",
-		    Tcl_PosixError(canvasPtr->interp), (char *) NULL);
+	if (psInfo.chan == NULL) {
 	    goto cleanup;
 	}
     }
 
+    if (psInfo.channelName != NULL) {
+        int mode;
+        
+        /*
+         * Check that the channel is found in this interpreter and that it
+         * is open for writing.
+         */
+#ifdef NYI
+        psInfo.chan = Tcl_GetChannel(canvasPtr->interp, psInfo.channelName,
+                &mode);
+#endif
+        if (psInfo.chan == (Tcl_Channel) NULL) {
+            result = TCL_ERROR;
+            goto cleanup;
+        }
+        if ((mode & TCL_WRITABLE) == 0) {
+            Tcl_AppendResult(canvasPtr->interp, "channel \"",
+                    psInfo.channelName, "\" wasn't opened for writing",
+                    (char *) NULL);
+            result = TCL_ERROR;
+            goto cleanup;
+        }
+    }
+    
     /*
      *--------------------------------------------------------
      * Make a pre-pass over all of the items, generating Postscript
@@ -399,63 +445,15 @@ TkCanvPostscriptCmd(canvasPtr, interp, argc, argv)
     Tcl_AppendResult(canvasPtr->interp, "%%EndComments\n\n", (char *) NULL);
 
     /*
-     * Read a standard prolog file from disk and insert it into
+     * Read a standard prolog file in a native way and insert it into
      * the Postscript.
      */
 
-#ifdef STk_CODE
-    libDir = Tcl_GetVar(canvasPtr->interp, "*stk-library*", TCL_GLOBAL_ONLY);
-#else
-    libDir = Tcl_GetVar(canvasPtr->interp, "tk_library", TCL_GLOBAL_ONLY);
-#endif
-    if (libDir == NULL) {
-	Tcl_ResetResult(canvasPtr->interp);
-	Tcl_AppendResult(canvasPtr->interp, "couldn't find library directory: ",
-#ifdef STk_CODE
-		"*stk-library* variable doesn't exist", (char *) NULL);
-#else
-		"tk_library variable doesn't exist", (char *) NULL);
-#endif
+    if (TkGetNativeProlog(canvasPtr->interp) != TCL_OK) {
 	goto cleanup;
     }
-#ifdef STk_CODE
-    sprintf(string, "%.350s/STk/prolog.ps", libDir);
-    f = fopen(string, "r");
-    Tcl_DStringInit(&buffer2);
-    Tcl_DStringAppend(&buffer2, string, -1);
-#else
-    sprintf(string, "%.350s", libDir);
-    Tcl_TranslateFileName(canvasPtr->interp, string, &buffer);
-    prologPathParts[0] = buffer.string;
-    prologPathParts[1] = "prolog.ps";
-    Tcl_DStringInit(&buffer2);
-    Tcl_JoinPath(2, prologPathParts, &buffer2);
-    Tcl_DStringFree(&buffer);
-    f = fopen(buffer2.string, "r");
-#endif
-    if (f == NULL) {
-	Tcl_ResetResult(canvasPtr->interp);
-	Tcl_AppendResult(canvasPtr->interp, "couldn't open prolog file \"",
-		buffer2.string, "\": ", Tcl_PosixError(canvasPtr->interp),
-		(char *) NULL);
-	Tcl_DStringFree(&buffer2);
-	goto cleanup;
-    }
-    Tcl_DStringFree(&buffer2);
-    while (fgets(string, STRING_LENGTH, f) != NULL) {
-	Tcl_AppendResult(canvasPtr->interp, string, (char *) NULL);
-    }
-    if (ferror(f)) {
-	fclose(f);
-	Tcl_ResetResult(canvasPtr->interp);
-	Tcl_AppendResult(canvasPtr->interp, "error reading prolog file \"",
-		string, "\": ",
-		Tcl_PosixError(canvasPtr->interp), (char *) NULL);
-	goto cleanup;
-    }
-    fclose(f);
-    if (psInfo.f != NULL) {
-	fputs(canvasPtr->interp->result, psInfo.f);
+    if (psInfo.chan != NULL) {
+	Tcl_Write(psInfo.chan, canvasPtr->interp->result, -1);
 	Tcl_ResetResult(canvasPtr->interp);
     }
 
@@ -501,8 +499,8 @@ TkCanvPostscriptCmd(canvasPtr, interp, argc, argv)
 	    psInfo.x, Tk_CanvasPsY((Tk_Canvas) canvasPtr, (double) psInfo.y2));
     Tcl_AppendResult(canvasPtr->interp, string,
 	" lineto closepath clip newpath\n", (char *) NULL);
-    if (psInfo.f != NULL) {
-	fputs(canvasPtr->interp->result, psInfo.f);
+    if (psInfo.chan != NULL) {
+	Tcl_Write(psInfo.chan, canvasPtr->interp->result, -1);
 	Tcl_ResetResult(canvasPtr->interp);
     }
 
@@ -535,8 +533,8 @@ TkCanvPostscriptCmd(canvasPtr, interp, argc, argv)
 	    goto cleanup;
 	}
 	Tcl_AppendResult(canvasPtr->interp, "grestore\n", (char *) NULL);
-	if (psInfo.f != NULL) {
-	    fputs(canvasPtr->interp->result, psInfo.f);
+	if (psInfo.chan != NULL) {
+	    Tcl_Write(psInfo.chan, canvasPtr->interp->result, -1);
 	    Tcl_ResetResult(canvasPtr->interp);
 	}
     }
@@ -550,8 +548,8 @@ TkCanvPostscriptCmd(canvasPtr, interp, argc, argv)
 
     Tcl_AppendResult(canvasPtr->interp, "restore showpage\n\n",
 	    "%%Trailer\nend\n%%EOF\n", (char *) NULL);
-    if (psInfo.f != NULL) {
-	fputs(canvasPtr->interp->result, psInfo.f);
+    if (psInfo.chan != NULL) {
+	Tcl_Write(psInfo.chan, canvasPtr->interp->result, -1);
 	Tcl_ResetResult(canvasPtr->interp);
     }
 
@@ -584,8 +582,11 @@ TkCanvPostscriptCmd(canvasPtr, interp, argc, argv)
     if (psInfo.fileName != NULL) {
 	ckfree(psInfo.fileName);
     }
-    if (psInfo.f != NULL) {
-	fclose(psInfo.f);
+    if ((psInfo.chan != NULL) && (psInfo.channelName == NULL)) {
+	Tcl_Close(canvasPtr->interp, psInfo.chan);
+    }
+    if (psInfo.channelName != NULL) {
+        ckfree(psInfo.channelName);
     }
     Tcl_DeleteHashTable(&psInfo.fontTable);
     canvasPtr->psInfoPtr = oldInfoPtr;
@@ -697,28 +698,19 @@ Tk_CanvasPsColor(interp, canvas, colorPtr)
  */
 
 int
-Tk_CanvasPsFont(interp, canvas, fontStructPtr)
+Tk_CanvasPsFont(interp, canvas, tkfont)
     Tcl_Interp *interp;			/* Interpreter for returning Postscript
 					 * or error message. */
     Tk_Canvas canvas;			/* Information about canvas. */
-    XFontStruct *fontStructPtr;		/* Information about font in which text
+    Tk_Font tkfont;			/* Information about font in which text
 					 * is to be printed. */
 {
     TkCanvas *canvasPtr = (TkCanvas *) canvas;
     TkPostscriptInfo *psInfoPtr = canvasPtr->psInfoPtr;
-    char *name, *end, *weightString, *slantString;
-#define TOTAL_FIELDS	8
-#define FAMILY_FIELD	1
-#define WEIGHT_FIELD	2
-#define SLANT_FIELD	3
-#define SIZE_FIELD	7
-    char *fieldPtrs[TOTAL_FIELDS];
-#define MAX_NAME_SIZE 100
-    char fontName[MAX_NAME_SIZE+50], pointString[20];
-    int i, c, weightSize, nameSize, points;
-    char *p;
-
-    name = Tk_NameOfFontStruct(fontStructPtr);
+    char *end;
+    char pointString[20];
+    Tcl_DString ds;
+    int i, points;
 
     /*
      * First, look up the font's name in the font map, if there is one.
@@ -726,13 +718,16 @@ Tk_CanvasPsFont(interp, canvas, fontStructPtr)
      * containing font name and size.  Use this information.
      */
 
+    Tcl_DStringInit(&ds);
+    
     if (psInfoPtr->fontVar != NULL) {
 	char *list, **argv;
 	int argc;
 	double size;
+	char *name;
 
-	list = Tcl_GetVar2(interp, psInfoPtr->fontVar,
-		name, 0);
+	name = Tk_NameOfFont(tkfont);
+	list = Tcl_GetVar2(interp, psInfoPtr->fontVar, name, 0);
 	if (list != NULL) {
 	    if (Tcl_SplitList(interp, list, &argc, &argv) != TCL_OK) {
 		badMapEntry:
@@ -748,117 +743,29 @@ Tk_CanvasPsFont(interp, canvas, fontStructPtr)
 	    if ((size <= 0) || (*end != 0)) {
 		goto badMapEntry;
 	    }
-	    sprintf(pointString, "%.15g", size);
-	    Tcl_AppendResult(interp, "/", argv[0], " findfont ",
-		    pointString, " scalefont ", (char *) NULL);
-	    if (strncasecmp(argv[0], "Symbol", 7) != 0) {
-		Tcl_AppendResult(interp, "ISOEncode ", (char *) NULL);
-	    }
-	    Tcl_AppendResult(interp, "setfont\n", (char *) NULL);
-	    Tcl_CreateHashEntry(&psInfoPtr->fontTable, argv[0], &i);
+
+	    Tcl_DStringAppend(&ds, argv[0], -1);
+	    points = (int) size;
+	    
 	    ckfree((char *) argv);
-	    return TCL_OK;
+	    goto findfont;
 	}
-    }
+    } 
 
-    /*
-     * Not in the font map.  Try to parse the name to get four fields:
-     * family name, weight, slant, and point size.  To do this, split the
-     * font name up into fields, storing pointers to the first character
-     * of each field in fieldPtrs.
-     */
+    points = Tk_PostscriptFontName(tkfont, &ds);
 
-    if (name[0] != '-') {
-	goto error;
-    }
-    for (p =  name+1, i = 0; i < TOTAL_FIELDS; i++) {
-	fieldPtrs[i] = p;
-	while (*p != '-') {
-	    if (*p == 0) {
-		goto error;
-	    }
-	    p++;
-	}
-	p++;
-    }
-
-    /*
-     * Use the information from the X font name to make a guess at a
-     * Postscript font name of the form "<family>-<weight><slant>" where
-     * <weight> and <slant> may be omitted and if both are omitted then
-     * the dash is also omitted.  Postscript is very picky about font names,
-     * so there are several heuristics in the code below (e.g. don't
-     * include a "Roman" slant except for "Times" font, and make sure
-     * that the first letter of each field is capitalized but no other
-     * letters are in caps).
-     */
-
-    nameSize = fieldPtrs[FAMILY_FIELD+1] - 1 - fieldPtrs[FAMILY_FIELD];
-    if ((nameSize == 0) || (nameSize > MAX_NAME_SIZE)) {
-	goto error;
-    }
-    strncpy(fontName, fieldPtrs[FAMILY_FIELD], (size_t) nameSize);
-    if (islower(UCHAR(fontName[0]))) {
-	fontName[0] = toupper(UCHAR(fontName[0]));
-    }
-    for (p = fontName+1, i = nameSize-1; i > 0; p++, i--) {
-	if (isupper(UCHAR(*p))) {
-	    *p = tolower(UCHAR(*p));
-	}
-    }
-    *p = 0;
-    weightSize = fieldPtrs[WEIGHT_FIELD+1] - 1 - fieldPtrs[WEIGHT_FIELD];
-    if (weightSize == 0) {
-	goto error;
-    }
-    if (strncasecmp(fieldPtrs[WEIGHT_FIELD], "medium",
-	    (size_t) weightSize) == 0) {
-	weightString = "";
-    } else if (strncasecmp(fieldPtrs[WEIGHT_FIELD], "bold",
-	    (size_t) weightSize) == 0) {
-	weightString = "Bold";
-    } else {
-	goto error;
-    }
-    if (fieldPtrs[SLANT_FIELD+1] != (fieldPtrs[SLANT_FIELD] + 2)) {
-	goto error;
-    }
-    c = fieldPtrs[SLANT_FIELD][0];
-    if ((c == 'r') || (c == 'R')) {
-	slantString = "";
-	if ((weightString[0] == 0) && (nameSize == 5)
-		&& (strncmp(fontName, "Times", 5) == 0)) {
-	    slantString = "Roman";
-	}
-    } else if ((c == 'i') || (c == 'I')) {
-	slantString = "Italic";
-    } else if ((c == 'o') || (c == 'O')) {
-	slantString = "Oblique";
-    } else {
-	goto error;
-    }
-    if ((weightString[0] != 0) || (slantString[0] != 0)) {
-	sprintf(p, "-%s%s", weightString, slantString);
-    }
-    points = strtoul(fieldPtrs[SIZE_FIELD], &end, 0);
-    if (points == 0) {
-	goto error;
-    }
-    sprintf(pointString, "%.15g", ((double) points)/10.0);
-    Tcl_AppendResult(interp, "/", fontName, " findfont ",
+    findfont:
+    sprintf(pointString, "%d", points);
+    Tcl_AppendResult(interp, "/", Tcl_DStringValue(&ds), " findfont ",
 	    pointString, " scalefont ", (char *) NULL);
-    if (strcmp(fontName, "Symbol") != 0) {
+    if (strncasecmp(Tcl_DStringValue(&ds), "Symbol", 7) != 0) {
 	Tcl_AppendResult(interp, "ISOEncode ", (char *) NULL);
     }
     Tcl_AppendResult(interp, "setfont\n", (char *) NULL);
-    Tcl_CreateHashEntry(&psInfoPtr->fontTable, fontName, &i);
-    return TCL_OK;
+    Tcl_CreateHashEntry(&psInfoPtr->fontTable, Tcl_DStringValue(&ds), &i);
+    Tcl_DStringFree(&ds);
 
-    error:
-    Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "couldn't translate font name \"",
-	    name, "\" to Postscript", (char *) NULL);
-    return TCL_ERROR;
+    return TCL_OK;
 }
 
 /*
@@ -1164,5 +1071,95 @@ GetPostscriptPoints(interp, string, doublePtr)
 	goto error;
     }
     *doublePtr = d;
+    return TCL_OK;
+}
+
+/*
+ *--------------------------------------------------------------
+ *
+ * TkGetProlog --
+ *
+ *	Locate and load the postscript prolog.
+ *
+ * Results:
+ *	A standard Tcl Result.  If everything is OK the prolog
+ *	will be located in the result string of the interpreter.
+ *
+ * Side effects:
+ *	None.
+ *
+ *--------------------------------------------------------------
+ */
+
+int
+TkGetProlog(interp)
+    Tcl_Interp *interp;		/* Places the prolog in the result. */
+{
+    char *libDir;
+    Tcl_Channel chan;
+    Tcl_DString buffer, buffer2;
+    char *prologPathParts[2];
+    int bufferSize;
+    char *prologBuffer;
+
+#ifdef STk_CODE
+    libDir = Tcl_GetVar(interp, "*stk-library*", TCL_GLOBAL_ONLY);
+#else
+    libDir = Tcl_GetVar(interp, "tk_library", TCL_GLOBAL_ONLY);
+#endif
+    if (libDir == NULL) {
+	Tcl_ResetResult(interp);
+	Tcl_AppendResult(interp, "couldn't find library directory: ",
+#ifdef STk_CODE
+		"*stk-library* variable doesn't exist", (char *) NULL);
+#else
+		"tk_library variable doesn't exist", (char *) NULL);
+#endif
+	return TCL_ERROR;
+    }
+    Tcl_TranslateFileName(interp, libDir, &buffer);
+    prologPathParts[0] = buffer.string;
+#ifdef STk_CODE
+    prologPathParts[1] = "STk/prolog.ps";
+#else
+    prologPathParts[1] = "prolog.ps";
+#endif
+    Tcl_DStringInit(&buffer2);
+    Tcl_JoinPath(2, prologPathParts, &buffer2);
+    Tcl_DStringFree(&buffer);
+
+    /*
+     * Compute size of file by seeking to the end of the file.  This will
+     * overallocate if we are performing CRLF translation.
+     */
+    chan = Tcl_OpenFileChannel(interp, buffer2.string, "r", 0);
+    if (chan == NULL) {
+	Tcl_DStringFree(&buffer2);
+	return TCL_ERROR;
+    }
+    bufferSize = Tcl_Seek(chan, 0L, SEEK_END);
+    (void) Tcl_Seek(chan, 0L, SEEK_SET);
+    if (bufferSize < 0) {
+	Tcl_AppendResult(interp, "error seeking to end of file \"",
+		buffer2.string, "\":", Tcl_PosixError(interp), (char *) NULL);
+	Tcl_Close(NULL, chan);
+	Tcl_DStringFree(&buffer2);
+	return TCL_ERROR;
+
+    }
+    prologBuffer = (char *) ckalloc((unsigned) bufferSize+1);
+    bufferSize = Tcl_Read(chan, prologBuffer, bufferSize);
+    Tcl_Close(NULL, chan);
+    if (bufferSize < 0) {
+	Tcl_AppendResult(interp, "error reading file \"", buffer2.string, 
+		"\":", Tcl_PosixError(interp), (char *) NULL);
+	Tcl_DStringFree(&buffer2);
+	return TCL_ERROR;
+    }
+    Tcl_DStringFree(&buffer2);
+    prologBuffer[bufferSize] = 0;
+    Tcl_AppendResult(interp, prologBuffer, (char *) NULL);
+    ckfree(prologBuffer);
+    
     return TCL_OK;
 }

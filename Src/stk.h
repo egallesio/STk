@@ -2,7 +2,7 @@
  *
  * s t k . h
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -16,10 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
+ *  $Id: stk.h 1.11 Fri, 10 Apr 1998 09:13:18 +0200 eg $
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 12-May-1993 10:34
- * Last file update: 25-Sep-1996 14:33
+ * Last file update:  9-Apr-1998 10:57
  *
  ******************************************************************************/
 
@@ -49,10 +50,11 @@ extern "C" {
 #include "gmp.h"
 
 /*
- * Header <tcl.h> is always included (even if not USE_TK) for the hash table
- * function prototypes. 
+ * Headers <tcl*.h> are always included (even if not USE_TK) for the hash table
+ * function prototypes, and for implementing the crazy Tcl_Obj type. 
  */
 #include <tcl.h>
+#include <tclInt.h>
 
 /* ------------------------------------------------------------------------------ */
 
@@ -90,16 +92,17 @@ extern "C" {
 #define REPORT_ERROR	"report-error"
 
 #ifdef USE_TK
-#    include <tclInt.h>
 #    include <tk.h>
 #    define ROOT_WINDOW	"*root*"	/* Scheme name of main window */
-
+#    define ERROR_INFO  "*error-info*"
+#    define USE_THREAD  	/* Very very experimental */
   struct Tk_command {
     ClientData ptr;		/* pointer associated to the widget command */
     Tcl_CmdProc *fct;	   	/* Tk lib function associated to widget */
     Tcl_CmdDeleteProc *delproc; /* procedure to call when command is destroyed */
     ClientData deldata;	   	/* value to pass to delproc */
-    int deleted;		/* 1 if command has already been deleted */
+    short deleted;		/* 1 if command has already been deleted */
+    short objproc;		/* 1 if command is an tcl_Obj procedure */
     char Id[1];		   	/* must be last field */
   };
 #endif
@@ -108,14 +111,14 @@ extern "C" {
 struct obj {
   unsigned char type;
   unsigned char gc_mark;
-  unsigned char cell_info;
+  short         cell_info;
   union {struct {struct obj * car; struct obj * cdr;} 		cons;
 	 struct {double *data;}					flonum;
 	 struct {char *pname; struct obj * vcell;} 		symbol;
 	 struct {char *name; struct obj * (*f)(void);} 		subr0;
 	 struct {char *name; struct obj * (*f)(void *,...);} 	subr;
 	 struct {struct obj *env; struct obj *code;} 		closure;
-	 struct {struct obj *code; }				macro;
+	 struct {struct obj *code; struct obj* env;}		macro;
 	 struct {long dim; char *data;} 			string;
 	 struct {long dim; struct obj **data;} 			vector;
 	 struct {struct port_descr *p;}				port;
@@ -126,8 +129,10 @@ struct obj {
 	 struct {void *data; }					cont;
 	 struct {struct obj *data;}				env;
 	 struct {short id; char staticp; void *data; }		extension;
+         struct {struct Tcl_HashTable *t; void *data; }		module;
+	 struct {struct obj *data; }				tcl;
 #ifdef USE_STKLOS
-    	 struct {int id; struct stklos_instance *data; }	instance;
+    	 struct {int type_flags; struct stklos_instance *data;} instance;
 #endif
 #ifdef USE_TK
 	 /* Idea of l_data comes from Alexander Taranov <tay@jet.msk.edu> */
@@ -173,20 +178,26 @@ typedef struct obj* PRIMITIVE;
 #define tc_macro	30
 #define tc_localvar	31
 #define tc_globalvar	32
-#define tc_cont		33
-#define tc_env		34
-#define tc_address	35
-#define tc_autoload	36
-#define tc_Cpointer	37
+#define tc_modulevar	33
+#define tc_cont		34
+#define tc_env		35
+#define tc_address	36
+#define tc_autoload	37
+#define tc_Cpointer	38
+#define tc_module	39
+#define tc_frame	40
+#define tc_values	41
 
 #ifdef USE_STKLOS
-#  define tc_instance	 40
-#  define tc_next_method 41
+#  define tc_instance	 45
+#  define tc_next_method 46
 #endif
 
 #ifdef USE_TK
 #  define tc_tkcommand	50
 #endif
+#define tc_tclobject	51	/* always defined, even if NO_TK */
+
 
 #define tc_quote	61
 #define tc_lambda	62
@@ -225,7 +236,12 @@ typedef struct obj* PRIMITIVE;
 #define EXTDATA(x)	((*x).storage_as.extension.data)
 #define EXTID(x)	((*x).storage_as.extension.id)
 #define EXTSTATICP(x)	((*x).storage_as.extension.staticp)
-
+#define TCLOBJDATA(x)   ((*x).storage_as.tcl.data)
+#define CLOSENV(x)	((*x).storage_as.closure.env)
+#define CLOSCODE(x)	((*x).storage_as.closure.code)
+#define CLOSARITY(x)	((*x).cell_info)
+#define CLOSPARAMS(x)	(CAR(CLOSCODE(x)))
+#define CLOSBODY(x)	(CDR(CLOSCODE(x)))
 
 #ifdef COMPACT_SMALL_CST
 #  define MAKE_SMALL_CST(x,type)  (((long) (x) << 8) |((type) << 1) | 1)
@@ -247,7 +263,6 @@ typedef struct obj* PRIMITIVE;
 #  define CHAR(x)		  ((unsigned char) ((x)->storage_as.extension.data)
 #  define SET_CHARACTER(x, v)	  (CHAR(x) = (v))
 #endif
-
 
 #define EQ(x,y) 	((x) == (y))
 #define NEQ(x,y) 	((x) != (y))
@@ -274,6 +289,7 @@ typedef struct obj* PRIMITIVE;
 #define BIGNUMP(x)	 TYPEP(x,tc_bignum)
 #define NUMBERP(x)	 (FLONUMP(x) || INTEGERP(x) || BIGNUMP(x))
 #define EXACTP(x)	 (INTEGERP(x) || BIGNUMP(x))
+#define INTP(x)		 (INTEGERP(x) || BIGNUMP(x))
 #define CHARP(x)	 TYPEP(x,tc_char)
 #define PROMISEP(x)	 TYPEP(x,tc_promise)
 #define CONTINUATIONP(x) TYPEP(x,tc_cont)
@@ -281,6 +297,9 @@ typedef struct obj* PRIMITIVE;
 #define MACROP(x)	 TYPEP(x,tc_macro)
 #define EXTENDEDP(x)	 (tc_start_extd <= TYPE(x))
 #define CPOINTERP(x)	 TYPEP(x,tc_Cpointer)
+#define MODULEP(x) 	 TYPEP(x,tc_module)
+#define FRAMEP(x)	 TYPEP(x,tc_frame)
+#define VALUESP(x)	 TYPEP(x,tc_values)
 
 #define NCONSP(x)   	  NTYPEP(x,tc_cons)
 #define NCLOSUREP(x)	  NTYPEP(x,tc_closure)
@@ -299,6 +318,7 @@ typedef struct obj* PRIMITIVE;
 #define NBIGNUMP(x)	  NTYPEP(x,tc_bignum)
 #define NNUMBERP(x)	  (NFLONUMP(x) && NINTEGERP(x) && NBIGNUMP(x))
 #define NEXACTP(x)	  (NINTEGERP(x) && NBIGNUMP(x))
+#define NINTP(x)	  (NINTEGERP(x) && NBIGNUMP(x))
 #define NCHARP(x)	  NTYPEP(x,tc_char)
 #define NPROMISEP(x)	  NTYPEP(x,tc_promise)
 #define NCONTINUATIONP(x) NTYPEP(x,tc_cont)
@@ -306,10 +326,16 @@ typedef struct obj* PRIMITIVE;
 #define NMACROP(x)	  NTYPEP(x,tc_macro)
 #define NEXTENDEDP(x)	  (!EXTENDEDP(x))
 #define NCPOINTERP(x)	  NTYPEP(x,tc_Cpointer)
+#define NMODULEP(x) 	  NTYPEP(x,tc_module)
+#define NFRAMEP(x)	  NTYPEP(x,tc_frame)
+#define NVALUESP(x)	  NTYPEP(x,tc_values)
 
 #ifdef USE_TK
 #  define TKCOMMP(x)	  TYPEP(x,tc_tkcommand)
+#  define TCLOBJP(x)	  TYPEP(x,tc_tclobject)
+
 #  define NTKCOMMP(x)	  NTYPEP(x,tc_tkcommand)
+#  define NTCLOBJP(x)	  NTYPEP(x,tc_tclobject)
 #endif
 
 #define ModifyCode()	NEQ(VCELL(STk_sym_debug), STk_truth)
@@ -331,12 +357,6 @@ typedef struct obj* PRIMITIVE;
 
 #define TRACED_VARP(var)	(((var)->cell_info) & CELL_INFO_TRACED_VAR)
 
-
-#define Debug(message, obj) {fprintf(STk_stderr, "***%s",message); \
-			     STk_print(obj, STk_curr_eport, WRT_MODE); \
-			     fprintf(STk_stderr, "\n");}
-#define TRACE(message)	{printf("In %s (%d):", __FILE__, __LINE__); \
-			 printf message; putchar('\n');}
 
 
 /******************************************************************************/
@@ -405,9 +425,9 @@ PRIMITIVE STk_equal(SCM x, SCM y);
   ----
   ------------------------------------------------------------------------------
 */
-char  STk_string2char(char *s);
-char *STk_char2string(char c);
-SCM   STk_makechar(char c);
+unsigned char  STk_string2char(char *s);
+char *STk_char2string(unsigned char c);
+SCM   STk_makechar(unsigned char c);
 
 PRIMITIVE STk_charp(SCM obj);
 
@@ -468,7 +488,9 @@ PRIMITIVE STk_dump(SCM s);
   ------------------------------------------------------------------------------
 */
 void STk_load_object_file(char *path);
-
+PRIMITIVE STk_call_external(SCM l, int len);
+PRIMITIVE STk_external_existsp(SCM entry_name, SCM library);
+PRIMITIVE STk_cstring2string(SCM pointer);
 
 /*
   ------------------------------------------------------------------------------
@@ -477,14 +499,12 @@ void STk_load_object_file(char *path);
   ----
   ------------------------------------------------------------------------------
 */
-#define STk_fast_extend_env(formals, actuals, env) \
-	Cons(Cons((formals), (actuals)), (env))
 
+SCM STk_makeframe(SCM formals, SCM actuals);
 SCM STk_makeenv(SCM l, int create_if_null);
 SCM *STk_value_in_env(SCM var, SCM env);
 SCM *STk_varlookup(SCM x, SCM env, int err_if_unbound);
 SCM STk_localvalue(SCM var, SCM env);
-SCM STk_extend_env(SCM formals, SCM actuals, SCM env, SCM who);
 
 PRIMITIVE STk_symbol_boundp(SCM x, SCM env);
 PRIMITIVE STk_the_environment(SCM args, SCM env, int len);
@@ -492,7 +512,7 @@ PRIMITIVE STk_parent_environment(SCM env);
 PRIMITIVE STk_global_environment(void);
 PRIMITIVE STk_environment2list(SCM env);
 PRIMITIVE STk_environmentp(SCM obj);
-
+PRIMITIVE STk_get_environment(SCM env);
 
 /*
   ------------------------------------------------------------------------------
@@ -519,11 +539,14 @@ extern jmp_buf *STk_top_jmp_buf; /* Jump buffer denoting toplevel context */
 extern long STk_error_context;
 
 void STk_err(char *message, SCM x);
+void STk_procedure_error(char *procedure, char *message, SCM x);
 
-#define Err 		STk_err
-#define err		STk_err	/* For compatibility: don't use it anymore */
-#define Top_jmp_buf	STk_top_jmp_buf
-#define Error_context	STk_error_context
+#define Err 			STk_err
+#define Top_jmp_buf		STk_top_jmp_buf
+#define Error_context		STk_error_context
+#define Serror(msg, who)	STk_procedure_error(proc_name, msg, who)
+
+
 /*
   ------------------------------------------------------------------------------
   ----
@@ -538,9 +561,11 @@ void STk_err(char *message, SCM x);
 extern int STk_eval_flag;
 
 /* Eval stack. These are internals of the evaluator. Don't care*/
-void STk_show_eval_stack(int depth);
+void STk_show_eval_stack(int depth, int uncode);
 void STk_reset_eval_stack(void);
-PRIMITIVE STk_get_eval_stack(void);
+
+
+PRIMITIVE STk_user_get_eval_stack(void);
 
 /* Eval hook management */
 void STk_init_eval_hook(void);
@@ -548,7 +573,6 @@ void STk_reset_eval_hook(void);
 PRIMITIVE STk_eval_hook(SCM x, SCM env, SCM hook);
 
 /* Environment stack. These are internals of the evaluator. Don't care*/
-SCM STk_top_env_stack(void);
 PRIMITIVE STk_get_env_stack(void);
 
 SCM STk_eval(SCM x,SCM env);
@@ -562,6 +586,9 @@ PRIMITIVE STk_eval_string(SCM str, SCM env);
 #define EVALCAR(x)	  (SYMBOLP(CAR(x)) ? *STk_varlookup((x),env,1):EVAL(CAR(x)))
 #define SET_EVAL_FLAG(v)  {STk_eval_flag = (v);}
 
+#define add_frame(formals, actuals, env) Cons(STk_makeframe((formals), (actuals)),\
+					      (env))
+
 /*
   ------------------------------------------------------------------------------
   ----
@@ -572,8 +599,19 @@ PRIMITIVE STk_eval_string(SCM str, SCM env);
 #define EXT_ISPROC 	01	/* procedure? should answer #t */
 #define EXT_EVALPARAM 	02	/* evaluates parameter list when apply */
 
-#define STk_set_symbol_value(name,value)  {VCELL(Intern(name))=(value);}
-#define STk_get_symbol_value(name)	  (VCELL(Intern(name)))
+/* Easy access to variables from C */
+#define STk_define_variable(var, value, module) \
+  	STk_define_public_var((module), Intern(var), (value))
+#define STk_lookup_variable(var, module) \
+	*(STk_varlookup(Intern(var), (module), 0))
+#define STk_define_scheme_variable(var, value) \
+  	STk_define_variable((var), (value), STk_scheme_module)
+#define STk_lookup_scheme_variable(var) \
+	STk_lookup_variable((var), STk_scheme_module)
+
+/* Old interface for global variables. Don't use it anuymore */
+#define STk_set_symbol_value(var,value)  STk_define_variable((var), (value), NIL)
+#define STk_get_symbol_value(var)	 STk_lookup_variable((var), NIL)
 
 typedef struct {
   char *type_name;		/* The external name of this type */
@@ -590,6 +628,9 @@ typedef struct {
 int  STk_add_new_type(STk_extended_scheme_type *p);
 void STk_add_new_primitive(char *fct_name, int fct_type, PRIMITIVE (*fct_ptr)());
 SCM  STk_eval_C_string(char *s, SCM env);
+
+#define ANONYMOUS_STAT_PTR_ID 0
+#define ANONYMOUS_DYN_PTR_ID  1	
 
 int STk_new_Cpointer_id(void (*display_func)(SCM x, SCM port, int mode));
 SCM STk_make_Cpointer(int Cpointer_id, void *ptr, int staticp);
@@ -686,7 +727,9 @@ PRIMITIVE STk_get_keyword(SCM key, SCM l, SCM default_value);
   ----
   ------------------------------------------------------------------------------
 */
-int STk_llength(SCM l);	/* length of a list. -1 if not a proper list */
+int STk_llength(SCM l);		  /* length of a list. -1 if not a proper list */
+SCM STk_append2(SCM l1, SCM l2);  /* append with only two lists */
+SCM STk_dappend2(SCM l1, SCM l2); /* the same one but destructive this time */
 
 PRIMITIVE STk_pairp(SCM x);
 PRIMITIVE STk_cons(SCM x, SCM y);
@@ -739,6 +782,12 @@ PRIMITIVE STk_assoc (SCM obj, SCM alist);
 
 PRIMITIVE STk_liststar(SCM l, int len);		/* + */
 PRIMITIVE STk_copy_tree(SCM l);			/* + */
+PRIMITIVE STk_last_pair(SCM l);			/* + */
+PRIMITIVE STk_remq   (SCM obj, SCM list);	/* + */
+PRIMITIVE STk_remv   (SCM obj, SCM list);	/* + */
+PRIMITIVE STk_remove (SCM obj, SCM list);	/* + */
+PRIMITIVE STk_dappend(SCM l, int len);		/* + */
+
 
 #define Cons			 STk_cons
 #define Reverse			 STk_reverse
@@ -750,7 +799,6 @@ PRIMITIVE STk_copy_tree(SCM l);			/* + */
 #define LIST6(a,b,c,d,e,f)	 Cons((a), LIST5((b),(c),(d),(e),(f)))
 #define LIST7(a,b,c,d,e,f,g)	 Cons((a), LIST6((b),(c),(d),(e),(f),(g)))
 #define LIST8(a,b,c,d,e,f,g,h)	 Cons((a), LIST7((b),(c),(d),(e),(f),(g),(h)))
-#define LIST9(a,b,c,d,e,f,g,h,i) Cons((a), LIST8((b),(c),(d),(e),(f),(g),(h),(i)))
 
 /*
   ------------------------------------------------------------------------------
@@ -764,6 +812,51 @@ PRIMITIVE STk_macro_expand(SCM form, SCM env, int len);		/* + */
 PRIMITIVE STk_macro_expand_1(SCM form, SCM env, int len);	/* + */
 PRIMITIVE STk_macro_body(SCM form);				/* + */
 PRIMITIVE STk_macrop(SCM obj);					/* + */
+
+PRIMITIVE STk_macro_R5(SCM args, SCM env, int len);		/* Undoc */
+
+
+/*
+  ------------------------------------------------------------------------------
+  ----
+  ---- M O D U L E  . C
+  ----
+  ------------------------------------------------------------------------------
+*/
+
+extern SCM STk_global_module;	/* Global module -- i.e STk pseudo-module */
+extern SCM STk_scheme_module;	/* The Scheme module */
+extern SCM STk_selected_module; /* Selected module */
+
+SCM  STk_make_module(SCM name);
+SCM  STk_make_parent_module(SCM module);
+void STk_mark_module(SCM m);
+void STk_free_module(SCM m);
+void STk_mark_module_table(void);
+void STk_define_public_var(SCM module, SCM var, SCM value);
+SCM* STk_module_lookup(SCM module, SCM var, SCM context);
+SCM  STk_modulevalue(SCM obj);
+SCM  STk_module_env2list(SCM module);
+void STk_select_stk_module(void);
+void STk_init_modules(void);
+
+PRIMITIVE STk_define_module(SCM l, SCM env, int len);
+PRIMITIVE STk_modulep(SCM obj);
+PRIMITIVE STk_with_module(SCM l, SCM env, int len);
+PRIMITIVE STk_import(SCM l, SCM env, int len);
+PRIMITIVE STk_export_symbol(SCM symbol, SCM module);
+PRIMITIVE STk_export_all_symbols(void);
+
+PRIMITIVE STk_select_module(SCM l, SCM env, int len);
+PRIMITIVE STk_get_module(SCM env);
+PRIMITIVE STk_current_module(SCM l, SCM env, int len);
+
+PRIMITIVE STk_find_module(SCM name, SCM default_value);
+PRIMITIVE STk_module_name(SCM module);
+PRIMITIVE STk_module_imports(SCM module);
+PRIMITIVE STk_module_exports(SCM module);
+PRIMITIVE STk_module_env(SCM module);
+PRIMITIVE STk_module_symbols(SCM module);
 
 /*
   ------------------------------------------------------------------------------
@@ -783,9 +876,16 @@ char   *STk_number2Cstr(SCM n, long base, char buffer[]);
 SCM	STk_Cstr2number(char *str, long base);
 SCM	STk_makenumber(double x);
 SCM	STk_makeinteger(long x);
+SCM	STk_makeunsigned(unsigned long x);
 long	STk_integer_value(SCM x); /* Returns LONG_MIN if not representable as int */
 long	STk_integer_value_no_overflow(SCM x); /* Returns LONG_MIN if not an int */
 int	STk_equal_numbers(SCM number1, SCM number2); /* number1 = number2 */
+
+long 	STk_integer2long(SCM x);
+unsigned long STk_integer2ulong(SCM x);
+
+#define STk_real2double(x)	FLONM(x)
+
 
 PRIMITIVE STk_numberp(SCM x);
 PRIMITIVE STk_integerp(SCM x);
@@ -880,7 +980,7 @@ extern SCM STk_curr_iport, STk_curr_oport, STk_curr_eport, STk_eof_object;
 
 void 	  STk_freeport(SCM port);
 void 	  STk_init_standard_ports(void);
-SCM 	  STk_loadfile(char *fname, int err_if_absent);
+SCM 	  STk_load_file(char *fname, int err_if_absent, SCM module);
 SCM 	  STk_Cfile2port(char *name, FILE *f, int type, int flags);
 
 PRIMITIVE STk_input_portp(SCM port);
@@ -903,20 +1003,23 @@ PRIMITIVE STk_write(SCM expr, SCM port);
 PRIMITIVE STk_display(SCM expr, SCM port);
 PRIMITIVE STk_newline(SCM port);
 PRIMITIVE STk_write_char(SCM c, SCM port);
-PRIMITIVE STk_scheme_load(SCM filename);
+PRIMITIVE STk_load(SCM filename, SCM module);
+
 
 /* Non standard functions */
 PRIMITIVE STk_format(SCM l, int len);
 PRIMITIVE STk_error(SCM l, int len);
-PRIMITIVE STk_try_load(SCM filename);
+PRIMITIVE STk_try_load(SCM filename, SCM module);
 PRIMITIVE STk_open_file(SCM filename, SCM mode);
 PRIMITIVE STk_close_port(SCM port);
 PRIMITIVE STk_read_line(SCM port);
 PRIMITIVE STk_flush(SCM porSTk_t);
+PRIMITIVE STk_write_star(SCM expr, SCM port);
 
-void      STk_do_autoload(SCM var);
+
+void      STk_do_autoload(SCM var, SCM autoload);
 PRIMITIVE STk_autoload(SCM l, SCM env, int len);
-PRIMITIVE STk_autoloadp(SCM l, SCM env, int len);
+PRIMITIVE STk_autoloadp(SCM symbol, SCM module);
 
 PRIMITIVE STk_when_port_readable(SCM port, SCM closure);
 PRIMITIVE STk_when_port_writable(SCM port, SCM closure);
@@ -937,12 +1040,13 @@ void STk_init_primitives(void);
   ----
   ------------------------------------------------------------------------------
 */
-#define DSP_MODE	01
-#define WRT_MODE	02
-#define TK_MODE		04	/* Always defined even if no Tk support */
-
+#define DSP_MODE	0x1
+#define WRT_MODE	0x2
+#define TK_MODE		0x4	/* Always defined even if no Tk support */
+#define PANIC_MODE	0x8	/* Printing in "panic" mode (i.e. don't cons) */
 
 SCM STk_print(SCM exp, SCM port, int mode);
+SCM STk_print_star(SCM exp, SCM port);
 
 /*
   ------------------------------------------------------------------------------
@@ -951,14 +1055,17 @@ SCM STk_print(SCM exp, SCM port, int mode);
   ----
   ------------------------------------------------------------------------------
 */
-#define CLOSURE_PARAMETERS(p)		(CAR((p)->storage_as.closure.code))
 
 int       STk_is_thunk(SCM obj);
+SCM 	  STk_makeclosure(SCM code, SCM env);
+
 PRIMITIVE STk_procedurep(SCM obj);
 PRIMITIVE STk_map(SCM l, int len);
 PRIMITIVE STk_for_each(SCM l, int len);
 PRIMITIVE STk_procedure_body(SCM proc);
 PRIMITIVE STk_procedure_environment(SCM proc);
+PRIMITIVE STk_procedure_arity(SCM proc);
+
 
 /*
   ------------------------------------------------------------------------------
@@ -992,8 +1099,8 @@ SCM STk_readf(FILE *f, int case_significant);
 #define SIGHADGC		MAX_SYSTEM_SIG	    /* End of a GC run */
 #define MAX_SIGNAL		(MAX_SYSTEM_SIG+1)  
 
-extern STk_sigint_counter;
-extern STk_control_C;
+extern int STk_sigint_counter;
+extern int STk_control_C;
 
 void      STk_handle_signal(int sig);
 PRIMITIVE STk_add_signal_handler(SCM sig, SCM proc);
@@ -1002,6 +1109,11 @@ PRIMITIVE STk_get_signal_handlers(SCM sig);
 
 void 	  STk_init_signal(void);
 void 	  STk_mark_signal_table(void);
+
+void STk_ignore_signals(void);	/* Block all signals */
+void STk_allow_signals(void);  /* Restore signals as  before block_signals */
+void STk_signal_GC(void);
+
 
 #define STk_disallow_sigint() {STk_sigint_counter += 1;}
 #define STk_allow_sigint()    {STk_sigint_counter -= 1;}
@@ -1032,6 +1144,7 @@ PRIMITIVE STk_random(SCM n);
 PRIMITIVE STk_set_random_seed(SCM n);
 PRIMITIVE STk_get_internal_info(void);
 PRIMITIVE STk_time(SCM expr, SCM env, int len);
+PRIMITIVE STk_global_set(SCM var, SCM value);
 PRIMITIVE STk_uncode(SCM expr);
 #ifdef SIGSEGV
 PRIMITIVE STk_default_SIGSEGV_handler(void);
@@ -1078,7 +1191,6 @@ PRIMITIVE STk_read_from_string(SCM str);
   ------------------------------------------------------------------------------
 */
 #ifdef USE_STKLOS
-#  define STKLOS_VERSION	"2.2b1"
    PRIMITIVE STk_init_STklos(void);
 #endif
 
@@ -1091,6 +1203,7 @@ PRIMITIVE STk_read_from_string(SCM str);
   ------------------------------------------------------------------------------
 */
 SCM       STk_makestrg(int len, char *init);
+SCM 	  STk_embed_C_string(char *str);
 
 PRIMITIVE STk_stringp(SCM obj);
 PRIMITIVE STk_make_string(SCM len, SCM init_char);
@@ -1123,6 +1236,7 @@ PRIMITIVE STk_string_findp(SCM s1, SCM s2);			/* + */
 PRIMITIVE STk_string_index(SCM s1, SCM s2);			/* + */
 PRIMITIVE STk_string_lower(SCM s);				/* + */
 PRIMITIVE STk_string_upper(SCM s);				/* + */
+PRIMITIVE STk_split_string(SCM string, SCM delimiters);		/* + */
 
 #define STk_makestring(s) STk_makestrg(strlen(s), (s))
 
@@ -1138,6 +1252,7 @@ void 	  STk_initialize_symbol_table(void);
 void 	  STk_mark_symbol_table(void);
 void 	  STk_free_symbol(SCM symbol);
 SCM  	  STk_global_env2list(void);
+SCM 	  STk_global_symbols(void);
 SCM 	  STk_intern(char *name);
 
 PRIMITIVE STk_symbolp(SCM x);
@@ -1240,8 +1355,21 @@ PRIMITIVE STk_file_is_executablep(SCM f);
 PRIMITIVE STk_file_existp(SCM f);
 PRIMITIVE STk_file_glob(SCM l, int len);
 
+PRIMITIVE STk_remove_file(SCM filename);
+PRIMITIVE STk_rename_file(SCM filename1, SCM filename2);
+PRIMITIVE STk_temporary_file_name(void);
 
 
+/*
+  ------------------------------------------------------------------------------
+  ----
+  ---- V A L U E S . C
+  ----
+  ------------------------------------------------------------------------------
+*/
+
+PRIMITIVE STk_values(SCM l, int len);
+PRIMITIVE STk_call_with_values(SCM producer, SCM consumer);
 
 /*
   ------------------------------------------------------------------------------
@@ -1325,6 +1453,8 @@ Extern SCM STk_globenv;
 /* Library location */
 Extern char *STk_library_path;
 
+/* Is the interpreter safe. Of course not!!! */
+Extern int STk_is_safe;
 
 #undef  Extern
 #define Truth 	  STk_truth
@@ -1348,7 +1478,7 @@ Extern char *STk_library_path;
 /*
   ------------------------------------------------------------------------------
   ----
-  ---- T C L - G L U E . C
+  ---- T K - G L U E . C
   ----
   ------------------------------------------------------------------------------
 */
@@ -1387,12 +1517,46 @@ PRIMITIVE STk_widget_environment(SCM widget);
   ------------------------------------------------------------------------------
 */
 extern Tcl_Interp *STk_main_interp;	/* Interpreter for this application. */
+extern SCM STk_Tk_module;		/* The Tk module */
 extern int Tk_initialized ;		/* 1 when Tk is fully initialized */
 
 void Tk_main(int synchronize, char *name, char *fileName, char *Xdisplay,
 	     char *geometry);
 
+
+/*
+  ------------------------------------------------------------------------------
+  ----
+  ---- BACKWARD COMPATIBILITY STUFF
+  ----
+  ---- Don't use these definitions
+  ------------------------------------------------------------------------------
+*/
+
+#define err			STk_err	
+#define STk_scheme_load(file)	STk_load(file, UNBOUND)
+#define STk_loadfile(file,err)	STk_load_file(file, NIL, err)
+#define CLOSURE_PARAMETERS	CLOSPARAMS
+#endif /* USE_TK */
+
+/*
+  ------------------------------------------------------------------------------
+  ----
+  ---- MISC
+  ----
+  ------------------------------------------------------------------------------
+*/
+
+#define ENTER_PRIMITIVE(name)	static char* proc_name = name;
+#define ENTER_SCM(name)		ENTER_PRIMITIVE(name)
+
+
+#ifdef DEBUG_STK
+void Debug(char *message, SCM obj);
+#else
+#define Debug(message, obj)
 #endif
+
 
 #ifdef __cplusplus
 };

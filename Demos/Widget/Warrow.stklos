@@ -44,7 +44,7 @@
 		       (if (> (winfo 'depth cnv) 1)
 			    `(:fill "SkyBlue1")
 			    `(:fill black 
-			      :stipple ,(& "@" *stk-library* "/images/grey.25"))))
+			      :stipple ,(& "@" *stk-library* "/Images/grey.25"))))
 
     (let ((xtip    (- x2 (* 10 b)))
 	  (delta-y (+ (* 10 c) (* 5 width))))

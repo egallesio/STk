@@ -4,8 +4,7 @@
 ;;;; This demonstration script displays two image widgets.
 ;;;;
 
-(require "Button")
-(require "Image")
+(require "Tk-classes")
 
 (define (demo-image1)
   (let ((w (make-demo-toplevel "image1"

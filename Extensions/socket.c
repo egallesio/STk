@@ -1,7 +1,5 @@
 /*
  * This file is based on a contribution of David Tolpin (dvd@pizza.msk.su)
- * It is an implementation of BSD-INET sockets and is known to run on 
- * Solaris 1 and Linux.
  *
  * Bugs correction (conversion between host and network byte order) by
  * Marc Furrer (Marc.Furrer@di.epfl.ch)
@@ -11,7 +9,7 @@
  * 
  * Win32 support by Caleb Deupree <cdeupree@erinet.com>
  *
- * Last file update: 25-Sep-1996 21:33
+ * Last file update: 31-Jan-1998 10:29
  */
 
 
@@ -117,7 +115,7 @@ static void set_socket_io_ports(int s, SCM sock, char *who)
   port     = SOCKET(sock)->portnum;
   hostname = CHARS(SOCKET(sock)->hostname);
   len      = strlen(hostname) + 20;
-  fname    =  (char*) must_malloc(len);
+  fname    = (char*) must_malloc(len);
   sprintf(fname, "%s:%d", hostname, port);
 
   /* Create input port */
@@ -293,7 +291,7 @@ static void apply_socket_closure(SCM closure)
 static PRIMITIVE when_socket_ready(SCM s, SCM closure)
 {
   char str[50];
-  Tcl_File f;
+  int fd;
 
   if (NSOCKETP(s))
     Err("when-socket-ready: bad socket", s);
@@ -303,17 +301,17 @@ static PRIMITIVE when_socket_ready(SCM s, SCM closure)
     return SOCKET(s)->ready_event;
   }
   
-  f = Tcl_GetFile((ClientData) SOCKET(s)->fd,  TCL_UNIX_FD);
-  
+  fd = SOCKET(s)->fd;
+ 
   if (closure == Ntruth) {
-    Tcl_DeleteFileHandler(f);    
+    Tcl_DeleteFileHandler(fd);    
     SOCKET(s)->ready_event = Ntruth;
   }
   else {
     if (STk_procedurep(closure) == Ntruth) 
       Err("when-socket-ready: bad closure", closure);
 
-    Tcl_CreateFileHandler(f, TCL_READABLE, (Tcl_FileProc *) apply_socket_closure, 
+    Tcl_CreateFileHandler(fd, TCL_READABLE, (Tcl_FileProc *) apply_socket_closure, 
 			  (ClientData) closure);
     SOCKET(s)->ready_event = closure;
   }
@@ -331,41 +329,49 @@ static PRIMITIVE buggy_handler(SCM s, SCM closure)
  *
  ******************************************************************************/
 
-static void shutdown_port(SCM port)
-{
-  int fd;
-  FILE *f;
-
-  fd  = fileno(PORT_FILE(port));
-  if (!(PORT_FLAGS(port) & PORT_CLOSED)) /* not already closed */ shutdown(fd, 2);
-}
-
 static PRIMITIVE socket_shutdown(SCM sock, SCM close_socket)
 {
+  SCM tmp1, tmp2;
+
   if (close_socket == UNBOUND) close_socket = Truth;
 
   if (NSOCKETP(sock)) 	       Err("socket-shutdown: bad socket", sock);
   if (NBOOLEANP(close_socket)) Err("socket-shutdown: bad boolean", close_socket);
 
   if (close_socket == Truth && SOCKET(sock)->fd > 0) {
+    int fd = SOCKET(sock)->fd;
+
     if (!STk_snow_is_running)
       /* We cannot use #ifdef USE_TK here to have the same socket.so
        * for both snow and stk. So we have to test if we are running 
        * snow dynamically
        */
-      Tcl_DeleteFileHandler(Tcl_GetFile((ClientData) SOCKET(sock)->fd, 
-					TCL_UNIX_FD));
-    close(SOCKET(sock)->fd);
+      Tcl_DeleteFileHandler(fd);
+    /* close(fd); */
+    shutdown(fd, 2);
     SOCKET(sock)->fd = -1;
   }
  
-  shutdown_port(SOCKET(sock)->input);  
-  shutdown_port(SOCKET(sock)->output); 
-  
-  /* Unset input and ouput pointers. By doing that, GC will close the
-   * input and ouput files later.
+  /* 
+   * Warning: input and output can have already be garbaged :if the socket is 
+   * no more used, the input and output are not marked as used and can
+   * (eventually) be released before the call to shutdown (through free_socket)
+   * be done. One way could be to just set SOCKET(sock)->{in|out}put to #t
+   * and wait that next GC frees the ports if not already down. However,
+   * this will really disconnect the peer when the GC occurs rather than when
+   * the call to shutdown is done. This is not important if this function 
+   * is called by the GC, but could be annoying when it is called by the user
    */
-  SOCKET(sock)->input = SOCKET(sock)->output = Ntruth;
+
+  if (INP(SOCKET(sock)->input)) {
+    STk_close_port(SOCKET(sock)->input);
+    SOCKET(sock)->input = Ntruth;
+  }
+  if (OUTP(SOCKET(sock)->output)) {
+    STk_close_port(SOCKET(sock)->output);
+    SOCKET(sock)->output = Ntruth;
+  }
+
   return UNDEFINED;
 }
 
@@ -498,7 +504,8 @@ static STk_extended_scheme_type socket_type = {
   mark_socket, 		/* gc_mark_fct */
   free_socket,		/* gc_free_fct */
   NULL,			/* apply_fct */
-  displ_socket		/* display_fct */
+  displ_socket,		/* display_fct */
+  NULL			/* compare function */
 };
 
 /******************************************************************************/

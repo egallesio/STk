@@ -1,0 +1,26 @@
+;;;;
+;;;; T k - a c t i v e . s t k l o s   	  --  Tk-active-metaclass definition
+;;;;
+;;;; Copyright © 1996-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; $Id: Tk-active.stklos 1.3 Wed, 04 Feb 1998 11:34:59 +0100 eg $
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 21-Oct-1996 12:24
+;;;; Last file update:  3-Feb-1998 11:17
+;;;
+
+(select-module STklos+Tk)
+
+(define-class <Tk-active-metaclass> (<Tk-metaclass> <Active-metaclass>)
+  ())
+
+(provide "Tk-active")

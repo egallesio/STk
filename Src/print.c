@@ -1,7 +1,7 @@
 /*
  * p r i n t . c				-- writing stuff
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -15,14 +15,20 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
+ * $Id: print.c 1.3 Mon, 09 Mar 1998 09:31:40 +0100 eg $
+ *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: ??-Oct-1993 ??:?? 
- * Last file update:  9-Jun-1996 23:53
+ * Last file update:  9-Mar-1998 09:26
  *
  */
 
 #include "stk.h"
 #include "extend.h"
+#include "module.h"
+#ifdef USE_STKLOS
+#  include "stklos.h"
+#endif
 
 static char valid_symbol_chars[]=
 		"abcdefghijklmnopqrstuvwxyz0123456789+-.*/<=>!?:$%_&~^";
@@ -43,6 +49,7 @@ static void printlist(SCM exp, SCM port, int mode)
   }
 }
 
+
 static void printsymbol(char *s, FILE *f, int mode)
 {
   if (mode==WRT_MODE) {	/* See if we need to enclose pname between a "|" pair */
@@ -57,20 +64,35 @@ static void printsymbol(char *s, FILE *f, int mode)
   Puts(s, f);
 }
 
+
 #ifdef USE_STKLOS
-static void display_instance(SCM instance, SCM port, int type)
+void internal_display_instance(SCM instance, SCM port)
+{
+  sprintf(STk_tkbuffer, "#[instance %lx]", (unsigned long) instance);
+  Puts(STk_tkbuffer, PORT_FILE(port));
+}
+
+void display_instance(SCM instance, SCM port, int type)
 {
   char *fct_name;
+  SCM fct;
 
-  if (type == DSP_MODE)   fct_name = "display-object"; else
-  if (type == WRT_MODE)   fct_name = "write-object";   else
-  /* (type == TK_MODE) */ fct_name = "tk-write-object";
+  switch (type) {
+    case DSP_MODE:   fct_name = "display-object";  break;
+    case WRT_MODE:   fct_name = "write-object";    break;
+    case TK_MODE:    fct_name = "tk-write-object"; break;
+    case PANIC_MODE: internal_display_instance(instance, port); return;
+  }
 
-  Apply(VCELL(STk_intern(fct_name)), LIST2(instance, port));
+  fct = STk_STklos_value(Intern(fct_name));
+  if (fct == UNBOUND) 
+    internal_display_instance(instance, port);
+  else 
+    Apply(fct, LIST2(instance, port));
 }
 #endif
 
-           
+
 SCM STk_print(SCM exp, SCM port, int mode)
 {
   FILE *f = PORT_FILE(port);
@@ -97,7 +119,7 @@ SCM STk_print(SCM exp, SCM port, int mode)
       {
 	char buffer[100];
 
-	char *s = STk_number2Cstr(exp, 10, buffer);
+	char *s = STk_number2Cstr(exp, 10L, buffer);
 	Puts(s, f);
 	if (TYPE(exp) == tc_bignum) free(s);
       }
@@ -125,8 +147,11 @@ SCM STk_print(SCM exp, SCM port, int mode)
       Putc(']', f);
       break;
     case tc_closure:
-      if (mode != TK_MODE) 
-	sprintf(STk_tkbuffer, "#[closure %lx]", (unsigned long) exp);
+      if (mode != TK_MODE) {
+	Puts("#[closure arglist=", f);
+	STk_print(CLOSPARAMS(exp), port, mode);
+	sprintf(STk_tkbuffer, " %lx]", (unsigned long) exp);
+      }
       else 
 	sprintf(STk_tkbuffer, "#p%lx", (unsigned long) exp);
       Puts(STk_tkbuffer, f);
@@ -140,15 +165,15 @@ SCM STk_print(SCM exp, SCM port, int mode)
       break;      
     case tc_string:
       {
-	register char *p  = CHARS(exp);
-	register int  len = STRSIZE(exp);
+	register unsigned char *p  = (unsigned char *) CHARS(exp);
+	register int	       len = STRSIZE(exp);
 
 	if (mode!=DSP_MODE) Putc('"', f);
 	
 	for (  ; len; len--, p++) {
 	  if (mode != DSP_MODE)
 	    switch (*p) {
-	      case '\0' : Puts("\\0000", f); break;
+	      case '\0' : Puts("\\0", f); break;
 	      case '\a' : Puts("\\a", f); break;
 	      case '\b' : Puts("\\n", f); break;
 	      case '\f' : Puts("\\f", f); break;
@@ -223,12 +248,22 @@ SCM STk_print(SCM exp, SCM port, int mode)
       sprintf(STk_tkbuffer, "#[global %s]", PNAME(VCELL(exp)));
       Puts(STk_tkbuffer, f);
       break;
+    case tc_modulevar:
+      sprintf(STk_tkbuffer, "#[modulevar %s:%s]", 
+	      PNAME(MOD_NAME(CDR(CAR(exp)))),
+	      PNAME(CAR(CAR(exp))));
+      Puts(STk_tkbuffer, f);
+      break;
+
     case tc_cont:
       sprintf(STk_tkbuffer, "#[continuation %lx]", (unsigned long) exp);
       Puts(STk_tkbuffer, f);
       break;
     case tc_env:
-      sprintf(STk_tkbuffer, "#[environment %lx]", (unsigned long) exp);
+      if (mode != TK_MODE) 
+	sprintf(STk_tkbuffer, "#[environment %lx]", (unsigned long) exp);
+      else 
+	sprintf(STk_tkbuffer, "#p%lx", (unsigned long) exp);
       Puts(STk_tkbuffer, f);
       break;
     case tc_address:
@@ -245,12 +280,28 @@ SCM STk_print(SCM exp, SCM port, int mode)
     case tc_Cpointer:
       STk_Cpointer_display(exp, port, mode);
       break;
+    case tc_module:
+      sprintf(STk_tkbuffer, "#[module %s]", PNAME(STk_module_name(exp)));
+      Puts(STk_tkbuffer, f);
+      break;
+    case tc_frame:
+      sprintf(STk_tkbuffer, "#[frame %lx]", (unsigned long) exp);
+      Puts(STk_tkbuffer, f);
+      break;
+    case tc_values:
+      Puts("#[values", f);
+      if (!NULLP(CAR(exp))) {
+	Putc(' ', f);
+	printlist(CAR(exp), port, mode);
+      }
+      Putc(']', f);
+      break;
 #ifdef USE_STKLOS
     case tc_instance:
       display_instance(exp, port, mode);
       break;
     case tc_next_method:
-      sprintf(STk_tkbuffer, "#[next_method %lx]", (unsigned long) exp);
+      sprintf(STk_tkbuffer, "#[next-method %lx]", (unsigned long) exp);
       Puts(STk_tkbuffer, f);
       break;
 #endif
@@ -259,6 +310,13 @@ SCM STk_print(SCM exp, SCM port, int mode)
       if (mode != TK_MODE) Puts("#[Tk-command ", f);
       Puts(exp->storage_as.tk.data->Id, f);
       if (mode != TK_MODE) Putc(']', f);
+      break;
+    case tc_tclobject:
+      if (mode == TK_MODE) 
+	STk_print(CAR(exp), port, WRT_MODE);
+      else
+	sprintf(STk_tkbuffer, "#[Tcl-obj %lx]", (unsigned long) exp);
+        Puts(STk_tkbuffer, f);
       break;
 #endif
     case tc_quote:
@@ -323,5 +381,158 @@ SCM STk_print(SCM exp, SCM port, int mode)
 	Puts(STk_tkbuffer, f);
       }
   }
+  return UNDEFINED;
+}
+
+/* Printing of circular structures */
+
+static struct Tcl_HashTable cycle_table;
+static int index_label;
+static void pass1(SCM exp);		/* pass 1: mark cells */
+static SCM pass2(SCM exp, SCM port);	/* pass 2: print      */
+
+static int get_def_label(SCM exp)
+{
+  Tcl_HashEntry *entry;
+  int new;
+  SCM val;
+
+  entry = Tcl_FindHashEntry(&cycle_table, (char*) exp);
+  if (!entry) panic("Internal error within STk_print_label");
+  val = (SCM) Tcl_GetHashValue(entry);
+  
+  if (INTEGERP(val)) {
+    Tcl_SetHashValue(entry, Cons(val, val));
+    return INTEGER(val);
+  }
+  return -1;
+}
+
+static int get_use_label(SCM exp)
+{
+  Tcl_HashEntry *entry;
+
+  entry = Tcl_FindHashEntry(&cycle_table, (char*) exp);
+  if (entry) {
+    SCM val = (SCM) Tcl_GetHashValue(entry);
+    
+    if (CONSP(val)) return INTEGER(CAR(val));
+  }
+  return -1;
+}
+
+
+static void printlist_star(SCM exp, SCM port)
+{
+  FILE *f = PORT_FILE(port);
+  char buffer[50];
+  int label;
+
+  if ((label = get_def_label(exp)) >= 0) {
+    sprintf(buffer, "#%d=", label);
+    Puts(buffer, f);
+  }
+
+  Putc('(', f); 
+  
+  for ( ; ; ) {
+    if ((label = get_use_label(CAR(exp))) >= 0) {
+      sprintf(buffer, "#%d#", label);
+      Puts(buffer, f);
+    }
+    else pass2(CAR(exp), port);
+    
+    exp = CDR(exp);
+
+    if (NULLP(exp)) break;
+    if  ((label = get_use_label(exp)) >= 0) {
+      sprintf(buffer, " . #%d#", label);
+      Puts(buffer, f);
+      break;
+    }
+    if (NCONSP(exp)) {
+      Puts(" . ", f);
+      pass2(exp, port);
+      break;
+    }
+    Putc(' ', f);
+  }
+  Putc(')', f);
+}
+
+static void printvector_star(SCM exp, SCM port)
+{
+  FILE *f = PORT_FILE(port);
+  char buffer[50];
+  int i, label, len = VECTSIZE(exp);;
+
+  if ((label = get_def_label(exp)) >= 0) {
+    sprintf(buffer, "#%d=", label);
+    Puts(buffer, f);
+  }
+
+  Puts("#(", f);
+  
+  for (i = 0; i < len; i++) {
+    SCM tmp = VECT(exp)[i];
+    if ((label = get_use_label(tmp)) >= 0) {
+      sprintf(buffer, "#%d#", label);
+      Puts(buffer, f);
+    }
+    else pass2(tmp, port);
+    if (i < len-1) Putc(' ', f);
+  }
+  Putc(')', f);
+}
+
+static void pass1(SCM exp)
+{
+  Tcl_HashEntry *entry;
+  int new;
+
+  if (NCONSP(exp) && NVECTORP(exp)) return;
+
+  entry = Tcl_CreateHashEntry(&cycle_table, (char *) exp, &new);
+  if (new) {
+    /* We have never seen this cell */
+    Tcl_SetHashValue(entry, Truth);
+    switch (TYPE(exp)) {
+      case tc_cons:   pass1(CAR(exp)); pass1(CDR(exp)); break;
+      case tc_vector: {
+			int i, len = VECTSIZE(exp);
+			for (i = 0; i < len; i++) pass1(VECT(exp)[i]);
+      		      }
+      		      break;
+    }
+  }
+  else {
+    SCM val = (SCM) Tcl_GetHashValue(entry);
+    if (val == Truth)
+      /* No label has been assigned to this cell. Provide one */
+      Tcl_SetHashValue(entry, (char *) STk_makeinteger(index_label++));
+  }
+}
+
+static SCM pass2(SCM exp, SCM port)
+{
+  FILE *f = PORT_FILE(port);
+
+  switch (TYPE(exp)) {
+    case tc_cons:   printlist_star(exp, port);   break;
+    case tc_vector: printvector_star(exp, port); break;
+    default:  STk_print(exp, port, WRT_MODE);
+  }
+}
+
+SCM STk_print_star(SCM exp, SCM port)
+{
+  if (NCONSP(exp) &&  NVECTORP(exp)) 
+    return STk_print(exp, port, WRT_MODE);
+  
+  Tcl_InitHashTable(&cycle_table, TCL_ONE_WORD_KEYS);
+  index_label = 0;
+
+  pass1(exp);
+  pass2(exp, port);
   return UNDEFINED;
 }

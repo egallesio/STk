@@ -3,7 +3,7 @@
 ;;;;				   display
 ;;;;
 ;;;;
-;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -16,10 +16,11 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 15-Sep-1993 14:11
-;;;; Last file update:  7-Jul-1996 17:14
+;;;; Last file update:  1-Feb-1998 15:47
 ;;;;
 
 (require "dialog")
+(select-module Tk)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;
@@ -77,7 +78,8 @@
 
       (toplevel top)
       (wm 'title top (format #f "~S" e))
-      (pack (frame f1) (frame f2) :expand #t :fill "both" :side "top")
+      (pack (frame f1) :expand #t :fill "both" :side "top")
+      (pack (frame f2) :expand #f :fill "x" :side "top")
 
       ;;;;;  Listbox and its scrollbar
       (set! lst (listbox lst :width 70 :height (max 2 (min (length el) 20))
@@ -234,6 +236,9 @@
 	    head 
 	    message 
 	    (if (equal? who "") "" (string-append ": " who)))
+
+    ;; Remove grab (if any) to allow interactions in the the next dialog
+    (for-each (lambda (x) (grab 'release x)) (winfo 'children *root*))
 
     ;; Open dialog box
     (stk::make-dialog 

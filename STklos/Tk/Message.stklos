@@ -1,7 +1,7 @@
 ;;;;
 ;;;; M e s s a g e . s t k 	  --  Message class definition
 ;;;;
-;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -11,12 +11,18 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
+;;;; $Id: Message.stklos 1.2 Sat, 24 Jan 1998 15:12:00 +0100 eg $
+;;;;
 ;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;    Creation date:  3-Mar-1994 23:10
-;;;; Last file update: 26-Sep-1995 23:58
+;;;; Last file update: 24-Jan-1998 13:41
 
 
 (require "Basics")
+
+(select-module STklos+Tk)
+
+;; No exports
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;

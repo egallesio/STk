@@ -3,7 +3,7 @@
  *  g c . c			-- Mark and Sweep Garbage Collector 
  *
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -20,7 +20,7 @@
  *
  *            Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 17-Feb-1993 12:27
- * Last file update: 29-Aug-1996 11:46
+ * Last file update:  8-Apr-1998 18:53
  *
  */
 
@@ -69,9 +69,9 @@ static double   time_gc_start;
 
 static struct gc_protected  *protected_registers = NULL;
 
-static no_memory(void)
+static void no_memory(void)
 {
-  STk_panic("**** No more memory. Cannot allocate a new heap. Stop\n");
+  STk_panic("No more memory. Cannot allocate a new heap.");
 }
 
 static void allocate_new_heap(void)
@@ -112,42 +112,6 @@ static void allocate_new_heap(void)
 	    		heaps_used, heaps_length);
 }
 
-static void gc_start(void)
-{
-  time_gc_start       = STk_my_time();
-  gc_calls           += 1;
-  gc_cells_collected  = 0;
-  gc_verbose	      = (VCELL(Intern(GC_VERBOSE)) != Ntruth);
-
-  if (gc_verbose) fprintf(STk_stderr, ";; [starting GC]\n");
-}
-
-static void gc_end(void)
-{
-  long total_cells, used_cells;
-  double time_for_this_gc;
-
-  total_cells = heaps_used * heap_size;
-  used_cells  = total_cells - gc_cells_collected;
-
-  time_for_this_gc   = STk_my_time() - time_gc_start;
-  STk_total_gc_time += time_for_this_gc;
-
-  /* 
-   * If heap is more than 75% filled after gc, allocate a new heap to 
-   * avoid continuous GCs
-   */
-  if (((float) used_cells / total_cells) > 0.75) allocate_new_heap();
-
-  STk_gc_requested = 0;
-
-  if (gc_verbose) 
-    fprintf(STk_stderr, ";; [end of GC (cells used: %ld/%ld; time: %.2fms)]\n", 
-	    	        used_cells, total_cells, time_for_this_gc);
-  STk_handle_signal(SIGHADGC);
-}
-
-
 void STk_gc_count_cells(long *allocated, long *used, long* calls)
 {
   register SCM ptr, heap_org, heap_end;
@@ -166,8 +130,6 @@ void STk_gc_count_cells(long *allocated, long *used, long* calls)
   *used      = used_cells;
   *calls     = (long) gc_calls;
 }
-
-
 
 
 int STk_valid_address(SCM p)	/* True if p is a valid address. Used for #Pxyz */
@@ -211,8 +173,8 @@ Top:
      case tc_ssubr:	  return;
      case tc_fsubr:	  return;
      case tc_syntax:	  return;
-     case tc_closure:	  gc_mark(ptr->storage_as.closure.code);
-			  ptr = ptr->storage_as.closure.env;
+     case tc_closure:	  gc_mark(CLOSCODE(ptr));
+			  ptr = CLOSENV(ptr);
 			  goto Top;
      case tc_free_cell:	  /* -----> Error */
      case tc_char:	  return;
@@ -235,14 +197,17 @@ Top:
      case tc_macro:	  ptr = ptr->storage_as.macro.code; goto Top;
      case tc_localvar:	  ptr = ptr->storage_as.localvar.symbol; goto Top;
      case tc_globalvar:	  ptr = VCELL(ptr); goto Top;
+     case tc_modulevar:	  ptr = CAR(ptr); goto Top;
      case tc_cont:	  ptr = STk_mark_continuation(ptr);
        			  goto Top;
      case tc_env:
      case tc_address:	  ptr = ptr->storage_as.env.data;
 			  goto Top;
-     case tc_autoload:	  ptr = CAR(ptr);
-       			  goto Top;
+     case tc_autoload:	  gc_mark(CAR(ptr)); ptr = CDR(ptr); goto Top;
      case tc_Cpointer:    return;
+     case tc_module:      STk_mark_module(ptr); return;
+     case tc_frame:	  gc_mark(CAR(ptr));ptr = CDR(ptr); goto Top;
+     case tc_values:	  ptr = CAR(ptr); goto Top;
 #ifdef USE_STKLOS
      case tc_instance: 	  {
        			    /* ACCESSORS_OF(ptr) doesn't need to be marked since it 
@@ -259,6 +224,8 @@ Top:
 #endif
 #ifdef USE_TK
      case tc_tkcommand:	  ptr = ptr->storage_as.tk.l_data; goto Top;
+     case tc_tclobject:	  ptr = CAR(ptr); if (ptr) goto Top;
+       			  return;
 #endif
      case tc_quote:	  return;
      case tc_lambda:	  return;
@@ -334,13 +301,17 @@ static void gc_sweep(void)
 	  case tc_macro:       break;
 	  case tc_localvar:    break;
 	  case tc_globalvar:   break;
+	  case tc_modulevar:   break;
 	  case tc_cont:	       free(ptr->storage_as.cont.data); break;
 	  case tc_env:	       break;
 	  case tc_address:     break;
 	  case tc_autoload:    break;
 	  case tc_Cpointer:    if (!EXTSTATICP(ptr)) free(EXTDATA(ptr)); break;
+	  case tc_module:      STk_free_module(ptr); break;
+	  case tc_frame:       break;
+	  case tc_values:      break;
 #ifdef USE_STKLOS
-	  case tc_instance:    free(INST(ptr)); 	break;
+	  case tc_instance:    STk_free_instance(ptr); 	break;
 	  case tc_next_method: break;
 #endif
 #ifdef USE_TK
@@ -349,6 +320,7 @@ static void gc_sweep(void)
 				     (STk_main_interp, ptr->storage_as.tk.data->Id);
 			       free(ptr->storage_as.tk.data);
 			       break;
+	  case tc_tclobject:   break;
 #endif
 	  case tc_quote:       break;
 	  case tc_lambda:      break;
@@ -425,6 +397,9 @@ static void mark_protected(void)
   /* Mark all objects accessible from obarray */
   STk_mark_symbol_table();
 
+  /* Mark the module table */
+  STk_mark_module_table();
+
   /* Mark the signal table */
   STk_mark_signal_table();
 
@@ -438,43 +413,83 @@ static void mark_protected(void)
 }
 
 
+static void gc_start(void)
+{
+  time_gc_start       = STk_my_time();
+  gc_calls           += 1;
+  gc_cells_collected  = 0;
+  gc_verbose	      = STk_lookup_variable(GC_VERBOSE, NIL) != Ntruth;
+
+  if (gc_verbose) fprintf(STk_stderr, ";; [starting GC]\n");
+}
+
+static void gc_end(void)
+{
+  long total_cells, used_cells;
+  double time_for_this_gc;
+
+  total_cells = heaps_used * heap_size;
+  used_cells  = total_cells - gc_cells_collected;
+
+  time_for_this_gc   = STk_my_time() - time_gc_start;
+  STk_total_gc_time += time_for_this_gc;
+
+  /* 
+   * If heap is more than 75% filled after gc, allocate a new heap to 
+   * avoid continuous GCs
+   */
+  if (((float) used_cells / total_cells) > 0.75) allocate_new_heap();
+
+  STk_gc_requested = 0;
+
+  if (gc_verbose) 
+    fprintf(STk_stderr, ";; [end of GC (cells used: %ld/%ld; time: %.2fms)]\n", 
+	    	        used_cells, total_cells, time_for_this_gc);
+}
+
 static void gc_mark_and_sweep(void)
 {
-  SCM stack_end;	/* The topmost variable allocated on stack */
+  long prev_context = Error_context;
+  SCM stack_end;     /* The topmost variable (at least a SCM) allocated on stack */
 
+
+  /**** Disallow interrupts while GC'ing because signal handlers may cons */
+  STk_ignore_signals();
+  Error_context = ERR_FATAL;
   gc_start();
-  setjmp(save_regs_gc_mark);
+
+  /**** Marking phase */
+  setjmp(save_regs_gc_mark);  					    /* registers */
   STk_mark_stack((SCM *) save_regs_gc_mark,
 		 (SCM *) (((char *) save_regs_gc_mark)+sizeof(save_regs_gc_mark)));
-  mark_protected();
-  STk_mark_stack((SCM *) STk_stack_start_ptr, (SCM *) &stack_end);
+  STk_mark_stack((SCM *) STk_stack_start_ptr, (SCM *) &stack_end);  /* stack */
+  mark_protected();						    /* globals */
 
+  /**** Sweep phase */
   gc_sweep();
+
+  /* Re-allow signals */
   gc_end();
+  Error_context = prev_context;
+  STk_allow_signals();
+
+  /* send the pseudo-signal SIGHADGC to say that we had a finished GC'ing */
+  STk_signal_GC();
 }
 
 void STk_gc_for_newcell(void)
 {
   if (Error_context != ERR_FATAL) {
-    STk_disallow_sigint();
-    Error_context = ERR_FATAL;
     gc_mark_and_sweep();
-    Error_context = ERR_OK;
-    STk_allow_sigint();
     if (NNULLP(STk_freelist)) return;
   }
-  Err("Out of storage",NIL);
+  STk_panic("Out of storage");
 }
 
 
 PRIMITIVE STk_gc(void)
 {
-  STk_disallow_sigint();
-  Error_context = ERR_FATAL;
   gc_mark_and_sweep();
-  Error_context = ERR_OK;
-  STk_allow_sigint();
-
   return UNDEFINED;
 }
 
@@ -542,7 +557,7 @@ PRIMITIVE STk_gc_stats(void)
   return UNDEFINED;
 }
 
-
+#ifdef DEBUG_STK
 PRIMITIVE STk_find_cells(SCM type)
 {
   SCM ptr, z, heap_org, heap_end;
@@ -575,14 +590,15 @@ PRIMITIVE STk_find_cells(SCM type)
   }
   return z;
 }
+#endif
 
 PRIMITIVE STk_expand_heap(SCM arg)
 {
   int i, number_of_heaps, wanted;
 
-  if (NINTEGERP(arg)) Err("expand-heap: bad integer", arg);
+  if (NINTEGERP(arg)) Err("expand-heap: bad value", arg);
 
-  gc_verbose      = VCELL(Intern(GC_VERBOSE))!=Ntruth;
+  gc_verbose      = STk_lookup_variable(GC_VERBOSE, NIL) != Ntruth;
   wanted	  = INTEGER(arg);
   number_of_heaps = (wanted + heap_size - 1) / heap_size;
   
@@ -590,6 +606,10 @@ PRIMITIVE STk_expand_heap(SCM arg)
     allocate_new_heap();
   return UNDEFINED;
 }
+
+/*=============================================================================*/
+/*				i n i t 				       */
+/*=============================================================================*/
 
 #ifndef max
 #define max(a,b) (((a)<(b))?(b):(a))

@@ -12,7 +12,7 @@
 #
 #           Author: Erick Gallesio [eg@kaolin.unice.fr]
 #    Creation date:  6-Mar-1994 15:49
-# Last file update: 21-Jul-1996 22:27
+# Last file update: 10-Oct-1996 09:35
 
 include ../config.make
 
@@ -41,6 +41,7 @@ socket.$(SH_SUFFIX): 	socket.o
 posix.$(SH_SUFFIX):	posix.o
 html.$(SH_SUFFIX):	html.o
 pixmap.$(SH_SUFFIX):	pixmap.o
+jpeg.$(SH_SUFFIX):	jpeg.o
 examples: $(EXAMPLES)
 
 install:

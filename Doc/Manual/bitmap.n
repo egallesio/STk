@@ -111,4 +111,4 @@ this case the procedure returns an empty string.
 \fBimage create bitmap\fR procedure.
 
 .SH SEE ALSO
-image, photo, pixmap
+make-image, image, jpeg, photo, pixmap

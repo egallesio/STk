@@ -1,7 +1,7 @@
 /*
  * r e a d  . c				-- reading stuff
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -15,21 +15,24 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
+ * $Id: read.c 1.3 Sun, 01 Feb 1998 23:14:16 +0100 eg $
+ *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: ??-Oct-1993 ??:?? 
- * Last file update: 17-May-1996 18:39
+ * Last file update:  1-Feb-1998 18:27
  *
  */
 
 #include <ctype.h>
 #include "stk.h"
+#include "module.h"
 
 static SCM lreadr(FILE *f, int case_significant);
 
 
 static int flush_ws(FILE *f, char *message)
 {
-  int c, commentp=0;
+  int c;
 
   c = Getc(f);
   for ( ; ; ) {
@@ -52,7 +55,7 @@ static SCM lreadlist(FILE *f, char delim, int case_significant)
   int c;
   SCM tmp;
   
-  c = flush_ws(f, "end of file inside list");
+  c = flush_ws(f, "End of file inside list");
   if (c == delim) return(NIL);
 
   /* Read the car */
@@ -62,8 +65,8 @@ static SCM lreadlist(FILE *f, char delim, int case_significant)
   /* Read the cdr */
   if (EQ(tmp, Sym_dot)) {
     tmp = lreadr(f, case_significant);
-    c = flush_ws(f, "end of file inside list");
-    if (c != delim) Err("missing close paren", NIL);
+    c = flush_ws(f, "End of file inside list");
+    if (c != delim) Err("Missing close parenthesis", NIL);
     return(tmp);
   }
   return(Cons(tmp, lreadlist(f, delim, case_significant)));
@@ -122,8 +125,12 @@ static SCM lreadtoken(FILE *f, int c, int case_significant)
 
   if (z == Ntruth)
     /* It is not a number */
-    return (*STk_tkbuffer == ':') ? STk_makekey(STk_tkbuffer): Intern(STk_tkbuffer);
-
+    switch (*STk_tkbuffer) {
+      case ':': return STk_makekey(STk_tkbuffer);
+      case '#': Err("bad # syntax", STk_makestring(STk_tkbuffer));
+      default : return Intern(STk_tkbuffer);
+    }
+  
   /* Return the number read */
   return z;
 }
@@ -141,7 +148,7 @@ static SCM lreadstring(FILE *f)
   while(((c = Getc(f)) != '"') && (c != EOF)) { 
     if (c == '\\') {
       c = Getc(f);
-      if (c == EOF) Err("eof after \\", NIL);
+      if (c == EOF) Err("Eof after \\", NIL);
       switch(c) {
         case 'b' : c = '\b'; break;	/* Bs  */
 	case 'e' : c = 0x1b; break;	/* Esc */
@@ -151,7 +158,7 @@ static SCM lreadstring(FILE *f)
         case '\n': STk_line_counter += 1; continue;
 	case '0' : for( k=n=0 ; ; k++ ) {
 		     c = Getc(f);
-		     if (c == EOF) Err("eof after \\0", NIL);
+		     if (c == EOF) Err("Eof after \\0", NIL);
 	             if (isdigit(c) && (c < '8') && k < 3) /* Max = 3 digits */
 		        n = n * 8 + c - '0';
 		     else {
@@ -173,7 +180,7 @@ static SCM lreadstring(FILE *f)
     j++;
     *p++ = c;
   }
-  if (c == EOF) Err("end of file while reading a string", NIL);
+  if (c == EOF) Err("End of file while reading a string", NIL);
   *p = '\0';
   
   z = STk_makestrg(j, buffer);
@@ -187,7 +194,7 @@ static SCM lreadr(FILE *f, int case_significant)
   int c;
 
   for ( ; ; ) {
-    c = flush_ws(f, "end of file inside read encountered");
+    c = flush_ws(f, "End of file inside read encountered");
     
     switch (c) {
       case '(':
@@ -196,7 +203,7 @@ static SCM lreadr(FILE *f, int case_significant)
 	return(lreadlist(f, ']', case_significant));
       case ')':
       case ']':
-	fprintf(STk_stderr, "\nunexpected close parenthesis");
+	fprintf(STk_stderr, "\nUnexpected close parenthesis");
 	if (STk_current_filename != UNBOUND)	
 	  fprintf(STk_stderr, " at line %d in file %s", 
 		  	      STk_line_counter, CHARS(STk_current_filename));
@@ -219,13 +226,24 @@ static SCM lreadr(FILE *f, int case_significant)
 		       return STk_vector(l, STk_llength(l));
 	  	     }
 	  case '!' : while ((c=Getc(f)) != '\n')
-	               if (c == EOF) Err("eof encountered in a #! notation", NIL);
+	               if (c == EOF) return STk_eof_object;
 		     Ungetc(c, f);
 	             continue;
+	  case '|':  do
+	    		do
+			  if (c == '\n') STk_line_counter += 1;
+			while ((c != EOF) && (c = Getc(f)) != '|');
+		     while ((c != EOF) && (c = Getc(f)) != '#');
+
+ 	  	     c = flush_ws(f, (char *) NULL);
+		     if (c == EOF) return STk_eof_object;
+		     Ungetc(c,f);
+	  	     continue;		     
 	  case 'p':
 	  case 'P': lreadword(f, Getc(f), TRUE);
 	    	    return STk_address2object(STk_tkbuffer);
-	  case '.': return STk_eval(lreadr(f, case_significant), NIL);
+	  case '.': return STk_eval(lreadr(f, case_significant), 
+				    MOD_ENV(STk_selected_module));
 	  default:  Ungetc(c, f); return lreadtoken(f, '#', FALSE);
 	}
       case ',': {

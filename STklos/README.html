@@ -1,0 +1,118 @@
+<HTML>
+<HEAD>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+   <META NAME="GENERATOR" CONTENT="Mozilla/4.04 [en] (X11; I; Linux 2.0.33 i586) [Netscape]">
+</HEAD>
+<BODY>
+
+<CENTER>
+<H1>
+<B>STklos version 4.0</B></H1></CENTER>
+&nbsp;
+<H3>
+What is STklos</H3>
+STklos is an extension of STk which provides &agrave; la CLOS objets to
+STk. This implementation is based on the
+<BR>implementation of version 1.3 of the Tiny CLOS&nbsp; package defined
+by Gregor Kickzales (available by ftp at <A HREF="ftp://parcftp.xerox.com/pub/mop/">parcftp.xerox.com:/pub/mop/*</A>).
+<H3>
+Compiling STklos</H3>
+STklos is compiled during the interpreter construction. You don't have
+to do something in this directory.
+<H3>
+Simple Test of STklos</H3>
+STklos needs some files to run properly. Until you have installed it in
+its definitive place, you have to:
+<OL>
+<LI>
+&nbsp; set your default directory to STklos</LI>
+
+<LI>
+&nbsp; use the the shell script ../Src/test-stk to run the interpreter</LI>
+</OL>
+So, you just have to type
+<UL><TT>$ cd STklos; ../Src/test-stk</TT></UL>
+To test, that everything is OK, you can try:
+<UL><TT>(let ()</TT>
+<BR><TT>&nbsp; (define-class A () ((a :initform 10) b))</TT>
+<BR><TT>&nbsp; (define inst (make A))</TT>
+<BR><TT>&nbsp; (slot-set! inst 'b 20)</TT>
+<BR><TT>&nbsp; (+ (slot-ref inst 'a) (slot-ref inst 'b)))</TT></UL>
+which should yield 30 if everything is correct.
+<H3>
+Using STklos with the Tk toolkit</H3>
+A set of classes have been defined to use Tk with object flavor. All the
+Tk widgets have been&nbsp; wrapped in STklos. classes.The following example
+creates a three buttons panel (button 1 &amp; 2 being on top of button
+3).
+<UL><TT>(require "Tk-classes")</TT>
+<BR><TT>(define f&nbsp; (make &lt;Frame>))</TT>
+<BR><TT>(define b1 (make &lt;Button> :text "Button 1" :parent f))</TT>
+<BR><TT>(define b2 (make &lt;Button> :text "Button 2" :parent f))</TT>
+<BR><TT>(define b3 (make &lt;Button> :text "Button 3"))</TT>
+<BR><TT>(pack b1 b2 :side "left")</TT>
+<BR><TT>(pack f b3 :fill "both" :expand #t)</TT></UL>
+Note usage of Scheme names in the two preceding pack calls instead of dotted
+Tcl/Tk names.
+
+<P>Tk options can be seen as slot in the STklos world. So getting the font
+of&nbsp; button 3 can be done with
+<UL><TT>(font b3)</TT></UL>
+and changing its value can be done with
+<UL>&nbsp;(<TT>set! (font b3) "fixed")</TT></UL>
+and associating a callback to button 1 can be done with the following expression
+<UL><TT>(set! (command b1) (lambda ()</TT>
+<BR><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+(format #t "You have typed on \"Button1\"\n"))</TT></UL>
+The desribe function permits to see all the slots value of a given object.
+For instance,
+<UL><TT>(describe b2)</TT></UL>
+would give something like:
+<UL><TT>#[&lt;button> 401bfdbc] is an instance of class &lt;button></TT>
+<BR><TT>Slots are:</TT>
+<BR><TT>&nbsp;&nbsp;&nbsp;&nbsp; id = #[Tk-command .v184.v214]</TT>
+<BR><TT>&nbsp;&nbsp;&nbsp;&nbsp; eid = #[Tk-command .v184.v214]</TT>
+<BR><TT>&nbsp;&nbsp;&nbsp;&nbsp; parent = #[&lt;frame> 401b5304]</TT>
+<BR><TT>&nbsp;&nbsp;&nbsp;&nbsp; bitmap = ""</TT>
+<BR><TT>&nbsp;&nbsp;&nbsp;&nbsp; width = 0</TT>
+<BR><TT>&nbsp;&nbsp;&nbsp;&nbsp; height = 0</TT>
+<BR><TT>&nbsp;&nbsp;&nbsp;&nbsp; anchor = "center"</TT>
+<BR><TT>&nbsp;&nbsp;&nbsp;&nbsp; font = "-Adobe-Helvetica-Bold-R-Normal--*-120-*-*-*-*-*-*"</TT>
+<BR><TT>&nbsp;&nbsp;&nbsp;&nbsp; foreground = "Black"</TT>
+<BR><TT>&nbsp;&nbsp;&nbsp;&nbsp; image = ""</TT>
+<BR><TT>&nbsp;&nbsp;&nbsp;&nbsp; justify = "center"</TT>
+<BR><TT>&nbsp;&nbsp;&nbsp;&nbsp; pad-x = 9</TT>
+<BR><TT>&nbsp;&nbsp;&nbsp;&nbsp; pad-y = 3</TT>
+<BR><TT>&nbsp;&nbsp;&nbsp;&nbsp; text = "Button 2"</TT>
+<BR><TT>&nbsp;&nbsp;&nbsp;&nbsp; text-variable = ""</TT>
+<BR><TT>&nbsp;&nbsp;&nbsp;&nbsp; underline = -1</TT>
+<BR><TT>&nbsp;&nbsp;&nbsp;&nbsp; wrap-length = 0</TT>
+<BR><TT>&nbsp;&nbsp;&nbsp;&nbsp; background = "#d9d9d9"</TT>
+<BR><TT>&nbsp;&nbsp;&nbsp;&nbsp; border-width = 2</TT>
+<BR><TT>&nbsp;&nbsp;&nbsp;&nbsp; cursor = ""</TT>
+<BR><TT>&nbsp;&nbsp;&nbsp;&nbsp; highlight-background = "#d9d9d9"</TT>
+<BR><TT>&nbsp;&nbsp;&nbsp;&nbsp; highlight-color = "Black"</TT>
+<BR><TT>&nbsp;&nbsp;&nbsp;&nbsp; highlight-thickness = 0</TT>
+<BR><TT>&nbsp;&nbsp;&nbsp;&nbsp; relief = "raised"</TT>
+<BR><TT>&nbsp;&nbsp;&nbsp;&nbsp; take-focus = ""</TT>
+<BR><TT>&nbsp;&nbsp;&nbsp;&nbsp; active-background = "#ececec"</TT>
+<BR><TT>&nbsp;&nbsp;&nbsp;&nbsp; active-foreground = "Black"</TT>
+<BR><TT>&nbsp;&nbsp;&nbsp;&nbsp; command = ""</TT>
+<BR><TT>&nbsp;&nbsp;&nbsp;&nbsp; disabled-foreground = "#a3a3a3"</TT>
+<BR><TT>&nbsp;&nbsp;&nbsp;&nbsp; state = "normal"</TT></UL>
+Destruction of a button can be obtained with the destroy-widget generic
+function as in
+<UL>(<TT>destroy b2)</TT></UL>
+
+<H3>
+Examples</H3>
+Some examples (too few) are available in the Examples directory. What those
+examples do is not interesting <I>per se </I>but rather how they are written.
+<BR><B>Note</B>:There are not enough examples. Send me programs if you
+have interestingpieces of code to make this directory growing.Thanks
+<BR>&nbsp;
+
+<P>Have fun.
+<BR>&nbsp;
+</BODY>
+</HTML>

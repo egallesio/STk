@@ -8,10 +8,11 @@
 ;;;; double-clicking.
 ;;;; This is a new version of the demo which can be run before STk is installed
 ;;;;
+;;;; $Id: browse.stk 1.2 Mon, 16 Feb 1998 08:28:39 +0100 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date:  3-Aug-1993 17:33
-;;;; Last file update: 18-Sep-1995 14:25
+;;;; Last file update: 12-Feb-1998 11:28
 
 (require "unix")
 

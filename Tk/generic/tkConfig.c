@@ -9,7 +9,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkConfig.c 1.52 96/02/15 18:52:39
+ * SCCS: @(#) tkConfig.c 1.53 96/04/26 10:29:31
  */
 
 #include "tkPort.h"
@@ -39,25 +39,20 @@ static Tk_ConfigSpec *	FindConfigSpec _ANSI_ARGS_((Tcl_Interp *interp,
 static char *		FormatConfigInfo _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tk_Window tkwin, Tk_ConfigSpec *specPtr,
 			    char *widgRec));
-#ifdef STk_CODE
-static char *		FormatConfigValue _ANSI_ARGS_((Tcl_Interp *interp,
-			    Tk_Window tkwin, Tk_ConfigSpec *specPtr,
-			    char *widgRec, char *buffer,
-			    Tcl_FreeProc **freeProcPtr, int* stringp));
-#else
 static char *		FormatConfigValue _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tk_Window tkwin, Tk_ConfigSpec *specPtr,
 			    char *widgRec, char *buffer,
 			    Tcl_FreeProc **freeProcPtr));
-#endif
 
 #ifdef STk_CODE
 
+#define DEFAULT_STK_ENV "#.(global-environment)"
+
 /* This UGLY code is used only for menus items.
- * It saves in the static variable menu_addr the addresse of the menu item
+ * It saves in the static variable menu_addr the address of the menu item
  * we are configuring. This addresse is necessary for storing the closure
  * associated to the "command" of a menu item. Address will be used to associate 
- * a unique signature to this item
+ * a unique signature to this item.
  */
 
 static void *menu_addr = NULL;
@@ -404,6 +399,22 @@ DoConfig(interp, tkwin, specPtr, value, valueIsUid, widgRec)
 		}
 		break;
 #ifdef STk_CODE
+	    case TK_CONFIG_ENV: {
+		SCM p;
+		
+		if (*value) {
+		  if (!STk_valid_environment(value, &p)) {
+		    Tcl_AppendResult(interp, "bad environment specification \"",
+				             value, "\"", (char *) NULL);
+		    return TCL_ERROR;
+		  }
+		  if (p != NULL) {
+		    /* add this environment to the callback table */
+		    STk_add_callback(Tk_PathName(tkwin), specPtr->argvName, "", p);
+		  }
+		}
+		goto String;
+	    }
 	    case TK_CONFIG_CLOSURE: {
 	        char buffer[50], *s = "";
 		SCM p;
@@ -428,9 +439,10 @@ DoConfig(interp, tkwin, specPtr, value, valueIsUid, widgRec)
 	    }
 	    /* NOBREAK */
 	    /* And now continue to register this command as a string */
-	    case TK_CONFIG_SINT:
+String:	    case TK_CONFIG_SINT:
 	    case TK_CONFIG_SBOOLEAN:
 	    case TK_CONFIG_BSTRING:
+	    case TK_CONFIG_IMAGE:
 #endif
 	    case TK_CONFIG_STRING: {
 		char *old, *new;
@@ -497,22 +509,18 @@ DoConfig(interp, tkwin, specPtr, value, valueIsUid, widgRec)
 		break;
 	    }
 	    case TK_CONFIG_FONT: {
-		XFontStruct *newPtr, *oldPtr;
+		Tk_Font new;
 
 		if (nullValue) {
-		    newPtr = NULL;
+		    new = NULL;
 		} else {
-		    uid = valueIsUid ? (Tk_Uid) value : Tk_GetUid(value);
-		    newPtr = Tk_GetFontStruct(interp, tkwin, uid);
-		    if (newPtr == NULL) {
+		    new = Tk_GetFont(interp, tkwin, value);
+		    if (new == NULL) {
 			return TCL_ERROR;
 		    }
 		}
-		oldPtr = *((XFontStruct **) ptr);
-		if (oldPtr != NULL) {
-		    Tk_FreeFontStruct(oldPtr);
-		}
-		*((XFontStruct **) ptr) = newPtr;
+		Tk_FreeFont(*((Tk_Font *) ptr));
+		*((Tk_Font *) ptr) = new;
 		break;
 	    }
 	    case TK_CONFIG_BITMAP: {
@@ -731,7 +739,9 @@ Tk_ConfigureInfo(interp, tkwin, specs, widgRec, argvName, flags)
      * Loop through all the specs, creating a big list with all
      * their information.
      */
-
+#ifdef STk_CODE
+    Tcl_AppendResult(interp, "(", NULL);
+#endif
     for (specPtr = specs; specPtr->type != TK_CONFIG_END; specPtr++) {
 	if ((argvName != NULL) && (specPtr->argvName != argvName)) {
 	    continue;
@@ -754,6 +764,9 @@ Tk_ConfigureInfo(interp, tkwin, specs, widgRec, argvName, flags)
 	leader = " {";
 #endif
     }
+#ifdef STk_CODE
+    Tcl_AppendResult(interp, ")", NULL);
+#endif
     return TCL_OK;
 }
 
@@ -789,7 +802,7 @@ FormatConfigInfo(interp, tkwin, specPtr, widgRec)
 #ifdef STk_CODE
 #   define MAX_BUFFER 200
     char buffer[MAX_BUFFER], dflt[MAX_BUFFER];
-    int len, stringp;
+    int len;
 #else
     char buffer[200];
 #endif
@@ -808,13 +821,8 @@ FormatConfigInfo(interp, tkwin, specPtr, widgRec)
 	return Tcl_Merge(2, argv);
 #endif
     }
-#ifdef STk_CODE
-    argv[4] = FormatConfigValue(interp, tkwin, specPtr, widgRec, buffer,
-	    &freeProc, &stringp);
-#else
     argv[4] = FormatConfigValue(interp, tkwin, specPtr, widgRec, buffer,
 	    &freeProc);
-#endif
     if (argv[1] == NULL) {
 	argv[1] = "";
     }
@@ -826,16 +834,38 @@ FormatConfigInfo(interp, tkwin, specPtr, widgRec)
      * Default value of an option (the one at index 3) can contain weird 
      * characters (e.g. fonts can contain '#'). Quote it if necessary.
      */
-    if (argv[3] == NULL) {
-	argv[3] = "\"\"";
+
+    switch (specPtr->type) {
+      case TK_CONFIG_BOOLEAN:
+      case TK_CONFIG_SBOOLEAN:
+      case TK_CONFIG_INT:
+      case TK_CONFIG_DOUBLE:
+      case TK_CONFIG_SINT:
+      case TK_CONFIG_MENU:
+      case TK_CONFIG_PIXELS:
+      case TK_CONFIG_MM:
+      case TK_CONFIG_CUSTOM:   if (argv[3] == NULL)
+				 argv[3] = "\"\"";
+      			       break;
+      case TK_CONFIG_ENV:      /* The Default environment is always the global 1 */
+			       argv[3] = DEFAULT_STK_ENV;
+			       break;
+      case TK_CONFIG_IMAGE:    
+      case TK_CONFIG_CLOSURE:  if (argv[3] == NULL || argv[3][0] == '\0')
+				  argv[3] = "\"\"";
+	                       break;
+      default: 		       if (argv[3] == NULL)
+				 argv[3] = "\"\"";
+      			       else {
+				 sprintf(dflt, "\"%s\"", argv[3]);
+				 argv[3] = dflt;
+			       }
     }
-    else if (stringp) {
-      sprintf(dflt, "\"%s\"", argv[3]);
-      argv[3] = dflt;		
-    }
+
     if (argv[4] == NULL) {
 	argv[4] = "\"\"";
-    }  
+    }
+
     len = strlen(argv[0])+strlen(argv[1])+strlen(argv[2])+
           strlen(argv[3])+strlen(argv[4]) + 9; /* 4 spaces, 4 quotes  and a null */
 
@@ -889,11 +919,7 @@ FormatConfigInfo(interp, tkwin, specPtr, widgRec)
  */
 
 static char *
-#ifndef STk_CODE
 FormatConfigValue(interp, tkwin, specPtr, widgRec, buffer, freeProcPtr)
-#else
-FormatConfigValue(interp, tkwin, specPtr, widgRec, buffer, freeProcPtr, stringp)
-#endif
     Tcl_Interp *interp;		/* Interpreter for use in real conversions. */
     Tk_Window tkwin;		/* Window corresponding to widget. */
     Tk_ConfigSpec *specPtr;	/* Pointer to information describing option.
@@ -905,24 +931,15 @@ FormatConfigValue(interp, tkwin, specPtr, widgRec, buffer, freeProcPtr, stringp)
     Tcl_FreeProc **freeProcPtr;	/* Pointer to word to fill in with address
 				 * of procedure to free the result, or NULL
 				 * if result is static. */
-#ifdef STk_CODE
-    int *stringp;		/* 1 if the default value of this configuration 
-				 * option is a string
-				 */
-#endif
 {
     char *ptr, *result;
 
-#ifdef STk_CODE
-    *stringp = 1;
-#endif
     *freeProcPtr = NULL;
     ptr = widgRec + specPtr->offset;
     result = "";
     switch (specPtr->type) {
 	case TK_CONFIG_BOOLEAN:
 #ifdef STk_CODE
-	    *stringp = 0;
 	    /* NO BREAK */
         case TK_CONFIG_SBOOLEAN:
 	    return (*((int *) ptr) == 0) ? "#f" : "#t";
@@ -937,7 +954,6 @@ FormatConfigValue(interp, tkwin, specPtr, widgRec, buffer, freeProcPtr, stringp)
 	case TK_CONFIG_INT:
 	    sprintf(buffer, "%d", *((int *) ptr));
 #ifdef STk_CODE
-	    *stringp = 0;
 	    return buffer;
 #else
 	    result = buffer;
@@ -946,7 +962,6 @@ FormatConfigValue(interp, tkwin, specPtr, widgRec, buffer, freeProcPtr, stringp)
 	case TK_CONFIG_DOUBLE:
 	    Tcl_PrintDouble(interp, *((double *) ptr), buffer);
 #ifdef STk_CODE
-	    *stringp = 0;
 	    return buffer;
 #else
 	    result = buffer;
@@ -954,14 +969,18 @@ FormatConfigValue(interp, tkwin, specPtr, widgRec, buffer, freeProcPtr, stringp)
 #endif
 #ifdef STk_CODE
 	case TK_CONFIG_SINT:
-	    *stringp = 0;
 	    result   = (*(char **) ptr);
 	    if (result == NULL) result = "0";
 	    return result;
         case TK_CONFIG_MENU:
-	    *stringp = 0;
 	    result   = (*(char **) ptr);
 	    if (result == NULL) result = "#f";
+	    return result;
+        case TK_CONFIG_ENV:
+	    result = (*(char **) ptr);
+	    if (result == NULL || *result == 0) {
+	      result = DEFAULT_STK_ENV;
+	    }
 	    return result;
         case TK_CONFIG_CLOSURE:
 	    result = (*(char **) ptr);
@@ -970,11 +989,17 @@ FormatConfigValue(interp, tkwin, specPtr, widgRec, buffer, freeProcPtr, stringp)
 	      break;
 	    }
 	    else {
-	      *stringp = 0;
 	      return result;
 	    }
+        case TK_CONFIG_IMAGE:
+	    result = (*(char **) ptr);
+	    if (result == NULL)
+	      return  "\"\"";
+	    else {
+	      sprintf(buffer, "#.|%s|", result);
+	      return  buffer;
+	    }
         case TK_CONFIG_BSTRING:
-	    *stringp = 0;
 	    /* NO BREAK */
 #endif
 	case TK_CONFIG_STRING:
@@ -998,9 +1023,9 @@ FormatConfigValue(interp, tkwin, specPtr, widgRec, buffer, freeProcPtr, stringp)
 	    break;
 	}
 	case TK_CONFIG_FONT: {
-	    XFontStruct *fontStructPtr = *((XFontStruct **) ptr);
-	    if (fontStructPtr != NULL) {
-		result = Tk_NameOfFontStruct(fontStructPtr);
+	    Tk_Font tkfont = *((Tk_Font *) ptr);
+	    if (tkfont != NULL) {
+		result = Tk_NameOfFont(tkfont);
 	    }
 	    break;
 	}
@@ -1044,8 +1069,6 @@ FormatConfigValue(interp, tkwin, specPtr, widgRec, buffer, freeProcPtr, stringp)
 	case TK_CONFIG_PIXELS:
 	    sprintf(buffer, "%d", *((int *) ptr));
 #ifdef STk_CODE
-	    *stringp = 0; /* most of the time correct "2c" will be seen as 
-			   * the symbol 2c but this should be rare */
 	    return buffer;
 #else
 	    result = buffer;
@@ -1054,7 +1077,6 @@ FormatConfigValue(interp, tkwin, specPtr, widgRec, buffer, freeProcPtr, stringp)
 	case TK_CONFIG_MM:
 	    Tcl_PrintDouble(interp, *((double *) ptr), buffer);
 #ifdef STk_CODE
-	    *stringp = 0;
 	    return buffer;
 #else
 	    result = buffer;
@@ -1074,7 +1096,6 @@ FormatConfigValue(interp, tkwin, specPtr, widgRec, buffer, freeProcPtr, stringp)
 		    specPtr->customPtr->clientData, tkwin, widgRec,
 		    specPtr->offset, freeProcPtr);
 #ifdef STk_CODE
-	    *stringp = 0;
 	    return result;
 #endif
 	    break;
@@ -1162,9 +1183,6 @@ Tk_ConfigureValue(interp, tkwin, specs, widgRec, argvName, flags)
 {
     Tk_ConfigSpec *specPtr;
     int needFlags, hateFlags;
-#ifdef STk_CODE
-    int dumb;
-#endif
 
     needFlags = flags & ~(TK_CONFIG_USER_BIT - 1);
     if (Tk_Depth(tkwin) <= 1) {
@@ -1176,13 +1194,8 @@ Tk_ConfigureValue(interp, tkwin, specs, widgRec, argvName, flags)
     if (specPtr == NULL) {
 	return TCL_ERROR;
     }
-#ifdef STk_CODE
-    interp->result = FormatConfigValue(interp, tkwin, specPtr, widgRec,
-	    interp->result, &interp->freeProc, &dumb);
-#else
     interp->result = FormatConfigValue(interp, tkwin, specPtr, widgRec,
 	    interp->result, &interp->freeProc);
-#endif
     return TCL_OK;
 }
 
@@ -1227,10 +1240,12 @@ Tk_FreeOptions(specs, widgRec, display, needFlags)
 	switch (specPtr->type) {
 #ifdef STk_CODE
 	    case TK_CONFIG_CLOSURE:
+	    case TK_CONFIG_ENV:
 	    case TK_CONFIG_MENU:
 	    case TK_CONFIG_SINT:
 	    case TK_CONFIG_SBOOLEAN:
 	    case TK_CONFIG_BSTRING:
+	    case TK_CONFIG_IMAGE:
 #endif
 	    case TK_CONFIG_STRING:
 		if (*((char **) ptr) != NULL) {
@@ -1245,10 +1260,8 @@ Tk_FreeOptions(specs, widgRec, display, needFlags)
 		}
 		break;
 	    case TK_CONFIG_FONT:
-		if (*((XFontStruct **) ptr) != NULL) {
-		    Tk_FreeFontStruct(*((XFontStruct **) ptr));
-		    *((XFontStruct **) ptr) = NULL;
-		}
+		Tk_FreeFont(*((Tk_Font *) ptr));
+		*((Tk_Font *) ptr) = NULL;
 		break;
 	    case TK_CONFIG_BITMAP:
 		if (*((Pixmap *) ptr) != None) {

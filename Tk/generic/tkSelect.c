@@ -11,7 +11,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkSelect.c 1.56 96/03/21 13:16:29
+ * SCCS: @(#) tkSelect.c 1.57 96/05/03 10:52:40
  */
 
 #include "tkInt.h"
@@ -1092,7 +1092,7 @@ TkSelClearSelection(tkwin, eventPtr)
     }
 
     if (infoPtr != NULL && (infoPtr->owner == tkwin)
-	    && (eventPtr->xselectionclear.serial >= infoPtr->serial)) {
+	    && (eventPtr->xselectionclear.serial >= (unsigned) infoPtr->serial)) {
 	if (prevPtr == NULL) {
 	    dispPtr->selectionInfoPtr = infoPtr->nextPtr;
 	} else {

@@ -1,0 +1,56 @@
+;;;; animate.stk -- A simple image animation (Demo)
+;;;;
+;;;; Copyright © 1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; $Id: animate.stk 1.1 Tue, 10 Mar 1998 21:43:37 +0100 eg $
+;;;;
+;;;;          Author: Erick Gallesio [eg@unice.fr]
+;;;;   Creation date:  9-Mar-1998 18:51
+;;;;Last file update:  9-Mar-1998 21:07
+
+(define *img* #f)
+
+(define (make-animation pattern parent delay)
+  (let* ((files  (sort (glob pattern) string<?)) 
+	 (size   (length files)) 
+	 (images (make-vector size)) 
+	 (name   (gensym (& (if (eq? parent *root*) "" parent) ".l"))) 
+	 (widget (label name :bd 0 :relief "flat" :background "white"
+			:env (the-environment))))
+    ;; Store in the image vector all the components of the animation
+    (dotimes (i size)
+      (let ((key (list-ref files i)))
+	(vector-set! images 
+		     i 
+		     (make-image key :file key))))
+    
+    ;; Display the first image of the animation
+    (tk-set! widget :image (vector-ref images 0))
+
+    ;; Animate the image 
+    (letrec ((anim (let ((i 0))
+		     (lambda () 
+		       (if (>= delay 0) 
+			   (when (winfo (quote exists) widget)
+			     (if (>= i size) (set! i 0))
+			     (tk-set! widget :image (vector-ref images i))
+			     (set! i (+ i 1))
+			     (update)
+			     (after (abs delay) anim))
+			   (after 100 anim))))))
+      (after 'idle anim))
+    widget))
+
+
+(define (change-animation-delay w delay)
+  (let ((env (tk-get w :env)))
+    (eval `(set! delay ,delay) env)))
+

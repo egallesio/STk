@@ -9,7 +9,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkCanvLine.c 1.43 96/02/15 18:52:30
+ * SCCS: @(#) tkCanvLine.c 1.46 97/04/25 16:51:02
  */
 
 #include <stdio.h>
@@ -267,9 +267,9 @@ CreateLine(interp, canvas, itemPtr, argc, argv)
 	bothUid = Tk_GetUid("both");
     }
     linePtr->arrow = noneUid;
-    linePtr->arrowShapeA = 8.0;
-    linePtr->arrowShapeB = 10.0;
-    linePtr->arrowShapeC = 3.0;
+    linePtr->arrowShapeA = (float)8.0;
+    linePtr->arrowShapeB = (float)10.0;
+    linePtr->arrowShapeC = (float)3.0;
     linePtr->firstArrowPtr = NULL;
     linePtr->lastArrowPtr = NULL;
     linePtr->smooth = 0;
@@ -606,11 +606,11 @@ ComputeLineBbox(canvas, linePtr)
 					 * recomputed. */
 {
     double *coordPtr;
-    int i;
+    int i, width;
 
     coordPtr = linePtr->coordPtr;
-    linePtr->header.x1 = linePtr->header.x2 = *coordPtr;
-    linePtr->header.y1 = linePtr->header.y2 = coordPtr[1];
+    linePtr->header.x1 = linePtr->header.x2 = (int) *coordPtr;
+    linePtr->header.y1 = linePtr->header.y2 = (int) coordPtr[1];
 
     /*
      * Compute the bounding box of all the points in the line,
@@ -626,10 +626,14 @@ ComputeLineBbox(canvas, linePtr)
 	    i++, coordPtr += 2) {
 	TkIncludePoint((Tk_Item *) linePtr, coordPtr);
     }
-    linePtr->header.x1 -= linePtr->width;
-    linePtr->header.x2 += linePtr->width;
-    linePtr->header.y1 -= linePtr->width;
-    linePtr->header.y2 += linePtr->width;
+    width = linePtr->width;
+    if (width < 1) {
+	width = 1;
+    }
+    linePtr->header.x1 -= width;
+    linePtr->header.x2 += width;
+    linePtr->header.y1 -= width;
+    linePtr->header.y2 += width;
 
     /*
      * For mitered lines, make a second pass through all the points.
@@ -644,7 +648,7 @@ ComputeLineBbox(canvas, linePtr)
 	    int j;
     
 	    if (TkGetMiterPoints(coordPtr, coordPtr+2, coordPtr+4,
-		    (double) linePtr->width, miter, miter+2)) {
+		    (double) width, miter, miter+2)) {
 		for (j = 0; j < 4; j += 2) {
 		    TkIncludePoint((Tk_Item *) linePtr, miter+j);
 		}
@@ -1019,10 +1023,7 @@ LineToArea(canvas, itemPtr, rectPtr)
     LineItem *linePtr = (LineItem *) itemPtr;
     double staticSpace[2*MAX_STATIC_POINTS];
     double *linePoints;
-    double radius;
     int numPoints, result;
-
-    radius = linePtr->width/2.0;
 
     /*
      * Handle smoothed lines by generating an expanded set of points
@@ -1258,9 +1259,9 @@ ParseArrowShape(clientData, interp, tkwin, value, recordPtr, offset)
 		!= TCL_OK)) {
 	goto syntaxError;
     }
-    linePtr->arrowShapeA = a;
-    linePtr->arrowShapeB = b;
-    linePtr->arrowShapeC = c;
+    linePtr->arrowShapeA = (float)a;
+    linePtr->arrowShapeB = (float)b;
+    linePtr->arrowShapeC = (float)c;
     ckfree((char *) argv);
     return TCL_OK;
 }

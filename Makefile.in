@@ -2,7 +2,7 @@
 # Toplevel Makefile for STk
 #
 # 
-# Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+# Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 # 
 # Permission to use, copy, and/or distribute this software and its
 # documentation for any purpose and without fee is hereby granted, provided
@@ -14,7 +14,7 @@
 #
 #           Author: Erick Gallesio [eg@unice.fr]
 #    Creation date: ??-Sep-1993 ??:??
-# Last file update: 26-Sep-1996 22:09
+# Last file update: 10-Apr-1998 10:09
 #
 
 
@@ -36,7 +36,7 @@ incdir		= $(libdir)/include
 bindir 		= $(prefix)/bin
 etcdir		= $(stkdir)/etc
 
-all: start tcl tk mp src snow stklos ext stop 
+all: start tcl tk mp stack src snow stklos ext stop 
 
 start:
 	@date > .start-date
@@ -89,6 +89,8 @@ tk:
 	@(echo "make Tk"; cd Tk; $(MAKE) libtk.a)
 mp:
 	@(echo "make Mp"; cd Mp; $(MAKE) $(MP))
+stack:
+	@(echo "make STack"; cd Stack; $(MAKE) all)
 src:
 	@(echo "make Src"; cd Src; $(MAKE) stk TK="-DUSE_TK")
 snow:
@@ -103,7 +105,7 @@ dvi:
 	@(echo "Make Documentation(dvi)"; cd Doc; $(MAKE) dvi)
 
 demos:
-	/bin/sh -c "(cd Demos; ../Src/test-stk -f hbrowse README.html)"
+	/bin/sh -c "(cd Demos; ../Src/test-stk -f S-scape README.html)"
 
 install: clean-before
 	(cd Tcl;     	$(MAKE) install)
@@ -186,6 +188,7 @@ clean:
 	(cd Tcl;    	$(MAKE) clean)
 	(cd Tk;     	$(MAKE) clean)
 	(cd Mp;     	$(MAKE) clean)
+	(cd Stack;     	$(MAKE) clean)
 	(cd Src;    	$(MAKE) clean)
 	(cd Snow;    	$(MAKE) clean)
 	(cd STklos; 	$(MAKE) clean)
@@ -193,3 +196,10 @@ clean:
 	(cd Help;	$(MAKE) clean)
 	(cd Doc;	$(MAKE) clean)
 	/bin/rm -f core *~ Makefile config.*
+
+checkin-n:
+	@(Bin/version-number > VERSION; cat VERSION; prcs checkin -n)
+
+checkin:
+	@(Bin/version-number > VERSION; cat VERSION; prcs checkin)
+

@@ -2,7 +2,7 @@
  *
  * h a s h  . c			-- Hash Tables 
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1997 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -19,7 +19,7 @@
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 17-Jan-1994 17:49
- * Last file update: 17-May-1996 17:46
+ * Last file update: 31-Dec-1997 15:36
  */
 
 #include <stk.h>
@@ -264,6 +264,8 @@ static PRIMITIVE hash_table_put(SCM ht, SCM key, SCM val)
     case hash_comp:
       index = Apply(HASH_SXHASH(ht), LIST1(key));
       entry = Tcl_CreateHashEntry(HASH_H(ht), (char *) index, &new);
+      Tcl_SetHashValue(entry, NIL); /* To avoid GC problems in further allocations 
+				     * Thanks to S. Calvo <sarah@grammatech.com> */
       if (new)
 	Tcl_SetHashValue(entry, LIST1(Cons(key, val)));
       else {

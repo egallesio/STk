@@ -1,0 +1,165 @@
+;;;;
+;;;; The DESCRIBE method (partly stolen fom Elk lib)
+;;;;
+;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 21-Mar-1993 14:33
+;;;; Last file update: 16-Jan-1998 21:22
+;;;;
+
+(require "stklos")
+
+(select-module STklos)			;; This file belongs to STklos module
+(export describe)			;; Export the describe generic function
+
+;;;
+;;; describe for simple objects
+;;;
+(define-method describe ((x <top>))
+  (format #t "~s is " x)
+  (cond
+     ((integer? x)      (format #t "an integer"))
+     ((real?    x)      (format #t "a real"))
+     ((null?	x)      (format #t "an empty list"))
+     ((boolean?	x)      (format #t "a boolean value (~s)" (if x 'true 'false)))
+     ((char?	x)      (format #t "a character, ascii value is ~s" 
+				(char->integer x)))
+     ((symbol?	x)      (format #t "a symbol"))
+     ((pair?	x)	(format #t "a list"))
+     ((string?	x)	(if (eqv? x "")
+			    (format #t "an empty string")
+			    (format #t "a string of length ~s" (string-length x))))
+     ((vector?  x)   	(if (eqv? x '#())
+			    (format #t "an empty vector")
+			    (format #t "a vector of length ~s" (vector-length x))))
+     ((procedure? x)	(format #t "a procedure"))
+     ((environment? x)	(format #t "an environment"))
+     ((eof-object? x)	(format #t "the end-of-file object"))
+     (else	     	(format #t "an unknown object (~s)" x)))
+  (format #t ".~%"))
+
+
+;;;
+;;; describe for STklos instances
+;;;
+(define-method describe ((x <object>))
+  (format #t "~S is an instance of class ~A~%" x (class-name (class-of x)))
+
+  ;; print all the instance slots
+  (format #t "Slots are: ~%")
+  (for-each (lambda (slot)
+	      (let ((name (slot-definition-name slot)))
+		(format #t "     ~S = ~A~%" name
+					    (if (slot-bound? x name) 
+						(format #f "~S" (slot-ref x name))
+						"#[unbound]"))))
+       (class-slots (class-of x)))
+  (make-undefined))
+
+;;;
+;;; Describe for classes
+;;;
+(define-method describe ((x <class>))
+  (format #t "~S is a class. It's an instance of ~A~%" 
+	  (class-name x) (class-name (class-of x)))
+  
+  ;; Super classes 
+  (format #t "Superclasses are:~%")
+  (for-each (lambda (class) (format #t "    ~A~%" (class-name class)))
+       (class-direct-supers x))
+
+  ;; Direct slots
+  (let ((slots (class-direct-slots x)))
+    (if (null? slots) 
+	(format #t "(No direct slot)~%")
+	(begin
+	  (format #t "Directs slots are:~%")
+	  (for-each (lambda (s) 
+		      (format #t "    ~A~%" (slot-definition-name s)))
+		    slots))))
+
+ 
+  ;; Direct subclasses
+  (let ((classes (class-direct-subclasses x)))
+    (if (null? classes)
+	(format #t "(No direct subclass)~%")
+	(begin
+	  (format #t "Directs subclasses are:~%") 
+	  (for-each (lambda (s) 
+		      (format #t "    ~A~%" (class-name s)))
+		    classes))))
+
+  ;; CPL
+  (format #t "Class Precedence List is:~%")
+  (for-each (lambda (s) (format #t "    ~A~%" (class-name s))) 
+	    (class-precedence-list x))
+
+  ;; Direct Methods
+  (let ((methods (class-direct-methods x)))
+    (if (null? methods)
+	(format #t "(No direct method)~%")
+	(begin
+	  (format #t "Class direct methods are:~%")
+	  (for-each describe methods))))
+
+;  (format #t "~%Field Initializers ~%    ")
+;  (write (slot-ref x 'initializers)) (newline)
+
+;  (format #t "~%Getters and Setters~%    ")
+;  (write (slot-ref x 'getters-n-setters)) (newline)
+)
+
+;;;
+;;; Describe for generic functions
+;;;
+(define-method describe ((x <generic>))
+  (let ((name    (generic-function-name x))
+	(methods (generic-function-methods x)))
+    ;; Title
+    (format #t "~S is a generic function. It's an instance of ~A.~%" 
+	    name (class-name (class-of x)))
+    ;; Methods
+    (if (null? methods)
+	(format #t "(No method defined for ~S)~%" name)
+	(begin
+	  (format #t "Methods defined for ~S~%" name)
+	  (for-each (lambda (x) (describe x #t)) methods)))))
+
+;;;
+;;; Describe for methods
+;;;
+(define-method describe ((x <method>) . omit-generic)
+  (letrec ((print-args (lambda (args)
+			 ;; take care of dotted arg lists
+			 (cond ((null? args) (newline))
+			       ((pair? args) (display #\space)
+					     (display (class-name (car args)))
+					     (print-args (cdr args)))
+			       (else	     (display #\space)
+					     (display (class-name args))
+					     (newline))))))
+
+    ;; Title
+    (format #t "    Method ~A~%" x)
+    
+    ;; Associated generic
+    (when (null? omit-generic)
+      (let ((gf (method-generic-function x)))
+	(if gf
+	    (format #t "\t     Generic: ~A~%" (generic-function-name gf))
+	    (format #t "\t(No generic)~%"))))
+
+    ;; GF specializers
+    (format #t "\tSpecializers:")
+    (print-args (method-specializers x))))
+
+(provide "describe")

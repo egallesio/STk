@@ -1,0 +1,80 @@
+'\" Color=Green
+'\"
+'\" 
+.so STk-man.macros
+.TH make-image n 3.2 STk "STk procedure"
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+create\-image, find\-image, change\-image, free\-image  \- an easier way to manipulate Tk images
+
+.SH PACKAGE
+Tk
+
+.SH SYNOPSIS
+(\fBmake-image\fR key \fIcreate image ?options?\fR)
+.br
+(\fBfind-image\fR key)
+.br
+(\fBchange-image\fR key  \fIcreate image options\fR)
+.br
+(\fBfree-image\fR key)
+.BE
+
+.SH DESCRIPTION
+.PP
+\fBmake-image\fR is a STk procedure which simplifies Tk images
+creation by providing a homogeneous way to create an image,
+independently of its coding format.  The first argument of
+\fBmake-image\fR is a string which identifies the image; if an image
+with this key has been already loaded in memory, it will not be loaded
+again and \fBmake-image\fR will return it. If no option is given,
+the identifying image key is taken as a file name (the file is searched 
+using the variable \fB*image\-path*\fR, which must contain a set of 
+prefix pathnames to prepend to the given filename).
+If options are passed to the \fBmake-image\fR  procedure they must follow
+the convention of the options passed in \fBimage create\fR just after the
+image format. If the image cannot be created, this procedure returns \fB#f\fR.
+.LP
+Hereafter is a simple usage of this procedure:
+.LP
+.CS
+(require "image")
+(require "pixmap")
+
+(define img1 (make-image "a pixmap" :file "exit.xpm"))
+(define img2 (make-image "a bitmap" :file "default.xbm"))
+(define img3 (make-image "a pixmap"))
+(define img4 (make-image "x.xpm"))    
+.CE
+In this case, \fIimg3\fR is identical to \fIimg1\fR since they use the same key.
+\fIImg4\fR is the image associated to the file "x.xpm" found according to 
+the  *image-path* varaiable.
+
+.PP
+\fBfind-image\fR returns the image associated to the given \fIkey\fR or 
+\fB#f\fR if this image has not been loaded yet.
+
+.PP
+\fBchange-image\fR changes the content of an image previously created with
+\fBmake-image\fR. Options are the identical to \fBmake-image\fR
+options.
+.LP
+Example:
+.CS
+(button '.b1 :image img1)
+(button '.b2 :image img2)
+(button '.b3 :image img1) ; .b3 content is identical to .b1
+(pack .b1 .b2 .b3)
+(change-image "a pixmap" :file "default.xbm")
+.CE
+After the execution of \fBchange-image\fR, both \fI.b1\fR and \fI.b3\fR
+graphical contents are changed.
+
+.PP
+\fBdelete-image\fR removes the image with the given key of the cache.
+The memory used by this image is returned to the system. See the 
+discussion about how this image is displayed in \fBimage delete\fR.
+
+.SH "SEE ALSO"
+bitmap, image, jpeg, photo, pixmap

@@ -2,7 +2,7 @@
 ;;;;  M e n u  . s t k			-- Menu Class definition 
 ;;;; 
 ;;;;
-;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -11,15 +11,26 @@
 ;;;; software or derived works may only be charged with express written
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
-;;;
+;;;;
 ;;;; This software is a derivative work of other copyrighted softwares; the
 ;;;; copyright notices of these softwares are placed in the file COPYRIGHTS
-;;;;;
+;;;;
+;;;; $Id: Menu.stklos 1.2 Sat, 24 Jan 1998 15:12:00 +0100 eg $
+;;;;
 ;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;    Creation date:  3-Mar-1994 21:03
-;;;; Last file update: 25-Mar-1996 22:57
+;;;; Last file update: 24-Jan-1998 13:39
 
 (require "Basics")
+
+(select-module STklos+Tk)
+
+(export ;; Menu methods
+ 	activate menu-add delete disable enable menu-entry-configure 
+	menu-index invoke menu-post menu-unpost menu-y-position
+	;; Menu-button Methods
+	menu-of (setter menu-of)
+	make-menubar)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;
@@ -81,6 +92,12 @@
    (tear-off 		 :init-keyword :tear-off 
 			 :accessor tear-off
 			 :tk-name tearoff
+			 :allocation :tk-virtual)
+   (title 		 :init-keyword :title 
+			 :accessor title
+			 :allocation :tk-virtual)
+   (type 		 :init-keyword :type
+			 :accessor type
 			 :allocation :tk-virtual))
   :metaclass <Tk-metaclass>)
 
@@ -179,6 +196,9 @@
 			:init-keyword :active-foreground
 			:allocation   :tk-virtual
 			:tk-name      activeforeground)
+   (direction		:accessor     direction
+			:init-keyword :direction
+			:allocation   :tk-virtual)
    (disabled-foreground :accessor     disabled-foreground
 			:init-keyword :disabled-foreground
 			:allocation   :tk-virtual
@@ -204,7 +224,7 @@
   (next-method)
   ;; If a parent is specified, modify the parent menu-button to point self
   (let ((parent (get-keyword :parent initargs #f)))
-    (if (and parent (is-a? parent <Menu-button>))
+    (if (and parent (slot-exists? parent 'menu))
 	(slot-set! parent 'menu (Id self)))))
 
 ;;;

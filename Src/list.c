@@ -2,7 +2,7 @@
  *
  * l i s t . c			-- Lists procedures
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1997 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -19,7 +19,7 @@
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: ??-Oct-1993 21:37
- * Last file update:  7-Nov-1995 21:36
+ * Last file update: 10-Nov-1997 11:37
  */
 
 #include "stk.h"
@@ -145,7 +145,7 @@ PRIMITIVE STk_list_length(SCM l)
   Err("length: not calculable.", NIL);
 }
 
-static SCM append2(SCM l1, SCM l2)
+SCM STk_append2(SCM l1, SCM l2)
 {
   register SCM res, p;
 
@@ -163,7 +163,7 @@ static SCM append2(SCM l1, SCM l2)
       p = CDR(p);
     }
     CAR(p) = CAR(l1);
-    CDR(p) = NIL;		/* Keep alwys a valid list in case of a GC */
+    CDR(p) = NIL;		/* Keep always a valid list in case of a GC */
     if (NCONSP(CDR(l1))) break;
   }
   CDR(p) = l2;
@@ -177,8 +177,8 @@ PRIMITIVE STk_append(SCM l, int len)
   switch (len) {
     case 0:  return NIL;
     case 1:  return CAR(l);
-    case 2:  return append2(CAR(l), CAR(CDR(l)));
-    default: return append2(CAR(l), STk_append(CDR(l), len-1));
+    case 2:  return STk_append2(CAR(l), CAR(CDR(l)));
+    default: return STk_append2(CAR(l), STk_append(CDR(l), len-1));
   }
 }
 
@@ -232,7 +232,7 @@ PRIMITIVE STk_list_ref(SCM list, SCM k)
   Err("list-ref: index must be exact positive integer", k);
 }
 
-static SCM lmember(SCM obj, SCM list,  SCM (*predicate)(SCM, SCM) )
+static SCM lmember(SCM obj, SCM list, SCM (*predicate)(SCM, SCM) )
 {
   register SCM ptr;
 	
@@ -244,11 +244,11 @@ static SCM lmember(SCM obj, SCM list,  SCM (*predicate)(SCM, SCM) )
     else 
       /* end of a dotted list */
       return ((*predicate)(ptr, obj) == Truth) ? ptr : Ntruth;
-    if ((ptr=CDR(ptr)) == list) goto Error;
+    if ((ptr=CDR(ptr)) == list) Err("member: circular list", NIL);
   }
   return Ntruth;
 Error:
-  Err("member function: Bad list", list);
+  Err("member: Bad list", list);
 }
 
 PRIMITIVE STk_memq  (SCM obj, SCM list)	{return lmember(obj, list, STk_eq);   }
@@ -290,4 +290,84 @@ PRIMITIVE STk_liststar(SCM l, int len)
 PRIMITIVE STk_copy_tree(SCM l)
 {
   return CONSP(l) ? STk_cons(STk_copy_tree(CAR(l)), STk_copy_tree(CDR(l))): l;
+}
+
+PRIMITIVE STk_last_pair(SCM l)
+{
+  register SCM tmp;
+
+  ENTER_PRIMITIVE("last-pair");
+  if (NCONSP(l)) Serror("bad list", l);
+  for (tmp=l; CONSP(CDR(l)); l = CDR(l))
+    /* Nothing */;
+  return l;
+}
+  
+
+/*
+ * remove functions
+ */
+
+static SCM lremove(SCM obj, SCM list, SCM (*predicate)(SCM, SCM) )
+{
+  register SCM ptr, l;
+  SCM result;
+
+  if (NCONSP(list) && NNULLP(list)) goto Error;
+
+  for (l=list, result=NIL; NNULLP(l); ) {
+    if (NCONSP(l)) goto Error;
+      
+    if ((*predicate)(CAR(l), obj) == Ntruth) {
+      if (NULLP(result)) {
+	NEWCELL(result, tc_cons);
+	ptr = result;
+      }
+      else {
+	NEWCELL(CDR(ptr), tc_cons);
+	ptr = CDR(ptr);
+      }
+      CAR(ptr) = CAR(l);
+      CDR(ptr) = NIL; 	/* Keep always a valid list in case of a GC */
+    }
+    if ((l=CDR(l)) == list) Err("remove: circular list", NIL);
+  }
+  return result;
+Error:
+  Err("remove: Bad list", list);
+}
+
+PRIMITIVE STk_remq  (SCM obj, SCM list)	{return lremove(obj, list, STk_eq);   }
+PRIMITIVE STk_remv  (SCM obj, SCM list)	{return lremove(obj, list, STk_eqv);  }
+PRIMITIVE STk_remove(SCM obj, SCM list)	{return lremove(obj, list, STk_equal);}
+
+/*
+ * 
+ * destructive append (aka append!)
+ *
+ */
+
+SCM STk_dappend2(SCM l1, SCM l2)
+{
+  register SCM tmp;
+
+  if (NULLP(l1)) return l2;
+
+  for (tmp = l1; CONSP(tmp); tmp = CDR(tmp)) {
+    if (NULLP(CDR(tmp))) {
+      CDR(tmp) = l2;
+      return l1;
+    }
+  }
+  Err("append!: argument is not a list", tmp);
+}
+
+PRIMITIVE STk_dappend(SCM l, int len)
+{
+  switch (len) {
+    case 0:  return NIL;
+    case 1:  return CAR(l);
+    case 2:  return STk_dappend2(CAR(l), CAR(CDR(l)));
+    default: return STk_dappend2(CAR(l), STk_dappend(CDR(l), len-1));
+  }
 }

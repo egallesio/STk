@@ -1,7 +1,7 @@
 ;;;;
 ;;;; D e f b u t t o n . s t k 	  --  Default button composite widget
 ;;;;
-;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -11,22 +11,37 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
+;;;; $Id: Defbutton.stklos 1.3 Wed, 04 Feb 1998 11:34:59 +0100 eg $
+;;;;
 ;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;    Creation date: 22-Mar-1994 13:05
-;;;; Last file update: 13-Aug-1996 23:16
+;;;; Last file update:  3-Feb-1998 18:37
 
-(require "Frame")
-(require "Button")
+(require "Basics")
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(select-module STklos+Tk)
+
+;=============================================================================
+;
+; 			< D e f a u l t - b u t t o n >
+;
+;=============================================================================
 ;;;;
-;;;; <Default-button> class definition
+;;;; Resources
 ;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(option 'add "*DefaultButton.Border.BorderWidth"        1        "widgetDefault")
+(option 'add "*DefaultButton.Border.Relief"             "sunken" "widgetDefault")
 
+;;;;
+;;;; Class definition
+;;;;
 (define-class <Default-button> (<Tk-composite-widget> <Button>)
-  ((button 	   :accessor     button-of)
+  ((class 	   :init-keyword :class
+		   :init-form    "DefaultButton")
+   
+   (button 	   :accessor     button-of)
    (internal-frame :accessor	 internal-frame-of)
+   
    ;; Fictive slots 
    (background     :accessor     background
 		   :init-keyword :background
@@ -42,14 +57,29 @@
 		   :propagate-to (frame))))
 
 (define-method initialize-composite-widget ((self <Default-button>) initargs frame)
-  (let* ((if (make <Frame>  :parent frame :border-width 2 :relief "groove"))
+  (let* ((if (make <Frame>  :parent frame :class "Border"))
 	 (b  (make <Button> :parent if)))
+    (next-method)
 
-    (pack b  :padx 5 :pady 5 :expand #t)
-    (pack if :padx 5 :pady 5 :expand #t)
-    
+    (pack (Id b)  :padx 5 :pady 5 :expand #t)
+    (pack if      :padx 5 :pady 5 :expand #t)
+
+    (set! (highlight-thickness frame) 1)
+    (focus b)
+    (bind b "<Return>" (lambda () (invoke b)))
+
     (slot-set! self 'Id    	    (Id b))
     (slot-set! self 'button	    b)
     (slot-set! self 'internal-frame if)))
 
+
 (provide "Defbutton")
+
+#|
+    Example:
+	(define db (make <Default-button> :text "Type Return anywhere"
+			 :command (lambda () (display "Default\n"))))
+        (define b  (make <Button> :text "Another button"
+			 :command (lambda () (display "Other\n"))))
+        (pack db b :side 'left :padx 20 :pady 20)
+|#

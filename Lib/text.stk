@@ -1,7 +1,7 @@
 ;;;;
 ;;;; Texts bindings and procs (bindings a` la emacs)
 ;;;;
-;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -14,43 +14,14 @@
 ;;;; This software is a derivative work of other copyrighted softwares; the
 ;;;; copyright notices of these softwares are placed in the file COPYRIGHTS
 ;;;;
+;;;; $Id: text.stk 1.3 Sun, 22 Mar 1998 17:16:09 +0100 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 17-May-1993 12:35
-;;;; Last file update: 24-Aug-1996 15:48
+;;;; Last file update: 21-Mar-1998 12:47
 ;;;;
 
-
-;; Tk:text-clipboard-keysyms
-;; This procedure is invoked to identify the keys that correspond to
-;; the "copy", "cut", and "paste" functions for the clipboard.
-;;
-;; Arguments:
-;; copy -	Name of the key (keysym name plus modifiers, if any,
-;;		such as "Meta-y") used for the copy operation.
-;; cut -		Name of the key used for the cut operation.
-;; paste -	Name of the key used for the paste operation.
-
-(define (Tk:text-clipboard-keysyms copy cut paste)
-  (define-binding "Text" copy (|W|)
-    (when (equal? [selection 'own :displayof |W|] |W|)
-       (clipboard 'clear :displayof |W|)
-       (catch 
-	  (clipboard 'append :displayof |W| (selection 'get :displayof |W|)))))
-
-  (define-binding "Text" cut (|W|)
-    (when (equal? [selection 'own :displayof |W|] (widget->string |W|))
-       (clipboard 'clear :displayof |W|)
-       (catch
-	  (clipboard 'append :displayof |W| (selection 'get :displayof |W|))
-	  (|W| 'delete 'sel.first 'sel.last))))
-
-  (define-binding "Text" paste (|W|)
-    (catch
-       (|W| 'insert 'insert (selection 'get :displayof |W| 
-				            :selection "CLIPBOARD"))))
-)
-
+(select-module Tk)
 
 ;; Tk:text-button-1 --
 ;; This procedure is invoked to handle button-1 presses in "Text"
@@ -123,6 +94,10 @@
 		      (set! last  (w 'index (format #f "~A lineend + 1c" cur)))))))
      
     (when (or tk::mouse-moved (not (equal? tk::select-mode "char")))
+        (w 'mark 'set 'insert (if (and (eqv? (os-kind) 'Windows)
+				       (w 'compare cur "<" "anchor"))
+				  first
+				  last))
 	(w 'tag 'remove "sel" "0.0" first)
 	(w 'tag 'add "sel" first last)
 	(w 'tag 'remove "sel" last "end")
@@ -383,18 +358,55 @@
 	    (w 'index (format #f "~A + 1 char" pos)))
 	pos)))
 
-;; Tk:text-paste --
+;; Tk:text-mouse-paste --
 ;; This procedure sets the insertion cursor to the mouse position,
 ;; inserts the selection, and sets the focus to the window.
 ;;
 ;; w -		The text window.
 ;; x, y - 	Position of the mouse.
 
-(define (Tk:text-paste |W| x y)
+(define (Tk:text-mouse-paste |W| x y)
   (|W| 'mark 'set 'insert (Tk:text-closest-gap |W| x y))
   (catch (|W| 'insert 'insert (selection 'get :displayof |W|)))
   (if (string=? (tk-get |W| :state) "normal")
       (focus |W|)))
+
+
+;; Tk:text-copy --
+;; This procedure copies the selection from a text widget into the clipboard.
+;;
+;; w -		Name of a text widget.
+
+(define (Tk:text-copy w)
+  (clipboard 'clear :displayof w)
+  (catch 
+     (clipboard 'append :displayof w (w 'get 'sel.first 'sel.last))))
+
+;; Tk:text-cut --
+;; This procedure copies the selection from a text widget into the
+;; clipboard, then deletes the selection (if it exists in the given
+;; widget).
+;;
+;;  w -		Name of a text widget.
+
+(define (Tk:text-cut w)
+  (when (equal? [selection 'own :displayof w] w)
+       (clipboard 'clear :displayof w)
+       (catch
+	  (clipboard 'append :displayof w (selection 'get :displayof w))
+	  (w 'delete 'sel.first 'sel.last))))
+
+;; Tk:text-paste --
+;; This procedure pastes the contents of the clipboard to the insertion
+;; point in a text widget.
+;;
+;; w -		Name of a text widget.
+
+(define (Tk:text-paste w)
+  (catch 
+     (unless (eqv? (os-kind) 'Unix)
+       (w 'delete 'sel.first 'sel.last))
+     (w 'insert 'insert (selection 'get :displayof w :selection "CLIPBOARD"))))
 
 ;;-------------------------------------------------------------------------
 ;; The code below creates the default class bindings for entries.
@@ -452,7 +464,7 @@
 
 (define-binding "Text" "<ButtonRelease-2>" (|W| x y)
   (if (or (not tk::mouse-moved) *tk-strict-motif*)
-      (Tk:text-paste |W| x y)))
+      (Tk:text-mouse-paste |W| x y)))
 
 (define-binding "Text" "<Left>" (|W|)
   (Tk:text-set-cursor |W| "insert-1c"))
@@ -540,7 +552,7 @@
 (define-binding "Text" "<Shift-Tab>" (|W|)
   ;; Needed only to keep <Tab> binding from triggering;  doesn't
   ;; have to actually do anything.
-  'nop)
+  'break)
 
 (define-binding "Text" "<Control-Tab>" (|W|)
   (focus (Tk:focus-next |W|)))
@@ -588,7 +600,17 @@
 (define-binding "Text" "<Control-backslash>" (|W|)
   (|W| 'tag 'remove 'sel "1.0" "end"))
 
-(Tk:text-clipboard-keysyms "<F16>" "<F20>" "<F18>")
+(define-binding "Text" "<<Cut>>" (|W|)
+  (Tk:text-cut |W|))
+
+(define-binding "Text" "<<Copy>>" (|W|)
+  (Tk:text-copy |W|))
+
+(define-binding "Text" "<<Paste>>" (|W|)
+  (Tk:text-paste |W|))
+
+(define-binding "Text" "<<Clear>>" (|W|)
+  (catch (|W| 'delete 'sel.first 'sel.last)))
 
 (define-binding "Text" "<Insert>" (|W|)
   (catch 
@@ -644,8 +666,9 @@
 (define-binding "Text" "<Control-t>" (|W|)
   (Tk:text-transpose |W|))
 
-(define-binding "Text" "<Control-v>" (|W|)
-  (Tk:text-scroll-pages |W| +1))
+(when (eqv? (os-kind) 'Unix)			;; Unix Only
+  (define-binding "Text" "<Control-v>" (|W|)
+    (Tk:text-scroll-pages |W| +1)))
 
 (define-binding "Text" "<Meta-b>" (|W|)
   (Tk:text-set-cursor |W| "insert - 1c wordstart"))
@@ -667,8 +690,6 @@
 
 (define-binding "Text" "<Meta-Delete>" (|W|)
   (|W| 'delete "insert -1c wordstart" "insert"))
-
-(Tk:text-clipboard-keysyms "<Meta-w>" "<Control-w>" "<Control-y>")
 
 ;; A few additional bindings of my own.
 

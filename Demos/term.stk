@@ -1,7 +1,9 @@
+#!/bin/sh
+:;exec /usr/local/bin/stk -f "$0" "$@"
 ;;;;
 ;;;;  t e r m  . s t k  --  A simple terminal emulator written in Scheme
 ;;;;
-;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -11,12 +13,12 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
+;;;; $Id: term.stk 1.2 Mon, 16 Feb 1998 08:28:39 +0100 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date:  7-Oct-1995 10:39
-;;;; Last file update: 22-Feb-1996 00:29
+;;;; Last file update: 12-Feb-1998 15:31
 
 (require "sterm")
 
-(wm 'withdraw *root*)
 (sterm) ;; Easy no? 

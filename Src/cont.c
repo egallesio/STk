@@ -2,7 +2,7 @@
  *
  * c o n t . c				-- Continuations management
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -16,10 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
+ * $Id: cont.c 1.2 Mon, 09 Mar 1998 09:31:40 +0100 eg $
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date:  8-Nov-1993 11:34
- * Last file update: 26-Apr-1996 17:46
+ * Last file update:  8-Mar-1998 18:46
  */
 
 #include "stk.h"
@@ -199,4 +200,37 @@ PRIMITIVE STk_dynamic_wind(SCM thunk1, SCM thunk2, SCM thunk3)
   STk_wind_stack = CDR(STk_wind_stack);
   Apply(thunk3, NIL);
   return result;
+}
+
+/******************************************************************************
+ *
+ * R5RS values
+ * 
+ ******************************************************************************/
+
+PRIMITIVE STk_values(SCM l, int len)
+{
+  SCM z;
+  
+  if (len == 1)
+    return CAR(l);
+  else {
+    NEWCELL(z, tc_values);
+    CAR(z) = l;
+    return z;
+  }
+}
+
+
+PRIMITIVE STk_call_with_values(SCM producer, SCM consumer)
+{
+  SCM res;
+
+  ENTER_PRIMITIVE("call-with-values");
+
+  if (!STk_procedurep(producer)) Serror("bad producer", producer);
+  if (!STk_procedurep(consumer)) Serror("bad consumer", consumer);
+
+  res = Apply(producer, NIL);
+  return Apply(consumer, VALUESP(res) ? CAR(res) : LIST1(res));
 }

@@ -6,14 +6,14 @@
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 13-May-1993 10:59
- * Last file update: 27-Aug-1996 18:16
+ * Last file update: 28-Mar-1998 16:17
  *
  *
  * Code used here was originally copyrigthed as shown below:
  *      Copyright 1990-1992 Regents of the University of California.
  *
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -34,28 +34,12 @@
 
 
 /*
- * Command used to initialize wish:
- */
-
-static char initCmd[] = "(load (string-append *stk-library* \"/STk/tk-init.stk\"))";
-
-/*
  * Global variables used by the main program:
  */
 
-static Tk_Window w;			/* The main window for the application.  If
-				 	 * NULL then the application no longer
-					 * exists. */
 Tcl_Interp *STk_main_interp= NULL;	/* Interpreter for this application. */
+SCM STk_Tk_module;			/* The Tk module */
 int Tk_initialized = 0;			/* 1 when Tk is fully initialized */
-
-/*
- * Forward declarations for procedures defined later in this file:
- */
-
-static void DelayedMap _ANSI_ARGS_((ClientData clientData));
-static void StructureProc _ANSI_ARGS_((ClientData clientData,
-				       XEvent *eventPtr));
 
 
 /*
@@ -70,6 +54,7 @@ static void StructureProc _ANSI_ARGS_((ClientData clientData,
 static void Tcl_main(void)
 {
   STk_main_interp = Tcl_CreateInterp();
+  STk_init_tracevar(); 	/* Initialize the variable tracing mechanism */
 }
 
 /*
@@ -89,6 +74,10 @@ void Tk_main(int synchronize, char *name, char *fileName, char *Xdisplay,
 
   Tcl_main();
 
+  /* First, create the Tk module */
+  STk_Tk_module = STk_make_module(Intern("tk"));
+  
+  /* Find the name of the application */
   if (name == NULL) {
     p    = (fileName != NULL) ? fileName: STk_Argv0;
     name = strrchr(p, '/');
@@ -156,13 +145,12 @@ void Tk_main(int synchronize, char *name, char *fileName, char *Xdisplay,
 			      geometry, ")", NULL))
       fprintf(STk_stderr, "**** Warning: %s\n", STk_main_interp->result);
   }
-  code = TkPlatformInit(STk_main_interp);
+  code = TkpInit(STk_main_interp);
   
   if (code == TCL_OK)
     Tk_initialized = 1;   /* Ok, it's fully initialized */
-  
-  STk_init_tracevar(); 	/* Initialize the variable tracing mechanism */
-  STk_init_glue();
+
+  STk_init_glue();  
 
   /* Initialize commands which are now in Tcl */
   Tcl_CreateCommand(STk_main_interp, "after",  Tcl_AfterCmd, NULL, NULL);
@@ -174,6 +162,11 @@ void Tk_main(int synchronize, char *name, char *fileName, char *Xdisplay,
 	 */
 
   /* Execute STk's initialization script */
-  Tcl_GlobalEval(STk_main_interp, initCmd);
+  {
+    char buffer[MAX_PATH_LENGTH];
+    
+    sprintf(buffer, "%s/STk/tk-init.stk", STk_library_path);
+    STk_load_file(buffer, TRUE, STk_Tk_module);
+  }
 }
 #endif /* USE_TK */

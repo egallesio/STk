@@ -4,7 +4,7 @@
  * 				   of code of the Tcl lib modified to take into
  *				   account some Scheme specificities)
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1997 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -21,7 +21,7 @@
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 26-Feb-1993 10:10
- * Last file update: 14-Jul-1996 21:58
+ * Last file update: 25-Aug-1997 22:51
  *
  *
  * This code is derivated from several Tcl files which have the following 
@@ -99,12 +99,12 @@ Tcl_PosixError(interp)
 
 char
 Tcl_Backslash(src, readPtr)
-    char *src;			/* Points to the backslash character of
+    CONST char *src;		/* Points to the backslash character of
 				 * a backslash sequence. */
     int *readPtr;		/* Fill in with number of characters read
 				 * from src, unless NULL. */
 {
-    register char *p = src+1;
+    CONST char *p = src+1;
     char result;
     int count;
 
@@ -221,6 +221,7 @@ Tcl_TildeSubst(interp, name, bufferPtr)
 
     Tcl_DStringInit(bufferPtr);
     if (name[0] != '~') {
+        Tcl_DStringAppend(bufferPtr, name, -1);
 	return name;
     }
 
@@ -303,23 +304,22 @@ int Tcl_ExprLong(interp, string, ptr)
   return TCL_ERROR;
 }
 
-
+#ifdef USE_TK
 void Tcl_AddErrorInfo(interp, message)
      Tcl_Interp *interp;
      char *message;	
 {
-  SCM new, old, error_info;
-  
-  error_info = Intern("*error-info*");
-  new        = STk_makestring(message);
-  old	     = VCELL(error_info);
+  SCM old = STk_lookup_variable(ERROR_INFO, STk_Tk_module);
+  SCM new = STk_makestring(message);
 
   if (!STRINGP(old)) old = STk_makestring("");
     
   /* Append message to current value of *error-info* */
-  VCELL(error_info) = STk_string_append(LIST2(old, new), 2);			 
+  STk_define_variable(ERROR_INFO, 
+		      STk_string_append(LIST2(old, new), 2),
+		      STk_Tk_module);
 }
-
+#endif
 /*
  *----------------------------------------------------------------------
  *
@@ -349,155 +349,3 @@ Tcl_AllowExceptions(interp)
     iPtr->evalFlags |= TCL_ALLOW_EXCEPTIONS;
 }
 
-#ifdef USE_TK
-
-/*
- *=============================================================================
- *
- * Misc
- *
- *=============================================================================
- */
-
-/*
- * The FileHashKey structure is used to associate the OS file handle and type
- * with the corresponding notifier data in a FileHandle.
- */
-
-typedef struct FileHashKey {
-    int type;			/* File handle type. */
-    ClientData osHandle;	/* Platform specific OS file handle. */
-} FileHashKey;
-
-typedef struct FileHandle {
-    FileHashKey key;		/* Hash key for a given file. */
-    ClientData data;		/* Platform specific notifier data. */
-    Tcl_FileFreeProc *proc;	/* Callback to invoke when file is freed. */
-} FileHandle;
-
-/*
- * Static variables used in this file:
- */
-
-static Tcl_HashTable fileTable;	/* Hash table containing file handles. */
-static int initialized = 0;	/* 1 if this module has been initialized. */
-
-/*
- * Static procedures used in this file:
- */
-
-static void 		FileExitProc _ANSI_ARGS_((ClientData clientData));
-
-/*
- *----------------------------------------------------------------------
- *
- * Tcl_GetFile --
- *
- *	This function retrieves the file handle associated with a
- *	platform specific file handle of the given type.  It creates
- *	a new file handle if needed.
- *
- * Results:
- *	Returns the file handle associated with the file descriptor.
- *
- * Side effects:
- *	Initializes the file handle table if necessary.
- *
- *----------------------------------------------------------------------
- */
-
-Tcl_File
-Tcl_GetFile(osHandle, type)
-    ClientData osHandle;	/* Platform specific file handle. */
-    int type;			/* Type of file handle. */
-{
-    FileHashKey key;
-    Tcl_HashEntry *entryPtr;
-    int new;
-
-    if (!initialized) {
-	Tcl_InitHashTable(&fileTable, sizeof(FileHashKey)/sizeof(int));
-	Tcl_CreateExitHandler(FileExitProc, 0);
-	initialized = 1;
-    }
-    key.osHandle = osHandle;
-    key.type = type;
-    entryPtr = Tcl_CreateHashEntry(&fileTable, (char *) &key, &new);
-    if (new) {
-	FileHandle *newHandlePtr;
-
-	newHandlePtr = (FileHandle *) ckalloc(sizeof(FileHandle));
-	newHandlePtr->key = key;
-	newHandlePtr->data = NULL;
-	newHandlePtr->proc = NULL;
-	Tcl_SetHashValue(entryPtr, newHandlePtr);
-    }
-    
-    return (Tcl_File) Tcl_GetHashValue(entryPtr);
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * Tcl_GetFileInfo --
- *
- *	This function retrieves the platform specific file data and
- *	type from the file handle.
- *
- * Results:
- *	If typePtr is not NULL, sets *typePtr to the type of the file.
- *	Returns the platform specific file data.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
-
-ClientData
-Tcl_GetFileInfo(handle, typePtr)
-    Tcl_File handle;
-    int *typePtr;
-{
-    FileHandle *handlePtr = (FileHandle *) handle;
-
-    if (typePtr) {
-	*typePtr = handlePtr->key.type;
-    }
-    return handlePtr->key.osHandle;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * FileExitProc --
- *
- *	This function an exit handler that frees any memory allocated
- *	for the file handle table.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	Cleans up the file handle table.
- *
- *----------------------------------------------------------------------
- */
-
-static void
-FileExitProc(clientData)
-    ClientData clientData;	/* Not used. */
-{
-    Tcl_HashSearch search;
-    Tcl_HashEntry *entryPtr;
-
-    entryPtr = Tcl_FirstHashEntry(&fileTable, &search);
-
-    while (entryPtr) {
-	ckfree(Tcl_GetHashValue(entryPtr));
-	entryPtr = Tcl_NextHashEntry(&search);
-    }
-
-    Tcl_DeleteHashTable(&fileTable);
-}
-#endif

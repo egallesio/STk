@@ -2,7 +2,7 @@
  *
  * p r i m i t i v e s . c			-- List of STk subrs
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -16,10 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
+ * $Id: primitives.c 1.10 Fri, 10 Apr 1998 09:13:18 +0200 eg $
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: ??????
- * Last file update: 16-Jun-1996 22:54
+ * Last file update: 28-Mar-1998 21:05
  */
 
 
@@ -54,6 +55,9 @@ extern PRIMITIVE STk_init_html(void);
 #endif
 #ifdef USE_PIXMAP
 extern PRIMITIVE STk_init_pixmap(void);
+#endif
+#ifdef USE_JPEG
+extern PRIMITIVE STk_init_jpeg(void);
 #endif
 
 static struct Primitive Scheme_primitives[] = { 
@@ -143,6 +147,11 @@ static struct Primitive Scheme_primitives[] = {
 
   {"list*",		    tc_lsubr,       STk_liststar},		/* + */
   {"copy-tree",		    tc_subr_1,	    STk_copy_tree},		/* + */
+  {"last-pair",		    tc_subr_1,	    STk_last_pair},		/* + */
+  {"remq",		    tc_subr_2,	    STk_remq},			/* + */
+  {"remv",		    tc_subr_2,	    STk_remv},			/* + */
+  {"remove",		    tc_subr_2,	    STk_remove},		/* + */
+  {"append!",		    tc_lsubr,       STk_dappend},		/* + */
 
   /**** Section 6.4 ****/
   {"symbol?",		    tc_subr_1,	    STk_symbolp},
@@ -257,7 +266,7 @@ static struct Primitive Scheme_primitives[] = {
   {"string-index",	    tc_subr_2,	    STk_string_index},		/* + */
   {"string-lower",	    tc_subr_1,	    STk_string_lower},		/* + */
   {"string-upper",	    tc_subr_1,	    STk_string_upper},		/* + */
-
+  {"split-string",	    tc_subr_1_or_2, STk_split_string},		/* + */
 
   /**** Section 6.8 ****/
   {"vector?",		    tc_subr_1,	    STk_vectorp},
@@ -281,6 +290,8 @@ static struct Primitive Scheme_primitives[] = {
   {"force",		    tc_subr_1,	    STk_force},
   {"call-with-current-continuation",		
      			    tc_call_cc,	    NULL}, 
+  {"values",		    tc_lsubr,	    STk_values},
+  {"call-with-values",	    tc_subr_2,      STk_call_with_values},
 
   {"promise?",	  	    tc_subr_1,	    STk_promisep},		/* + */
   {"continuation?",	    tc_subr_1,	    STk_continuationp},		/* + */
@@ -308,21 +319,22 @@ static struct Primitive Scheme_primitives[] = {
   {"display",		    tc_subr_1_or_2, STk_display},
   {"newline",		    tc_subr_0_or_1, STk_newline},
   {"write-char",	    tc_subr_1_or_2, STk_write_char},
-  {"load",		    tc_subr_1,	    STk_scheme_load},
+  {"load",		    tc_subr_1_or_2, STk_load},
 
   {"open-file",		    tc_subr_2,	    STk_open_file},		/* + */
   {"close-port",	    tc_subr_1,	    STk_close_port},		/* + */
   {"read-line",		    tc_subr_0_or_1, STk_read_line},		/* + */
   {"flush",		    tc_subr_0_or_1, STk_flush},			/* + */
-  {"try-load",		    tc_subr_1,	    STk_try_load},		/* + */
+  {"try-load",		    tc_subr_1_or_2, STk_try_load},		/* + */
   {"autoload",		    tc_fsubr,	    STk_autoload},		/* + */
-  {"autoload?",		    tc_fsubr,	    STk_autoloadp},		/* + */
+  {"autoload?",		    tc_subr_1_or_2, STk_autoloadp},		/* + */
 #ifdef USE_TK
   {"when-port-readable",    tc_subr_1_or_2, STk_when_port_readable},	/* + */
   {"when-port-writable",    tc_subr_1_or_2, STk_when_port_writable},	/* + */
 #endif
   {"format",		    tc_lsubr,	    STk_format},		/* + */
   {"error",		    tc_lsubr,	    STk_error},			/* + */
+  {"write*",		    tc_subr_1_or_2, STk_write_star},		/* + */
   {"input-string-port?",    tc_subr_1,	    STk_input_string_portp},	/* + */
   {"output-string-port?",   tc_subr_1,	    STk_output_string_portp},	/* + */
   {"current-error-port",    tc_subr_0,	    STk_current_error_port},	/* + */
@@ -359,7 +371,22 @@ static struct Primitive Scheme_primitives[] = {
   {"symbol-bound?",	    tc_subr_1_or_2, STk_symbol_boundp},		/* + */
   {"eval",		    tc_subr_1_or_2, STk_user_eval},		/* + */
   {"eval-hook",		    tc_subr_3,	    STk_eval_hook},		/* + */
-
+  
+  {"define-module",	    tc_fsubr,	    STk_define_module},		/* + */
+  {"module?",		    tc_subr_1,	    STk_modulep},		/* + */
+  {"with-module",	    tc_fsubr,	    STk_with_module},		/* + */
+  {"import",		    tc_fsubr,	    STk_import},		/* + */
+  {"export-symbol",	    tc_subr_2,	    STk_export_symbol},		/* + */
+  {"export-all-symbols",    tc_subr_0,	    STk_export_all_symbols},	/* + */
+  {"select-module",	    tc_fsubr, 	    STk_select_module},		/* + */
+  {"current-module",	    tc_fsubr,	    STk_current_module},	/* + */
+  {"find-module",	    tc_subr_1_or_2, STk_find_module},		/* + */
+  {"module-name",	    tc_subr_1,	    STk_module_name},		/* + */
+  {"module-imports",	    tc_subr_1,	    STk_module_imports},	/* + */
+  {"module-exports",	    tc_subr_1,	    STk_module_exports},	/* + */
+  {"module-environment",    tc_subr_1,	    STk_module_env},		/* + */
+  {"module-symbols",	    tc_subr_1,	    STk_module_symbols},	/* + */
+  {"%get-module",	    tc_subr_1,	    STk_get_module},		/* Undoc */
 
   /**** Section 6.14 ****/
   {"macro",		    tc_fsubr,	    STk_macro},			/* + */
@@ -367,6 +394,7 @@ static struct Primitive Scheme_primitives[] = {
   {"macro-expand",	    tc_fsubr,	    STk_macro_expand},		/* + */
   {"macro-expand-1",	    tc_fsubr,	    STk_macro_expand_1},	/* + */
   {"macro-body",	    tc_subr_1,	    STk_macro_body},		/* + */
+  {"%macro-r5",		    tc_fsubr,	    STk_macro_R5},		/* Undoc */
 
   /**** Section 6.15 ****/
   {"address-of",	    tc_subr_1,	    STk_address_of},		/* + */
@@ -393,8 +421,17 @@ static struct Primitive Scheme_primitives[] = {
   {"file-is-executable?",   tc_subr_1,	    STk_file_is_executablep},	/* + */
   {"file-exists?",	    tc_subr_1,	    STk_file_existp},		/* + */
   {"glob",		    tc_lsubr,	    STk_file_glob},		/* + */
+  {"remove-file",	    tc_subr_1,	    STk_remove_file},		/* + */
+  {"rename-file",	    tc_subr_2,	    STk_rename_file},		/* + */
+  {"temporary-file-name",   tc_subr_0,	    STk_temporary_file_name},	/* + */
 
-  /**** Non standard procedures ****/
+
+  /**** Section 6.23 (FFI) ****/
+  {"%call-external",	    tc_lsubr,	    STk_call_external},		/* Undoc */
+  {"%external-exists?",	    tc_subr_2, 	    STk_external_existsp},	/* Undoc */
+  {"c-string->string",	    tc_subr_1, 	    STk_cstring2string},	/* + */
+
+  /**** Section 6.24 (Misc) ****/
   {"eval-string",	    tc_subr_1_or_2, STk_eval_string},		/* + */
   {"gc",		    tc_subr_0,	    STk_gc},			/* + */
   {"gc-stats",		    tc_subr_0,	    STk_gc_stats},		/* + */
@@ -409,17 +446,21 @@ static struct Primitive Scheme_primitives[] = {
   {"time",		    tc_fsubr,	    STk_time},			/* + */
   {"uncode",		    tc_subr_1,	    STk_uncode},		/* + */
   {"exit",		    tc_subr_0_or_1, STk_quit_interpreter},	/* + */
-
 #ifdef USE_TK
   {"trace-var",		    tc_subr_2,	    STk_trace_var},		/* + */
   {"untrace-var",	    tc_subr_1,	    STk_untrace_var},		/* + */
 #endif
 
   /**** Undocumented primitives */
-  {"%get-eval-stack",	    tc_subr_0,	    STk_get_eval_stack},
-  {"%get-environment-stack",tc_subr_0,	    STk_get_env_stack},
-  {"%find-cells",	    tc_subr_1,	    STk_find_cells},
-  {"%library-location",	    tc_subr_0,	    STk_library_location},
+  {"%get-eval-stack",	    tc_subr_0,	    STk_user_get_eval_stack},	/* Undoc */
+  {"%get-environment-stack",tc_subr_0,	    STk_get_env_stack},		/* Undoc */
+  {"%library-location",	    tc_subr_0,	    STk_library_location},	/* Undoc */
+  {"%procedure-arity",	    tc_subr_1,	    STk_procedure_arity},	/* Undoc */
+#ifdef DEBUG_STK
+  {"%find-cells",	    tc_subr_1,	    STk_find_cells},     /* for debug*/
+  {"%get-environment",	    tc_subr_1,	    STk_get_environment},/* for debug*/
+#endif
+
 
 #ifdef USE_STKLOS
   {"%init-stklos",	    tc_subr_0,	    STk_init_STklos},
@@ -449,19 +490,30 @@ static struct Primitive Scheme_primitives[] = {
 #if defined(USE_TK) && defined(USE_PIXMAP)
   {"%init-pixmap",	    tc_subr_0,	    STk_init_pixmap},
 #endif
+#if defined(USE_TK) && defined(USE_JPEG)
+  {"%init-jpeg",	    tc_subr_0,	    STk_init_jpeg},
+#endif
   { "", 0, (SCM (*)()) NULL }
 };
 
 void STk_init_primitives(void)
 {
   register struct Primitive *p;
-  register SCM z;
+  register SCM var, z;
 
   for (p = Scheme_primitives; *p->name; p++) {
-    /* Create a subr cell and store it in the obarray */
+    /* Create a subr cell and store it in both the STk and Scheme modules */
     NEWCELL(z, p->type);
     z->storage_as.subr.name = p->name;
     z->storage_as.subr0.f   = p->fct;
-    VCELL(Intern(p->name))  =  z;
+
+    /* Normal calls should be 
+     *    STk_define_variable(p->name, z, STk_scheme_module);
+     *    STk_define_variable(p->name, z, NIL);
+     * but it sucks; use low level access instead.
+     */
+    var = Intern(p->name);
+    STk_define_public_var(STk_scheme_module, var, z);
+    VCELL(var) =  z;
   }
 }

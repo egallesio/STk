@@ -1,0 +1,437 @@
+;;; www-url.stk - URL Parsing library (used by the www package).
+;;;           Version 0.5.
+;;;
+;;; Copyright (c) 1995 Harvey J. Stein (hjstein@math.huji.ac.il)
+;;; This code is freely usable and distributable as long as this
+;;; heading remains.
+
+;;; slightly modified by Erick Gallesio (changes are noted with [eg])
+;;;      (Last file update: 27-Feb-1998 17:35)
+
+
+;;; Usage:
+;;; (url:parse-url url)
+;;;   Takes a string (url), and returns a parsed url.  One may apply
+;;;   The general url form handled is:
+;;;
+;;;      service://user:password@host:port/path;parameters?query#anchor
+;;;
+;;;   This function takes a second optional argument - the parent url
+;;;   (a parsed url).  When the 2nd argument is given, the url is
+;;;   interpreted relative to the parent url.
+;;;
+;;;   The following functions may be applied to a parsed url:
+;;;
+;;;   (url:unparse-url url)
+;;;         Returns a string (a fully qualified url) which would parse
+;;;         into url.
+;;;   (url:service  parsed-url)
+;;;         Returns the service (i.e. - protocol) (as a symbol), or #f
+;;;         if none was given.
+;;;   (define url:user parsed-url)
+;;;         Returns user name, or #f if none was supplied.
+;;;   (url:password parsed-url)
+;;;         Returns the password, or #f if none was supplied.
+;;;   (url:host parsed-url)
+;;;         Returns the host name, or #f if none was supplied.
+;;;         Note - the host name can be "" (as in file:///foo/bar).
+;;;   (url:port-number parsed-url)
+;;;         The port number in the url, or #f if none was supplied.
+;;;   (url:filename parsed-url)
+;;;         The file name (i.e. - path name) of the url, or #f if
+;;;         none was supplied.
+;;;   (url:anchor parsed-url)
+;;;         The anchor in the url, or #f if none was supplied.  It can
+;;;         be "" - as in http://foo.bar.com/file#
+;;;   (url:parameters parsed-url)
+;;;         The parameters (#f if not supplied, empty string if
+;;;         parameter delimiter is supplied, but no parameters are
+;;;         supplied.
+;;;   (url:query parsed-url)
+;;;         The query parameters (#f if not supplied, empty string if
+;;;         query delimiter is supplied, but no query parameters are
+;;;         supplied.
+;;;   (url:through-proxy? parsed-url)
+;;;         #t iff url has been parsed to be passed through a proxy.
+;;;         Proxying is handled by parsing the proxy address, and
+;;;         passing the unparsed url through as the file name.
+;;;   (url:pretty-url url . parent)				[eg]
+;;;  	    returns a pretty string denoting the URL. url can be parsed or not,
+;;;	    parent can be present or not.
+
+;;; Overview:
+
+;;; Internet RFC 1808 discusses how to interpret relative URLs.  In
+;;; doing so, it gives algorithms both for parsing URLs and for
+;;; computing relative URLs.
+;;;
+;;; To parse a URL, they say to follow the following procedure:
+;;;
+;;;   1. Everything incl & after 1st "#" is the anchor, of the rest,
+;;;   2. Everything incl & before 1st ":" is the scheme, assuming at
+;;;      least 1 char before ":" & all chars are scheme allowable
+;;;      [a-zA-Z0-9+.-], of the rest,
+;;;   3. If it starts with "//", everything up to (but not incl) next
+;;;      ocurrence of "/" or until end is network location.  Of the rest,
+;;;   4. everything from 1st "?" until end is the query info.  of the
+;;;      rest,
+;;;   5. everything from 1st ";" until end is the parameters field.  Of
+;;;      the rest,
+;;;   6. everything remaining is the path.
+;;;
+;;; After all this is done, one must remove the "#" from the beginning
+;;; of the anchor, the ":" from the end of the scheme, the "//" from
+;;; the beginning of the net location, the "?" from the beginning of
+;;; the query part, and the ";" from the beginning of the params part.
+;;; One typically leaves the "/" on the beginning of the path part,
+;;; because it shows up iff the URL is relative.
+;;;
+;;; This means that the following regexp should be able to separate
+;;; out these 6 basic parts of the url:
+;;;
+;;; "^([a-zA-Z0-9+.-]+:|)(//[^#/]*|)([^#?;]*|)(;[^?#]*|)(\\?[^#]*|)(#.*|)$"
+;;;
+;;; Once this is done, the net address must be parsed.  I believe this
+;;; can be done as follows:
+;;;
+;;;   1. Everything before & including the 1st "@" is the
+;;;      username/password part.  Of the rest,
+;;;   2. Everything after & including the last ":" is the port number,
+;;;      provided the ":" is only followed by digits
+;;;   3. What's left is the host name.
+;;;
+;;; Bugs
+;;;   -The parsing of http://foo.bar.com is problematic.  On the one
+;;;    hand, there's no file name 
+;;;    become /.			[eg] corrected
+;;;   -Proxy junk barely tested...
+
+
+(define-module URL
+   (export url:parse-url url:unparse-url url:service url:user       
+           url:password url:host url:port-number url:filename   
+           url:anchor url:parameters url:query url:through-proxy?
+           url:pretty-url))
+
+(select-module URL)
+
+(define url:*proxy-env-vars*
+  '((http   "HTTP_PROXY")
+    (ftp    "FTP_PROXY")
+    (wais   "WAIS_PROXY")
+    (gopher "GOPHER_PROXY")))
+
+(define *proxy-servers* ())
+;;; Takes a URL as an argument and returns a list containing the 
+;;; protocol, the host name, and the file name.
+
+(define (parse-url url . parent)
+  (proxitize (apply relativize (basic-parse-url url) parent)))
+
+(define (basic-parse-url url)
+  (let* ((base (split url-regexp url))
+	 (up-hp (split up-hp-regexp (safe-list-ref base 1)))
+	 (u-p   (split u-p-regexp (safe-list-ref up-hp 0)))
+	 (h-p   (split-hp-part (safe-list-ref up-hp 1))))
+;;    (format #t "basic-parse-url:\n   base=~s\n   up-hp=~s\n   u-p=~s\n   h-p=~s\n"
+;;	    base up-hp u-p h-p)
+    (if (not (and base up-hp u-p h-p))
+	#f
+      (let* ((dirty-url (map (lambda (x) (if (string=? x "") #f x))
+			     (append (list (car base))
+				     u-p
+				     h-p
+				     (cddr base))))
+	     (srv  (maybe-chop-end (list-ref dirty-url 0)))
+	     (user (maybe-chop-end (list-ref dirty-url 1)))
+	     (pass (maybe-chop-end (list-ref dirty-url 2)))
+	     (host (list-ref dirty-url 3))
+	     (port (maybe-chop-beg (list-ref dirty-url 4)))
+	     (path (list-ref dirty-url 5))
+	     (parm (maybe-chop-beg (list-ref dirty-url 6)))
+	     (quer (maybe-chop-beg (list-ref dirty-url 7)))
+	     (anch (maybe-chop-beg (list-ref dirty-url 8))))
+	(if (and (not host)
+		 (string? (safe-list-ref base 1))
+		 (> (string-length (safe-list-ref base 1)) 0))
+	    (set! host ""))
+	(list (if srv (string->symbol (string-lower srv))
+		#f)
+	      user
+	      pass
+	      host
+	      (if port (string->number port)
+		#f)
+	      (or path "/")
+	      parm
+	      quer
+	      anch
+	      #f)))))
+
+(define (relativize url . parent)
+  (define (inherit-service)
+    (set! url (smerge-lists url parent 0)))
+
+  (define (inherit-netloc)
+    (set! url (smerge-lists url parent 1 2 3 4)))
+
+  (define (inherit-path)
+    (set! url (smerge-lists url parent 5)))
+
+  (define (inherit-parameters)
+    (set! url (smerge-lists url parent 6)))
+
+  (define (inherit-query)
+    (set! url (smerge-lists url parent 7)))
+
+  (define (smerge-lists url parent . positions)
+    (define (smerge-aux url parent positions ref)
+      (cond ((null? positions) url)
+	    ((null? url) parent)
+	    ((null? parent) url)
+	    ((= (car positions) ref)
+	     (cons (car parent)
+		   (smerge-aux (cdr url) (cdr parent) (cdr positions) (+ 1 ref))))
+	    (else
+	     (cons (car url)
+		   (smerge-aux (cdr url) (cdr parent) positions (+ 1 ref))))))
+    (smerge-aux url parent positions 0))
+
+  (define (dirname f)
+    (define r (string->regexp "^(.*/|)([^/]*)$"))
+    (car (split r f)))
+
+  (define (merge-paths)
+    (let* ((base (string-append (dirname (filename parent))
+				(filename url)))
+	   (slb  (string-length base))
+	   (newpath 
+	    (cond ((and (> slb 0)
+			 (char=? (string-ref base (- slb 1)) #\/))
+		   (string-append (expand-file-name base) "/"))
+		  ((and (= slb 1)
+			(char=? (string-ref base 0) #\.))
+		   (string-append (expand-file-name base) "/"))
+		  ((and (= slb 2)
+			(or (string=? base "..")
+			    (string=? base "/.")))
+		   (string-append (expand-file-name base) "/"))
+		  ((and (> slb 2)
+			(char=? (string-ref base (- slb 2)) #\/)
+			(char=? (string-ref base (- slb 1)) #\.))
+		   (string-append (expand-file-name base) "/"))
+		  ((and (> slb 2)
+			(char=? (string-ref base (- slb 3)) #\/)
+			(char=? (string-ref base (- slb 2)) #\.)
+			(char=? (string-ref base (- slb 1)) #\.))
+		   (string-append (expand-file-name base) "/"))
+		  (else
+		   (expand-file-name base)))))
+      (set! slb (string-length newpath))
+      (if (and (> slb 1)
+	       (char=? (string-ref newpath (- slb 1)) #\/)
+	       (char=? (string-ref newpath (- slb 2)) #\/))
+	  (set! newpath (substring newpath 0 (- slb 1))))
+;;      (format #t "merge-paths: base=~s, newpath=~s\n" base newpath)
+      (set! url (smerge-lists url `(serv user pass host port ,newpath) 5))))
+      
+  (if (not (null? parent)) (set! parent (car parent)))
+  (cond ((null? parent) url)
+	((string=? "" (unparse-url parent)) url)
+	((string=? "" (unparse-url url)) parent)
+	((service url) url)
+	((host url) (inherit-service) url)
+	((and (filename url)
+	      (> (string-length (filename url)) 0)
+	      (char=? (string-ref (filename url) 0) #\/))
+	 (inherit-service) (inherit-netloc) url)
+	((and (not (filename url))
+	      (parameters url))
+	 (inherit-service) (inherit-netloc) (inherit-path) url)
+	((and (not (filename url))
+	      (query url))
+	 (inherit-service) (inherit-netloc) (inherit-path) (inherit-parameters)
+	 url)
+	((not (filename url))
+	 (inherit-service) (inherit-netloc) (inherit-path) (inherit-parameters)
+	 (inherit-query)
+	 url)
+	(else
+	 (inherit-service) (inherit-netloc) (merge-paths) url)))
+
+(define (proxitize parsed-url)
+  (let ((proxy (assoc (service parsed-url) *proxy-servers*)))
+    (cond (proxy
+	   (set! proxy (cadr proxy))
+	   (list (service proxy)
+		 (user proxy)
+		 (password proxy)
+		 (host proxy)
+		 (port-number proxy)
+		 (unparse-url parsed-url)
+		 (parameters proxy)
+		 (query proxy)
+		 (anchor proxy)
+		 #t))			; Is through proxy.
+	  (else
+	   parsed-url))))
+	
+(define (unparse-url url)
+  (cond ((through-proxy? url)
+	 (filename url))
+	(else
+	 (let ((srv (service url)))
+	   ; (if srv (set! srv (symbol->string srv))) [eg]
+	   (set! srv  (if srv (symbol->string srv) "file"))
+	   (string-append (maybe-append srv ":")
+			  (string-netaddr url)
+			  (if (filename url) (filename url) "")
+			  (maybe-append ";" (parameters url))
+			  (maybe-append "?" (query url))
+			  (maybe-append "#" (anchor url)))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define (pretty-url url . parent)    ;; [eg] added for pretty mesages
+  (unless (string? url)
+    (set! url (url:unparse-url url)))
+  (url:unparse-url (apply url:parse-url url parent)))
+
+
+;;;  --------- Regexps for parsing ---------------
+
+(define url-regexp 
+  (string->regexp
+   "^([a-zA-Z0-9+.-]+:|)(//[^#/]*|)([^#?;]*|)(;[^?#]*|)(\\?[^#]*|)(#.*|)$"))
+
+(define up-hp-regexp
+  (string->regexp
+   "^/?/?([^@]*@|)(.*)$"))		; Strips off // automatically.
+
+(define u-p-regexp
+  (string->regexp
+   "^([^@:]*[:@]|)(.*)$"))
+
+(define h-p-test-regexp
+  (string->regexp
+   "^(.*)(:[0-9]+)$"))
+
+;;; ----------------- Support routines for basic-parse-url ---------------
+(define (string-netaddr url)
+  (let ((prt (port-number url)))
+    (if prt (set! prt (number->string prt)))
+    (cond ((password url)
+	   (string-append "//" (user url) ":" (password url)
+			  "@" (host url)
+			  (maybe-append ":" prt)))
+	   ((user url)
+	    (string-append "//" (user url) "@" (host url)
+			   (maybe-append ":" prt)))
+	   ((host url)
+	    (string-append "//" (host url)
+			   (maybe-append ":" prt)))
+	   (else ""))))
+
+(define (split-hp-part h-p)
+  (or (split h-p-test-regexp h-p)
+      (list h-p "")))
+
+(define (maybe-append s1 s2)
+  (if (and s1 s2) (string-append s1 s2)
+    ""))
+
+(define (split regexp maybe-str)
+  (if (string? maybe-str)
+      (apply-matches (regexp maybe-str) maybe-str)
+    #f))
+
+(define (safe-list-ref maybe-list index)
+  (if (and (list? maybe-list)
+	   (< index (length maybe-list)))
+      (list-ref maybe-list index)
+    #f))
+
+(define (maybe-chop-end maybe-string)
+  (if (and (string? maybe-string)
+	   (> (string-length maybe-string) 0))
+      (substring maybe-string 0 (- (string-length maybe-string) 1))
+    #f))
+
+(define (maybe-chop-beg maybe-string)
+  (if (and (string? maybe-string)
+	   (> (string-length maybe-string) 0))
+      (substring maybe-string 1 (string-length maybe-string))
+    #f))
+
+
+(define (apply-matches matches string)
+  (if matches
+      (map (lambda (m) (apply substring string m))
+	   (cdr matches))
+    #f))
+
+;;; ---------- Url access routines -------------
+
+(define (service url)
+  (list-ref url 0))
+
+(define (user url)
+  (list-ref url 1))
+
+(define (password url)
+  (list-ref url 2))
+
+(define (host url)
+  (list-ref url 3))
+
+(define (port-number url)
+  (list-ref url 4))
+
+(define (filename url)
+  (list-ref url 5))
+
+(define (parameters url)
+  (list-ref url 6))
+
+(define (query url)
+  (list-ref url 7))
+
+(define (anchor url)
+  (list-ref url 8))
+
+(define (through-proxy? url)
+  (list-ref url 9))
+
+;;; ------------ Exports -------------------------
+(define url:parse-url      parse-url)
+(define url:unparse-url    unparse-url)
+;(define url:service       service)	[eg] to default to file if nothing else
+(define url:service        (lambda (url) (or (service url) 'file)))
+(define url:user           user)
+(define url:password       password)
+(define url:host           host)
+(define url:port-number    port-number)
+(define url:filename       filename)
+(define url:anchor         anchor)
+(define url:through-proxy? through-proxy?)
+(define url:pretty-url     pretty-url)
+
+;;; -------------- Set up proxy list -----------------
+(define (get-proxy-evar evar)
+  (let ((e (getenv evar)))
+    (if e
+	(basic-parse-url e)
+      #f)))
+
+
+(define *proxy-servers*
+  (let loop ((l url:*proxy-env-vars*))
+       (cond ((null? l) ())
+	     (else
+	      (let ((p (get-proxy-evar (cadar l))))
+		(if p
+		    (cons (list (caar l) p)
+			  (loop (cdr l)))
+		  (loop (cdr l))))))))
+
+
+(provide "www-url")

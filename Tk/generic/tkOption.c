@@ -6,12 +6,12 @@
  *	with windows either by name or by class or both.
  *
  * Copyright (c) 1990-1994 The Regents of the University of California.
- * Copyright (c) 1994-1995 Sun Microsystems, Inc.
+ * Copyright (c) 1994-1996 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkOption.c 1.55 96/05/01 14:54:25
+ * SCCS: @(#) tkOption.c 1.57 96/10/17 15:16:45
  */
 
 #include "tkPort.h"
@@ -907,6 +907,16 @@ ReadOptionFile(interp, tkwin, fileName, priority)
     Tcl_Channel chan;
     Tcl_DString newName;
 
+    /*
+     * Prevent file system access in a safe interpreter.
+     */
+    
+    if (Tcl_IsSafe(interp)) {
+        Tcl_AppendResult(interp, "can't read options from a file in a",
+                " safe interpreter", (char *) NULL);
+        return TCL_ERROR;
+    }
+    
     realName = Tcl_TranslateFileName(interp, fileName, &newName);
     if (realName == NULL) {
 	return TCL_ERROR;
@@ -914,6 +924,9 @@ ReadOptionFile(interp, tkwin, fileName, priority)
     chan = Tcl_OpenFileChannel(interp, realName, "r", 0);
     Tcl_DStringFree(&newName);
     if (chan == NULL) {
+        Tcl_ResetResult(interp);
+	Tcl_AppendResult(interp, "couldn't open \"", fileName,
+		"\": ", Tcl_PosixError(interp), (char *) NULL);
 	return TCL_ERROR;
     }
 

@@ -1,0 +1,22 @@
+/* XPM */
+static char *textfile[] = {
+/* width height num_colors chars_per_pixel */
+"    16    12        3            1",
+/* colors */
+". c none",
+"# c #000000",
+"a c #f8fcf0",
+/* pixels */
+"...########.....",
+"...#aaaaaa#.....",
+"...#aaaaaa###...",
+"...#a####aaa#...",
+"...#aaaaaaaa#...",
+"...#a###aaaa#...",
+"...#aaaaaaaa#...",
+"...#a#####aa#...",
+"...#aaaaaaaa#...",
+"...#a#####aa#...",
+"...#aaaaaaaa#...",
+"...##########..."
+};

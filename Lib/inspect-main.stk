@@ -13,10 +13,10 @@
 ;******************************************************************************
 
 (provide "inspect-main")
-(require "inspect-misc")
-(require "inspect-view")
-(require "inspect-detail")
-(require "inspect-help")
+(load "inspect-misc")
+(load "inspect-view")
+(load "inspect-detail")
+(load "inspect-help")
 
 (define INSPECTOR_WIDGET_NAME 	 ".inspector")
 (define inspected-objects-list   ())
@@ -46,10 +46,10 @@
      		   :command `(inspect-menu-Uninspect ',(object-symbol obj)))
   (w 'add 'command :label "Detail"
      		   :command `(inspect-menu-Detail ',(object-symbol obj)))
-  (if (detailed? obj) ((inspect-m-wid obj) 'disable "Detail"))
+  (if (detailed? obj) ((inspect-m-wid obj) 'entryconfigure "Detail" :state 'disabled))
   (w 'add 'command :label "View" 
      		   :command `(inspect-menu-View ',(object-symbol obj)))
-  (if (viewed? obj) ((inspect-m-wid obj) 'disable "View")))
+  (if (viewed? obj) ((inspect-m-wid obj) 'entryconfigure "View" :state 'disabled)))
 
 (define (inspect-menu-Eval obj)
   (eval-string (format #f "(set! ~a ~a)" obj ((inspect-e-wid obj) 'get))))
@@ -63,14 +63,15 @@
 (define (inspect-menu-Detail key)
   (let ((obj (find-object-infos  key)))
     (detail obj)
-    ((inspect-m-wid obj) 'disable "Detail")
-    (if (viewed? obj) ((view-m-wid obj) 'disable "Detail"))))
+    ((inspect-m-wid obj) 'entryconfigure "Detail" :state 'disabled)
+    (if (viewed? obj)
+	((view-m-wid obj) 'entryconfigure "View" :state 'disabled))))
 
 (define (inspect-menu-View key)
   (let ((obj (find-object-infos  key)))
     (view obj)
-    ((inspect-m-wid obj) 'disable "View")
-    (if (detailed? obj) ((detail-m-wid obj) 'disable "View"))))
+    ((inspect-m-wid obj) 'entryconfigure "View" :state 'disabled)
+    (if (detailed? obj) ((detail-m-wid obj) 'entryconfigure "View" :state 'disabled))))
 
 (define (create-inspector)
   (define w [toplevel INSPECTOR_WIDGET_NAME])
@@ -97,7 +98,6 @@
   (pack [frame (& INSPECTOR_WIDGET_NAME ".f1")]
 	:fill "both" :expand "yes" :padx 4 :pady 2))
 
-
 (define (destroy-inspector) 
   (for-each uninspect-object inspected-objects-list))
 
@@ -108,7 +108,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (inspect obj)
-  (when (= (winfo 'exist INSPECTOR_WIDGET_NAME) 0) (create-inspector))
+  (when (not (winfo 'exist INSPECTOR_WIDGET_NAME)) (create-inspector))
   ;; Kludge to avoid problems . Should be modified [eg]
   (let ((obj-val (inspect::eval obj)))
     (when (eqv? (inspect::typeof obj-val) 'widget)
@@ -171,7 +171,7 @@
 (define (uninspect obj)
   (when (inspected? obj) (uninspect-object obj))     
   (update 'idletasks)
-  (when (= (winfo 'exist INSPECTOR_WIDGET_NAME) 1)
+  (when (winfo 'exist INSPECTOR_WIDGET_NAME)
 	(let ((req-h (winfo 'reqheight INSPECTOR_WIDGET_NAME)))
 	  (wm 'minsize INSPECTOR_WIDGET_NAME 0 req-h)
 	  (wm 'maxsize INSPECTOR_WIDGET_NAME SCREEN_WIDTH req-h)
@@ -183,8 +183,10 @@
   (set! inspected-objects-list (list-remove obj inspected-objects-list))
   (destroy (inspect-frame-wid obj))
   (when (null? inspected-objects-list) (destroy INSPECTOR_WIDGET_NAME))
-  (if (detailed? obj) ((detail-m-wid obj) 'enable "Inspect"))
-  (if (viewed? obj)   ((view-m-wid obj)   'enable "Inspect"))
+  (if (detailed? obj)
+      ((detail-m-wid obj) 'entryconfigure "Inspect" :state 'normal))
+  (if (viewed? obj)
+      ((view-m-wid obj)   'entryconfigure "Inspect" :state 'normal))
   (unless (or (detailed? obj) (viewed? obj))
 	  (remove-object-infos obj)
 	  (if (symbol? obj) (untrace-var obj))))

@@ -2,7 +2,7 @@
  *
  *  p o r t . c			-- ports implementation
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -16,10 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
+ * $Id: port.c 1.5 Sun, 22 Mar 1998 17:16:09 +0100 eg $
  *
  *            Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 17-Feb-1993 12:27
- * Last file update: 13-Sep-1996 21:59
+ * Last file update: 21-Mar-1998 22:25
  *
  */
 #ifndef WIN32
@@ -46,6 +47,7 @@
 #endif
 
 #include "stk.h"
+#include "module.h"
 
 #ifdef WIN32
   /* Provide substitute functions dor WIN32 */
@@ -97,8 +99,8 @@ static SCM makeport(char *name, int type, char *mode, int error)
   }
   else {
     full_name = name;
+    flags     = PIPE_PORT;
     if ((f = popen(name+1, mode)) == NULL) {
-      flags = PIPE_PORT;
       if (error) Err("could not create pipe", STk_makestring(name));
       else goto Out;
     }    
@@ -110,7 +112,8 @@ Out:
   STk_allow_sigint();
   return(z);
 }
-  
+
+
 static SCM verify_port(char *who, SCM port, int mode)
 {
   char buff[100];
@@ -140,15 +143,16 @@ static void closeport(SCM port)
   STk_disallow_sigint();
   
   if (IPORTP(port) || OPORTP(port)) {			    /* Not a string port */
+    FILE *f = PORT_FILE(port);
 #ifdef USE_TK
     /* For pipe and file ports, delete the fileevent associated to it (if any) */
-    Tcl_DeleteFileHandler(Tcl_GetFile((ClientData) fileno(PORT_FILE(port)), 
-				    TCL_UNIX_FD));
+    Tcl_DeleteFileHandler(fileno(f));
 #endif
+    fflush(f);
     if (PORT_FLAGS(port) & PIPE_PORT)   		    /* Pipe port */
-      pclose(PORT_FILE(port));
+      pclose(f);
     else 						    /* File port */
-      fclose(PORT_FILE(port));
+      fclose(f);
   }
   PORT_FLAGS(port) |= PORT_CLOSED;
   STk_allow_sigint();
@@ -188,7 +192,7 @@ void STk_init_standard_ports(void)
  * L O A D  stuff
  *
  ******************************************************************************/
-static int do_load(char *full_name)
+static int do_load(char *full_name, SCM module)
 {
   FILE *f;
   int c;
@@ -198,7 +202,7 @@ static int do_load(char *full_name)
      
      if (f == NULL) return 0;
 
-     if (VCELL(Intern(LOAD_VERBOSE)) != Ntruth)
+     if (STk_lookup_variable(LOAD_VERBOSE, NIL) != Ntruth)
        fprintf(STk_stderr, ";; Loading file \"%s\"\n", full_name);
      
      /* Just read one character. Assume that file is an object if this 
@@ -215,14 +219,19 @@ static int do_load(char *full_name)
        /* file seems not to be an object file. Try to load it as a Scheme file */
        jmp_buf jb, *prev_jb = Top_jmp_buf;
        long prev_context    = Error_context;
+       SCM prev_module;
        SCM previous_file, form;
        int k, previous_line;
-      
+
        /* Save info about current line and file */
        previous_file	    = STk_current_filename;
        previous_line	    = STk_line_counter;
        STk_line_counter     = 1;
        STk_current_filename = STk_makestring(full_name);
+
+       /* Save info about selected module */
+       prev_module	    = STk_selected_module;
+       STk_selected_module  = module;
 
        /* save normal error jmpbuf so that eval error don't lead to toplevel */
        /* This permits to close the opened file in case of error */
@@ -233,20 +242,22 @@ static int do_load(char *full_name)
 	 for( ; ; ) {
 	   form = STk_readf(f, FALSE);
 	   if EQ(form, STk_eof_object) break;
-	   STk_eval(form, NIL);
+	   STk_eval(form, MOD_ENV(STk_selected_module));
 	 }
        }
        fclose(f);
 
-       Top_jmp_buf   = prev_jb;
-       Error_context = prev_context;
+       Top_jmp_buf   	   = prev_jb;
+       Error_context 	   = prev_context;
+       STk_selected_module = prev_module;
+
        if (k) /*propagate error */ longjmp(*Top_jmp_buf, k);
 
        /* No error: restore info about current line and file */
        STk_current_filename = previous_file;
        STk_line_counter	    = previous_line;
      }
-     if (VCELL(Intern(LOAD_VERBOSE)) != Ntruth)
+     if (STk_lookup_variable(LOAD_VERBOSE, NIL) != Ntruth)
        fprintf(STk_stderr, ";; File \"%s\" loaded\n", full_name);
      return 1;
   }
@@ -254,7 +265,7 @@ static int do_load(char *full_name)
   return 0;
 }
 
-static int try_loadfile(char *prefix, char *fname, SCM suffixes)
+static int try_loadfile(char *prefix, char *fname, SCM suffixes, SCM module)
 {
   char full_name[MAX_PATH_LENGTH], *s;
 
@@ -262,7 +273,7 @@ static int try_loadfile(char *prefix, char *fname, SCM suffixes)
   if (strlen(prefix) + strlen(fname) + 2 >= MAX_PATH_LENGTH) goto TooLong;
   sprintf(full_name, "%s%s%s", prefix, (*prefix ? "/": ""), fname);
   
-  if (do_load(full_name)) return 1;
+  if (do_load(full_name, module)) return 1;
 
   /* Now try to load file with suffix */
   for ( ; NNULLP(suffixes); suffixes = CDR(suffixes)) {
@@ -273,7 +284,7 @@ static int try_loadfile(char *prefix, char *fname, SCM suffixes)
     if (strlen(prefix)+strlen(fname)+strlen(s)+3 >= MAX_PATH_LENGTH) goto  TooLong;
     sprintf(full_name, "%s%s%s.%s", prefix, (*prefix ? "/": ""), fname, s);
 
-    if (do_load(full_name)) return 1;
+    if (do_load(full_name, module)) return 1;
   }
   
   /* No file loaded */
@@ -283,14 +294,14 @@ TooLong:
     Err("load: Filename too long", NIL);
 }
 
-SCM STk_loadfile(char *fname, int err_if_absent)
+SCM STk_load_file(char *fname, int err_if_absent, SCM module)
 {
   int len;
-  SCM load_path, load_suffixes;     
-  
+  SCM load_path, load_suffixes;
+
   len           = strlen(fname);
-  load_path     = VCELL(Intern(LOAD_PATH));
-  load_suffixes = VCELL(Intern(LOAD_SUFFIXES));
+  load_path     = STk_lookup_variable(LOAD_PATH,     NIL);
+  load_suffixes = STk_lookup_variable(LOAD_SUFFIXES, NIL);
   
   if (STk_llength(load_path)<0)     Err("load: bad loading path", load_path);
   if (STk_llength(load_suffixes)<0) Err("load: bad set of suffixes", load_suffixes);
@@ -310,7 +321,7 @@ SCM STk_loadfile(char *fname, int err_if_absent)
     if (fname[0] == '~') 
       fname = CHARS(STk_internal_expand_file_name(fname));
 
-    if (try_loadfile("", fname, load_suffixes))
+    if (try_loadfile("", fname, load_suffixes, module))
       return(err_if_absent? UNDEFINED: Truth);
   }
   else {
@@ -319,7 +330,7 @@ SCM STk_loadfile(char *fname, int err_if_absent)
       if (NSTRINGP(CAR(load_path))) 
 	Err("load: bad loading path component", CAR(load_path));
 
-      if (try_loadfile(CHARS(CAR(load_path)), fname, load_suffixes))
+      if (try_loadfile(CHARS(CAR(load_path)), fname, load_suffixes, module))
 	return(err_if_absent? UNDEFINED: Truth);
     }
   }
@@ -329,7 +340,6 @@ SCM STk_loadfile(char *fname, int err_if_absent)
     Err("load: cannot open file", STk_makestring(fname));
   return Ntruth; 
 }
-
 
 PRIMITIVE STk_input_portp(SCM port)
 {
@@ -451,7 +461,7 @@ PRIMITIVE STk_read_char(SCM port)
 
   port = verify_port("read-char", port, F_READ);
   c = Getc(PORT_FILE(port));
-  return (c == EOF) ? STk_eof_object : STk_makechar(c);
+  return (c == EOF) ? STk_eof_object : STk_makechar((unsigned char) c);
 }
 
 PRIMITIVE STk_peek_char(SCM port)
@@ -541,14 +551,18 @@ PRIMITIVE STk_write_char(SCM c, SCM port)
   return UNDEFINED;
 }
 
-/*
- * The name `scheme_load' is needed because of a symbol table conflict
- * in libc. This is bogus, but what do you do.
- */
-PRIMITIVE STk_scheme_load(SCM filename)
+PRIMITIVE STk_load(SCM filename, SCM module)
 {
-  if (NSTRINGP(filename)) Err("load: bad file name", filename); 
-  return STk_loadfile(CHARS(filename), 1);
+  ENTER_PRIMITIVE("load");
+  
+  if (NSTRINGP(filename)) Serror("bad file name", filename);
+  if (module != UNBOUND) {
+    if (NMODULEP(module)) Serror("bad module", module);
+  }
+  else
+    module = STk_selected_module;
+  
+  return STk_load_file(CHARS(filename), TRUE,  module);
 }
 
 
@@ -635,18 +649,24 @@ PRIMITIVE STk_error(SCM l, int len)
   return UNDEFINED; 	/* for compiler */
 }
 
-PRIMITIVE STk_try_load(SCM filename)
+PRIMITIVE STk_try_load(SCM filename, SCM module)
 {
-  if (NSTRINGP(filename)) Err("try-load: bad file name", filename); 
-
-  return STk_loadfile(CHARS(filename), FALSE);
+  ENTER_PRIMITIVE("try-load");
+  
+  if (NSTRINGP(filename)) Serror("bad file name", filename);
+  if (module != UNBOUND) {
+    if (NMODULEP(module)) Serror("bad module", module);
+  }
+  else
+    module = STk_selected_module;
+  
+  return STk_load_file(CHARS(filename), FALSE,  module);
 }
 
 PRIMITIVE STk_open_file(SCM filename, SCM mode)
 {
   int type;
   
-
   if (NSTRINGP(filename)) Err("open-file: bad file name", filename); 
   if (NSTRINGP(mode) || CHARS(mode)[1] != '\0') goto Error;
   
@@ -679,6 +699,7 @@ PRIMITIVE STk_read_line(SCM port)
   for (i = 0; ; i++) {
     switch (c = Getc(f)) {
       case EOF:  if (i == 0) { free(buff); return STk_eof_object; }
+      case '\r': i--; continue;
       case '\n': res = STk_makestrg(i, buff); free(buff); return res;
       default:   if (i == size) {
 	           size += size / 2;
@@ -701,6 +722,13 @@ PRIMITIVE STk_flush(SCM port)
   return UNDEFINED;
 }
 
+PRIMITIVE STk_write_star(SCM expr, SCM port)
+{
+  port = verify_port("write*", port, F_WRITE);
+  STk_print_star(expr, port);
+  return UNDEFINED;
+}
+
 /******************************************************************************
  *
  * Autoload stuff
@@ -708,62 +736,106 @@ PRIMITIVE STk_flush(SCM port)
  ******************************************************************************/
 
 static SCM list_of_files = NULL;
+static int dont_do_autoload = 0;	/* 1 if we are testing autoload? */ 
 
-static SCM make_autoload(SCM file)
+static SCM make_autoload(SCM file, SCM env)
 {
   SCM z;
   
   NEWCELL(z, tc_autoload);
-  CAR(z) =  file;
+  CAR(z) = file;
+  CDR(z) = env;
   return z;
 }
 
-void STk_do_autoload(SCM var)
+void STk_do_autoload(SCM var, SCM autoload)
 {
-  SCM file, autoload;
+  static int recursive_call = 0;
 
-  autoload = VCELL(var); file = CAR(autoload);
-  
-  /* Retain in a list, files which are currently autoloaded to avoid mult. load */
-  if (!list_of_files) {
-    list_of_files = NIL;
-    STk_gc_protect(&list_of_files);
+  if (dont_do_autoload) return;
+
+  if (recursive_call) {
+    /* We have a recursive call if var has not be defined in the specified
+     * file. In effect when a file has been loaded, we just try to find
+     * the value of var. If this value has not been defined we will do 
+     * another STk_do_autoload
+     */
+    recursive_call = 0;
+    Err("autoload: symbol was not defined", var);
   }
 
-  if (STk_member(file, list_of_files) != Ntruth) return;
-  list_of_files = Cons(file, list_of_files);
+  {
+    SCM file    	= CAR(autoload);
+    SCM module  	= CDR(autoload);
+    SCM loaded;
 
-  STk_loadfile(CHARS(file), TRUE);
-
-  list_of_files = CDR(list_of_files);
-
-  if (TYPEP(VCELL(var), tc_autoload)) {
-    Err("autoload: symbol was not defined", var);
+    /* Retain in a list, files which are currently autoloaded to avoid mult. load */
+    if (!list_of_files) {
+      list_of_files = NIL;
+      STk_gc_protect(&list_of_files);
+    }
+    
+    if (STk_member(file, list_of_files) != Ntruth) return;
+    list_of_files = Cons(file, list_of_files);
+    
+    /* Load file in the module used when the symbol was defined as autoload */
+    loaded        = STk_load_file(CHARS(file), FALSE, module);
+    list_of_files = CDR(list_of_files);
+    
+    /* Verify that file was really loaded  (loaded is true in this case) */
+    if (loaded == Ntruth)
+      Err("autoload: file not found for autoload symbol", Cons(var, file));
+    
+    /* File is now loaded. Try to lookup the value of var and see if it
+     * provokes another STk_do_autoload call
+     */
+    recursive_call = 1;
+    STk_varlookup(var, MOD_ENV(module), TRUE);
+    recursive_call = 0;
   }
 }
 
 PRIMITIVE STk_autoload(SCM l, SCM env, int len)
 {
-  SCM file;
+  SCM file, current_module;
 
-  if (len < 2) Err("autoload: bad parameter list", l);
+  ENTER_PRIMITIVE("autoload");
+  if (len < 2) Serror("bad parameter list", l);
+  file = CAR(l);
+  if (NSTRINGP(file)) Serror("bad file name", file);
 
-  file = CAR(l); 
-  if (NSTRINGP(file)) Err("autoload: bad file name", file);
+  current_module = STk_current_module(NIL, env, 0);
 
   for (l = CDR(l); NNULLP(l); l = CDR(l)) {
-    if (NSYMBOLP(CAR(l))) Err("autoload: bad symbol", CAR(l));
-    VCELL(CAR(l)) = make_autoload(file);
+    if (NSYMBOLP(CAR(l))) Serror("bad symbol", CAR(l));
+    STk_define_public_var(current_module, 
+			  CAR(l), 
+			  make_autoload(file, current_module));
   }
   return UNDEFINED;
 }
 
-PRIMITIVE STk_autoloadp(SCM l, SCM env, int len)
+PRIMITIVE STk_autoloadp(SCM symbol, SCM module)
 {
-  if (len != 1 || NSYMBOLP(CAR(l)))
-    Err("autoload?: bad symbol", l);
+  SCM *value, env;
   
-  return TYPEP(CAR(l), tc_autoload) ? Truth: Ntruth;
+  ENTER_PRIMITIVE("autoload?");
+  
+  if (NSYMBOLP(symbol)) Serror("bad symbol", symbol); 
+  if (module == UNBOUND) 
+    env = STk_global_module;
+  else {
+    if (NMODULEP(module)) Serror("bad module", module);
+    env = MOD_ENV(module);
+  }
+
+  /* Looking at var value will load the file. Signal that we don't want to load */
+  /* This is a little bit hacky, but it does the job */
+  dont_do_autoload = 1;
+  value 	   = STk_varlookup(symbol, env, FALSE);
+  dont_do_autoload = 0;
+
+  return TYPEP(*value, tc_autoload) ? Truth: Ntruth;
 }
 
 #ifdef USE_TK
@@ -782,7 +854,7 @@ static void apply_file_closure(SCM closure)
 static SCM when_port_ready(SCM port, SCM closure, char *name, int mode)
 {
   char str[50];
-  Tcl_File f;
+  int fd;
 
   if (NIPORTP(port) && NOPORTP(port)) {
     sprintf(str, "%s: bad port", name);
@@ -794,10 +866,10 @@ static SCM when_port_ready(SCM port, SCM closure, char *name, int mode)
     return ((mode == TCL_READABLE)? PORT_REVENT(port): PORT_WEVENT(port));
   }
 
-  f = Tcl_GetFile((ClientData) fileno(PORT_FILE(port)), TCL_UNIX_FD);
+  fd = fileno(PORT_FILE(port));
   
   if (closure == Ntruth) {
-    Tcl_DeleteFileHandler(f);    
+    Tcl_DeleteFileHandler(fd);    
     if (mode == TCL_READABLE)
       PORT_REVENT(port) = Ntruth;
     else
@@ -809,7 +881,10 @@ static SCM when_port_ready(SCM port, SCM closure, char *name, int mode)
       STk_err(str, closure);
     }
 
-    Tcl_CreateFileHandler(f, mode, (Tcl_FileProc *) apply_file_closure, 
+    /* It is not necessary to mark the closure in the Tcl tables since it is
+     * also pointed by the Scheme port. This prevent GC problems
+     */
+    Tcl_CreateFileHandler(fd, mode, (Tcl_FileProc *) apply_file_closure, 
 			  (ClientData) closure);
     if (mode == TCL_READABLE)
       PORT_REVENT(port) = closure;

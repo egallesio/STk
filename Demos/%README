@@ -1,278 +1,246 @@
 [Image] Demo directory
 
-This directory contains demo programs for STk.
 
-If you want to run a demo BEFORE a complete installation of the STk package,
-you must use the
 
-    ../Src/test-stk
 
-command to run the interpreter.
 
-If you view this file with the STk HTML browser, you can click on each given
-command to launch a demo.
+Content
 
-To use the STk HTML browser, just type:
+     This directory contains the demo programs for STk. There are several
+     categories of demos available from here:
+        o STk demos: They correspond to program which don't use CLOS like
+          object extension of STk. These demo are quite simple and they
+          often mimic original Tcl/Tk demonstrations
+        o STklos demos: These demonstration programs use the STklos object
+          Extension of STk. The code of most of these demos has been kept
+          short to illustrate the basic of STklos programming.
+        o Html demo: This demo is in fact an overview of STk/STklos that I
+          have used once in a presentation of STklos. The pages accessible
+          from this link present STk but also contains links or Scheme
+          applets which illustrate the kind of things that can be done with
+          the STk browser. Of course, to properly execute the applets
+          contained in theses pages, you need to run the STk Html browser
+          (see below).
 
-    ../Src/test-stk -f hbrowse README.html
+Running demonstration programs without installing STk
 
-Happy STking
-----------------------------------------------------------------------------
+     If you want to run a demo BEFORE a complete installation of the STk
+     package, you must use the shell script ../Src/test-stk in order to run
+     the interpreter (this shell script set some variables to run properly
+     the interpreter without installing it).
 
-                                  STk demos
+Running demonstration programs in the STk web browser
 
-----------------------------------------------------------------------------
+     STk provides a simple Web browser which can be used to launch the demo
+     of this directory. If you are not running it now, you can type the
+     following command:
 
-File
-     browse.stk
-Description
-     a simple Unix file browser
-Run
-     ../Src/test-stk -f browse.stk
+               ../Src/test-stk -f S-scape README.html
 
-----------------------------------------------------------------------------
+     at the shell prompt.
 
-File
-     colormap.stk
-Description
-     a simple color builder
-Run
-     ../Src/test-stk -f colormap.stk
-Comment
-     On exit, the RGB value is printed on the sandard output
+1. STk demos
 
-----------------------------------------------------------------------------
+1.1 Basic STk demos
 
-File
-     small-ed.stk
-Description
-     A small editor to create enhanced text
-Run
-     ../Src/test-stk -f small-ed.stk
-Comment
-     Does not work (still) with STk 3.0
+   * hello.stk
+     This is the traditional first program. This program creates a single
+     button that you can click on.
+     Run with : ../Src/test-stk -f hello.stk
 
-----------------------------------------------------------------------------
+   * browse.stk
+     A simple Unix file browser. The code of this demo is less than a page.
+     Run with: .../Src/test-stk -f browse.stk
 
-File
-     hanoi.stk
-Description
-     Hanoi towers animation
-Run
-     ../Src/test-stk -f hanoi.stk
+1.2 Basics of STk programming
 
-----------------------------------------------------------------------------
-
-File
-     hello.stk
-Description
-     a simple button demonstration
-Run
-     ../Src/test-stk -f hello.stk
-
-----------------------------------------------------------------------------
-
-File
-     showvars.stk
-Description
-     a variable shower
-     This program shows the value of three variables (named a,b and c)
-     Changing the value of one of these vars (with a set! for instance) will
-     redisplay its new value immediatly
-Run
-     ../Src/test-stk -load showvars.stk
-Comment
-Exit
-     type (exit) on the STk prompt
-
-----------------------------------------------------------------------------
-
-File
-     turtle.stk
-Description
-     a Logo turtle package + some demo functions.
-Run
-     ../Src/test-stk -f turtle.stk
-
-----------------------------------------------------------------------------
-
-File
-     inspector.stk
-Description
-     A simple demo of the inspector on Tk widgets
-Run
-     ../Src/test-stk -f inspector.stk
-Comment
-     Does not work (still) with STk 3.0
-
-----------------------------------------------------------------------------
-
-File
-     mc-server.stk
-Description
-     A multiple-clients server.
-Run
-     ../Src/test-stk -load mc-server.stk
-
-----------------------------------------------------------------------------
-
-File
-     queens.stk
-Description
-     The queens problem. You can do it yourself (and it will make sure you
-     follow the rules) or you can ask it to solve the puzzle starting with a
-     given board configuration. This code is a contribution of Grant Edwards
-     (grante@rosemount.com)
-Run
-     ../Src/test-stk -f queens.stk
-
-----------------------------------------------------------------------------
-
-File
-     stetris.stk
-Description
-     This is a falling block game not unlike tetris(tm) :). It is
-     implemented in STk just to prove it can be done, and as a challenge to
-     TCLers. It starts slowly and becomes faster and faster. Have fun. This
-     code is a contribution of Harvey J. Stein(hjstein@math.huji.ac.il)
-Run
-     ../Src/test-stk -f stetris.stk
-
-----------------------------------------------------------------------------
-
-File
-     ttt.stk
-Description
-     A 3D Tic-Tac-Toe, where the board is 4x4x4, a 3 dimensional board of
-     four planes with four rows and four columns each. This code is a
-     contribution of Edin "Dino" Hodzic <ehodzic@scu.edu>
-Run
-     ../Src/test-stk -f ttt.stk
-
-----------------------------------------------------------------------------
-
-File
-     server.stk
-Description
-     A simple server showing how to use the socket package. It creates a
-     xterm window in which a read-eval-print-loop is executed. When the
-     window is closed or when an error occurs, the socket is closed
-Run
-     ../Src/test-stk -f server.stk
-
-----------------------------------------------------------------------------
-
-File
-     term.stk
-Description
-     A simple terminal emulator (a kind of xterm, but in a text widget).
-Run
-     ../Src/test-stk -f term.stk
-
-----------------------------------------------------------------------------
-
-File
-     wtour.stk
-Description
+   * wtour.stk
      This is a rewrite of the Tcl/Tk wtour2.0 in Scheme/STk. Use the menus
      to navigate through different lessons. You can make changes to the
      lesson source code; click on the Apply button to see the results of the
      changes.
-Run
-     ../Src/test-stk -f ./wtour.stk ../Contrib/STk-wtour
+     Run with: ../Src/test-stk -f ./wtour.stk ../Contrib/STk-wtour
+     Comment: This code is a contribution of Suresh Srinivas
+     <ssriniva@cs.indiana.edu>
 
-----------------------------------------------------------------------------
+1.3 Client/Server Demos
 
-                                STklos demos
+   * server.stk
+     A simple server showing how to use the socket package. It creates an
+     xterm window in which a read-eval-print-loop is executed. When the
+     window is closed or when an error occurs, the socket is closed
+     Run with: ../Src/test-stk -no -f server.stk
 
-----------------------------------------------------------------------------
-There are few demos of STklos. What is interesting is not what they do but
-how they are programmmed (IMO).
-----------------------------------------------------------------------------
+   * mc-server.stk
+     A multiple-clients server. On Unix, you can use several telnet sessions
+     to discuss with the server. Each discussion has its own dedicated
+     channel. Type (exit) at the STk when you want to exit the demo.
+     Run with: ../Src/test-stk -load mc-server.stk
 
-File
-     widget.stklos
-Description
-     A tour of the Tk widgets. This demo shows all the Tk widgets
-Run
-     ../Src/test-stk -f widget.stklos
+1.4 Fun and Games
 
-----------------------------------------------------------------------------
+   * turtle.stk
+     A Logo turtle package + some demo functions.
+     Run with: ../Src/test-stk -f turtle.stk
 
-File
-     stklos-demo.stklos
-Description
-     a simple demo written in STklos
-Run
-     ../Src/test-stk -f stklos-demo.stklos
+   * hanoi.stk
+     Hanoi towers animation.
+     Run with: ../Src/test-stk -f hanoi.stk
 
-----------------------------------------------------------------------------
+   * queens.stk
+     The queens problem. You can do it yourself (and it will make sure you
+     follow the rules) or you can ask it to solve the puzzle starting with a
+     given board configuration.
+     Run with: ../Src/test-stk -f queens.stk
+     Comment: This code is a contribution of Grant Edwards
+     <grante@rosemount.com)>
 
-File
-     stklos-demo2.stklos
-Description
-     another simple demo written in STklos
-Run
-     ../Src/test-stk -f stklos-demo2.stklos
+   * stetris.stk
+     This is a falling block game not unlike tetris(tm) :). It is
+     implemented in STk just to prove it can be done, and as a challenge to
+     TCLers. It starts slowly and becomes faster and faster. Have fun.
+     Run with: ../Src/test-stk -f stetris.stk
+     Comment: This code is a contribution of Harvey J. Stein
+     <hjstein@math.huji.ac.il>
 
-----------------------------------------------------------------------------
+   * ttt.stk
+     A 3D Tic-Tac-Toe, where the board is 4x4x4, a 3 dimensional board of
+     four planes with four rows and four columns each.
+     Run with: ../Src/test-stk -f ttt.stk
+     Comment: This code is a contribution of Edin "Dino" Hodzic
+     <ehodzic@scu.edu>
 
-File
-     hello.stklos
-Description
-     a rewriting of the hello.stk demo in STklos
-Run
-     ../Src/test-stk -f hello.stklos
+1.5 Misc
 
-----------------------------------------------------------------------------
+   * colormap.stk
+     This is a simple color palette written in STk.
+     Run with: ../Src/test-stk -f colormap.stk
+     Comment: Note that this program is no more really useful since STk
+     offers now the function Tk:choose-color which allow to choose a color
+     by name or by value.
 
-File
-     browse.stklos
-Description
-     a rewriting of the browse.stk demo in STklos
-Run
-     ../Src/test-stk -f browse.stklos
+   * small-ed.stk
+     A small editor to create enhanced text
+     Run with: ../Src/test-stk -f small-ed.stk
+     Comment: This editor use a ad-hoc format for saving file and was used
+     for the help buttons of various widgets in old versions of STk. It will
+     not be developed anymore since the preferred format for help is now
+     HTML.
 
-----------------------------------------------------------------------------
+   * showvars.stk
+     A variable shower: this program shows the value of three variables
+     (named a,b and c) Changing the value of one of these vars (with a set!
+     for instance) will redisplay its new value immediately. Run with:
+     ../Src/test-stk -load showvars.stk
 
-File
-     calc.stklos
-Description
-     a very simple calculator
-Run
-     ../Src/test-stk -f calc.stklos
+   * inspector.stk
+     A simple demo of the inspector on Tk widgets
+     Run with: ../Src/test-stk -f inspector.stk
+     Comment: Does not work with this version of STk
+     A new version of the inspector is in practically finished and will be
+     soon released.
 
-----------------------------------------------------------------------------
+   * term.stk
+     A simple terminal emulator (a kind of xterm, but in a text widget).
+     Run with: ../Src/test-stk -f term.stk
+     Comment: Users of Glibc2 (aka libc6, or RedHat 5.0 users): This program
+     has problems with new release of the libc under Linux, if your shell
+     has the line editing mode set. To avoid the problem you can
+        o disable the line editing mode of your shell
+        o set the SHELL variable to a dumb shell (e.g. ash)
+        o link STk with the old libc
+        o don't run the demo :-)
 
-File
-     compo-demo.stklos
-Description
-     A quick demo of the composite widgets which are in the STk release.
-     This code is a contribution of <Drew.Whitehouse@anu.edu.au>
-Run
-     ../Src/test-stk -f compo-demo.stklos
+2. STklos demos
 
-----------------------------------------------------------------------------
+     All the standard Tk widgets have been wrapped in STklos classes. As a
+     result, in STklos, Tk widgets are seen as instances of STklos classes.
+     There are two kinds of STklos widgets:
+        o Simple widgets which map one to one the Tk standard widgets
+        o Composite widgets which are built from simple Tk widgets (or even
+          simpler composite widgets).
+     Demonstration programs accessible from this page use indifferently
+     simple widgets and composite widgets.
 
-File
-     filebox.stklos
-Description
-     a simple program which uses the <File-box> compositeclass. A <File-box>
-     is a file requestor with file name completion. It is a composition of
-     various composite widget classes.
-Run
-     ../Src/test-stk -f filebox.stklos
+2.1 Basic STklos demos
 
-----------------------------------------------------------------------------
+   * hello.stklos
+     This is a simple rewriting of the hello.stk demonstration in STklos
+     Run with: ../Src/test-stk -f hello.stklos
 
-File
-     tkcolor.stklos
-Description
-     a simple color picker written in STklos. Clicking button 1 on the color
-     box sets the text color to that color; Clicking button 3 sets the
-     background.
-Run
-     ../Src/test-stk -f tkcolor.stklos
+   * browse.stklos
+     This is a simple rewriting of the browse.stk demonstration in STklos
+     Run with: ../Src/test-stk -f browse.stklos
 
-----------------------------------------------------------------------------
-eg@unice.fr
+   * stklos-demo.stklos A simple demo written in STklos.
+     Run with: ../Src/test-stk -f stklos-demo.stklos
+     Comment: What is interesting in this demo is not what it does, nothing
+     specially fancy, but how it is easy to program, IMHO.
+
+   * stklos-demo2.stklos Another simple demo written in STklos.
+     Run with: ../Src/test-stk -f stklos-demo2.stklos
+     Comment: Here again, what is interesting in this demo is not what it
+     does, nothing specially fancy, but how it is easy to program, IMHO.
+
+2.2 STklos widgets
+
+   * widget.stklos
+     A tour of the Tk widgets. This demo shows all the Tk widgets. This is a
+     rewriting in STklos of the big Tcl/Tk demo widget.tcl. For each widget
+     demo accessible from this program, you can see the source by just
+     clicking the "See code" button. You can modify the code and test your
+     modified version by clicking the button "Rerun demo"
+     Run with: ../Src/test-stk -f widget.stk
+     Comment: This demo illustrate only the simple widgets (the ones of the
+     Tk library). For a composite widgets demo look at the
+     stklos-widgets.stklos program.
+
+   * filebox.stklos
+     This is a simple program which uses the <File-box> composite widget. A
+     <File-box> is a file requester with file name completion (on the Tab
+     key).This widget is itself a composition of various composite widget
+     classes.
+     Run with: ../Src/test-stk -f filebox.stklos
+
+   * stklos-widgets.stklos
+     A quick demo of some of the STklos Composite widgets which are
+     available in this release.
+     Run with: ../Src/test-stk -f stklos-widgets.stklos
+     Comment: This code is a contribution of Drew Whitehouse
+     <Drew.Whitehouse@anu.edu.au>.
+
+2.3 STklos Applications
+
+   * calc.stklos
+     This is a simplistic calculator.
+     Run with: ../Src/test-stk -f calc.stklos
+
+   * tkcolor.stklos
+     This is a simple color picker written in STklos. Clicking the left
+     mouse button in the color box sets the text color to the chosen color.
+     Clicking the right button sets the background color. The Select button
+     sets the selection to a string which can be used (by pasting it in an
+     xterm window) as argument of most X11 applications to set their
+     foreground and background color.
+     Run with: ../Src/test-stk -f tkcolor.stklos
+
+   * amib.stklos
+     A Mini Interface Builder.
+     Run with: ../Src/test-stk -f amib.stklos
+     Comment: The current version of AMIB allow you to:
+        o place objects on a plane by drag and drop
+        o resize objects
+        o displace objects
+        o change all the slots of an object (color, font, value, ...)
+        o save an interface to reload it later in an application
+     However it is far from a really usable interface builder (but after all
+     it is only a 600 lines of code application!!!!)
+
+   * S-scape.stklos
+     The STk web browser. You are probably using it while seeing these
+     lines.
+     Run with: ../Src/test-stk -f S-scape.stklos
+
+  ------------------------------------------------------------------------
+Erick Gallesio
+Last modified: Mon Mar 9 19:15:46 CET 1998

@@ -1,7 +1,7 @@
 #
 # Makefile for STk
 # 
-# Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+# Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 # 
 # Permission to use, copy, and/or distribute this software and its
 # documentation for any purpose and without fee is hereby granted, provided
@@ -11,9 +11,11 @@
 # permission of the copyright holder.  
 # This software is provided ``as is'' without express or implied warranty.
 #
+# $Id: Makefile.in 1.4 Fri, 10 Apr 1998 09:13:18 +0200 eg $
+#
 #           Author: Erick Gallesio [eg@unice.fr]
 #    Creation date: ??-Sep-1993 ??:??
-# Last file update:  6-Sep-1996 18:06
+# Last file update: 10-Apr-1998 08:51
 #
 
 include ../config.make
@@ -21,7 +23,7 @@ include ../config.make
 CFLAGS		= $(STKCFLAGS) $(VERS-OPT) $(MACHINE) $(DYNLOAD) $(TK) $(DFLGS) \
 		  $(OPTS) @DEFS@ \
 		  -I. -I../Tk/generic -I../Tk/$(FLAVOR) -I../Tcl -I../Mp \
-		   $(XINCLUDES)
+		  -I../Stack $(XINCLUDES)
 #
 # Add here your object ('.o') files
 #
@@ -35,20 +37,21 @@ SOBJ 		= stk.o slib.o primitives.o boolean.o char.o str.o vector.o\
 		  read.o print.o eval.o env.o macros.o syntax.o \
 		  cont.o io.o sport.o promise.o error.o proc.o keyword.o \
 		  dump.o address.o dynload.o unix.o toplevel.o argv.o \
-		  extend.o signal.o trace.o dummy.o \
+		  extend.o signal.o trace.o module.o dummy.o \
 		  stklos.o
 
-TCLOBJ		= tcl-lib.o tcl-util.o 
-TKOBJ		= tk-main.o tk-glue.o tk-util.o 
+TCLOBJ		= tcl-lib.o tcl-util.o tcl-glue.o tcl-obj.o
+TKOBJ		= tk-main.o tk-glue.o tk-util.o
 
 TKLIB		= ../Tk/$(FLAVOR)/libtk.a
 TCLLIB		= ../Tcl/libtcl.a
 EVTCLLIB	= ../Tcl/libevtcl.a
 MPLIB		= ../Mp/$(MP).a
+STACKLIB	= ../Stack/libstack.a
 LIBS    	= @LIBS@ $(LIB_DLD) $(LIB_MALLOC)
 
-ALLIBS	 = $(MPLIB) $(TKLIB) $(TCLLIB) $(EVTCLLIB)
-SALLLIBS = $(MPLIB) $(TCLLIB) 
+ALLIBS	 = $(MPLIB) $(STACKLIB) $(TKLIB) $(TCLLIB) $(EVTCLLIB)
+SALLLIBS = $(MPLIB) $(STACKLIB) $(TCLLIB) 
 
 default: 
 	@echo "You must specify 'STk' or 'Snow'"
@@ -58,7 +61,7 @@ STk:
 
 Snow:
 	make snow TK="-DNO_TK"
-	
+
 dev: 
 	make dev-bin TK="-DUSE_TK"
 
@@ -141,6 +144,6 @@ install.snow.libs:
 
 
 clean: 
-	@/bin/rm -f  core *.o core config.* \
+	@/bin/rm -f  Makefile core *.o core config.* \
 		     stk  libstk.a  stk  run-stk \
 		     snow libsnow.a snow run-snow

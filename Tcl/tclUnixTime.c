@@ -9,7 +9,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tclUnixTime.c 1.10 96/02/15 11:58:41
+ * SCCS: @(#) tclUnixTime.c 1.12 97/01/08 17:38:15
  */
 
 #include "tclInt.h"
@@ -18,7 +18,7 @@
 /*
  *-----------------------------------------------------------------------------
  *
- * TclGetSeconds --
+ * TclpGetSeconds --
  *
  *	This procedure returns the number of seconds from the epoch.  On
  *	most Unix systems the epoch is Midnight Jan 1, 1970 GMT.
@@ -33,7 +33,7 @@
  */
 
 unsigned long
-TclGetSeconds()
+TclpGetSeconds()
 {
     return time((time_t *) NULL);
 }
@@ -41,7 +41,7 @@ TclGetSeconds()
 /*
  *-----------------------------------------------------------------------------
  *
- * TclGetClicks --
+ * TclpGetClicks --
  *
  *	This procedure returns a value that represents the highest resolution
  *	clock available on the system.  There are no garantees on what the
@@ -58,7 +58,7 @@ TclGetSeconds()
  */
 
 unsigned long
-TclGetClicks()
+TclpGetClicks()
 {
     unsigned long now;
 #ifdef NO_GETTOD
@@ -81,14 +81,15 @@ TclGetClicks()
 /*
  *----------------------------------------------------------------------
  *
- * TclGetTimeZone --
+ * TclpGetTimeZone --
  *
  *	Determines the current timezone.  The method varies wildly
  *	between different platform implementations, so its hidden in
  *	this function.
  *
  * Results:
- *	Hours east of GMT.
+ *	The return value is the local time zone, measured in
+ *	minutes away from GMT (-ve for east, +ve for west).
  *
  * Side effects:
  *	None.
@@ -97,7 +98,7 @@ TclGetClicks()
  */
 
 int
-TclGetTimeZone (currentTime)
+TclpGetTimeZone (currentTime)
     unsigned long  currentTime;
 {
     /*
@@ -137,6 +138,24 @@ TclGetTimeZone (currentTime)
     return timeZone;
 #endif
 
+#if defined(USE_DELTA_FOR_TZ)
+#define TCL_GOT_TIMEZONE 1
+    /*
+     * This hack replaces using global var timezone or gettimeofday
+     * in situations where they are buggy such as on AIX when libbsd.a
+     * is linked in.
+     */
+
+    int timeZone;
+    time_t tt;
+    struct tm *stm;
+    tt = 849268800L;      /*    1996-11-29 12:00:00  GMT */
+    stm = localtime(&tt); /* eg 1996-11-29  6:00:00  CST6CDT */
+    /* The calculation below assumes a max of +12 or -12 hours from GMT */
+    timeZone = (12 - stm->tm_hour)*60 + (0 - stm->tm_min);
+    return timeZone;  /* eg +360 for CST6CDT */
+#endif
+
     /*
      * Must prefer timezone variable over gettimeofday, as gettimeofday does
      * not return timezone information on many systems that have moved this
@@ -163,7 +182,7 @@ TclGetTimeZone (currentTime)
     return timeZone;
 #endif
 
-#if defined(HAVE_GETTIMEOFDAY) && !defined (TCL_GOT_TIMEZONE)
+#if !defined(NO_GETTOD) && !defined (TCL_GOT_TIMEZONE)
 #   define TCL_GOT_TIMEZONE
     struct timeval  tv;
     struct timezone tz;
@@ -190,7 +209,7 @@ TclGetTimeZone (currentTime)
 /*
  *----------------------------------------------------------------------
  *
- * TclGetTime --
+ * TclpGetTime --
  *
  *	Gets the current system time in seconds and microseconds
  *	since the beginning of the epoch: 00:00 UCT, January 1, 1970.
@@ -205,7 +224,7 @@ TclGetTimeZone (currentTime)
  */
 
 void
-TclGetTime(timePtr)
+TclpGetTime(timePtr)
     Tcl_Time *timePtr;		/* Location to store time information. */
 {
     struct timeval tv;

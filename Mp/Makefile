@@ -20,7 +20,7 @@ libfgmp.a:
 	rm -f libfgmp.a gmp.h
 	(cd $(FGMP_VERSION); $(MAKE) CC="$(CC)" CFLAGS="$(STKCFLAGS) $(ALLOC)")
 	ln -s $(FGMP_VERSION)/libfgmp.a .
-	ln -s $(GMP_VERSION)/gmp.h .
+	ln -s $(FGMP_VERSION)/gmp.h .
 
 install: 
 

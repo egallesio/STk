@@ -1,0 +1,48 @@
+;;;;
+;;;; w w w - h t t p . s t k		--  WWW for STk (HTTP: protocol)
+;;;;
+;;;; Copyright © 1996-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; This version uses some of the enhancements done by Harvey J. Stein:
+;;;;         Copyright (c) 1995 Harvey J. Stein (hjstein@math.huji.ac.il)
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date:  4-Oct-1996 18:49
+;;;; Last file update: 27-Feb-1998 21:48
+
+
+;; Add the "HTTP:" protocol
+
+(with-module WWW
+
+  (define (get-http: url)
+    (let ((file (URL:filename    url))
+	  (host (URL:host        url))
+	  (port (URL:port-number url)))
+
+      ;; Control parameters
+      (if (or (not host) (string=? host ""))	(set! host "localhost"))
+      (if (or (not file) (string=? file ""))	(set! file "/"))
+      (if (not port) 				(set! port 80))
+     
+      (let* ((s   (make-client-socket host port))
+	     (in  (socket-input  s))
+	     (out (socket-output s)))
+	(format out "GET ~A\r\n" file)
+	(close-output-port out)
+	;; Return the socket and the function to close it
+	(cons in
+	      (lambda () (close-input-port in))))))
+
+  (WWW:add-protocol 'http get-http:)
+)
+
+(provide "www-http")

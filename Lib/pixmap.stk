@@ -1,5 +1,5 @@
 ;;;;
-;;;; p r o c e s s . s t k 		-- Processes 
+;;;; p i x m a p . s t k 		-- Pixmap support
 ;;;;
 ;;;;
 ;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
@@ -15,7 +15,7 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 25-Dec-1995 12:41
-;;;; Last file update: 21-Jul-1996 18:41
+;;;; Last file update: 10-Oct-1996 09:50
 ;;;;
 
 (if (symbol-bound? '%init-pixmap)

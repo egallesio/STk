@@ -1,7 +1,7 @@
 ;;;;
 ;;;; Dialog box creation utility
 ;;;;
-;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -17,12 +17,14 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date:  4-Aug-1993 11:05
-;;;; Last file update: 25-Sep-1996 14:48
+;;;; Last file update: 13-Jan-1998 10:12
 ;;;;
 
 (provide "dialog")
 
-(define stk::button-pressed   #f)
+(select-module Tk)
+
+(define stk::button-pressed #f)
 ;;
 ;; STk:make-dialog
 ;;
@@ -55,6 +57,7 @@
 	(old-focus (Tk:focus)))
 
     (catch (Tk:destroy w))
+    (set! stk::button-pressed #f)
 
     ;; 1. Create the top-level window and divide it into top and bottom parts.
     (define w.top (format #f "~A.top" w))
@@ -117,7 +120,9 @@
 	    (Tk:grab 'set w))
 
 	;; Add a binding that sets the result to -1 if the window is detroyed
-	(bind w "<Destroy>" (lambda () (set! stk::button-pressed -1)))
+	(bind w "<Destroy>" (lambda () 
+			      (unless stk::button-pressed
+				  (set! stk::button-pressed -1))))
 
 	(Tk:tkwait 'variable 'stk::button-pressed)
 	(if old-grab

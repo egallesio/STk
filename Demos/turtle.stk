@@ -109,7 +109,7 @@
   (let ((name (vector-ref turtle-colours n)))
     (if (string=? name "")
 	""
-	(string-append "@" *STk-library* "/images/" name))))
+	(string-append "@" *STk-library* "/Images/" name))))
 
 (define (go length)
   (let ((newx (+ turtle-x (* (cos (/ turtle-direction turtle-d2r)) length)))

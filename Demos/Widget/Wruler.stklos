@@ -1,0 +1,143 @@
+;;;;
+;;;; STk adaptation of the Tk widget demo.
+;;;;
+;;;; This demonstration script creates a canvas widget that displays a ruler
+;;;; with tab stops that can be set, moved, and deleted.
+;;;;
+(require "Tk-classes")
+
+(define ruler-x      0)
+(define ruler-y      0)
+(define ruler-grid   '.25c)
+(define ruler-left   0)
+(define ruler-right  0)
+(define ruler-top    0)
+(define ruler-bottom 0)
+(define ruler-size   0)
+(define ruler-item   #f)
+
+(define (demo-ruler)
+  (define w (make-demo-toplevel "ruler"
+				"Ruler Demonstration"
+				"This canvas widget shows a mock-up of a ruler.  You can create tab stops by dragging them out of the well to the right of the ruler.  You can also drag existing tab stops.  If you drag a tab stop far enough up or down so that it turns dim, it will be deleted when you release the mouse button."))
+
+  (define c (make <Canvas> :parent w :width '14.8c :height '2.5c))
+
+  (define (make-coords fmt . args)
+    (read-from-string (apply format #f (string-append "(" fmt ")") args)))
+  
+  (pack c :fill "x")
+
+  (make <Line> :parent c :coords '(1c 0.5c 1c 1c 13c 1c 13c 0.5c) :width 1)
+  (dotimes (i 12)
+    (let ((x (+ i 1)))
+      (make <Line> :parent c :coords (make-coords "~Ac     1c ~Ac    0.6c" x x))
+      (make <Line> :parent c :coords (make-coords "~A.25c  1c ~A.25c 0.8c" x x))
+      (make <Line> :parent c :coords (make-coords "~A.5c   1c ~A.5c  0.7c" x x))
+      (make <Line> :parent c :coords (make-coords "~A.75c  1c ~A.75c 0.8c" x x))
+
+      (make <Text-item> :parent c :coords (make-coords  "~A.15c .75c" x)
+	    		:text i :anchor 'sw)))
+
+  (let ((r   (make <Rectangle> :parent c :coords '(13.2c 1c 13.8c 0.5c)
+		   	       :outline "black" :fill (background c)))
+	(tab (make-ruler-tab c (winfo 'pixels c '13.5c) (winfo 'pixels c '.65c))))
+    (add-tag r   "weel")
+    (add-tag tab "weel")
+    (bind c "weel" "<1>" 	     (lambda (x y) (ruler-new-tab     c x y)))
+    (bind c "tab"  "<1>"       	     (lambda (x y) (ruler-select-tab  c x y)))
+    (bind c "<B1-Motion>"  	     (lambda (x y) (ruler-move-tab    c x y)))
+    (bind c "<Any-ButtonRelease-1>"  (lambda ()    (ruler-release-tab c))))
+
+  (set! ruler-left   (winfo 'fpixels c '1c))
+  (set! ruler-right  (winfo 'fpixels c '13c))
+  (set! ruler-top    (winfo 'fpixels c '1c))
+  (set! ruler-bottom (winfo 'fpixels c '1.5c))
+  (set! ruler-size   (winfo 'fpixels c '.2c)))
+
+
+
+;;;; make-ruler-tab --
+;;;; This procedure creates a new triangular polygon in a canvas to
+;;;; represent a tab stop.
+
+(define (make-ruler-tab c x y)
+  (let ((size [winfo 'pixels c '.2c]))
+    (make <Polygon> :parent c :fill 'black
+	  :coords (list x y (+ x size) (+ y size) (- x size) (+ y size)))))
+
+;;;; ruler-new-tab --
+;;;; Does all the work of creating a tab stop, including creating the
+;;;; triangle object and adding tags to it to give it tab behavior.
+
+(define (ruler-new-tab c x y)
+  (let ((tab (make-ruler-tab c x y)))
+    (add-tag tab "active")
+    (add-tag tab "tab")
+    (set! ruler-x x)
+    (set! ruler-y y)
+    (set! ruler-item tab)
+    (ruler-move-tab c x y)))
+
+;;;; ruler-select-tab --
+;;;; This procedure is invoked when mouse button 1 is pressed over
+;;;; a tab.  It remembers information about the tab so that it can
+;;;; be dragged interactively.
+;;;;
+(define (ruler-select-tab c x y)
+  (add-tag c "active" 'withtag 'current)
+  (raise c "active")
+
+  (set! ruler-x    (canvas-x c x ruler-grid))
+  (set! ruler-y    (+ ruler-top 2))
+  (set! ruler-item (car (find-items c 'withtag "active")))
+  (ruler-set-style! ruler-item 'active)
+)
+
+;;;; ruler-move-tab --
+;;;; This procedure is invoked during mouse motion events to drag a tab.
+;;;; It adjusts the position of the tab, and changes its appearance if
+;;;; it is about to be dragged out of the ruler.
+
+(define (ruler-move-tab c x y)
+  (let ((active (find-items c 'withtag "active")))
+    (unless (null? active)
+      (let ((cx (canvas-x c x ruler-grid))
+	    (cy (canvas-y c y)))
+	(if (< cx ruler-left)   (set! cx ruler-left))
+	(if (> cx  ruler-right) (set! cx ruler-right))
+	(if (and (>= cy  ruler-top) (<= cy ruler-bottom))
+	    (begin
+	      (set! cy (+ ruler-top 2))
+	      (ruler-set-style! ruler-item 'active)
+	      )
+	    (begin
+	      (set! cy (- cy ruler-size 2))
+	      (ruler-set-style! ruler-item 'delete)
+	      ))
+	(move (car active) (- cx ruler-x) (- cy ruler-y))
+	(set! ruler-x cx)
+	(set! ruler-y cy)))))
+
+;;;; ruler-release-tab --
+;;;; This procedure is invoked during button release events that end
+;;;; a tab drag operation.  It deselects the tab and deletes the tab if
+;;;; it was dragged out of the ruler.
+
+(define (ruler-release-tab c)
+  (let ((active (find-items c 'withtag "active")))
+    (unless (null? active)
+      (if (= ruler-y (+ ruler-top 2))
+	  (begin
+	    (ruler-set-style! ruler-item 'normal)
+	    (delete-tag c "active"))
+	  (canvas-delete c "active")))))
+
+;;;; ruler-set-style!
+;;;; Set the style of the tab
+(define (ruler-set-style! tab style)
+  (case style
+    ((active) (when (> (winfo 'depth (parent tab)) 1) (slot-set! tab 'fill "red"))
+	      (slot-set! tab 'stipple ""))
+    ((delete) (slot-set! tab 'stipple 'gray25))
+    ((normal) (slot-set! tab 'fill "black"))))

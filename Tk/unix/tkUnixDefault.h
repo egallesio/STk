@@ -5,12 +5,12 @@
  *	the Tk widgets.
  *
  * Copyright (c) 1991-1994 The Regents of the University of California.
- * Copyright (c) 1994-1995 Sun Microsystems, Inc.
+ * Copyright (c) 1994-1997 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkUnixDefault.h 1.85 96/02/15 18:55:24
+ * SCCS: @(#) tkUnixDefault.h 1.104 97/06/18 15:44:41
  */
 
 #ifndef _TKUNIXDEFAULT
@@ -44,6 +44,7 @@
 #define DEF_BUTTON_ACTIVE_BG_COLOR	ACTIVE_BG
 #define DEF_BUTTON_ACTIVE_BG_MONO	BLACK
 #define DEF_BUTTON_ACTIVE_FG_COLOR	BLACK
+#define DEF_CHKRAD_ACTIVE_FG_COLOR	DEF_BUTTON_ACTIVE_FG_COLOR
 #define DEF_BUTTON_ACTIVE_FG_MONO	WHITE
 #define DEF_BUTTON_BG_COLOR		NORMAL_BG
 #define DEF_BUTTON_BG_MONO		WHITE
@@ -51,15 +52,20 @@
 #define DEF_BUTTON_BORDER_WIDTH		"2"
 #define DEF_BUTTON_CURSOR		""
 #define DEF_BUTTON_COMMAND		""
+#define DEF_BUTTON_DEFAULT		"disabled"
 #define DEF_BUTTON_DISABLED_FG_COLOR	DISABLED
 #define DEF_BUTTON_DISABLED_FG_MONO	""
+#ifdef STk_CODE
+#  define DEF_BUTTON_ENV		""
+#endif
 #define DEF_BUTTON_FG			BLACK
-#define DEF_BUTTON_FONT			"-Adobe-Helvetica-Bold-R-Normal--*-120-*-*-*-*-*-*"
+#define DEF_CHKRAD_FG			DEF_BUTTON_FG
+#define DEF_BUTTON_FONT			"Helvetica -12 bold"
 #define DEF_BUTTON_HEIGHT		"0"
 #define DEF_BUTTON_HIGHLIGHT_BG		NORMAL_BG
 #define DEF_BUTTON_HIGHLIGHT		BLACK
 #define DEF_LABEL_HIGHLIGHT_WIDTH	"0"
-#define DEF_BUTTON_HIGHLIGHT_WIDTH	"2"
+#define DEF_BUTTON_HIGHLIGHT_WIDTH	"1"
 #define DEF_BUTTON_IMAGE		(char *) NULL
 #ifdef STk_CODE
 #   define DEF_BUTTON_INDICATOR		"#t"
@@ -124,7 +130,7 @@
 #define DEF_CANVAS_HEIGHT		"7c"
 #define DEF_CANVAS_HIGHLIGHT_BG		NORMAL_BG
 #define DEF_CANVAS_HIGHLIGHT		BLACK
-#define DEF_CANVAS_HIGHLIGHT_WIDTH	"2"
+#define DEF_CANVAS_HIGHLIGHT_WIDTH	"1"
 #define DEF_CANVAS_INSERT_BG		BLACK
 #define DEF_CANVAS_INSERT_BD_COLOR	"0"
 #define DEF_CANVAS_INSERT_BD_MONO	"0"
@@ -155,15 +161,16 @@
 #define DEF_ENTRY_BORDER_WIDTH		"2"
 #define DEF_ENTRY_CURSOR		"xterm"
 #ifdef STk_CODE
-#define DEF_ENTRY_EXPORT_SELECTION	"#t"
+#  define DEF_ENTRY_ENV			""
+#  define DEF_ENTRY_EXPORT_SELECTION	"#t"
 #else
-#define DEF_ENTRY_EXPORT_SELECTION	"1"
+#  define DEF_ENTRY_EXPORT_SELECTION	"1"
 #endif
-#define DEF_ENTRY_FONT			"-Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-*"
+#define DEF_ENTRY_FONT			"Helvetica -12"
 #define DEF_ENTRY_FG			BLACK
 #define DEF_ENTRY_HIGHLIGHT_BG		NORMAL_BG
 #define DEF_ENTRY_HIGHLIGHT		BLACK
-#define DEF_ENTRY_HIGHLIGHT_WIDTH	"2"
+#define DEF_ENTRY_HIGHLIGHT_WIDTH	"1"
 #define DEF_ENTRY_INSERT_BG		BLACK
 #define DEF_ENTRY_INSERT_BD_COLOR	"0"
 #define DEF_ENTRY_INSERT_BD_MONO	"0"
@@ -194,6 +201,11 @@
 #define DEF_FRAME_BORDER_WIDTH		"0"
 #define DEF_FRAME_CLASS			"Frame"
 #define DEF_FRAME_COLORMAP		""
+#ifdef STk_CODE
+#  define DEF_FRAME_CONTAINER		"#f"
+#else
+#  define DEF_FRAME_CONTAINER		"0"
+#endif
 #define DEF_FRAME_CURSOR		""
 #define DEF_FRAME_HEIGHT		"0"
 #define DEF_FRAME_HIGHLIGHT_BG		NORMAL_BG
@@ -205,6 +217,7 @@
 #else
 #  define DEF_FRAME_TAKE_FOCUS		"0"
 #endif
+#define DEF_FRAME_USE			""
 #define DEF_FRAME_VISUAL		""
 #define DEF_FRAME_WIDTH			"0"
 
@@ -221,12 +234,12 @@
 #else
 #  define DEF_LISTBOX_EXPORT_SELECTION	"1"
 #endif
-#define DEF_LISTBOX_FONT		"-Adobe-Helvetica-Bold-R-Normal--*-120-*-*-*-*-*-*"
+#define DEF_LISTBOX_FONT		"Helvetica -12 bold"
 #define DEF_LISTBOX_FG			BLACK
 #define DEF_LISTBOX_HEIGHT		"10"
 #define DEF_LISTBOX_HIGHLIGHT_BG	NORMAL_BG
 #define DEF_LISTBOX_HIGHLIGHT		BLACK
-#define DEF_LISTBOX_HIGHLIGHT_WIDTH	"2"
+#define DEF_LISTBOX_HIGHLIGHT_WIDTH	"1"
 #define DEF_LISTBOX_RELIEF		"sunken"
 #define DEF_LISTBOX_SCROLL_COMMAND	""
 #define DEF_LISTBOX_SELECT_COLOR	SELECT_BG
@@ -252,9 +265,22 @@
 #define DEF_MENU_ENTRY_ACCELERATOR	(char *) NULL
 #define DEF_MENU_ENTRY_BG		(char *) NULL
 #define DEF_MENU_ENTRY_BITMAP		None
+#ifdef STk_CODE
+#  define DEF_MENU_ENTRY_COLUMN_BREAK	"#f"
+#else
+#  define DEF_MENU_ENTRY_COLUMN_BREAK	"0"
+#endif
 #define DEF_MENU_ENTRY_COMMAND		(char *) NULL
+#ifdef STk_CODE
+#  define DEF_MENU_ENTRY_ENV		""
+#endif
 #define DEF_MENU_ENTRY_FG		(char *) NULL
 #define DEF_MENU_ENTRY_FONT		(char *) NULL
+#ifdef STk_CODE
+#  define DEF_MENU_ENTRY_HIDE_MARGIN	"#f"
+#else
+#  define DEF_MENU_ENTRY_HIDE_MARGIN	"0"
+#endif
 #define DEF_MENU_ENTRY_IMAGE		(char *) NULL
 #ifdef STk_CODE
 #  define DEF_MENU_ENTRY_INDICATOR	"#t"
@@ -297,7 +323,7 @@
 #define DEF_MENU_CURSOR			"arrow"
 #define DEF_MENU_DISABLED_FG_COLOR	DISABLED
 #define DEF_MENU_DISABLED_FG_MONO	""
-#define DEF_MENU_FONT			"-Adobe-Helvetica-Bold-R-Normal--*-120-*-*-*-*-*-*"
+#define DEF_MENU_FONT			"Helvetica -12 bold"
 #define DEF_MENU_FG			BLACK
 #define DEF_MENU_POST_COMMAND		""
 #define DEF_MENU_RELIEF			"raised"
@@ -311,7 +337,8 @@
 #  define DEF_MENU_TEAROFF		"1"
 #endif
 #define DEF_MENU_TEAROFF_CMD		(char *) NULL
-#define DEF_MENU_TRANSIENT		"1"
+#define DEF_MENU_TITLE			""
+#define DEF_MENU_TYPE			"normal"
 
 /*
  * Defaults for menubuttons:
@@ -327,9 +354,13 @@
 #define DEF_MENUBUTTON_BITMAP		""
 #define DEF_MENUBUTTON_BORDER_WIDTH	"2"
 #define DEF_MENUBUTTON_CURSOR		""
+#define DEF_MENUBUTTON_DIRECTION	"below"
 #define DEF_MENUBUTTON_DISABLED_FG_COLOR DISABLED
 #define DEF_MENUBUTTON_DISABLED_FG_MONO	""
-#define DEF_MENUBUTTON_FONT		"-Adobe-Helvetica-Bold-R-Normal--*-120-*-*-*-*-*-*"
+#ifdef STk_CODE
+#  define DEF_MENUBUTTON_ENV		""
+#endif
+#define DEF_MENUBUTTON_FONT		"Helvetica -12 bold"
 #define DEF_MENUBUTTON_FG		BLACK
 #define DEF_MENUBUTTON_HEIGHT		"0"
 #define DEF_MENUBUTTON_HIGHLIGHT_BG	NORMAL_BG
@@ -372,8 +403,11 @@
 #define DEF_MESSAGE_BG_MONO		WHITE
 #define DEF_MESSAGE_BORDER_WIDTH	"2"
 #define DEF_MESSAGE_CURSOR		""
+#ifdef STk_CODE
+#  define DEF_MESSAGE_ENV		""
+#endif
 #define DEF_MESSAGE_FG			BLACK
-#define DEF_MESSAGE_FONT		"-Adobe-Helvetica-Bold-R-Normal--*-120-*-*-*-*-*-*"
+#define DEF_MESSAGE_FONT		"Helvetica -12 bold"
 #define DEF_MESSAGE_HIGHLIGHT_BG	NORMAL_BG
 #define DEF_MESSAGE_HIGHLIGHT		BLACK
 #define DEF_MESSAGE_HIGHLIGHT_WIDTH	"0"
@@ -403,13 +437,16 @@
 #define DEF_SCALE_COMMAND		""
 #define DEF_SCALE_CURSOR		""
 #define DEF_SCALE_DIGITS		"0"
-#define DEF_SCALE_FONT			"-Adobe-Helvetica-Bold-R-Normal--*-120-*-*-*-*-*-*"
+#ifdef STk_CODE
+#  define DEF_SCALE_ENV			""
+#endif
+#define DEF_SCALE_FONT			"Helvetica -12 bold"
 #define DEF_SCALE_FG_COLOR		BLACK
 #define DEF_SCALE_FG_MONO		BLACK
 #define DEF_SCALE_FROM			"0"
 #define DEF_SCALE_HIGHLIGHT_BG		NORMAL_BG
 #define DEF_SCALE_HIGHLIGHT		BLACK
-#define DEF_SCALE_HIGHLIGHT_WIDTH	"2"
+#define DEF_SCALE_HIGHLIGHT_WIDTH	"1"
 #define DEF_SCALE_LABEL			""
 #define DEF_SCALE_LENGTH		"100"
 #define DEF_SCALE_ORIENT		"vertical"
@@ -420,9 +457,9 @@
 #define DEF_SCALE_TROUGH_COLOR		TROUGH
 #define DEF_SCALE_TROUGH_MONO		WHITE
 #ifdef STk_CODE
-#define DEF_SCALE_SHOW_VALUE		"#t"
+#  define DEF_SCALE_SHOW_VALUE		"#t"
 #else
-#define DEF_SCALE_SHOW_VALUE		"1"
+#  define DEF_SCALE_SHOW_VALUE		"1"
 #endif
 #define DEF_SCALE_SLIDER_LENGTH		"30"
 #define DEF_SCALE_SLIDER_RELIEF		"raised"
@@ -448,7 +485,7 @@
 #define DEF_SCROLLBAR_EL_BORDER_WIDTH	"-1"
 #define DEF_SCROLLBAR_HIGHLIGHT_BG	NORMAL_BG
 #define DEF_SCROLLBAR_HIGHLIGHT		BLACK
-#define DEF_SCROLLBAR_HIGHLIGHT_WIDTH	"2"
+#define DEF_SCROLLBAR_HIGHLIGHT_WIDTH	"1"
 #ifdef STk_CODE
 #  define DEF_SCROLLBAR_JUMP		"#f"
 #else
@@ -477,11 +514,11 @@
 #else
 #  define DEF_TEXT_EXPORT_SELECTION	"1"
 #endif
-#define DEF_TEXT_FONT			"-*-Courier-Medium-R-Normal--*-120-*-*-*-*-*-*"
+#define DEF_TEXT_FONT			"Courier -12"
 #define DEF_TEXT_HEIGHT			"24"
 #define DEF_TEXT_HIGHLIGHT_BG		NORMAL_BG
 #define DEF_TEXT_HIGHLIGHT		BLACK
-#define DEF_TEXT_HIGHLIGHT_WIDTH	"2"
+#define DEF_TEXT_HIGHLIGHT_WIDTH	"1"
 #define DEF_TEXT_INSERT_BG		BLACK
 #define DEF_TEXT_INSERT_BD_COLOR	"0"
 #define DEF_TEXT_INSERT_BD_MONO		"0"
@@ -497,6 +534,7 @@
 #define DEF_TEXT_SELECT_BD_MONO		"0"
 #define DEF_TEXT_SELECT_FG_COLOR	BLACK
 #define DEF_TEXT_SELECT_FG_MONO		WHITE
+#define DEF_TEXT_SELECT_RELIEF		"raised"
 #ifdef STk_CODE
 #  define DEF_TEXT_SET_GRID		"#f"
 #else
@@ -519,6 +557,7 @@
  */
 
 #define DEF_TOPLEVEL_CLASS		"Toplevel"
+#define DEF_TOPLEVEL_MENU		""
 #define DEF_TOPLEVEL_SCREEN		""
 
 #endif /* _TKUNIXDEFAULT */

@@ -1,0 +1,71 @@
+;;;;
+;;;; w w w - s n d . s t k	--  WWW for STk (Sound files reader)
+;;;;
+;;;; Copyright © 1996-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; This version uses some of the enhancements done by Harvey J. Stein:
+;;;;         Copyright (c) 1995 Harvey J. Stein (hjstein@math.huji.ac.il)
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date:  1-Nov-1996 23:39
+;;;; Last file update: 28-Feb-1998 13:53
+;;;;
+
+;;;; Sound player must be placed in the shell variable PLAY_PRG. If this 
+;;;; variable is not set, the program "play" is launched. The play program 
+;;;; is called with one parameter: the file to play. 
+
+
+(select-module WWW)
+
+(define sound-player (or (getenv "PLAY_PRG") "play"))
+
+;=============================================================================
+;
+; 			U t i l i t i e s
+;
+;=============================================================================
+
+(define (get-sound-file url port)
+  ;; Keep the suffix of the sound file, since some players need it
+  (let* ((str-url (url:pretty-url url))
+	 (tmpname (temporary-file-name))
+	 (file    (open-file tmpname "w")))
+    (when file
+      (copy-port-image port file)
+      (close-output-port file))
+    tmpname))
+
+;=============================================================================
+;
+; 			P l a y - s o u n d 
+;
+;=============================================================================
+
+(define (play-sound txt fd url)
+  (let* ((str-url    (if (string? url) url (url:unparse-url url)))
+	 (in-file?   (eq? (url:service url) 'file))
+	 (sound      (if in-file?
+			 (url:filename url)
+			 (get-sound-file url fd))))
+    (when sound
+      ;; play sound file
+      (system (string-append sound-player " " sound))
+      ;;  If sound is in a temporary file, delete it
+      (unless in-file? 
+	 (remove-file sound)))))
+
+;=============================================================================
+
+;;;; Add the sound "viewer"
+(www:add-viewer (string->regexp "\\.au$|\\.wav$") play-sound)
+
+(provide "www-snd")

@@ -9,7 +9,7 @@
 '\" @(#) frame.n 1.23 95/08/12 17:35:08
 '\" 
 .so STk-man.macros
-.TH frame n 3.1 STk "Tk Built-In Commands"
+.TH frame n 4.0 STk "Tk Built-In Commands"
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
@@ -45,6 +45,17 @@ If the \fBcolormap\fR option is not specified, the new window
 uses the same colormap as its parent.
 This option may not be changed with the \fBconfigure\fR
 widget procedure.
+.VS br
+.OP :container container Container container
+The value must be a boolean.  If true, it means that this window will
+be used as a container in which some other application will be embedded
+(for example, a Tk toplevel can be embedded using the \fB:use\fR option).
+The window will support the appropriate window manager protocols for
+things like geometry requests.  The window should not have any
+children of its own in this application.
+This option may not be changed with the \fBconfigure\fR
+widget command.
+.VE
 .OP :height height Height height
 Specifies the desired height for the window in any of the forms
 acceptable to \fBTk_GetPixels\fR.

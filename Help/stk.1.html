@@ -1,4 +1,5 @@
-<HTML><HEAD><TITLE>4.0 - STk manual page</TITLE></HEAD>
+<HTML><HEAD><TITLE>January_1998 - STk manual page</TITLE></HEAD>
+<BR>
 <BODY bgcolor = white>
 <H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageWhite.gif"> stk, snow</H2>
 <I>A Scheme interpreter using the Tk toolkit</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
@@ -13,25 +14,25 @@ abbreviations for the <B>-help</B> option).
 
 <P>
 <DL>
-<DT><A NAME="M4"><B>-display </B><I>display</I></A><DD>
+<DT><A NAME="M4"><B>-colormap new</B></A><DD>
+Specifies that the window should have a new private colormap instead of
+using the default colormap for the screen.
+<P>
+<DT><A NAME="M5"><B>-display </B><I>display</I></A><DD>
 Display (and screen) on which to display window.
 <P>
-<DT><A NAME="M5"><B>-file </B><I>fileName</I></A><DD>
+<DT><A NAME="M6"><B>-file </B><I>fileName</I></A><DD>
 Read commands from <I>fileName</I> rather than standard input.  The
 last element in <I>fileName</I> will be used as the title for the
 application and name of its interpreter for <B><A HREF="./send.n.html">send</A></B>
 commands (unless overridden by the <B>-name</B> option\fR).
 <P>
-<DT><A NAME="M6"><B>-geometry </B><I>geometry</I></A><DD>
+<DT><A NAME="M7"><B>-geometry </B><I>geometry</I></A><DD>
 Initial geometry to use for window.
 <P>
-<DT><A NAME="M7"><B>-name </B><I>name</I></A><DD>
+<DT><A NAME="M8"><B>-name </B><I>name</I></A><DD>
 Use <I>name</I> as the title to be displayed in the window, and
 as the name of the interpreter for <B><A HREF="./send.n.html">send</A></B> commands.
-<P>
-<DT><A NAME="M8"><B>-new-colormap</B></A><DD>
-Specifies that the main window should have a new private colormap instead of
-using the default colormap for the screen.
 <P>
 <DT><A NAME="M9"><B>-sync</B></A><DD>
 Execute all X server commands synchronously, so that errors
@@ -87,7 +88,7 @@ reached on standard input.
 <B>Snow</B> is a <I>light</I> version of the <B>stk</B> interpreter which
 does not provide support for the Tk toolkit. This interpreter does not
 recognize the options <B>-display</B>, <B>-geometry</B>, <B>-sync</B> 
-<B>new-colormap</B>, <B>visual</B> and <B>-no-tk</B> which are meaningless 
+<B>-colormap</B>, <B>-visual</B> and <B>-no-tk</B> which are meaningless 
 without Tk. This interpreter is called, rather than the standard one, 
 when the shell DISPLAY variable is not initialized.
 
@@ -98,7 +99,12 @@ forms will normally create an interactive interface consisting
 of one or more widgets.  When the end of the command file is
 reached, <B>stk</B> will continue to respond to X events until
 all windows have been deleted.
-
+<P>
+<B>Note:</B> The <B>-file</B> exits for compatibility reasons and can be
+eventually ommited. In there is no <B>-file</B> option used, the first
+argument in the command line is taken as the name of the script file
+to execute. To launch an interactive script with an argument, you have 
+to use the <B>--</B> option.
 <P>
 The <B>-interactive</B> option forces the interpreter in interactive
 mode. In this mode, standard output and standard error are unbuffered. 
@@ -118,9 +124,9 @@ Contains a Scheme list whose elements are the <I>arg</I> arguments (not
 including the options described above), in order, or an empty list
 if there are no <I>arg</I> arguments.
 <P>
-<DT><A NAME="M22"><B>*program-name*</B></A><DD>
-Contains <I>fileName</I> if it was specified.
-Otherwise, contains the name by which <B>stk</B> was invoked.
+<DT><A NAME="M22"><B>*program-name*</B> Contains <I>fileName</I> if it was provided (in a</A><DD>
+<B>-file</B> option or as first argument of the command line).
+Otherwise, contains the name by which the interpreter was invoked.
 
 
 <P>
@@ -133,6 +139,8 @@ you mark it as executable.
 This assumes that <B>stk</B> has been installed in the default
 location in /usr/local/bin;  if it's installed somewhere else
 then you'll have to modify the above line to match.
+Note that <B>-f</B> which was necessary with pre-4.0 versions of <B>STk</B>
+is no more necessary and can be omitted.
 
 <H3><A NAME="M24">ENVIRONMENT VARIABLES</A></H3>
 <B>stk</B> uses the following shell variables:
@@ -168,13 +176,13 @@ executable.
 <P>
 <DT><A NAME="M31"><I>~/.stkrc</I></A><DD>
 Standard <I>init.stk</I> file tries to load the file <I>~/.stkrc</I>. This file 
-can be used to store function definitions or variables settings that you want
-to be executed at each interpretater invocation.
+can be used to store functions definitions or variables settings that you want
+to be executed at each interpreter invocation.
 
 <P>
 </DL>
 <H3><A NAME="M32">SEE ALSO</A></H3>
 <B>wish(1)</B>
-<P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif"><P>
 <A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookWhite.gif"> Back to the <B>STk</B> main page</A>
 </BODY></HTML>

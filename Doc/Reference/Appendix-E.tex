@@ -1,0 +1,75 @@
+%
+% STk Reference manual (Appendix: Changes)
+%
+%           Author: Erick Gallesio [eg@unice.fr]
+%    Creation date: 21-Dec-1997 20:09
+% Last file update: 21-Dec-1997 21:56
+%
+
+\section*{Introduction}
+
+This appendix lists the main differences\footnote{ Only the
+  differences which affect the language or new ports are reported here.
+  In particular, internal changes, packages written in Scheme or
+  performance enhancement are not discussed here.}.among the various
+recent versions of STk.  Differences with older versions as well as
+implementation changes are described in the CHANGES file located in
+the main directory of the STk distribution.
+
+\section*{Release 3.1.1}
+
+\small{\emph{Release date: 09/26/96}}
+
+This release is a bug correction release. It corrects a lot of bugs.
+A lot of these bugs prevent to install it on some architectures.
+
+
+\section*{Release 3.1}
+
+\small{\emph{Release date: 07/24/96}}
+
+\begin{itemize}
+\item Version of Tk is now at Tk4.1 level.
+\item STk has been ported on Windows 95 and Windows NT. 
+\item Ports can have a handler which is executed when port becomes
+  readable or writable (see primitives \texttt{when-port-readable} and
+  \texttt{when-port-writable}.
+\item Sockets in server mode allow multiple concurrent connection.
+\item \stklos{}: Two new methods: \texttt{object-eqv?} and
+  \texttt{object-equal?} which are called when applying \texttt{eqv?} 
+  or \texttt{equal?} to instances.
+\item New primitive:\texttt{setenv!}
+  
+\end{itemize}
+\section*{Release 3.0} 
+
+\small{\emph{Release date: 01/22/96}}
+\begin{itemize}
+\item Version of Tk is at Tk4.0p2 level.
+\item Closures are fully supported by Tk. That means that a callback can be 
+  now a  Scheme closure with its environment. GC problems with closures
+  and usage of the dirty \texttt{address-of} are definitively gone.
+\item Strings can contain null charters (printing of strings is more
+  friendly in write mode).
+\item Signals can  be redirected to Scheme closures. The end of a GC 
+ is seen as a signal.
+\item Traces on variables are changed (and re-work now): the
+  associated trace must be a thunk.
+\item  New options for some widgets to be more friendly with Scheme world
+\item \stklos{}: if a method M is defined and if it is already bound
+  to a procedure, the old procedure is called when no method is
+  applicable.
+  \begin{scheme}
+(define-method car ((x <integer>)) (- x 1))
+(car 10)           \lev 9
+(car (cons 'a 'b)) \lev a
+  \end{scheme}
+\item Small change in the STklos hierarchy. \texttt{<widget>} is now a
+  subclass of \texttt{<procedure>} and its meta class is 
+  \texttt{<procedure-metaclass>}.
+\end{itemize}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "manual"
+%%% End: 

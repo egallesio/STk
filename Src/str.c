@@ -2,7 +2,7 @@
  *
  * s t r . c				-- Strings management
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1997 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -16,10 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
+ * $Id: str.c 1.1 Sat, 03 Jan 1998 13:46:25 +0100 eg $
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: ??????
- * Last file update: 13-May-1996 22:42
+ * Last file update: 30-Dec-1997 10:36
  */
 
 #include <ctype.h>
@@ -65,7 +66,7 @@ static int stringcompi(SCM s1, SCM s2)
 
 SCM STk_makestrg(int len, char *init)
 {
-  SCM  z;
+  register SCM  z;
 
   STk_disallow_sigint();
   NEWCELL(z, tc_string);
@@ -76,6 +77,18 @@ SCM STk_makestrg(int len, char *init)
 
   if (init) memcpy(z->storage_as.string.data, init, len);
   STk_allow_sigint();
+
+  return z;
+}
+
+SCM STk_embed_C_string(char *str)
+{
+  /* Embed a C string in Scheme world (the dting must be dynamic */
+  register SCM  z;
+
+  NEWCELL(z, tc_string);
+  z->storage_as.string.dim  = strlen(str);
+  z->storage_as.string.data = str;
 
   return z;
 }
@@ -331,4 +344,42 @@ PRIMITIVE STk_string_upper(SCM s)
 
   for (p=CHARS(s), q=CHARS(z); *p; p++, q++) *q = toupper(*p);
   return z;
+}
+
+PRIMITIVE STk_split_string(SCM string, SCM delimiters)
+{
+  SCM result = NIL;
+  char *c_string, *c_delimiters, *s;
+  
+  if (!STRINGP(string)) STk_err("split-string: bad string", string);
+  c_string = CHARS(string);
+
+  if (delimiters == UNBOUND)
+    c_delimiters = " \t\n";
+  else {
+    if (!STRINGP(delimiters)) 
+      STk_err("split-string: bad delimiter string", delimiters);
+    c_delimiters = CHARS(delimiters);
+  }
+
+  for (s = c_string; *s; s++) {
+    if (strchr(c_delimiters, *s)) {
+      if (s > c_string) {
+	int len;
+	SCM tmp;
+	
+	len = s - c_string;
+	tmp = STk_makestrg(len, NULL);
+	
+	strncpy(CHARS(tmp), c_string, len);
+	CHARS(tmp)[len] = '\0';
+	result = Cons(tmp, result);
+      }
+      c_string = s + 1;
+    }
+  }
+  if (s > c_string) 
+    result = Cons(STk_makestring(c_string), result);
+
+  return STk_reverse(result);
 }

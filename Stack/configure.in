@@ -1,0 +1,51 @@
+dnl	This file is an input file used by the GNU "autoconf" program to
+dnl	generate the file "configure", which is run during installation
+dnl	to configure the system for the local environment.
+dnl
+dnl              Author: Erick Gallesio [eg@unice.fr]
+dnl       Creation date: 27-Sep-1997 20:02
+dnl    Last file update:  8-Apr-1998 10:54
+
+AC_INIT(libstack.h.in)
+
+# I have a lot of problems with cache. So ...
+/bin/rm -f ./config.cache 
+
+# determine the kind of the machine which is running this script
+machine=`uname -m`
+
+# I hope that compatible ix86 chips (such as K6 or AMD) always return ix386
+case $machine in
+  i?86)   ARCH=I386;;
+  sun*)   ARCH=SUN;;
+  alpha*) ARCH=ALPHA;;
+  ?000/*) ARCH=HP;;
+  IP22)   ARCH=MIPS32;;
+  *)      ARCH="UNKNOWN_ARCH";;
+esac
+
+AC_PROG_CC
+AC_PROG_RANLIB
+
+# The library is done with one header file (libstack.h) and two sources files
+# If gcc is available, use the C source file otherwise, use the provided 
+# assembly language source file.
+
+ln -s libstack-$ARCH.c libstack.c;
+
+LOW=
+if test -f lowstack-$ARCH.s 
+then 
+  ln -s lowstack-$ARCH.s lowstack.s 
+  LOW=lowstack.o
+fi
+
+echo "Stack library configuration"
+echo "         Machine type: " $ARCH
+echo "    Low level support: " $LOW
+
+
+AC_SUBST(ARCH)
+AC_SUBST(LOW)
+AC_OUTPUT(libstack.h Makefile)
+

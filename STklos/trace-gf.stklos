@@ -1,0 +1,94 @@
+;;;;
+;;;; t r a c e - g f . s t k l o s	-- Trace generic functions
+;;;;
+;;;; Copyright © 1997-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; $Id: trace-gf.stklos 1.1 Sun, 18 Jan 1998 20:17:48 +0100 eg $
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 17-Jan-1998 17:48
+;;;; Last file update: 18-Jan-1998 18:39
+
+
+(require "trace")		;; The one which doesn't feal with generic
+(select-module Trace)		;; Place the rest of this file in module Trace
+
+;=============================================================================
+;
+; Class <Traced-generic>
+;
+; Trace of a generic function is done using MOP.
+; In fact, to trace a gf we change its class from <generic> to <traced-generic>
+; Untracing is of course just the contrary
+;
+;=============================================================================
+
+(define-class <Traced-generic> (<generic>)
+  ())
+
+;;
+;; How to apply the methods of a <traced-generic>
+;; 
+(define-method apply-method ((gf <traced-generic>) methods-list build-next args)
+  (let* ((name (generic-function-name gf))
+	 (m    (car methods-list))
+	 (spec (method-specializers m))
+	 (map* (with-module STklos map*)))
+    ;; Trace the closure application in a dynammic wind to restore indentation
+    ;; on error. This code is quite identical to the code used for procedure in
+    ;; trace.stk
+    (dynamic-wind 
+       (lambda () (set! *indentation* (+ *indentation* 2)))
+	  
+       (lambda ()
+	 (let ((I   (indent))
+	       (res #f))
+	   (format *err-port* "~A -> GF ~S\n~A    spec = ~S\n~A    args = ~S\n" 
+		   I name I (map* class-name spec) I args)
+	   (set! res (apply (method-procedure (car methods-list))
+			    (build-next (cdr methods-list) args)
+			    args))
+	   (format *err-port* "~A <- GF ~S returns ~S\n" I name res)
+	   res))
+
+       (lambda () (set! *indentation* (- *indentation* 2))))))
+
+
+;=============================================================================
+;
+; Trace-generic
+;
+;=============================================================================
+
+(define-method trace-generic ((symbol <symbol>) (gf <generic>))
+  ;; Verify that gf is "exactly" a <generic> (not "is-a?")
+  ;; Otherwise, we can lost some information when untracing
+  (unless (eq? (class-of gf) <generic>)
+    (error "trace: cannot trace ~S (descendant of <generic>)" symbol))
+  (change-class gf <traced-generic>)
+  gf)
+
+
+;=============================================================================
+;
+; Untrace-symbol
+;
+;=============================================================================
+
+(define-generic untrace-symbol)	; transform function untrace-symbol in a generic
+
+(define-method untrace-symbol ((symbol <symbol>))
+  (let ((entry (hash-table-get *traced-symbols* symbol #f)))
+    (if (and entry (is-a? (car entry) <generic>))
+	(change-class (car entry) <generic>))
+    (next-method)))
+
+(provide "trace-gf")

@@ -14,7 +14,7 @@
 
 (provide "inspect-misc")
 
-(define BITMAP_MENU 		(& "@" *stk-library* "/bitmaps/menu.bm"))
+(define BITMAP_MENU 		(& "@" *stk-library* "/Images/menu.bm"))
 (define FIXED_FONT 		"-adobe-courier-bold-r-*-*-*-140-*-*-*-*-*-*")
 (define MEDIUM_FONT 		"-adobe-helvetica-medium-r-*-*-*-120-*-*-*-*-*-*")
 (define BOLD_FONT 		"-adobe-helvetica-bold-r-*-*-*-120-*-*-*-*-*-*")
@@ -50,6 +50,7 @@
 (define-macro (<> x y)
   `(not (= ,x ,y)))
 
+;; method to handle "regular" objects
 
 (define (inspect::typeof obj)
   (cond ((boolean? obj)	 'boolean)
@@ -64,6 +65,12 @@
         ((closure? obj)	 'closure)
 	((primitive? obj) 'primitive)
         (else 'unknown)))
+
+;; method to handle classes
+
+;(define-method inspect::typeof ((obj <object>))
+;  'stklos)
+
 
 ;---- Display
 
@@ -179,6 +186,7 @@
 (define objects-infos-list ())
 
 (define (object-infos obj)  (assoc obj objects-infos-list))
+
 (define (object-type obj)   (list-ref (object-infos obj) 1))
 (define (object-symbol obj) (list-ref (object-infos obj) 2))
 
@@ -203,6 +211,7 @@
     ((vector pair list) 'VPL)
     ((procedure) 'PROCEDURE)
     ((widget) 'WIDGET)
+    ((object) 'STKLOS)
     (else 'UNKNOWN)))
 
 (define (viewer-type obj-type)

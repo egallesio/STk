@@ -1,0 +1,104 @@
+;;;;
+;;;; c o m p l e x .  s t k l o s		-- The documentation example
+;;;;
+;;;; Copyright © 1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; $Id: complex.stklos 1.1 Thu, 22 Jan 1998 16:04:46 +0100 eg $
+;;;;
+;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
+;;;;    Creation date: 20-Jan-1998 17:28 
+;;;; Last file update: 20-Jan-1998 19:07 
+
+
+;;;;
+;;;; This file corresponds to the example shown in the STklos documentation
+;;;;
+
+
+; ====  Class definition 
+
+(define-class <complex> (<number>)
+  (;; True slots use rectangular coordinates
+    (r :initform 0 :accessor real-part :init-keyword :r)
+    (i :initform 0 :accessor imag-part :init-keyword :i)
+    ;; Virtual slots access do the conversion
+    (m :accessor magnitude :init-keyword :magn  
+       :allocation :virtual
+       :slot-ref (lambda (o)
+                   (let ((r (slot-ref o 'r)) (i (slot-ref o 'i)))
+                     (sqrt (+ (* r r) (* i i)))))
+       :slot-set! (lambda (o m)
+                     (let ((a (slot-ref o 'a)))
+                       (slot-set! o 'r (* m (cos a)))
+                       (slot-set! o 'i (* m (sin a))))))
+    (a :accessor angle :init-keyword :angle
+       :allocation :virtual
+       :slot-ref (lambda (o)
+                   (atan (slot-ref o 'i) (slot-ref o 'r)))
+       :slot-set! (lambda(o a)
+                    (let ((m (slot-ref o 'm)))
+                       (slot-set! o 'r (* m (cos a)))
+                       (slot-set! o 'i (* m (sin a))))))))
+
+
+;==== The scheme MAKE-RECTANGULAR and MAKE-POLAR procedures
+
+(define make-rectangular (lambda (x y) (make <complex> :r x :i y)))
+ 
+(define make-polar (lambda (x y) (make <complex> :magn x :angle y)))
+
+
+;==== Define methods to pretty print complex numbers
+
+(define-method write-object ((c <complex>) port)
+  (format port "#.(make <complex> :r ~S :i ~S)" (real-part c) (imag-part c)))
+
+(define-method display-object ((c <complex>) port)
+  (format port "~S+~Si" (real-part c) (imag-part c)))
+
+;==== Define methods to compare complex numbers
+
+(define-method object-eqv? ((a <complex>) (b <complex>))
+  (and (= (real-part a) (real-part b))
+       (= (imag-part a) (imag-part b))))
+
+(define-method object-equal? ((a <complex>) (b <complex>))
+  (eqv? a b))
+
+
+(define-generic new-+)
+
+(let ((+ +))
+  (define-method new-+ ((a <real>) (b <real>)) (+ a b))
+  
+  (define-method new-+ ((a <real>) (b <complex>)) 
+    (make-rectangular (+ a (real-part b)) (imag-part b)))
+  
+  (define-method new-+ ((a <complex>) (b <real>))
+    (make-rectangular (+ (real-part a) b) (imag-part a)))
+  
+  (define-method new-+ ((a <complex>) (b <complex>))
+    (make-rectangular (+ (real-part a) (real-part b))
+		      (+ (imag-part a) (imag-part b))))
+  
+  (define-method new-+ ((a <number>)) a)
+  
+  (define-method new-+ () 0)
+  
+  (define-method new-+ args (new-+ (car args) (apply new-+ (cdr args))))
+)
+
+(set! + new-+)
+
+(define c1 (make <complex> :r 2 :i 3))
+(define c2 (make <complex> :r 3 :i 4))
+(define c3 (make-rectangular 3 2))
+

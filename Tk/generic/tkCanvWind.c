@@ -9,7 +9,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkCanvWind.c 1.25 96/02/17 16:59:13
+ * SCCS: @(#) tkCanvWind.c 1.28 97/06/16 15:31:39
  */
 
 #include <stdio.h>
@@ -416,12 +416,21 @@ ComputeWindowBbox(canvas, winItemPtr)
 {
     int width, height, x, y;
 
-    x = winItemPtr->x + ((winItemPtr->x >= 0) ? 0.5 : - 0.5);
-    y = winItemPtr->y + ((winItemPtr->y >= 0) ? 0.5 : - 0.5);
+    x = (int) (winItemPtr->x + ((winItemPtr->x >= 0) ? 0.5 : - 0.5));
+    y = (int) (winItemPtr->y + ((winItemPtr->y >= 0) ? 0.5 : - 0.5));
 
     if (winItemPtr->tkwin == NULL) {
-	winItemPtr->header.x1 = winItemPtr->header.x2 = x;
-	winItemPtr->header.y1 = winItemPtr->header.y2 = y;
+	/*
+	 * There is no window for this item yet.  Just give it a 1x1
+	 * bounding box.  Don't give it a 0x0 bounding box; there are
+	 * strange cases where this bounding box might be used as the
+	 * dimensions of the window, and 0x0 causes problems under X.
+	 */
+
+	winItemPtr->header.x1 = x;
+	winItemPtr->header.x2 = winItemPtr->header.x1 + 1;
+	winItemPtr->header.y1 = y;
+	winItemPtr->header.y2 = winItemPtr->header.y1 + 1;
 	return;
     }
 
@@ -695,10 +704,10 @@ ScaleWinItem(canvas, itemPtr, originX, originY, scaleX, scaleY)
     winItemPtr->x = originX + scaleX*(winItemPtr->x - originX);
     winItemPtr->y = originY + scaleY*(winItemPtr->y - originY);
     if (winItemPtr->width > 0) {
-	winItemPtr->width = scaleY*winItemPtr->width;
+	winItemPtr->width = (int) (scaleX*winItemPtr->width);
     }
     if (winItemPtr->height > 0) {
-	winItemPtr->height = scaleY*winItemPtr->height;
+	winItemPtr->height = (int) (scaleY*winItemPtr->height);
     }
     ComputeWindowBbox(canvas, winItemPtr);
 }

@@ -1,0 +1,152 @@
+;;;;
+;;;; w w w - b r o w s e r . s t k l o s     -- A simple WEB browser
+;;;;
+;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 21-Oct-1996 14:02
+;;;; Last file update:  2-Mar-1998 10:47
+;;;;
+
+(require "Tk-classes")
+(require "www")
+
+(import WWW)
+
+(define WWW:browser
+  (let ((browser #f))		;; Id of browser (#f if no browser exists)
+    (lambda args
+
+  ;; URL history management
+  ;;
+  (define new-url
+    (let ((history '())
+	  (current -1))
+      (lambda  (txt url)
+	(case url
+	  ((previous) (when (> (length history) 1)
+			(set! current (modulo (- current 1) (length history)))
+			(www:view-url (Id txt) (list-ref history current))))
+	  ((next)     (when (> (length history) 1)
+			(set! current (modulo (+ current 1) (length history)))
+			(www:view-url (Id txt) (list-ref history current))))
+	  ((reload)   (www:view-url (Id txt) (list-ref history current)))
+	  (ELSE	      (if (null? history)
+			  (begin
+			    (set! history (list url))
+			    (set! current 0))
+			  (unless (string=? (list-ref history current) url)
+			    (set! history (append history (list url)))
+			    (set! current (- (length history) 1)))))))))
+  ;;; Make interface
+  ;;;
+  (define (make-buttons parent txt)
+    (let* ((f      (make <Frame>  :parent parent))
+	   (back   (make <Button> :parent f :text "Back" 
+			 :command (lambda () (new-url txt 'previous))))
+	   (forw   (make <Button> :parent f :text "Forward"
+			 :command (lambda () (new-url txt 'next))))
+	   (reload (make <Button> :parent f :text "Reload"
+			 :command (lambda () (new-url txt 'reload))))
+	   (stop   (make <Button> :parent f :foreground  "Red"   :text "Stop"
+			 :command (lambda () (set! www:stop-loading #t))))
+	   (exit   (make <Button> :parent f :foreground  "Blue2" :text "Exit"
+			 :command (lambda () (destroy parent))))
+	   (help   (make <Button> :parent f :text "Help"
+			 :command (lambda () (STk:show-help-file "STk-hlp.html")))))
+      
+      (pack stop back forw reload exit :side "left")
+      (pack help :side "right")
+      f))
+
+
+  (define (make-interface parent)
+    (let* ((loc   (make <Labeled-entry> :parent parent :title "Location:" 
+			:font "fixed"))
+	   (txt   (make <Scroll-text> :parent parent :font "fixed" 
+			:width 100 :height 45))
+	   (f     (make-buttons parent (Id txt)))
+	   (f1    (make <Frame> :parent parent))
+	   (lab	  (make <Label> :parent f1 :anchor "w"))
+	   (gauge (make <Gauge> :parent f1 :width 200 :height 10 
+			:background "Dark Gray" :foreground "IndianRed4")))
+      ;;
+      ;; Pack commponents
+      (pack f loc :expand #f :fill "x")
+      (pack txt   :expand #t :fill "both")
+      (pack f1    :expand #f :fill "x")
+      (pack lab   :expand #t :fill "x" :side "left")
+      (pack gauge :expand #f :side "left" :padx 10)
+
+      (bind (Id loc) "<Return>" (lambda () (www:view-url (Id txt) (value loc))))
+
+      ;; Redefinition of WWW hooks
+      ;;
+      (set! www:hook-formatting 
+	    (let ((counter  0)
+		  (pos      0))
+	      (lambda ()
+		(when (= counter 20)
+		  (set! pos (modulo (+ pos 5) 105))
+		  (set! counter 0)
+		  (set! (value gauge) pos)
+		  (update))
+		(set! counter (+ counter 1)))))
+
+      (set! www:hook-start-loading
+	    (lambda ()
+	      (slot-set! txt 'cursor "watch")
+	      (slot-set! lab 'text "Loading Document ...")
+	      (update)))
+
+      (set! www:hook-stop-loading 
+	    (lambda ()
+	      (let ((msg "Loading Document ... Done."))
+		(slot-set! gauge 'value 0)
+		(slot-set! lab 'text msg)
+		(slot-set! txt 'cursor "top_left_arrow")
+		(set! www:stop-loading #f)
+		(after 5000 (lambda () 
+			      (catch (if (equal? (slot-ref lab 'text) msg)
+					 (slot-set! lab 'text ""))))))))
+      (set! www:hook-title 
+	    (lambda (value)
+	      (slot-set! parent 'title value)))
+
+      (set! www:hook-location
+	    (lambda (url)
+	      (set! (value loc) url)
+	      (new-url txt url)))
+
+      ;; Return the txt widget
+      txt))
+
+  ;;;;
+  ;;;; STk:browse starts here 
+  ;;;;
+  (let* ((url    (get-keyword :url args #f))
+	 (parent (get-keyword :parent args #f)))
+    (unless browser
+      (set! browser (make-interface 
+		       (or parent 
+			   (make <Toplevel> :title "Stk Web browser"))))
+      (bind browser "<Destroy>" (lambda () (set! browser #f))))
+
+    (when url
+      (www:view-url (Id browser) url))
+    browser))))
+
+;;;
+;;; Misc.
+;;; 
+(define STk:web-browser WWW:browser) ; for backward compatibility with 3.x versions
+
+(provide "www-browser")

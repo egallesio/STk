@@ -1,0 +1,111 @@
+;;;;
+;;;; s e c u r i t y  . s t k 		-- Secure environments building
+;;;;
+;;;;
+;;;; Copyright © 1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 11-Nov-1996 20:03
+;;;; Last file update: 13-Nov-1996 19:47
+
+;; Security is achieved by the function "set-security-level!". This function
+;; sets the desired level of security. Levels are defined as is
+;; 		level 0  -- no control
+;; 		level 1  -- no system  + send procedures 
+;; 		level 2  -- no eval and environment manipulation
+;;		level 3  -- no file opening / closing
+;; 		level 4  -- no output port procedures
+;; 		level 5  -- no input port procedures
+;;
+;; The function "secure-environment" returns an environment with the unsecure
+;; function re-defined to an error procedure.
+
+;;;
+;;; Exported procedures
+;;;
+(define set-security-level! #f)
+(define security-level	    #f)
+(define secure-environment  #f)
+
+;=============================================================================
+
+(let ()
+  (define current-level 	0)     			; The current security level
+  (define cached-environment    (global-environment))	; current secure env
+  (define security-table (vector			; Security table
+       ;; level 0 -- no control
+       ' ()
+       ;; level 1 -- no system procedure
+       '(system exit bye quit send)
+       ;; level 2 -- no eval and environment manipulation
+       '(extend-environment eval global-environment
+	 environment->list procedure-environment eval-hook)
+       ;; level 3 -- no file opening / closing
+       '(with-output-to-file open-output-file close-output-port 
+	 open-file close-port
+	 with-input-from-file open-input-file close-input-port)
+       ;; level-4 -- no output port procedure
+       '(write display newline write-char
+	 when-port-writable format error flush)
+       ;; level 5 -- no input port procedure
+       '(read read-char peek-char eof-object? char-ready? load
+	 try-load autoload when-port-readable)))
+
+  
+  ;;;
+  ;;; Set-security-level!
+  ;;;
+  (set! set-security-level!
+	(lambda (n)
+	  ; make-invalid-procedure
+	  (define (make-invalid-procedure name)
+	    (lambda args
+	      (security-alert name)))
+    
+	  ; security-alert
+	  (define (security-alert name)
+	    (letrec ((find-level (lambda (name lev)
+				   (if (member name (vector-ref security-table lev))
+				       lev
+				       (find-level name (+ lev 1))))))
+	      (error "Security alert: Procedure \"~A\" is unsecure.\nIt is at level ~A and current level security is ~A."
+		     name (find-level name 0) current-level)))
+	    
+	  ; all-symbols 
+	  (define (all-symbols n)
+	    (if (= n 0) 
+		'()
+		(append (vector-ref security-table n) (all-symbols (- n 1)))))
+	  
+	  ; make-environment
+	  (define (make-environment)
+	    (let ((bindings (map (lambda (x) (list x (make-invalid-procedure x)))
+				 (all-symbols current-level))))
+	      (eval `(let ,bindings (the-environment)))))
+	  ;;
+	  ;; Set-security-level! starts here
+	  ;;
+	  (unless (= current-level n)
+	    (set! current-level (min n (1- (vector-length security-table))))
+	    (set! cached-environment (make-environment)))))
+
+  ;;;
+  ;;; security-level
+  ;;;
+  (set! security-level (lambda () current-level))
+
+  ;;;
+  ;;; Secure-environment
+  ;;;
+  (set! secure-environment (lambda () cached-environment))
+)
+
+(provide "security")

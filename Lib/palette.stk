@@ -1,7 +1,7 @@
 ;;;;
 ;;;; Palette -- procedures that change the color palette used by Tk
 ;;;;
-;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -17,10 +17,12 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date:  4-Aug-1995 11:24
-;;;; Last file update:  4-Aug-1995 14:07
+;;;; Last file update: 24-Feb-1998 19:49
 ;;;;
 
 (require "hash")
+
+(select-module Tk)
 
 ;; Tk:set-palette! --
 ;; Changes the default color scheme for a Tk application by setting
@@ -35,7 +37,7 @@
 
 (define Tk:set-palette!
   (let ((tk::palette #f))
-  
+
     (define (make-color r g b)
       (let ((hexa (lambda (n) 
 		    (string-append (number->string (quotient n 16) 16) 
@@ -140,7 +142,7 @@
 
       (unless (hash-table? tk::palette)
 	 (let ((c (checkbutton (gensym ".tmp")))
-	       (e (entry	     (gensym ".tmp")))
+	       (e (entry       (gensym ".tmp")))
 	       (s (scrollbar   (gensym ".tmp"))))
 
 	   (set! tk::palette (make-hash-table string=?))

@@ -33,6 +33,12 @@
   (let ((library-path (or (getenv "SCHEME_LIBRARY_PATH") "/usr/local/lib/slib/")))
     (lambda () library-path)))
 
+;;; 
+;;;
+(define home-vicinity
+  (let ((home-path (or (getenv "HOME") "/")))
+    (lambda () home-path)))
+
 ;;; *FEATURES* should be set to a list of symbols describing features
 ;;; of this implementation.  Suggestions for features are:
 

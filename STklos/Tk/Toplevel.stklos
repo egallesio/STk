@@ -1,7 +1,7 @@
 ;;;;
-;;;; T o p l e v e l . s t k	  --  Toplevel class definition
+;;;; T o p l e v e l . s t k	  --  Frame and Toplevel class definitions
 ;;;;
-;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -11,31 +11,76 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
+;;;; $Id: Toplevel.stklos 1.7 Tue, 03 Mar 1998 23:48:24 +0100 eg $
+;;;;
 ;;;;	       Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;	Creation date:	5-Mar-1994 17:19
-;;;; Last file update: 23-Jul-1996 23:44
+;;;; Last file update:  3-Mar-1998 19:49
 
 (require "Basics")
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;
-;;;; <Toplevel> class
-;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(select-module STklos+Tk)
 
-(define-class <Toplevel> (<Tk-simple-widget> <Tk-sizeable>)
-  ((class	:accessor	class
-		:init-keyword 	:class
+(export *top-root* deiconify iconify toplevel-frame toplevel-state withdraw)
+
+;=============================================================================
+;
+;			 	<Frame> 
+;
+;=============================================================================
+
+(define-class <Frame> (<Tk-simple-widget> <Tk-sizeable>)
+  ((class	:getter   	class
+		:init-keyword   :class
 		:allocation	:tk-virtual)
-   (colormap	:accessor	colormap
+   (colormap	:getter   	colormap  
 		:init-keyword	:colormap
 		:allocation	:tk-virtual)
-   (screen	:accessor	screen
-		:init-keyword	:screen
+   (container	:accessor	container 
+		:init-keyword	:container
 		:allocation	:tk-virtual)
    (visual	:accessor	visual
 		:init-keyword	:visual
+		:allocation	:tk-virtual)))
+
+(define-method tk-constructor ((self <Frame>))
+  Tk:frame)
+
+(define-method initialize ((self <Frame>) initargs)
+  ;; We have a special initialization because some slots values must be
+  ;; passed at widget initialization. So we have to isolate these slots 
+  ;; since they cannot be initialized in a standard way
+  (let ((specials (special-Tk-slots self)))
+    (let Loop ((l initargs) (normal '()) (special '()))
+      (cond
+       ((null? l) 
+	     (if (null? special)
+		 (next-method self normal)
+		 (next-method self `(:tk-options ,special ,@normal))))
+       ((memv (car l) specials)
+	     (Loop (cddr l) normal (list* (car l) (cadr l) special)))
+       (else (Loop (cddr l) (list* (car l) (cadr l) normal) special))))))
+
+(define-method special-Tk-slots ((self <Frame>))
+  (list :class :colormap :container :visual))
+
+;=============================================================================
+;
+;				 <Toplevel>
+;
+;=============================================================================
+
+(define-class <Toplevel> (<Frame>)
+  ((menu	:accessor     	menu-of 
+		:init-keyword   :menu
+		:allocation   	:tk-virtual)
+   (screen	:getter		screen
+		:init-keyword	:screen
 		:allocation	:tk-virtual)
+   (use		:getter		use
+		:init-keyword	:use
+		:allocation	:tk-virtual)
+
    ;;;;
    ;;;; Following slots embody the Tk:wm command options
    ;;;; Note: "Uncommon" slots have not been given an accessor
@@ -102,7 +147,7 @@
 		:slot-ref	(lambda (o) (Tk:wm 'min (slot-ref o 'Eid)))
 		:slot-set!	(lambda (o v)
 				  (apply Tk:wm 'min (slot-ref o 'Eid) v)))
-   (override	:init-keyword	:override-redirect
+   (override 	:init-keyword	:override-redirect
 		:allocation	:virtual
 		:slot-ref	(lambda (o)   (Tk:wm 'over (slot-ref o 'Eid)))
 		:slot-set!	(lambda (o v) (Tk:wm 'over (slot-ref o 'Eid) v)))
@@ -130,15 +175,17 @@
 		:slot-set!      (lambda (o v) (Tk:wm 'trans (slot-ref o 'Eid) v)))))
 
 
-
 (define-method tk-constructor ((self <Toplevel>))
   Tk:toplevel)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;
-;;;; Some methods 
-;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define-method special-Tk-slots ((self <Frame>))
+  (list :class :colormap :container :visual :screen :use))
+
+;=============================================================================
+;
+; Some <Toplevel> methods 
+;
+;=============================================================================
 
 (define-method deiconify ((self <Toplevel>))
   (Tk:wm 'deiconify (slot-ref self 'Eid)))
@@ -155,5 +202,19 @@
 (define-method withdraw ((self <Toplevel>))
   (Tk:wm 'withdraw (slot-ref self 'Eid)))
 
-(provide "Toplevel")
+;=============================================================================
+;
+; Redefine *top-root* to a <Toplevel> accessing the root window (before
+; loading this file *top-root* is set to #f)
+;
+;=============================================================================
+(set! *top-root* (if Tk:initialized?
+		     (let ((top (allocate-instance <Toplevel> '())))
+			 (slot-set! top 'Id     *root*)
+			 (slot-set! top 'Eid    *root*)
+			 (slot-set! top 'parent *root*)
+			 (set-widget-data! *root* `(:instance ,top))
+			 top)
+		       #f))
 
+(provide "Toplevel")

@@ -2,7 +2,7 @@
  *
  * s y n t a x . c			-- Syntaxic forms implementation
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -19,7 +19,7 @@
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 25-Oct-1993 23:39
- * Last file update: 19-Sep-1995 11:49
+ * Last file update:  9-Jan-1998 19:03
  */
 
 /* Notes:
@@ -40,7 +40,7 @@
  */
 
 #include "stk.h"
-
+#include "module.h"
 
 #ifdef COMPACT_SMALL_CST
 #   define makecell(type) ((SCM) MAKE_SMALL_CST(0, type))
@@ -66,7 +66,7 @@ static SCM define2lambda(SCM l, int len)
   else 
     if (len == 2) return l;
 Error:
-  Err("define: bad parameter list", l);
+  Err("define: bad definition", l);
 }
 
 PRIMITIVE STk_syntax_quote(SCM *pform, SCM env, int len)
@@ -80,16 +80,13 @@ PRIMITIVE STk_syntax_quote(SCM *pform, SCM env, int len)
 
 PRIMITIVE STk_syntax_lambda(SCM *pform, SCM env, int len)
 {
-  register SCM z, args=CDR(*pform);
+  register SCM args=CDR(*pform);
 
   if (len < 2) Err("lambda: bad syntax", *pform);
 
   if(ModifyCode()) CAR(*pform) = makecell(tc_lambda);
 
-  NEWCELL(z, tc_closure);
-  z->storage_as.closure.env  = env;
-  z->storage_as.closure.code = args;
-  SYNTAX_RETURN(z, Ntruth);
+  SYNTAX_RETURN(STk_makeclosure(args, env), Ntruth);
 }
 
 
@@ -279,9 +276,7 @@ PRIMITIVE STk_syntax_delay(SCM *pform, SCM env, int len)
   if (len != 1) Err("delay: Bad expression", *pform);
 
   /* Build (lambda () expr) in tmp */
-  NEWCELL(tmp, tc_closure);
-  tmp->storage_as.closure.env = env;
-  tmp->storage_as.closure.code = Cons(NIL, CDR(*pform));
+  tmp = STk_makeclosure(Cons(NIL, CDR(*pform)), env);
 
   /* save this closure in the promise */
   NEWCELL(z, tc_promise);
@@ -308,9 +303,8 @@ static SCM backquotify(SCM x, SCM env, int level)
 
   if (CONSP(CAR(x)) && EQ(CAR(CAR(x)), Sym_unq_splicing))
     return NULLP(CDR(x)) ? EVALCAR(CDR(CAR(x)))
-	    		 : STk_append(LIST2(EVALCAR(CDR(CAR(x))),
-					    backquotify(CDR(x), env, level)),
-				      2);
+	    		 : STk_append2(EVALCAR(CDR(CAR(x))),
+				       backquotify(CDR(x), env, level));
   /* Otherwise */
   return Cons(backquotify(CAR(x), env, level), backquotify(CDR(x), env, level));
 }
@@ -322,46 +316,48 @@ PRIMITIVE STk_syntax_quasiquote(SCM *pform, SCM env, int len)
   SYNTAX_RETURN(backquotify(CAR(CDR(*pform)), env, 1), Ntruth);
 }
 
+
 PRIMITIVE STk_syntax_define(SCM *pform, SCM env, int len)
 {
-  SCM *tmp, var, args;
+  SCM *tmp, var, args, expr;
 
   args = define2lambda(CDR(*pform), len);
   var  = CAR(args); if (NSYMBOLP(var)) Err("define: bad variable name", var);
+  expr = EVALCAR(CDR(args)); 
 
-  if (NULLP(env)) {
-    /* Global var */
-    if (VCELL(var) == UNBOUND && (var->cell_info&CELL_INFO_C_VAR)) {
-      /* This is not an unbound variable but rather a C variable */
-      STk_apply_setter_C_variable(PNAME(var), EVALCAR(CDR(args)));
-    }
-    else {
-      tmp  = STk_varlookup(var, env, 0);
-      *tmp = EVALCAR(CDR(args));
-    }
+  if (NULLP(env)) {				/* Global var */
+    STk_define_public_var(NIL, var, expr);
   }
   else {
-    /* Local var */
-    tmp = STk_value_in_env(var, env);
-    if (tmp != &UNBOUND) {
-      /* This symbol was already defined at current level. Just do an assignment */
-      *tmp = EVALCAR(CDR(args));
+    if (MODULEP(CAR(env))) {			/* Public variable */
+      STk_define_public_var(CAR(env), var, expr);
     }
-    else {
-      /* Extend current environment for that definition 
-      /* We should add new definition at the end of current environment (since some 
-      /* code as possbly be re-written usin tc_localvar). This avoid re-numbering 
-      /* acual code is FALSE */
-      SCM  tmp = CAR(env);
-    
-      tmp = Cons(Cons(var, 		  CAR(tmp)),
-		 Cons(EVALCAR(CDR(args)), CDR(tmp)));
-      CAR(CAR(env)) = CAR(tmp);
-      CDR(CAR(env)) = CDR(tmp);
+    else {				 	/* Local var */
+      tmp = STk_value_in_env(var, env);
+      if (tmp != &UNBOUND) {
+	/* This symbol was already defined at current level. Just do an assignment*/
+	*tmp = expr;
+      }
+      else {
+	/* Extend current environment for that definition */
+	SCM vars, vals, tmp = CAR(env);
+	
+	/* We add new definition at the end of current environment (since
+	 * some code has possbly be re-written using tc_localvar). This avoid
+	 * re-numbering  the code.
+	 *
+	 * Note: The first append cannot be destructive because vars are direct
+	 * references on the procedure environmment. 
+	 */
+	vars = STk_append2(CAR(tmp), LIST1(var));
+	vals = STk_dappend2(CDR(tmp), LIST1(expr));
+	CAR(tmp) = vars;
+	CDR(tmp) = vals;
+      }
     }
   }
-  if (TRACED_VARP(var)) STk_change_value(var, env);
 
+  if (TRACED_VARP(var)) STk_change_value(var, env);
   SYNTAX_RETURN(UNDEFINED, Ntruth);
 }
 
@@ -373,9 +369,9 @@ PRIMITIVE STk_syntax_define(SCM *pform, SCM env, int len)
 
 PRIMITIVE STk_syntax_extend_env(SCM *pform, SCM env, int len)
 {
-  if (len < 2) Err("extend-current-env: Bad syntax", *pform);
-  SYNTAX_RETURN(Cons(makecell(tc_extend_env), STk_copy_tree(CDR(*pform))),
-		Truth);
+  if (len < 2) Err("extend-environement: Bad syntax", *pform);
+  if (ModifyCode()) CAR(*pform) = makecell(tc_extend_env);
+  SYNTAX_RETURN(*pform, Truth);
 }
 
 PRIMITIVE STk_while(SCM l, SCM env, int len)

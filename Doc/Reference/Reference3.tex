@@ -1,0 +1,846 @@
+%
+% STk Reference manual (Part 3)
+%
+%           Author: Erick Gallesio [eg@unice.fr]
+%    Creation date: 16-Dec-1997 14:00
+% Last file update:  8-Apr-1998 11:04
+%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%
+%%%% Section 6.22: Sockets
+%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Sockets}
+
+\label{socket-type}
+{\stk} defines sockets, on systems which support them, as first class
+objects. Sockets permits processes to communicate even if they are on
+different machines. Sockets are useful for creating client-server
+applications.
+
+\begin{entry}{
+\proto{make-client-socket}{ hostname port-number}{procedure}}
+\saut
+\ide{make-client-socket} returns a new socket object. This socket
+establishes a link between the running application listening on port
+\var{port-number} of \var{hostname}.
+\end{entry}
+
+\begin{entry}{
+\proto{socket?}{ socket}{procedure}}
+\saut
+Returns \schtrue{} if \var{socket} is a socket, otherwise returns
+{\schfalse}.
+\end{entry}
+
+\begin{entry}{
+\proto{socket-host-name}{ socket}{procedure}}
+\saut
+Returns a string which contains the name of the distant host attached to  
+\var{socket}. If \var{socket} has been created with \ide{make-client-socket}
+this procedure returns the official name of the distant machine used for 
+connection. If \var{socket} has been created with \ide{make-server-socket},
+this function returns the official name of the client connected to the socket. 
+If no client has used yet the socket, this function returns \schfalse.
+\end{entry}
+
+\begin{entry}{
+\proto{socket-host-address}{ socket}{procedure}}
+\saut
+Returns a string which contains the IP\mainindex{IP number} number of
+the distant host attached to \var{socket}. If \var{socket} has been
+created with \ide{make-client-socket} this procedure returns the
+IP number of the distant machine used for connection. If
+\var{socket} has been created with \ide{make-server-socket}, this
+function returns the address of the client connected to the
+socket.  If no client has used yet the socket, this function returns
+\schfalse.
+\end{entry}
+
+\begin{entry}{
+\proto{socket-local-address}{ socket}{procedure}}
+\saut
+Returns a string which contains the IP\mainindex{IP number} number of
+the local host attached to \var{socket}.
+\end{entry}
+
+
+\begin{entry}{
+\proto{socket-port-number}{ socket}{procedure}}
+\saut
+Returns the integer number of the port used for \var{socket}.
+\end{entry}
+
+\begin{entry}{
+\proto{socket-input} { socket}{procedure}
+\proto{socket-output}{ socket}{procedure}}
+\saut
+Returns the file port associated for reading or writing with the program 
+connected with \var{socket}. If no connection has already been established,
+these functions return \schfalse.
+
+The following example shows how to make a client socket. Here we create a
+socket on port 13 of the machine ``{\tt kaolin.unice.fr}''\footnote{Port 13
+is generally used for testing: making a connection to it permits to know
+the distant system's idea of the time of day.}:
+\begin{scheme}
+(let ((s (make-client-socket "kaolin.unice.fr" 13)))
+  (format {\schtrue}  "Time is: {\tilda}A\verb+\+n" (read-line (socket-input s)))
+  (socket-shutdown  s))
+\end{scheme}
+\end{entry}
+
+
+\begin{entry}{
+\proto{make-server-socket}{}{procedure}
+\proto{make-server-socket}{ port-number}{procedure}}
+\saut
+\ide{make-server-socket} returns a new socket object. If \var{port-number}
+is specified, the socket is listening on the specified port; otherwise, the
+communication port is chosen by the system. 
+\end{entry}
+
+
+\begin{entry}{
+\proto{socket-accept-connection}{ socket}{procedure}}
+\saut
+\ide{socket-accept-connection} waits for a client connection on the given
+\var{socket}. If no client is already waiting for a connection, this
+procedure blocks its caller; otherwise, the first connection request on the
+queue of pending connections is connected to \var{socket}. 
+This procedure must be called on a server socket created
+with \ide{make-server-socket}. The result of \ide{socket-accept-connection}
+is undefined. 
+
+The following example is a simple server which waits for a connection
+on the port 1234\footnote{Under Unix, you can simply connect to
+  listening socket with the {\tt telnet} command. With the given
+  example, this can be
+  achieved by typing the following command in a window shell:\\
+  {\tt \$ telnet localhost 1234}}. Once the connection with the
+distant program is established, we read a line on the input port
+associated to the socket and we write the length of this line on its
+output port.
+\begin{scheme}
+(let ((s (make-server-socket 1234)))
+  (socket-accept-connection s)
+  (let ((l (read-line (socket-input s))))
+    (format (socket-output s) "Length is: {\tilda}A\verb+\+n" (string-length l))
+    (flush (socket-output s)))
+  (socket-shutdown s))
+\end{scheme}
+\end{entry}
+
+\begin{entry}{
+\proto{socket-shutdown}{ socket}{procedure}
+\proto{socket-shutdown}{ socket close}{procedure}}
+\saut
+\ide{Socket-shutdown} shutdowns the connection associated to \var{socket}.
+\var{Close} is a boolean; it indicates if the socket must be closed or not, when
+the connection is destroyed. Closing the socket forbids further connections on
+the same port with the \ide{socket-accept-connection} procedure.
+Omitting a value for \var{close} implies the closing of socket.
+The result of \ide{socket-shutdown} is undefined. 
+
+The following example shows a simple server: when there is a new connection
+on the port number 1234, the server displays the first line sent to it by the
+client, discards the others and go back waiting for further client connections.
+\begin{scheme}
+(let ((s (make-server-socket 1234)))
+  (let loop ()
+    (socket-accept-connection s)
+    (format {\schtrue} "I've read: {\tilda}A\verb+\+n" (read-line (socket-input s)))
+    (socket-shutdown s \schfalse)
+    (loop)))
+\end{scheme}
+\end{entry}
+
+\begin{entry}{
+\proto{socket-down?}{ socket}{procedure}}
+\saut
+Returns {\schtrue} if \var{socket} has been previously closed 
+with \ide{socket-shutdown}. It returns {\schfalse} otherwise.
+\end{entry}
+
+\begin{entry}{
+\proto{socket-dup}{ socket}{procedure}}
+\saut
+Returns a copy of \var{socket}. The original and the copy socket can be used 
+interchangeably. However, if a new connection is accepted on one socket, 
+the characters exchanged on this socket are not visible on the other socket.
+Duplicating a socket is useful when a server must accept multiple simultaneous
+connections.
+The following example creates a server listening on port 1234. This server is 
+duplicated and, once two clients are present, a message is sent on both 
+connections.
+\begin{scheme}
+(define s1 (make-server-socket 1234))
+(define s2 (socket-dup s1))
+(socket-accept-connection s1)
+(socket-accept-connection s2)
+;; blocks until two clients are present
+(display "Hello,\verb+\+n" (socket-output s1))
+(display "world\verb+\+n"  (socket-output s2))
+(flush (socket-output s1))
+(flush (socket-output s2))
+\end{scheme}
+\end{entry}
+
+\begin{entry}{
+\proto{when-socket-ready}{ socket handler}{procedure}
+\proto{when-socket-ready}{ socket}{procedure}}
+\saut
+Defines a handler for \var{socket}. The handler is a thunk which is 
+executed when a connection is available on \var{socket}. If the special value
+\schfalse{} is provided as \var{handler}, the current handler for \var{socket}
+is deleted. If a handler is provided, the value returned by 
+\ide{when-socket-ready} is undefined. Otherwise, it 
+returns the handler currently associated to \var{socket}.
+
+This procedure, in conjunction with \ide{socket-dup} permits to build
+multiple-clients servers which work asynchronously. Such a server is
+shown below.
+\begin{scheme}
+(define p (make-server-socket 1234))
+(when-socket-ready p 
+                  (let ((count 0))
+                    (lambda ()
+                      (set! count (+ count 1))
+                      (register-connection (socket-dup p) count))))
+
+(define register-connection
+  (let ((sockets '()))
+    (lambda (s cnt)
+      ;; Accept connection
+      (socket-accept-connection s)
+      ;; Save socket somewhere to avoid GC problems
+      (set! sockets (cons s sockets))
+      ;; Create a handler for reading inputs from this new connection
+      (let ((in  (socket-input s))
+            (out (socket-output s)))
+        (when-port-readable in 
+             (lambda ()
+               (let ((l (read-line in)))
+                 (if (eof-object? l)
+                     ;; delete current handler
+                     (when-port-readable in \schfalse)
+                     ;; Just write the line read on the socket
+                     (begin
+                       (format out "On {\sharpsign}{\tilda}A --> {\tilda}A\verb+\+n" cnt l)
+                       (flush out))))))))))
+\end{scheme}
+\end{entry}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%
+%%%% Section 6.23: FFI 
+%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\subsection{Foreign Function Interface}
+
+The {\stk} Foreign Function Interface (FFI for short) has been defined
+to allow an easy access to functions written in C without needing to
+build C-wrappers and, consequently, without any need to write C code.
+Note that the FFI is very machine dependent and that it works only on
+a limited set of architectures\footnote{In release \stkversion, FFI is
+  known to work on the following architectures : ix86 (but not yet
+  MS Windows), Sun Sparc, HP 9000, SGI.}. Moreover, since FFI
+allows very low level access, it is easy to crash the interpreter when
+using an external C function.
+
+The definition of an external function is done with the syntax
+\ide{define-external}.  This form takes as arguments a typed list of
+parameters and accepts several options to define the name of the
+function in the C world, the library which defines this
+function,~\ldots{} The type of the function result and the types of
+its arguments are defined in Table~\ref{FfiTypes}. This table lists the various
+keywords reserved for denoting types and their equivalence between the
+C and the Scheme worlds.
+
+\begin{table}[t]
+  \begin{center}
+
+   \begin{tabular}{|p{3cm}|p{5cm}|p{5cm}|}
+\hline 
+\textbf{Name}&\textbf{Corresponding C type}&\textbf{Corresponding Scheme Type }\\
+\hline 
+\hline 
+\texttt{:void}&\texttt{void}&\emph{None}\\
+\hline 
+
+\texttt{:char}&\texttt{char}&Scheme character or Scheme integer\\
+\hline 
+
+\texttt{:short}&\texttt{short~int}&Scheme integer\\
+\hline 
+
+\texttt{:ushort}&\texttt{unsigned~short~int}&Scheme integer\\
+\hline 
+
+\texttt{:int}&\texttt{int}&Scheme integer\\
+\hline 
+
+\texttt{:uint}&\texttt{unsigned~integer}&Scheme integer\\
+\hline 
+
+\texttt{:long}&\texttt{long~integer}&Scheme integer\\
+\hline 
+
+\texttt{:ulong}&\texttt{unsigned~long~integer}&Scheme integer\\
+\hline 
+
+\texttt{:float}&\texttt{float}&Scheme Real\\
+\hline 
+
+\texttt{:double}&\texttt{double}&Scheme Real\\
+\hline 
+
+\texttt{:static-ptr}&pointer on a static area&Scheme C-pointer object or Scheme String\\
+\hline 
+
+\texttt{:dynamic-ptr}~\emph{or} \texttt{(:void~{*})}&pointer on a dynamic area (\texttt{malloc}ated) &
+Scheme C-pointer object or Scheme String\\
+\hline  
+
+\texttt{:string}~\emph{or} \texttt{(:char~{*})}&\texttt{char~{*}}~(pointer on a dynamic string)&Scheme C-pointer object or Scheme String\\
+\hline 
+
+\texttt{:boolean}&\texttt{int}&Scheme boolean\\
+\hline 
+\end{tabular} 
+\caption{FFI predefined types}
+\label{FfiTypes}
+  \end{center}
+\end{table}
+
+
+\begin{entry}{
+\proto{define-external}{ \hyper{name} \hyper{parameters} \hyper{options}}{\exprtype}}
+\saut
+
+The form \ide{define-external} binds a new procedure to \hyper{name}.
+The arity of this new procedure is defined by the typed list of
+parameters given by \hyper{parameters}. This parameters list is a list
+of couples whose first element is the name of the parameter, and the
+second one is is a keyword representing its type (see table for
+equivalence).  All the types defined in Table~\ref{FfiTypes}, except
+\texttt{:void}, are allowed for the parameters of a foreign function.
+\ide{Define-external} accepts several options:
+\begin{itemize}
+\item \texttt{:return-type} is used to define the type of the value returned 
+  by the foreign function. The type returned must be chosen in the types specified
+  in the table. For instance:
+  \begin{scheme}
+    (define-external maximum((a :int) (b :int))
+      :return-type :int)
+  \end{scheme}
+  defines the foreign function maximum which takes two C integers and
+  returns an integer result. Omitting this option default to a result
+  type equal to \texttt{:void} (i.e. the returned value is
+  \emph{undefined}).
+  
+\item \texttt{:entry-name} is used to specify the name of the foreign
+  function in the C world. If this option is omitted, the entry-name is
+  supposed to be \hyper{name}. For instance:
+  \begin{scheme}
+    (define-external minimum((a :int) (b :int))
+      :return-type :int
+      :entry-name  "min")
+  \end{scheme}
+  defines the Scheme function \texttt{minimum} whose application
+  executes the C function called \texttt{min}.
+\item \texttt{:library-name} is used to specify the library which contains the 
+  foreign-function. If necessary, the library is loaded before calling the 
+  C function. So, 
+  \begin{scheme}
+    (define-external minimum((a :int) (b :int))
+      :return-type  :int
+      :entry-name   "min"
+      :library-name "libminmax")
+  \end{scheme}
+  defines a function which will execute the function \texttt{min}
+  located in the library \texttt{libminmax.xx} (where \texttt{xx} is
+  the suffix used for shared libraries on the running system (generally \texttt{so}
+  or \texttt{sl}).
+\end{itemize}
+
+Hereafter, there are some commented  definitions of external functions:
+\begin{scheme}
+  (define-external isatty ((fd :int))  
+     :return-type :boolean)
+
+  (define-external system ((cmd (:char *))) \emph{;; or ((cmd :string))}
+     :return-type :int)
+
+  (define-external malloc ((size :ulong))
+     :return-type (void *))
+
+  (define-external free ( (p (:void *) )) )
+\end{scheme}
+
+All these functions are defined in the C standard library, hence it is not
+necessary to specify the \texttt{:library-name} option.
+\begin{itemize}
+\item \texttt{istty} is declared here as a function which takes an
+  integer and returns a boolean (in fact, the value returned by the C
+  function \texttt{isatty} is an \texttt{int}, but we ask here to the
+  FFI system to translate this result as a boolean value in the Scheme 
+  world).
+
+\item \texttt{system} is a function which takes a string as parameter
+  and returns an \texttt{int}. Note that the type of the parameter,
+  can be specified as a \texttt{(:char~*)} or \texttt{:string}, as
+  indicated in Table~\ref{FfiTypes}.
+  
+\item \texttt{malloc} is a function which takes one parameter (an
+  \texttt{unsigned long int} and which returns a \texttt{(:void~*)} (or
+  \texttt{:dynamic-ptr}). Specifying that the result is a dynamic
+  pointer (instead of a static one) means that we want that the Garbage
+  Collector \mainindex{Garbage Collector} takes into account the area
+  allocated by the C function \texttt{malloc} (i.e. if this area
+  becomes no more accessible, the GC disposes it with the
+  \texttt{free} function\footnote{Pointers defined with
+    \texttt{:dynamic-ptr} are always unallocated with \texttt{free}.
+    Consequently, areas allocated with another allocator than the
+    standard one must be declared as \texttt{:static-ptr} and freed
+    by hand}.
+\item \texttt{free} is a function which takes a dynamic pointer and
+  deallocates the area it points. Since the definition of this function
+  specifies no result type, it is supposed to be \texttt{:void}\footnote{
+    Usage of malloc and free are for illustration purpose here. Their usage 
+    in a program must be avoided, if possible, because it can have 
+    interact badly with the way the interpreter manages memory or it 
+    can conduct to \emph{crashing} programs if you don't take care.}.
+\end{itemize}
+
+External functions can also have a variable number of parameters by using 
+the standard Scheme \emph{dot} notation. For instance,
+\begin{scheme}
+(define-external printf ((format :string) . l)
+  :return-type  :int)
+\end{scheme}
+defines a Scheme function with one or more parameters (the first one
+being a string). Of course, the parameters which constitute the
+variable parameters list must have a type which appears in the third
+column of Table~\ref{FfiTypes}. Some examples using the \texttt{printf} function:
+\begin{scheme}
+  (printf "This is a \verb+%+s test" "good")
+        \lev \emph{displays}~~~This is a good test
+  (printf \verb+"char: '%c' Dec: '%04d' Hex '%04x'" #\space +100 100)
+        \lev \emph{displays}~~~char: ' ' Dec: '0100' Hex '0064'
+\end{scheme}
+
+\begin{note}
+  The types \texttt{:dynamic-ptr}, \texttt{:static-ptr} and
+  \texttt{:string} are compatible when used for foreign function
+  parameter. This gives a semantic which is similar to the one of C,
+  where \texttt{void~*} is a compatible with all other pointer types.
+  However, differenciating those types is useful for converting 
+  the function return value to a proper Scheme type.
+\end{note}
+\par{}
+\vspace{2mm}
+\begin{note}
+  When a function has a \texttt{:return-type} which is
+  \texttt{:string}, \texttt{:dynamic-ptr} or \texttt{:static-ptr}, and
+  the return value is the C \texttt{NULL} pointer, the Scheme value
+  returned by the function is, by convention, equal to \schfalse.  For
+  instance, the GNU \texttt{readline} function allows line editing
+  \emph{\`a la} Emacs returns \texttt{NULL} when the user has typed an
+  end of file. The following lines show how to make a simple shell-like 
+  toplevel using FFIs.
+  \begin{scheme}
+(define-external system ((var (:char *)))
+  :return-type :int)
+
+(define-external readline ((prompt :string))
+  :library-name "libreadline"
+  :return-type  :string)
+
+\textbf{;; A Shell-like toplevel}
+(do ((l (readline "?> ") (readline "?> ")))
+    ((not l))
+  (system l))
+  \end{scheme}
+\end{note}
+\end{entry}
+
+\begin{entry}{
+\proto{external-exists?}{ entry} {procedure}
+\proto{external-exists?}{ entry library} {procedure}}
+\saut
+
+Returns \schtrue{} if \var{entry} is defined as an external symbol in
+\var{library}. If \var{library} is not provided the symbol is searched
+in the \stk{} interpreter or in libraries that it uses.
+This function can be useful to define external functions conditionally:
+\begin{scheme}
+  (when (external-exists? "dup2")
+     (define-external dup2 ((oldfd :int) (newfd :int)) 
+        :return-type :int))
+\end{scheme}
+\end{entry}
+
+
+\begin{entry}{
+\proto{c-string->string}{ str} {procedure}} 
+\saut
+
+STk strings are more general than C strings since they accept null
+character.  \ide{c-string->string} takes an area of characters built
+by a call to a foreign function (typically the result of a function
+returning a \texttt{:static-ptr}, \texttt{:dynamic-ptr} or
+\texttt{:string}) and convert it to a proper Scheme string.
+\begin{scheme}
+(define-external sprintf ((str :string) (format :string) . l)
+   :return-type  :int)
+
+\verb+(let ((str (make-string 5 #\?)))+
+\verb+  (sprintf str "%x" 100)+
+\verb+  (cons str (C-string->string str)))+
+                \lev \verb+("64\0??" . "64")+
+\end{scheme}
+\end{entry}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%
+%%%% Section 6.24: Misc
+%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\subsection{Miscellaneous}
+
+This section lists the primitives defined in {\stk} that did not fit
+anywhere else.
+
+\begin{entry}{
+\proto{eval}{ \hyper{expr}}{syntax}
+\proto{eval}{ \hyper{expr} \hyper{environment}}{syntax}}
+\saut
+Evaluates \hyper{expr} in the given environment. \hyper{Environment} may be
+omitted, in which case it defaults to the global environment.
+\begin{scheme}
+(define foo (let ((a 1)) (lambda () a)))
+(foo) \ev 1
+(eval '(set! a 2) (procedure-environment foo))
+(foo) \ev 2
+\end{scheme}
+\end{entry}
+
+\begin{entry}{
+\proto{version}{} {procedure}}
+\saut
+returns a string identifying the current version of {\stk}.
+\end{entry}
+
+\begin{entry}{
+\proto{machine-type}{} {procedure}}
+\saut
+returns a string identifying the kind of machine which is running the
+interpreter. The form of the result is {\tt [os-name]-[os-version]-[processor-type]}.
+\end{entry}
+
+\begin{entry}{
+\proto{random}{ n} {procedure}}
+\saut
+returns an integer in the range 0, $\var{n}-1$ inclusive.
+\end{entry}
+
+\begin{entry}{%
+\proto{set-random-seed!} { seed} {procedure}}
+\saut
+Set the random seed to the specified \var{seed}. {\tt Seed} must be an integer
+which fits in a C {\tt long int}.
+\end{entry}
+
+\begin{entry}{
+\proto{eval-string}{ string environment} {procedure}}
+\saut
+Evaluates the contents of the given \var{string} in the given
+\var{environment} and returns its result. 
+If \var{environment} is omitted it defaults to the global
+environment. If evaluation leads to an error, the result of \ide{eval-string} 
+is undefined.
+\begin{scheme}
+(define x 1)
+(eval-string "(+ x 1)")   \lev 2
+(eval-string "x" (let ((x 2)) (the-environment))) \lev 2
+\end{scheme}
+\end{entry}
+
+\begin{entry}{
+\proto{read-from-string}{ \hyper{string}} {procedure}}
+\saut
+Performs a read from the given \var{string}. If \var{string} is the empty
+string, an end of file object is returned. If an error occurs during string
+reading, the result of \ide{read-from-string} is undefined.
+\begin{scheme}
+(read-from-string "123 456") \lev 123
+(read-from-string "")        \lev an eof object
+\end{scheme}
+\end{entry}
+
+\begin{entry}{
+\proto{dump}{ string} {procedure}}
+\saut
+\ide{Dump} grabs the current continuation
+\mainindex{continuation} and creates an image of the current {\stk}
+interpreter in the file whose name is \var{string}{\footnote{
+Image creation is not yet implemented on all systems. The current version
+(\stkversion) allows image dumping only on some platforms: 
+SunOs~4.1.x, Linux~1, FreeBsd}}.
+This image can be used later to restart the interpreter from the saved
+state. See the {\stk} man page about the {\tt -image} option for more details.
+
+\begin{note}
+Image creation cannot be done if Tk is initialized.
+\end{note}
+\end{entry}
+
+\begin{entry}{
+\proto{trace-var}{ symbol thunk} {procedure}}
+\saut
+\ide{Trace-var} call the given \var{thunk} when the value
+of the variable denoted by \var{symbol} is changed.
+\begin{scheme}
+(define x 1)
+(define y 0)
+(trace-var 'x (lambda () (set! y 1)))
+(set! x 2)
+(cons x y)                      \lev (2 . 1)
+\end{scheme}
+
+\begin{note}
+Several traces can be associated with a single symbol. They are executed in
+reverse order to their definition. For instance, the execution of 
+\begin{scheme}
+(begin 
+  (trace-var 'z (lambda () (display "One")))
+  (trace-var 'z (lambda () (display "Two")))
+  (set! z 10))
+\end{scheme}
+will display the string {\tt"Two"} before the string {\tt"One"} on the
+current output port.
+\end{note}
+\end{entry}
+
+\begin{entry}{
+\proto{untrace-var}{ symbol} {procedure}}
+\saut
+Deletes all the traces associated to the variable denoted by \var{symbol}.
+\end{entry}
+
+\begin{entry}{
+\proto{error}{ string \vri{string} \vrii{obj} \dotsfoo}{procedure}}
+\saut
+\ide{error} prints the \var{obj}s according to the specification given in 
+\var{string} on the current error port (or in an error window if Tk is
+initialized\index{Tk toolkit}\index{toolkit}). The specification string
+follows the ``tilde conventions'' of \ide{format}(see \ref{format}). Once the
+message is printed, execution returns to toplevel.
+\end{entry}
+
+\begin{entry}{
+\proto{gc}{}{procedure}}
+\saut
+Runs the garbage collector. See \ref{GCSTART} for the signals associated to 
+garbage collection.
+\end{entry}
+
+\begin{entry}{
+\proto{gc-stats}{}{procedure}}
+\saut %
+Provides some statistics about current memory usage. This procedure is
+primarily for debugging the {\stk} interpreter, hence its weird
+printing format.
+\end{entry}
+
+
+\begin{entry}{
+\proto{expand-heap}{ n}{procedure}}
+\saut %
+Expand the heap so that it will contains at least \var{n}
+cells. Normally, the heap automatically grows when more memory is needed.
+However, using only automatic heap growing is sometimes very penalizing.
+This is particularly true for programs which uses a lot of temporary data
+(which are not pointed by any a variable) and a small amount of global
+data. In this case, the garbage collector will be often called and the heap
+will not be automatically expanded (since most of the consumed heap will be
+reclaimed by the GC). This could be annoying specially for program where
+response time is critical. Using \ide{expand-heap} permits to enlarge 
+the heap size (which is set to 20000 cells by default), to avoid those
+continual calls to the GC.
+\end{entry}
+
+
+\begin{entry}{
+\proto{get-internal-info}{}{procedure}}
+\saut %
+Returns a 7-length vector which contains the following informations:
+\begin{enumerate}
+\item[0] total cpu used in milli-seconds
+\item[1] number of cells currently in use.
+\item[2] total number of allocated cells
+\item[3] number of cells used since the last call to \ide{get-internal-info}
+\item[4] number of gc runs
+\item[5] total time used in the gc
+\item[6] a boolean indicating if Tk is initialized
+\end{enumerate}
+\end{entry}
+
+
+\begin{entry}{
+\proto{sort}{ obj predicate}{procedure}}
+\saut
+\var{Obj} must be a list or a vector. \ide{Sort} returns a copy of \var{obj} sorted
+according to \var{predicate}. \var{Predicate} must be a procedure which takes
+two arguments and returns a true value if the first argument is strictly ``before''
+the second.
+\begin{scheme}
+(sort '(1 2 -4 12 9 -1 2 3) <) 
+               \ev (-4 -1 1 2 2 3 9 12)
+(sort \sharpsign("one" "two" "three" "four") 
+      (lambda (x y) (> (string-length x) (string-length y))))
+                       \ev \sharpsign("three" "four" "one" "two")
+\end{scheme}
+\end{entry}
+
+\begin{entry}{
+\label{uncode}
+\proto{uncode}{ form}{procedure}}
+\saut %
+When {\stk} evaluates an expression it encodes it so that further
+evaluations of this expression will be more efficient. Since encoded
+forms are generally difficult to read, \ide{uncode} can be used to
+(re-)obtain the original form.
+\begin{scheme}
+(define (foo a b) 
+   (let ((x a) (y (+ b 1))) (cons x y)))
+
+(procedure-body foo)
+                \ev (lambda (a b) 
+                       (let ((x a) (y (+ b 1))) (cons x y)))
+(foo 1 2)       \ev (1 . 3)
+(procedure-body foo)
+                \ev  (lambda (a b) 
+                       ({\sharpsign}let (x y) 
+                             ({\sharpsign}<local a @0,0)> 
+                              ({\sharpsign}<global +> {\sharpsign}<local b @0,1)> 1)) 
+                         ({\sharpsign}<global cons> {\sharpsign}<local x @0,0)> 
+                                         {\sharpsign}<local y @0,1)>)))
+
+(uncode (procedure-body foo))
+                 \ev (lambda (a b)
+                        (let ((x a) (y (+ b 1))) (cons x y)))
+\end{scheme}
+
+\begin{note}
+When a macro has been directly expanded into the macro call code, it is not
+possible to retrieve the original macro call. Set \ide{*debug*} to
+{\schtrue} to avoid macro expansion in-lining.
+\end{note}
+\end{entry}
+
+\begin{entry}{
+\proto{time} { \hyper{expr}}{macro}}
+\saut
+Evaluates the expression \hyper{expr} in the current environment. Prints the
+elapsed CPU time and the number of conses used before returning the result of
+this evaluation.
+\end{entry}
+
+\begin{entry}{%
+\proto{apropos}{ symbol}{ procedure}}
+\saut
+\ide{Apropos} returns a list of symbol whose print name contains the characters 
+of \var{symbol}. Symbols are searched for in the current environment. 
+\begin{scheme}
+(apropos 'cadd) \lev (caddar caddr cadddr)
+\end{scheme}
+\end{entry}
+
+\begin{entry}{%
+\proto{inspect}{ obj}{ procedure}}
+\saut %
+\ide{Inspect} permits to graphically inspect an object. The first call
+of this procedure creates a top level window containing the object to
+inspect and its current value. If the inspector window is already on
+screen, \var{obj} will be appended to the list of inspected objects.
+The inspector window contains menus which permit to call the viewer or
+detailer on each inspected object. See the on-line documentation for
+further details. A view of the general inspector is given in figure~1.
+
+\begin{note}
+Tk must be initialized to use \ide{inspect}.
+\end{note}
+
+\begin{figure}
+\centerline{\psfig{figure={Inspector.ps}}}
+\caption{A view of the Inspector}
+\end{figure}
+\end{entry}
+
+
+\begin{entry}{%
+\proto{view}{ obj}{ procedure}}
+\saut %
+\ide{View} permits to obtain a graphical representation of an {\stk}
+object. The type of representation depends on the type of the viewed
+object. Here again, menus are provided to switch to the inspector or
+to the detailer. See the on-line documentation for more details. A
+snapshot of the viewer is given in figure~2.
+
+\begin{note}
+Tk must be initialized to use \ide{view}.
+\end{note}
+
+\begin{figure}
+\centerline{\psfig{figure={View.ps}}}
+\caption{A view of the Viewer}
+\end{figure}
+
+\end{entry}
+
+
+\begin{entry}{%
+\proto{detail}{ obj}{ procedure}}
+\saut %
+\ide{detail} permits to display the fields of a composite Scheme
+object.  The type of detailer depends on the type of the composite
+object detailed. Here again, menus are provided to go to the inspector
+or to the viewer. See the on-line documentation for more details.
+Figure~3 shows the detailer examining a {\em tk-command}.
+
+\begin{note}
+Tk must be initialized to use \ide{detail}.
+\end{note}
+
+\begin{figure}
+\centerline{\psfig{figure={Detail.ps}}}
+\caption{A view of the Detailer}
+\end{figure}
+\end{entry}
+
+\begin{entry}{%
+\proto{quit}{ retcode} {procedure}
+\proto{quit}{} {procedure}
+\proto{exit}{ retcode} {procedure}
+\proto{exit}{} {procedure}
+\proto{bye}{ retcode} {procedure}
+\proto{bye}{} {procedure}}
+\saut
+Exits the {\stk} interpreter with the specified integer return code. If
+omitted, the interpreter terminates with a return code of 0.
+\end{entry}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "manual"
+%%% End: 

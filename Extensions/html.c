@@ -17,7 +17,7 @@
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date:  1-Sep-1995 23:10
- * Last file update: 16-Jun-1996 20:47
+ * Last file update: 11-Oct-1996 15:54
  */
 
 #include <ctype.h>

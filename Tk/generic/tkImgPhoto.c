@@ -6,7 +6,7 @@
  *	dithering if necessary.
  *
  * Copyright (c) 1994 The Australian National University.
- * Copyright (c) 1994-1996 Sun Microsystems, Inc.
+ * Copyright (c) 1994-1997 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -15,12 +15,16 @@
  *	   Department of Computer Science,
  *	   Australian National University.
  *
- * SCCS: @(#) tkImgPhoto.c 1.44 96/03/01 17:35:11
+ * SCCS: @(#) tkImgPhoto.c 1.60 97/08/08 11:32:46
  */
 
 #include "tkInt.h"
 #include "tkPort.h"
-#include <math.h>
+#ifdef STk_CODE
+#  include <math.h>
+#else
+#  include "tclMath.h"
+#endif
 #include <ctype.h>
 
 /*
@@ -322,13 +326,6 @@ static Tk_ConfigSpec configSpecs[] = {
 };
 
 /*
- * Hash table used to provide access to photo images from C code.
- */
-
-static Tcl_HashTable imgPhotoHash;
-static int imgPhotoHashInitialized;	/* set when Tcl_InitHashTable done */
-
-/*
  * Hash table used to hash from (display, colormap, palette, gamma)
  * to ColorTable address.
  */
@@ -375,7 +372,8 @@ static void		DisposeInstance _ANSI_ARGS_((ClientData clientData));
 static int		ReclaimColors _ANSI_ARGS_((ColorTableId *id,
 			    int numColors));
 static int		MatchFileFormat _ANSI_ARGS_((Tcl_Interp *interp,
-			    FILE *f, char *fileName, char *formatString,
+			    Tcl_Channel chan, char *fileName,
+			    char *formatString,
 			    Tk_PhotoImageFormat **imageFormatPtr,
 			    int *widthPtr, int *heightPtr));
 static int		MatchStringFormat _ANSI_ARGS_((Tcl_Interp *interp,
@@ -463,8 +461,6 @@ ImgPhotoCreate(interp, name, argc, argv, typePtr, master, clientDataPtr)
 				 * it will be returned in later callbacks. */
 {
     PhotoMaster *masterPtr;
-    Tcl_HashEntry *entry;
-    int isNew;
 
     /*
      * Allocate and initialize the photo image master record.
@@ -489,17 +485,6 @@ ImgPhotoCreate(interp, name, argc, argv, typePtr, master, clientDataPtr)
 	ImgPhotoDelete((ClientData) masterPtr);
 	return TCL_ERROR;
     }
-
-    /*
-     * Enter this photo image in the hash table.
-     */
-
-    if (!imgPhotoHashInitialized) {
-	Tcl_InitHashTable(&imgPhotoHash, TCL_STRING_KEYS);
-	imgPhotoHashInitialized = 1;
-    }
-    entry = Tcl_CreateHashEntry(&imgPhotoHash, name, &isNew);
-    Tcl_SetHashValue(entry, masterPtr);
 
     *clientDataPtr = (ClientData) masterPtr;
     return TCL_OK;
@@ -546,11 +531,9 @@ ImgPhotoCmd(clientData, interp, argc, argv)
     Tk_PhotoImageFormat *imageFormat;
     int imageWidth, imageHeight;
     int matched;
-    FILE *f;
+    Tcl_Channel chan;
     Tk_PhotoHandle srcHandle;
     size_t length;
-    Tcl_DString buffer;
-    char *realFileName;
 
     if (argc < 2) {
 	Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0],
@@ -580,7 +563,7 @@ ImgPhotoCmd(clientData, interp, argc, argv)
 		    (char *) NULL);
 	    return TCL_ERROR;
 	}
-	result = Tk_ConfigureValue(interp, Tk_MainWindow(interp), configSpecs,
+	Tk_ConfigureValue(interp, Tk_MainWindow(interp), configSpecs,
 		(char *) masterPtr, argv[2], 0);
     } else if ((c == 'c') && (length >= 3)
 	    && (strncmp(argv[1], "configure", length) == 0)) {
@@ -627,7 +610,7 @@ ImgPhotoCmd(clientData, interp, argc, argv)
 	 * Check the values given for the -from option.
 	 */
 
-	if ((srcHandle = Tk_FindPhoto(options.name)) == NULL) {
+	if ((srcHandle = Tk_FindPhoto(interp, options.name)) == NULL) {
 	    Tcl_AppendResult(interp, "image \"", argv[2], "\" doesn't",
 		    " exist or is not a photo image", (char *) NULL);
 	    return TCL_ERROR;
@@ -837,25 +820,31 @@ ImgPhotoCmd(clientData, interp, argc, argv)
 	    return TCL_ERROR;
 	}
 
+        /*
+         * Prevent file system access in safe interpreters.
+         */
+
+        if (Tcl_IsSafe(interp)) {
+            Tcl_AppendResult(interp, "can't get image from a file in a",
+                    " safe interpreter", (char *) NULL);
+            return TCL_ERROR;
+        }
+        
 	/*
 	 * Open the image file and look for a handler for it.
 	 */
 
-	realFileName = Tcl_TranslateFileName(interp, options.name, &buffer);
-	if (realFileName == NULL) {
+	chan = Tcl_OpenFileChannel(interp, options.name, "r", 0);
+	if (chan == NULL) {
 	    return TCL_ERROR;
 	}
-	f = fopen(realFileName, "rb");
-	Tcl_DStringFree(&buffer);
-	if (f == NULL) {
-	    Tcl_AppendResult(interp, "couldn't read image file \"",
-		    options.name, "\": ", Tcl_PosixError(interp),
-		    (char *) NULL);
-	    return TCL_ERROR;
-	}
-	if (MatchFileFormat(interp, f, options.name, options.format,
+        if (Tcl_SetChannelOption(interp, chan, "-translation", "binary")
+		!= TCL_OK) {
+            return TCL_ERROR;
+        }
+	if (MatchFileFormat(interp, chan, options.name, options.format,
 		&imageFormat, &imageWidth, &imageHeight) != TCL_OK) {
-	    fclose(f);
+	    Tcl_Close(NULL, chan);
 	    return TCL_ERROR;
 	}
 
@@ -868,7 +857,7 @@ ImgPhotoCmd(clientData, interp, argc, argv)
 		|| (options.fromY2 > imageHeight)) {
 	    Tcl_AppendResult(interp, "coordinates for -from option extend ",
 		    "outside source image", (char *) NULL);
-	    fclose(f);
+	    Tcl_Close(NULL, chan);
 	    return TCL_ERROR;
 	}
 	if (((options.options & OPT_FROM) == 0) || (options.fromX2 < 0)) {
@@ -893,11 +882,11 @@ ImgPhotoCmd(clientData, interp, argc, argv)
 	 * into the image.
 	 */
 
-	result = (*imageFormat->fileReadProc)(interp, f, options.name,
+	result = (*imageFormat->fileReadProc)(interp, chan, options.name,
 		options.format, (Tk_PhotoHandle) masterPtr, options.toX,
 		options.toY, width, height, options.fromX, options.fromY);
-	if (f != NULL) {
-	    fclose(f);
+	if (chan != NULL) {
+	    Tcl_Close(NULL, chan);
 	}
 	return result;
     } else if ((c == 'r') && (length >= 3)
@@ -936,6 +925,17 @@ ImgPhotoCmd(clientData, interp, argc, argv)
 	    return TCL_ERROR;
 	}
     } else if ((c == 'w') && (strncmp(argv[1], "write", length) == 0)) {
+
+        /*
+         * Prevent file system access in safe interpreters.
+         */
+
+        if (Tcl_IsSafe(interp)) {
+            Tcl_AppendResult(interp, "can't write image to a file in a",
+                    " safe interpreter", (char *) NULL);
+            return TCL_ERROR;
+        }
+        
 	/*
 	 * photo write command - first parse and check any options given.
 	 */
@@ -1278,13 +1278,12 @@ ImgPhotoConfigureMaster(interp, masterPtr, argc, argv, flags)
 				 * such as TK_CONFIG_ARGV_ONLY. */
 {
     PhotoInstance *instancePtr;
-    char *oldFileString, *oldDataString, *realFileName, *oldPaletteString;
+    char *oldFileString, *oldDataString, *oldPaletteString;
     double oldGamma;
     int result;
-    FILE *f;
+    Tcl_Channel chan;
     Tk_PhotoImageFormat *imageFormat;
     int imageWidth, imageHeight;
-    Tcl_DString buffer;
 
     /*
      * Save the current values for fileString and dataString, so we
@@ -1338,30 +1337,36 @@ ImgPhotoConfigureMaster(interp, masterPtr, argc, argv, flags)
     if ((masterPtr->fileString != NULL)
 	    && (masterPtr->fileString != oldFileString)) {
 
-	realFileName = Tcl_TranslateFileName(interp, masterPtr->fileString,
-		&buffer);
-	if (realFileName == NULL) {
+        /*
+         * Prevent file system access in a safe interpreter.
+         */
+
+        if (Tcl_IsSafe(interp)) {
+            Tcl_AppendResult(interp, "can't get image from a file in a",
+                    " safe interpreter", (char *) NULL);
+            return TCL_ERROR;
+        }
+        
+	chan = Tcl_OpenFileChannel(interp, masterPtr->fileString, "r", 0);
+	if (chan == NULL) {
 	    return TCL_ERROR;
 	}
-	f = fopen(realFileName, "rb");
-	Tcl_DStringFree(&buffer);
-	if (f == NULL) {
-	    Tcl_AppendResult(interp, "couldn't read image file \"",
-		    masterPtr->fileString, "\": ", Tcl_PosixError(interp),
-		    (char *) NULL);
-	    return TCL_ERROR;
-	}
-	if (MatchFileFormat(interp, f, masterPtr->fileString,
+        if (Tcl_SetChannelOption(interp, chan, "-translation", "binary")
+		!= TCL_OK) {
+            return TCL_ERROR;
+        }
+	if (MatchFileFormat(interp, chan, masterPtr->fileString,
 		masterPtr->format, &imageFormat, &imageWidth,
 		&imageHeight) != TCL_OK) {
-	    fclose(f);
+	    Tcl_Close(NULL, chan);
 	    return TCL_ERROR;
 	}
 	ImgPhotoSetSize(masterPtr, imageWidth, imageHeight);
-	result = (*imageFormat->fileReadProc)(interp, f, masterPtr->fileString,
-		masterPtr->format, (Tk_PhotoHandle) masterPtr, 0, 0,
+	result = (*imageFormat->fileReadProc)(interp, chan,
+		masterPtr->fileString, masterPtr->format,
+		(Tk_PhotoHandle) masterPtr, 0, 0,
 		imageWidth, imageHeight, 0, 0);
-	fclose(f);
+	Tcl_Close(NULL, chan);
 	if (result != TCL_OK) {
 	    return TCL_ERROR;
 	}
@@ -1907,8 +1912,7 @@ ImgPhotoDelete(masterData)
     }
     masterPtr->tkMaster = NULL;
     if (masterPtr->imageCmd != NULL) {
-	Tcl_DeleteCommand(masterPtr->interp,
-		Tcl_GetCommandName(masterPtr->interp, masterPtr->imageCmd));
+	Tcl_DeleteCommandFromToken(masterPtr->interp, masterPtr->imageCmd);
     }
     if (masterPtr->pix24 != NULL) {
 	ckfree((char *) masterPtr->pix24);
@@ -1993,8 +1997,8 @@ ImgPhotoSetSize(masterPtr, width, height)
      */
 
     TkClipBox(masterPtr->validRegion, &validBox);
-    if ((validBox.x + validBox.width > (unsigned) width)
-	    || (validBox.y + validBox.height > (unsigned) height)) {
+    if ((validBox.x + validBox.width > width)
+	    || (validBox.y + validBox.height > height)) {
 	clipBox.x = 0;
 	clipBox.y = 0;
 	clipBox.width = width;
@@ -2997,10 +3001,10 @@ DisposeInstance(clientData)
  */
 
 static int
-MatchFileFormat(interp, f, fileName, formatString, imageFormatPtr,
+MatchFileFormat(interp, chan, fileName, formatString, imageFormatPtr,
 	widthPtr, heightPtr)
     Tcl_Interp *interp;		/* Interpreter to use for reporting errors. */
-    FILE *f;			/* The image file, open for reading. */
+    Tcl_Channel chan;		/* The image file, open for reading. */
     char *fileName;		/* The name of the image file. */
     char *formatString;		/* User-specified format string, or NULL. */
     Tk_PhotoImageFormat **imageFormatPtr;
@@ -3033,8 +3037,9 @@ MatchFileFormat(interp, f, fileName, formatString, imageFormatPtr,
 	    }
 	}
 	if (formatPtr->fileMatchProc != NULL) {
-	    fseek(f, 0L, SEEK_SET);
-	    if ((*formatPtr->fileMatchProc)(f, fileName, formatString,
+	    (void) Tcl_Seek(chan, 0L, SEEK_SET);
+	    
+	    if ((*formatPtr->fileMatchProc)(chan, fileName, formatString,
 		    widthPtr, heightPtr)) {
 		if (*widthPtr < 1) {
 		    *widthPtr = 1;
@@ -3060,7 +3065,7 @@ MatchFileFormat(interp, f, fileName, formatString, imageFormatPtr,
     }
 
     *imageFormatPtr = formatPtr;
-    fseek(f, 0L, SEEK_SET);
+    (void) Tcl_Seek(chan, 0L, SEEK_SET);
     return TCL_OK;
 }
 
@@ -3164,19 +3169,19 @@ MatchStringFormat(interp, string, formatString, imageFormatPtr,
  */
 
 Tk_PhotoHandle
-Tk_FindPhoto(imageName)
+Tk_FindPhoto(interp, imageName)
+    Tcl_Interp *interp;		/* Interpreter (application) in which image
+				 * exists. */
     char *imageName;		/* Name of the desired photo image. */
 {
-    Tcl_HashEntry *entry;
+    ClientData clientData;
+    Tk_ImageType *typePtr;
 
-    if (!imgPhotoHashInitialized) {
+    clientData = Tk_GetImageMasterData(interp, imageName, &typePtr);
+    if (typePtr != &tkPhotoImageType) {
 	return NULL;
     }
-    entry = Tcl_FindHashEntry(&imgPhotoHash, imageName);
-    if (entry == NULL) {
-	return NULL;
-    }
-    return (Tk_PhotoHandle) Tcl_GetHashValue(entry);
+    return (Tk_PhotoHandle) clientData;
 }
 
 /*
@@ -3389,8 +3394,12 @@ Tk_PhotoPutZoomedBlock(handle, blockPtr, x, y, width, height, zoomX, zoomY,
     xEnd = x + width;
     yEnd = y + height;
     if ((xEnd > masterPtr->width) || (yEnd > masterPtr->height)) {
+	int sameSrc = (blockPtr->pixelPtr == masterPtr->pix24);
 	ImgPhotoSetSize(masterPtr, MAX(xEnd, masterPtr->width),
 		MAX(yEnd, masterPtr->height));
+	if (sameSrc) {
+	    blockPtr->pixelPtr = masterPtr->pix24;
+	}
     }
 
     if ((y < masterPtr->ditherY) || ((y == masterPtr->ditherY)
@@ -3766,9 +3775,18 @@ DitherInstance(instancePtr, xStart, yStart, width, height)
 			case NBBY:
 			    *destBytePtr++ = i;
 			    break;
+#ifndef __WIN32__
+/*
+ * This case is not valid for Windows because the image format is different
+ * from the pixel format in Win32.  Eventually we need to fix the image
+ * code in Tk to use the Windows native image ordering.  This would speed
+ * up the image code for all of the common sizes.
+ */
+
 			case NBBY * sizeof(pixel):
 			    *destLongPtr++ = i;
 			    break;
+#endif
 			default:
 			    XPutPixel(imagePtr, x - xStart, y - yStart,
 				    (unsigned) i);
@@ -3817,9 +3835,18 @@ DitherInstance(instancePtr, xStart, yStart, width, height)
 			case NBBY:
 			    *destBytePtr++ = i;
 			    break;
+#ifndef __WIN32__
+/*
+ * This case is not valid for Windows because the image format is different
+ * from the pixel format in Win32.  Eventually we need to fix the image
+ * code in Tk to use the Windows native image ordering.  This would speed
+ * up the image code for all of the common sizes.
+ */
+
 			case NBBY * sizeof(pixel):
 			    *destLongPtr++ = i;
 			    break;
+#endif
 			default:
 			    XPutPixel(imagePtr, x - xStart, y - yStart,
 				    (unsigned) i);
@@ -3947,12 +3974,14 @@ Tk_PhotoBlank(handle)
      */
 
     memset((VOID *) masterPtr->pix24, 0,
-	    (size_t) (masterPtr->width * masterPtr->height));
+	    (size_t) (masterPtr->width * masterPtr->height * 3));
     for (instancePtr = masterPtr->instancePtr; instancePtr != NULL;
 	    instancePtr = instancePtr->nextPtr) {
-	memset((VOID *) instancePtr->error, 0,
-		(size_t) (masterPtr->width * masterPtr->height
-		    * sizeof(schar)));
+	if (instancePtr->error) {
+	    memset((VOID *) instancePtr->error, 0,
+		    (size_t) (masterPtr->width * masterPtr->height
+		    * 3 * sizeof(schar)));
+	}
     }
 
     /*

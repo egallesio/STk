@@ -24,6 +24,11 @@ entry \- Create and manipulate entry widgets
 :foreground	:insertofftime	:selectborderwidth
 .SE
 .SH "WIDGET-SPECIFIC OPTIONS"
+.VS
+.OP :environment environment Environment environment
+Specifies the environment in which the \fB:textvariable\fR must be taken. 
+By default, the value of this option is the STk global environment.
+.VE
 .OP :show show Show show
 If this option is specified, then the true contents of the entry
 are not displayed in the window.

@@ -10,7 +10,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkUnix.c 1.3 96/02/15 18:55:18
+ * SCCS: @(#) tkUnix.c 1.5 97/01/07 11:41:39
  */
 
 #include <tkInt.h>
@@ -73,7 +73,12 @@ TkGetDefaultScreenName(interp, screenName)
     char *screenName;		/* Screen name from command line, or NULL. */
 {
     if ((screenName == NULL) || (screenName[0] == '\0')) {
+#ifdef STk_CODE
+	screenName = getenv("DISPLAY");
+#else
 	screenName = Tcl_GetVar2(interp, "env", "DISPLAY", TCL_GLOBAL_ONLY);
+#endif
     }
     return screenName;
 }
+

@@ -9,7 +9,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkCanvImg.c 1.17 96/02/17 17:18:43
+ * SCCS: @(#) tkCanvImg.c 1.18 96/05/03 10:49:09
  */
 
 #include <stdio.h>
@@ -46,7 +46,11 @@ static Tk_CustomOption tagsOption = {Tk_CanvasTagsParseProc,
 static Tk_ConfigSpec configSpecs[] = {
     {TK_CONFIG_ANCHOR, "-anchor", (char *) NULL, (char *) NULL,
 	"center", Tk_Offset(ImageItem, anchor), TK_CONFIG_DONT_SET_DEFAULT},
+#ifdef STk_CODE
+    {TK_CONFIG_IMAGE, "-image", (char *) NULL, (char *) NULL,
+#else
     {TK_CONFIG_STRING, "-image", (char *) NULL, (char *) NULL,
+#endif
 	(char *) NULL, Tk_Offset(ImageItem, imageString), TK_CONFIG_NULL_OK},
     {TK_CONFIG_CUSTOM, "-tags", (char *) NULL, (char *) NULL,
 	(char *) NULL, 0, TK_CONFIG_NULL_OK, &tagsOption},
@@ -356,8 +360,8 @@ ComputeImageBbox(canvas, imgPtr)
     int width, height;
     int x, y;
 
-    x = imgPtr->x + ((imgPtr->x >= 0) ? 0.5 : - 0.5);
-    y = imgPtr->y + ((imgPtr->y >= 0) ? 0.5 : - 0.5);
+    x = (int) (imgPtr->x + ((imgPtr->x >= 0) ? 0.5 : - 0.5));
+    y = (int) (imgPtr->y + ((imgPtr->y >= 0) ? 0.5 : - 0.5));
 
     if (imgPtr->image == None) {
 	imgPtr->header.x1 = imgPtr->header.x2 = x;

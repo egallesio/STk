@@ -1,0 +1,165 @@
+<HTML><HEAD><TITLE>Tk Built-In Commands - font manual page</TITLE></HEAD>
+<BR>
+<BODY bgcolor = #c3c3ff>
+<H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageBlue.gif"> font</H2>
+<I>Create and inspect fonts.</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<H3><A NAME="M2">SYNOPSIS</A></H3>
+(<B>font</B><I> option </I>?<I>arg arg ...</I>?)<BR>
+<H3><A NAME="M3">DESCRIPTION</A></H3>
+The <B>font</B> procedure provides several facilities for dealing with
+fonts, such as defining named fonts and inspecting the actual attributes of
+a font.  The procedure has several different forms, determined by the
+first argument.  The following forms are currently supported:
+<P>
+<DL>
+<DT><A NAME="M4">(<B>font 'actual </B><I>font</I> ?\fB\:displayof \fIwindow\fR? ?\fIoption\fR?)</A><DD>
+</DL>
+<P>
+<DL>
+<DT><A NAME="M5">(<B>font 'configure </B><I>fontname</I> ?<I>option</I>? ?<I>value option value ...</I>?)</A><DD>
+</DL>
+<P>
+<DL>
+<DT><A NAME="M6">(<B>font 'create</B> ?<I>fontname</I>? ?<I>option value ...</I>?)</A><DD>
+</DL>
+<P>
+<DL>
+<DT><A NAME="M7">(<B>font 'delete</B> <I>fontname</I> ?<I>fontname ...</I>?)</A><DD>
+</DL>
+<P>
+<DL>
+<DT><A NAME="M8">(<B>font 'families</B>)</A><DD>
+<DT><A NAME="M9">(<B>font 'families</B> \fB\:displayof \fIwindow\fR?)</A><DD>
+</DL>
+<P>
+<DL>
+<DT><A NAME="M10">(<B>font 'measure </B><I>font</I> ?\fB\:displayof \fIwindow\fR? \fItext\fR)</A><DD>
+</DL>
+<P>
+<DL>
+<DT><A NAME="M11">(<B>font 'metrics </B><I>font</I> ?\fB\:displayof \fIwindow\fR? ?\fIoption\fR?)</A><DD>
+</DL>
+<P>
+<DL>
+<DT><A NAME="M12">(<B>font 'names</B>)</A><DD>
+The return value is a list of all the named fonts that are currently defined.
+<P>
+</DL>
+<H3><A NAME="M13">FONT DESCRIPTION</A></H3>
+The following formats are accepted as a font description anywhere
+<I>font</I> is specified as an argument above; these same forms are also
+permitted when specifying the <B>:font</B> option for widgets.
+<P>
+<DL>
+<DT><A NAME="M14">[1] <I>fontname</I></A><DD>
+</DL>
+<P>
+<DL>
+<DT><A NAME="M15">[2] <I>systemfont</I></A><DD>
+</DL>
+<P>
+<DL>
+<DT><A NAME="M16">[3] <I>family </I>?<I>size</I>? ?<I>style</I>? ?<I>style ...</I>?</A><DD>
+</DL>
+<UL>
+<PRE><B>normal	bold	roman	italic	
+underline	overstrike</B></PRE>
+</UL>
+<P>
+<DL>
+<DT><A NAME="M17">[4] X-font names (XLFD)</A><DD>
+</DL>
+<P>
+<DL>
+<DT><A NAME="M18">[5] <I>option value </I>?<I>option value ...</I>?</A><DD>
+</DL>
+<P>
+When font description <I>font</I> is used, the system attempts to parse the
+description according to each of the above five rules, in the order specified.
+Cases [1] and [2] must match the name of an existing named font or of a
+system font.  Cases [3], [4], and [5] are accepted on all
+platforms and the closest available font will be used.  In some situations
+it may not be possible to find any close font (e.g., the font family was
+a garbage value); in that case, some system-dependant default font is
+chosen.  If the font description does not match any of the above patterns,
+an error is generated.  
+<H3><A NAME="M19">FONT METRICS</A></H3>
+<P>
+<DL>
+<DT><A NAME="M20"><B>:ascent         </B></A><DD>
+</DL>
+<P>
+<DL>
+<DT><A NAME="M21"><B>:descent        </B></A><DD>
+</DL>
+<P>
+<DL>
+<DT><A NAME="M22"><B>:linespace</B></A><DD>
+</DL>
+<P>
+<DL>
+<DT><A NAME="M23"><B>:fixed           </B></A><DD>
+</DL>
+<H3><A NAME="M24">FONT OPTIONS</A></H3>
+The following options are supported on all platforms, and are used when
+constructing a named font or when specifying a font using style [5] as
+above:
+<P>
+<DL>
+<DT><A NAME="M25"><B>:family </B><I>name</I></A><DD>
+</DL>
+<P>
+<DL>
+<DT><A NAME="M26"><B>:size </B><I>size</I></A><DD>
+</DL>
+<UL>
+<P>
+Sizes should normally be specified in points so the application will remain
+the same ruler size on the screen, even when changing screen resolutions or
+moving scripts across platforms.  However, specifying pixels is useful in
+certain circumstances such as when a piece of text must line up with respect
+to a fixed-size bitmap.  The mapping between points and pixels is set when
+the application starts, based on properties of the installed monitor, but it
+can be overridden by calling  <B>(tk-state 'scaling)</B>.
+</UL>
+<P>
+<DL>
+<DT><A NAME="M27"><B>:weight </B><I>weight</I></A><DD>
+</DL>
+<P>
+<DL>
+<DT><A NAME="M28"><B>:slant </B><I>slant</I></A><DD>
+The amount the characters in the font are slanted away from the
+vertical.  Valid values for slant are <B>roman</B> and <B>italic</B>.
+A roman font is the normal, upright appearance of a font, while 
+an italic font is one that is tilted some number of degrees from upright.
+The closest available slant to the one specified will be chosen.
+The default slant is <B>roman</B>.
+<P>
+<DT><A NAME="M29"><B>:underline </B><I>boolean</I></A><DD>
+The value is a boolean flag that specifies whether characters in this
+font should be underlined.  The default value for underline is <B>#f</B>.
+<P>
+<DT><A NAME="M30"><B>:overstrike </B><I>boolean</I></A><DD>
+The value is a boolean flag that specifies whether a horizontal line should
+be drawn through the middle of characters in this font.  The default value
+for overstrike is <B>#f</B>.
+
+<P>
+</DL>
+<H3><A NAME="M31">PLATFORM-SPECIFIC ISSUES</A></H3>
+The following named system fonts are supported:
+<P>
+<DL>
+<DT><A NAME="M32">X Windows:</A><DD>
+All valid X font names, including those listed by xlsfonts(1), are available.
+<P>
+<DT><A NAME="M33">MS Windows:</A><DD>
+<PRE><B>system	ansi	device
+systemfixed	ansifixed	oemfixed</B></PRE>
+<DT><A NAME="M34">Macintosh:</A><DD>
+<PRE><B>system	application</B></PRE>
+</DL>
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif"><P>
+<A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookBlue.gif"> Back to the <B>STk</B> main page</A>
+</BODY></HTML>

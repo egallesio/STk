@@ -1,7 +1,7 @@
 /*
  * d u m p . c				-- Image creation
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1997 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -17,7 +17,7 @@
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: ??-Jul-1993 ??:??
- * Last file update:  2-Jun-1996 21:39
+ * Last file update: 15-Aug-1997 12:45
  */
 
 #include "stk.h"
@@ -125,7 +125,7 @@ void STk_restore_image(char *s)
   Restore_data_file(s);
   STk_dumped_core =  restoring_image = 1;
 
-  gcont = VCELL(Intern("*global-continuation*"));
+  gcont = STk_lookup_variable("*global-continuation*", NIL);
   /* After reading the file we must have a continuation in *global-continuation* */
   if (NCONTINUATIONP(gcont)) {
     Err("restore: file loaded is corrupted. DANGER.", NIL);

@@ -12,7 +12,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkFrame.c 1.68 96/02/15 18:53:30
+ * SCCS: @(#) tkFrame.c 1.82 97/08/08 17:26:26
  */
 
 #include "default.h"
@@ -49,6 +49,8 @@ typedef struct {
     char *colormapName;		/* Textual description of colormap for window,
 				 * from -colormap option.  Malloc-ed, may be
 				 * NULL. */
+    char *menuName;		/* Textual description of menu to use for
+				 * menubar. Malloc-ed, may be NULL. */
     Colormap colormap;		/* If not None, identifies a colormap
 				 * allocated for this window, which must be
 				 * freed when the window is deleted. */
@@ -72,6 +74,12 @@ typedef struct {
     char *takeFocus;		/* Value of -takefocus option;  not used in
 				 * the C code, but used by keyboard traversal
 				 * scripts.  Malloc'ed, but may be NULL. */
+    int isContainer;		/* 1 means this window is a container, 0 means
+				 * that it isn't. */
+    char *useThis;		/* If the window is embedded, this points to
+				 * the name of the window in which it is
+				 * embedded (malloc'ed).  For non-embedded
+				 * windows this is NULL. */
     int flags;			/* Various flags;  see below for
 				 * definitions. */
 } Frame;
@@ -118,6 +126,8 @@ static Tk_ConfigSpec configSpecs[] = {
     {TK_CONFIG_STRING, "-colormap", "colormap", "Colormap",
 	DEF_FRAME_COLORMAP, Tk_Offset(Frame, colormapName),
 	BOTH|TK_CONFIG_NULL_OK},
+    {TK_CONFIG_BOOLEAN, "-container", "container", "Container",
+	DEF_FRAME_CONTAINER, Tk_Offset(Frame, isContainer), BOTH},
     {TK_CONFIG_ACTIVE_CURSOR, "-cursor", "cursor", "Cursor",
 	DEF_FRAME_CURSOR, Tk_Offset(Frame, cursor), BOTH|TK_CONFIG_NULL_OK},
     {TK_CONFIG_PIXELS, "-height", "height", "Height",
@@ -130,6 +140,9 @@ static Tk_ConfigSpec configSpecs[] = {
     {TK_CONFIG_PIXELS, "-highlightthickness", "highlightThickness",
 	"HighlightThickness",
 	DEF_FRAME_HIGHLIGHT_WIDTH, Tk_Offset(Frame, highlightWidth), BOTH},
+    {TK_CONFIG_STRING, "-menu", "menu", "Menu",
+	DEF_TOPLEVEL_MENU, Tk_Offset(Frame, menuName),
+	TOPLEVEL|TK_CONFIG_NULL_OK},
     {TK_CONFIG_RELIEF, "-relief", "relief", "Relief",
 	DEF_FRAME_RELIEF, Tk_Offset(Frame, relief), BOTH},
     {TK_CONFIG_STRING, "-screen", "screen", "Screen",
@@ -142,6 +155,8 @@ static Tk_ConfigSpec configSpecs[] = {
 #endif
 	DEF_FRAME_TAKE_FOCUS, Tk_Offset(Frame, takeFocus),
 	BOTH|TK_CONFIG_NULL_OK},
+    {TK_CONFIG_STRING, "-use", "use", "Use",
+	DEF_FRAME_USE, Tk_Offset(Frame, useThis), TOPLEVEL|TK_CONFIG_NULL_OK},
     {TK_CONFIG_STRING, "-visual", "visual", "Visual",
 	DEF_FRAME_VISUAL, Tk_Offset(Frame, visualName),
 	BOTH|TK_CONFIG_NULL_OK},
@@ -244,9 +259,10 @@ TkCreateFrame(clientData, interp, argc, argv, toplevel, appName)
 {
     Tk_Window tkwin = (Tk_Window) clientData;
     Frame *framePtr;
-    Tk_Window new = NULL;
-    char *className, *screenName, *visualName, *colormapName, *arg;
+    Tk_Window new;
+    char *className, *screenName, *visualName, *colormapName, *arg, *useOption;
     int i, c, length, depth;
+    unsigned int mask;
     Colormap colormap;
     Visual *visual;
 
@@ -263,7 +279,7 @@ TkCreateFrame(clientData, interp, argc, argv, toplevel, appName)
      * is configured using the usual Tk mechanisms.
      */
 
-    className = colormapName = screenName = visualName = NULL;
+    className = colormapName = screenName = visualName = useOption = NULL;
     colormap = None;
     for (i = 2; i < argc; i += 2) {
 	arg = argv[i];
@@ -281,6 +297,9 @@ TkCreateFrame(clientData, interp, argc, argv, toplevel, appName)
 	} else if ((c == 's') && toplevel
 		&& (strncmp(arg, "-screen", strlen(arg)) == 0)) {
 	    screenName = argv[i+1];
+	} else if ((c == 'u') && toplevel
+		&& (strncmp(arg, "-use", strlen(arg)) == 0)) {
+	    useOption = argv[i+1];
 	} else if ((c == 'v')
 		&& (strncmp(arg, "-visual", strlen(arg)) == 0)) {
 	    visualName = argv[i+1];
@@ -288,10 +307,18 @@ TkCreateFrame(clientData, interp, argc, argv, toplevel, appName)
     }
 
     /*
-     * Create the window, and deal with the special options -classname,
-     * -colormap, -screenname, and -visual.  The order here is tricky,
-     * because we want to allow values for these options to come from
-     * the database, yet we can't do that until the window is created.
+     * Create the window, and deal with the special options -use,
+     * -classname, -colormap, -screenname, and -visual.  These options
+     * must be handle before calling ConfigureFrame below, and they must
+     * also be processed in a particular order, for the following
+     * reasons:
+     * 1. Must set the window's class before calling ConfigureFrame,
+     *    so that unspecified options are looked up in the option
+     *    database using the correct class.
+     * 2. Must set visual information before calling ConfigureFrame
+     *    so that colors are allocated in a proper colormap.
+     * 3. Must call TkpUseWindow before setting non-default visual
+     *    information, since TkpUseWindow changes the defaults.
      */
 
     if (screenName == NULL) {
@@ -319,6 +346,14 @@ TkCreateFrame(clientData, interp, argc, argv, toplevel, appName)
 	}
     }
     Tk_SetClass(new, className);
+    if (useOption == NULL) {
+	useOption = Tk_GetOption(new, "use", "Use");
+    }
+    if (useOption != NULL) {
+	if (TkpUseWindow(interp, new, useOption) != TCL_OK) {
+	    goto error;
+	}
+    }
     if (visualName == NULL) {
 	visualName = Tk_GetOption(new, "visual", "Visual");
     }
@@ -380,11 +415,32 @@ TkCreateFrame(clientData, interp, argc, argv, toplevel, appName)
     framePtr->height = 0;
     framePtr->cursor = None;
     framePtr->takeFocus = NULL;
+    framePtr->isContainer = 0;
+    framePtr->useThis = NULL;
     framePtr->flags = 0;
-    Tk_CreateEventHandler(new, ExposureMask|StructureNotifyMask|FocusChangeMask,
-	    FrameEventProc, (ClientData) framePtr);
+    framePtr->menuName = NULL;
+
+    /*
+     * Store backreference to frame widget in window structure.
+     */
+    TkSetClassProcs(new, NULL, (ClientData) framePtr);
+
+    mask = ExposureMask | StructureNotifyMask | FocusChangeMask;
+    if (toplevel) {
+        mask |= ActivateMask;
+    }
+    Tk_CreateEventHandler(new, mask, FrameEventProc, (ClientData) framePtr);
     if (ConfigureFrame(interp, framePtr, argc-2, argv+2, 0) != TCL_OK) {
 	goto error;
+    }
+    if ((framePtr->isContainer)) {
+	if (framePtr->useThis == NULL) {
+	    TkpMakeContainer(framePtr->tkwin);
+	} else {
+	    Tcl_AppendResult(interp,"A window cannot have both the -use ",
+		    "and the -container option set.");
+	    return TCL_ERROR;
+	}
     }
     if (toplevel) {
 	Tcl_DoWhenIdle(MapFrame, (ClientData) framePtr);
@@ -429,7 +485,7 @@ FrameWidgetCmd(clientData, interp, argc, argv)
     char **argv;		/* Argument strings. */
 {
     register Frame *framePtr = (Frame *) clientData;
-    int result = TCL_OK;
+    int result;
     size_t length;
     int c, i;
 
@@ -462,8 +518,8 @@ FrameWidgetCmd(clientData, interp, argc, argv)
 		    (char *) framePtr, argv[2], framePtr->mask);
 	} else {
 	    /*
-	     * Don't allow the options -class, -newcmap, -screen,
-	     * or -visual to be changed.
+	     * Don't allow the options -class, -colormap, -container,
+	     * -newcmap, -screen, -use, or -visual to be changed.
 	     */
 
 	    for (i = 2; i < argc; i++) {
@@ -475,9 +531,15 @@ FrameWidgetCmd(clientData, interp, argc, argv)
 		if (((c == 'c') && (strncmp(argv[i], "-class", length) == 0)
 			&& (length >= 2))
 			|| ((c == 'c') && (framePtr->mask == TOPLEVEL)
-			&& (strncmp(argv[i], "-colormap", length) == 0))
+			&& (strncmp(argv[i], "-colormap", length) == 0)
+			&& (length >= 3))
+			|| ((c == 'c')
+			&& (strncmp(argv[i], "-container", length) == 0)
+			&& (length >= 3))
 			|| ((c == 's') && (framePtr->mask == TOPLEVEL)
 			&& (strncmp(argv[i], "-screen", length) == 0))
+			|| ((c == 'u') && (framePtr->mask == TOPLEVEL)
+			&& (strncmp(argv[i], "-use", length) == 0))
 			|| ((c == 'v') && (framePtr->mask == TOPLEVEL)
 			&& (strncmp(argv[i], "-visual", length) == 0))) {
 		    Tcl_AppendResult(interp, "can't modify ", argv[i],
@@ -562,14 +624,38 @@ ConfigureFrame(interp, framePtr, argc, argv, flags)
     char **argv;		/* Arguments. */
     int flags;			/* Flags to pass to Tk_ConfigureWidget. */
 {
+    char *oldMenuName;
+    
+    /*
+     * Need the old menubar name for the menu code to delete it.
+     */
+    
+    if (framePtr->menuName == NULL) {
+    	oldMenuName = NULL;
+    } else {
+    	oldMenuName = ckalloc(strlen(framePtr->menuName) + 1);
+    	strcpy(oldMenuName, framePtr->menuName);
+    }
+    
     if (Tk_ConfigureWidget(interp, framePtr->tkwin, configSpecs,
 	    argc, argv, (char *) framePtr, flags | framePtr->mask) != TCL_OK) {
 	return TCL_ERROR;
     }
 
+    if (((oldMenuName == NULL) && (framePtr->menuName != NULL))
+	    || ((oldMenuName != NULL) && (framePtr->menuName == NULL))
+	    || ((oldMenuName != NULL) && (framePtr->menuName != NULL)
+	    && strcmp(oldMenuName, framePtr->menuName) != 0)) {
+	TkSetWindowMenuBar(interp, framePtr->tkwin, oldMenuName,
+		framePtr->menuName);
+    }
+    
     if (framePtr->border != NULL) {
 	Tk_SetBackgroundFromBorder(framePtr->tkwin, framePtr->border);
+    } else {
+	Tk_SetWindowBackgroundPixmap(framePtr->tkwin, None);
     }
+
     if (framePtr->highlightWidth < 0) {
 	framePtr->highlightWidth = 0;
     }
@@ -578,6 +664,10 @@ ConfigureFrame(interp, framePtr, argc, argv, flags)
     if ((framePtr->width > 0) || (framePtr->height > 0)) {
 	Tk_GeometryRequest(framePtr->tkwin, framePtr->width,
 		framePtr->height);
+    }
+
+    if (oldMenuName != NULL) {
+    	ckfree(oldMenuName);
     }
 
     if (Tk_IsMapped(framePtr->tkwin)) {
@@ -615,7 +705,8 @@ DisplayFrame(clientData)
     GC gc;
 
     framePtr->flags &= ~REDRAW_PENDING;
-    if ((framePtr->tkwin == NULL) || !Tk_IsMapped(tkwin)) {
+    if ((framePtr->tkwin == NULL) || !Tk_IsMapped(tkwin)
+        || framePtr->isContainer) {
 	return;
     }
 
@@ -670,10 +761,29 @@ FrameEventProc(clientData, eventPtr)
 	    || (eventPtr->type == ConfigureNotify)) {
 	goto redraw;
     } else if (eventPtr->type == DestroyNotify) {
+	if (framePtr->menuName != NULL) {
+	    TkSetWindowMenuBar(framePtr->interp, framePtr->tkwin,
+		    framePtr->menuName, NULL);
+	    ckfree(framePtr->menuName);
+	    framePtr->menuName = NULL;
+	}
 	if (framePtr->tkwin != NULL) {
+
+	    /*
+	     * If this window is a container, then this event could be
+	     * coming from the embedded application, in which case
+	     * Tk_DestroyWindow hasn't been called yet.  When Tk_DestroyWindow
+	     * is called later, then another destroy event will be generated.
+	     * We need to be sure we ignore the second event, since the frame
+	     * could be gone by then.  To do so, delete the event handler
+	     * explicitly (normally it's done implicitly by Tk_DestroyWindow).
+	     */
+    
+	    Tk_DeleteEventHandler(framePtr->tkwin,
+		    ExposureMask|StructureNotifyMask|FocusChangeMask,
+		    FrameEventProc, (ClientData) framePtr);
 	    framePtr->tkwin = NULL;
-	    Tcl_DeleteCommand(framePtr->interp,
-		    Tcl_GetCommandName(framePtr->interp, framePtr->widgetCmd));
+            Tcl_DeleteCommandFromToken(framePtr->interp, framePtr->widgetCmd);
 	}
 	if (framePtr->flags & REDRAW_PENDING) {
 	    Tcl_CancelIdleCall(DisplayFrame, (ClientData) framePtr);
@@ -694,6 +804,9 @@ FrameEventProc(clientData, eventPtr)
 		goto redraw;
 	    }
 	}
+    } else if (eventPtr->type == ActivateNotify) {
+    	TkpSetMainMenubar(framePtr->interp, framePtr->tkwin,
+    		framePtr->menuName);
     }
     return;
 
@@ -728,6 +841,13 @@ FrameCmdDeletedProc(clientData)
 {
     Frame *framePtr = (Frame *) clientData;
     Tk_Window tkwin = framePtr->tkwin;
+
+    if (framePtr->menuName != NULL) {
+	TkSetWindowMenuBar(framePtr->interp, framePtr->tkwin,
+		framePtr->menuName, NULL);
+	ckfree(framePtr->menuName);
+	framePtr->menuName = NULL;
+    }
 
     /*
      * This procedure could be invoked either because the window was
@@ -790,4 +910,38 @@ MapFrame(clientData)
     }
     Tk_MapWindow(framePtr->tkwin);
     Tcl_Release((ClientData) framePtr);
+}
+
+/*
+ *--------------------------------------------------------------
+ *
+ * TkInstallFrameMenu --
+ *
+ *	This function is needed when a Windows HWND is created
+ *	and a menubar has been set to the window with a system
+ *	menu. It notifies the menu package so that the system
+ *	menu can be rebuilt.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	The system menu (if any) is created for the menubar
+ *	associated with this frame.
+ *
+ *--------------------------------------------------------------
+ */
+
+void
+TkInstallFrameMenu(tkwin)
+    Tk_Window tkwin;		/* The window that was just created. */
+{
+    TkWindow *winPtr = (TkWindow *) tkwin;
+
+    if (winPtr->mainPtr != NULL) {
+	Frame *framePtr;
+	framePtr = (Frame*) winPtr->instanceData;
+	TkpMenuNotifyToplevelCreate(winPtr->mainPtr->interp, 
+		framePtr->menuName);
+    }
 }

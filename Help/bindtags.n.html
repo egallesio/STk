@@ -1,4 +1,5 @@
 <HTML><HEAD><TITLE>Tk Built-In Commands - bindtags manual page</TITLE></HEAD>
+<BR>
 <BODY bgcolor = #c3c3ff>
 <H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageBlue.gif"> bindtags</H2>
 <I>Determine which bindings apply to a window, and order of evaluation</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
@@ -43,6 +44,8 @@ reverses the order in which binding scripts will be evaluated for
 a button named <B>.b</B> so that <B>&quot;all&quot;</B> bindings are invoked
 first, following by bindings for <B>.b</B>'s toplevel (<B>*root</B>* or ``.''), 
 followed by class bindings, followed by bindings for <B>.b</B>.
+If <I>tagList</I> is an empty list then the binding tags for <I>window</I>
+are returned to the default state described above.
 <P>
 The <B>bindtags</B> procedure may be used to introduce arbitrary
 additional binding tags for a window, or to remove standard tags.
@@ -56,6 +59,6 @@ new button behavior) will apply.
 
 <H3><A NAME="M4">SEE ALSO</A></H3>
 <B><A HREF="./bind.n.html">bind</A></B>
-<P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif"><P>
 <A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookBlue.gif"> Back to the <B>STk</B> main page</A>
 </BODY></HTML>

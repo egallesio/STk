@@ -2,7 +2,7 @@
  *
  * a r g v . c			-- Argc/Argv management
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1997 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -19,7 +19,7 @@
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 30-Aug-1994 15:38
- * Last file update: 21-Sep-1996 22:38
+ * Last file update: 30-Dec-1997 14:34
  */
 
 #include "stk.h"
@@ -58,12 +58,12 @@ static struct arguments {
   char *help;
 } Table[] = {
 #ifdef USE_TK
-  {"-geometry",	   &STk_arg_geometry,		   1, NULL,
-		   "Initial geometry for window"},
+  {"-colormap",	   (char **) &STk_arg_colormap,	   0, (char *) 0,
+   		   "Use a private colormap"},
   {"-display",	   &STk_arg_Xdisplay,		   1, NULL,
 		   "Display to use"},
-  {"-new-colormap",(char **) &STk_arg_colormap,	   0, (char *) 0,
-   		   "Use a private colormap"},
+  {"-geometry",	   &STk_arg_geometry,		   1, NULL,
+		   "Initial geometry for window"},
   {"-name",	   &STk_arg_name,		   1, NULL,
 		   "\tName to use for application"},
   {"-sync",	   (char **) &STk_arg_sync,	   0, (char *) 0,
@@ -150,7 +150,17 @@ char **STk_process_argc_argv(int argc, char **argv)
       }
     }
     
-    if (!found) break;
+    if (!found) {
+      /* Special convention: if we have an argument before "--" alone 
+       * consider it as the name of a script file 
+       */
+      if (!STk_arg_file) {
+	STk_arg_file = arg;
+	argv += 1;
+	argc -= 1;
+      }
+      break;
+    }
   }
   
   /* Option have been analysed. Parse program arguments */
@@ -181,7 +191,7 @@ void STk_save_unix_args_and_environment(int argc, char **argv)
   /* Open a file in which we will save argc/argv/envp */
   sprintf(filename, "/usr/tmp/STktmp%d", getpid());
   if ((f = fopen(filename, "w")) == NULL) {
-    STk_panic("Cannot save environment in %s.\n ABORT.\n", filename);
+    STk_panic("Cannot save environment in %s.", filename);
     exit(1);
   }
 
@@ -216,7 +226,7 @@ void STk_restore_unix_args_and_environment(int *argc, char ***argv)
   /* Open a file in which we have saved argc/argv/envp */
   sprintf(filename, "/usr/tmp/STktmp%d", getpid());
   if ((f = fopen(filename, "r")) == NULL) {
-    STk_panic("Cannot re-open environment in %s.\n ABORT.\n", filename);
+    STk_panic("Cannot re-open environment in %s.", filename);
     exit(1);
   }
 
@@ -259,12 +269,15 @@ void STk_restore_unix_args_and_environment(int *argc, char ***argv)
 void STk_initialize_scheme_args(char **argv)
 {
   SCM l;
+  char *progname;
 
+  progname = (STk_arg_file) ? STk_arg_file : STk_Argv0;
+  
   for (l = NIL; *argv; argv++)
     l = Cons(STk_makestring(*argv), l);
   
-  VCELL(Intern(ARGV))      = Reverse(l);
-  VCELL(Intern(PROG_NAME)) = STk_makestring(STk_Argv0);
+  STk_define_variable(ARGV, Reverse(l), NIL);
+  STk_define_variable(PROG_NAME, STk_makestring(progname), NIL);
 }
 
 #ifdef WIN32

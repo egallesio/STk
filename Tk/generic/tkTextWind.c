@@ -11,7 +11,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkTextWind.c 1.13 96/02/15 18:53:02
+ * SCCS: @(#) tkTextWind.c 1.14 97/04/25 16:52:09
  */
 
 #include "tk.h"
@@ -167,7 +167,6 @@ TkTextWindowCmd(textPtr, interp, argc, argv)
 				 * parsed this command enough to know that
 				 * argv[1] is "window". */
 {
-    int c;
     size_t length;
     register TkTextSegment *ewPtr;
 
@@ -176,7 +175,6 @@ TkTextWindowCmd(textPtr, interp, argc, argv)
 		argv[0], " window option ?arg arg ...?\"", (char *) NULL);
 	return TCL_ERROR;
     }
-    c = argv[2][0];
     length = strlen(argv[2]);
     if ((strncmp(argv[2], "cget", length) == 0) && (length >= 2)) {
 	TkTextIndex index;
@@ -806,7 +804,7 @@ EmbWinLayoutProc(textPtr, indexPtr, ewPtr, offset, maxX, maxChars,
  	  void * dumb;
  	  /* Convert last result for Tk */
  	  Tcl_DStringAppend(&name, 
-			    STk_convert_for_Tk(STk_last_Tk_as_SCM(), &dumb),
+			    STk_convert_for_Tcl(STk_last_Tk_as_SCM(), &dumb),
  			    -1);
 	}
 #else

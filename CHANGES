@@ -1,3 +1,117 @@
+04/10/98 Release 3.99.0
+-----------------------
+
+This is the pre-4.0 release. Why is is not calles 4.0? Good question. 
+This version would have been numbered 4.0 if there was not a so long
+time between this release and the previous one. Since I take so long 
+to release, I had time to add a lot of things to my "TODO list". 
+And this version misses some things that I consider important (even if 
+not visible form outside) to be called 4.0. Furthermore, ther is a big 
+absent since last release which is the port on Windows. The real 4.0 
+will have support for Windows.
+
+Here are the main visible changes from previous release:
+
+   About Scheme
+
+   * A module system has been added
+   * Integration of the Bigloo MATCH-CASE and MATCH-LAMBDA
+     primitives. Furthermore, the file bigloo.stk provide
+     some compatibility between STk and bigloo modules.
+   * A simple FFI has been added. It allows to access C
+     functions without writing C code (works only on a
+     limited set of architectures for now).
+   * integrates the R5RS VALUES and CALL-WITH-VALUES
+   * multi-line comments have been added.
+   * The "-file" interpreter option is no more necessary
+   * Display of the prompt and of the eval result in the
+     REPL are now user definable.
+   * report-error mechanism has been enhanced a lot (work
+     is not completely achieved).
+   * new-primitives: append!, mast-pair, C-string->string,
+     remove-file, rename-file, temporary-file-name, ...
+   * Numerous bug corrections
+   * ...
+
+   About Tk
+
+   * Integration of the Tk8.0 toolkit
+   * The old inspector has been adapted to work with
+     current release (not completely, but sufficiently
+     while the new version is terminated)
+   * Buttons, Checkbuttons and Radiobuttons can use a
+     :variable and :textvariable in a given environment.
+     This environment is given with the new :environment
+     option.
+   * New metaclass: <Tk-composite-toplevel>. This is
+     identical to the class <Tk-composite-widget>, except
+     that the widhet lives in its own toplevel window.
+   * make-image simplifies the usage of Tk images and uses
+     a cache, to speed-up access to already used images.
+   * The little square window, which used to appear as soon
+     as STk was launched, appears now only when the first
+     widget is mapped on screen.
+   * ...
+
+   About STklos
+
+   * The MOP of STklos is now very similar to the CLOS one.
+     Here are some of the new features:
+	o when a slot does not exists, the gf slot-missing
+	  is called
+	o when a unbound slot is read, the gf slot-unbound
+	  is called
+	o new generic functions slot-ref-using-class,
+	  slot-set-using-class, slot-bound-using-class?,
+	  slot-exists-using-class?, slot-definition-name,
+	  slot-definition-options,
+	  slot-definition-allocation,
+	  slot-definition-getter, slot-definition-setter,
+	  slot-definition-accessor, generic-function-name,
+	  generic-function-methods,
+	  method-generic-function, method-specializers
+	  method-procedure, remove-method
+	  change-object-class
+   * New kind of slot allocation: "active". An active slot
+     is a slot for which you can put a daemon before or
+     after its reading/writing
+   * Standard behavior of class slots is now identical to
+     CLOS: when a class-slot is inherited, it is shared
+     with instances of the superclass. If it is redefined,
+     a new slot is created
+   * slot initializers are evaluated in the lexical
+     environment of the class definition.
+   * (Tk-)virtual slots can now have an :initform option.
+   * Generic functions can be now traced with the standard
+     TRACE function.
+   * Composite widgets have now a class slots which
+     contains the class of the object. This slot is
+     initialized by default to "Composite", but it can be
+     overloaded for a particular class. For instance
+     labeled entries use the value "LabeledEntry" by
+     default. This feature can be used for initializing the
+     X11 resource database. for instance you can have
+     STk*LabeledEntry*Entry*Background: white in your
+     .Xdefaults file to set the default value of background
+     of the entry of a <Labeled-entry> widget.
+   * New composites widgets: Gauge, Valued-Gauge,
+     Balloon-help
+   * The HTML-browser has been enhanced to access now the
+     web (i.e. you can grab distant texts or images). The
+     Web browser admit now applets written in Scheme.
+   * New kind of slot allocation: "active". An active slot
+     is a slot for which you can put a daemon before or
+     after its reading/writing
+   * extended types (defined in C) are now automatically
+     integrated in the STklos hierarchy.
+   * Several new classes for displaying messages boxes
+   * New class <Color-box> for choosing colors.
+   * New <Tk-Text-inset>. This class is the now the parent
+     class of <Text-window> and of (the new) class
+     <Text-image>.
+   * ...
+
+
 09/26/96 Release 3.1.1
 ----------------------
 

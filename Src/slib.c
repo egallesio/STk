@@ -1,7 +1,7 @@
 /*
  * s l i b . c				-- Misc functions
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -15,9 +15,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
+ * $Id: slib.c 1.6 Fri, 10 Apr 1998 14:05:25 +0200 eg $
+ *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: ??-Oct-1993 ??:?? 
- * Last file update: 25-Sep-1996 17:55
+ * Last file update: 10-Apr-1998 10:22
  *
  */
 
@@ -62,10 +64,12 @@ static unsigned long malloc_count = 0;
 
 static void cannot_allocate()
 {
-  fprintf(stderr, "**** Storage allocation from system failed\n");
-  fprintf(stderr, "**** Evaluation aborted\n");
+  fprintf(STk_stderr, "**** Storage allocation from system failed\n");
+  fprintf(STk_stderr, "**** Evaluation aborted\n");
   
   STk_gc_requested = 1;
+
+  STk_allow_signals();
 
   /* Use a null message to avoid a call to report-error (which uses conses) */
   Err("", NIL);
@@ -75,6 +79,7 @@ void *STk_must_malloc(unsigned long size)
 {
   void *tmp;
 
+/*  STk_ignore_signals(); */
   tmp = (void *) malloc(size);
 
   /* Test for size because some libc return NULL when doing malloc(0) */
@@ -91,12 +96,15 @@ void *STk_must_malloc(unsigned long size)
     STk_gc_requested = 1;
   }
 
+/*   STk_allow_signals(); */
   return tmp;
 }
 
 void *STk_must_realloc(void *ptr, unsigned long size)
 {
   void *tmp;
+
+  STk_ignore_signals();
 
   tmp = (void *) realloc(ptr, size);
   /* Since we cannot know (in a portable way) the size of area pointed by ptr,
@@ -111,6 +119,8 @@ void *STk_must_realloc(void *ptr, unsigned long size)
   }
 
   if (tmp == NULL) cannot_allocate();
+
+  STk_allow_signals();
   return tmp;
 }
 #endif
@@ -153,12 +163,11 @@ PRIMITIVE STk_catch(SCM expr, SCM env, int unused_len)
   long prev_context     = Error_context;
   SCM l;
   int k;
-  
+
   /* save normal error jmpbuf  so that eval error don't lead to toplevel */
   if ((k = setjmp(jb)) == 0) {
     Top_jmp_buf   = &jb;
     Error_context |= ERR_IGNORED;
-
     /* Evaluate the list of expressions */
     for (l = expr; NNULLP(l); l = CDR(l)) 
       STk_eval(CAR(l), env);
@@ -247,7 +256,7 @@ double STk_my_time(void)
 
 PRIMITIVE STk_get_internal_info(void)
 {
-  SCM z = STk_makevect(7, NULL);
+  SCM z = STk_makevect(7, NIL);
   long allocated, used, calls;
 
   /* The result is a vector which contains
@@ -295,7 +304,7 @@ PRIMITIVE STk_time(SCM expr, SCM env, int len)
   return res;
 }
 
-
+      
 /*
  * STk_delete_Tcl_child_Interp
  *
@@ -315,7 +324,7 @@ void STk_delete_Tcl_child_Interp(void)
     Tcl_HashEntry *hPtr;
 
     /* Try to find "send". Modify it's delproc to point NULL */
-    hPtr = Tcl_FindHashEntry(&iPtr->commandTable, "send");
+    hPtr = Tcl_FindHashEntry(&iPtr->globalNsPtr->cmdTable, "send");
     if (hPtr != NULL) {
       W = (struct Tk_command *) Tcl_GetHashValue(hPtr);
       W->delproc = NULL;
@@ -326,7 +335,7 @@ void STk_delete_Tcl_child_Interp(void)
     /* Report-error points to a graphical procedure. Undefine it 
      * to display error messages on stderr in the child process
      */
-    STk_set_symbol_value("report-error", UNBOUND);
+    STk_define_variable(REPORT_ERROR, UNBOUND, NIL);
 
     /* Redefine exit to the standard STk exit function */
     STk_add_new_primitive("exit", tc_subr_0_or_1, STk_quit_interpreter);
@@ -399,6 +408,7 @@ PRIMITIVE STk_uncode(SCM expr)
     case tc_begin:	return Intern("begin");
     case tc_globalvar:  return VCELL(expr);
     case tc_localvar:   return expr->storage_as.localvar.symbol;
+    case tc_modulevar:	return CAR(CAR(expr));
     case tc_apply:	return Intern("apply");
     case tc_call_cc:	return Intern("call-with-current-continuation");
     case tc_dynwind:    return Intern("dynamic-wind");
@@ -424,11 +434,44 @@ void STk_panic TCL_VARARGS_DEF(char *,arg1)
   MessageBox(NULL, buf, "Fatal error in STk", 
 	     MB_ICONSTOP | MB_OK | MB_TASKMODAL | MB_SETFOREGROUND);
 #else
-  fprintf(STk_stderr, "\n**** %s\n", buf);
+  fprintf(STk_stderr, "\n**** Fatal error in STk:\n**** %s\n**** ABORT.\n", buf);
   fflush(STk_stderr);
 #endif
   exit(1);
 }
+
+
+#ifdef DEBUG_STK
+
+/* Debug code to use with debugger */
+
+void dbg(SCM obj)
+{
+  fprintf(STk_stderr, " <<#p%lx>> ", obj);
+  STk_print(obj, STk_curr_eport, WRT_MODE);
+  fprintf(STk_stderr, " \n");
+}
+
+void dbgeval(void)
+{
+  SCM x;
+Top:
+  fprintf(STk_stderr, "Debug STk> "); fflush(STk_stderr);
+  if (EQ(x=STk_readf(STk_stdin, FALSE), STk_eof_object)) return;
+  dbg(STk_eval(x, STk_selected_module));
+  goto Top;
+}
+
+void Debug(char *message, SCM obj)
+{
+  fflush(STk_stdout); fflush(STk_stderr);
+  fprintf(STk_stderr, "***%s", message); 
+  dbg(obj);
+  fflush(STk_stdout); fflush(STk_stderr);
+}
+
+#endif
+
 
 
 /******************************************************************************
@@ -443,6 +486,8 @@ typedef void (*dumb)();
 
 dumb STk_dumb[] = { 
   (dumb) Tcl_TildeSubst,
-  (dumb) Tcl_SetVar2
+  (dumb) Tcl_SetVar2,
+  (dumb) Tcl_NewListObj
+  
 };
 #endif

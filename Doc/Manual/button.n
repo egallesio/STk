@@ -8,7 +8,7 @@
 '\" @(#) button.n 1.33 95/08/12 17:35:02
 '\" 
 .so STk-man.macros
-.TH button n 3.1 STk "Tk Built-In Commands"
+.TH button n 4.0 STk "Tk Built-In Commands"
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
@@ -28,6 +28,23 @@ button \- Create and manipulate button widgets
 Specifies a STk procedure to associate with the button.  This procedure
 is typically invoked when mouse button 1 is released over the button
 window.
+OP :default default Default default
+.VS
+Specifies one of three states for the default ring: \fB"normal"\fR,
+\fB"active"\fR, or \fB"disabled"\fR.  In active state, the button is drawn
+with the platform specific appearance for a default button.  In normal
+state, the button is drawn with the platform specific appearance for a
+non-default button, leaving enough space to draw the default button
+appearance.  The normal and active states will result in buttons of
+the same size.  In disabled state, the button is drawn with the
+non-default button appearance without leaving space for the default
+appearance.  The disabled state may result in a smaller button than
+the active state.
+ring.
+.OP :environment environment Environment environment
+Specifies the environment in which the \fB:textvariable\fR must be taken. 
+By default, the value of this option is the STk global environment.
+.VE
 .OP :height height Height height
 Specifies a desired height for the button.
 If an image or bitmap is being displayed in the button then the value is in
@@ -68,8 +85,7 @@ text, and initial relief.  The \fBbutton\fR procedure returns its
 there must not exist a window named \fIwidget\-name\fR, but
 \fIwidget\-name\fR's parent must exist.
 .PP
-A button is a widget
-that displays a textual string, bitmap or image.
+A button is a widget that displays a textual string, bitmap or image.
 If text is displayed, it must all be in a single font, but it
 can occupy multiple lines on the screen (if it contains newlines
 or if wrapping occurs because of the \fBwrapLength\fR option) and
@@ -132,10 +148,14 @@ This procedure is ignored if the button's state is \fBdisabled\fR.
 .SH "DEFAULT BINDINGS"
 .PP
 Tk automatically creates class bindings for buttons that give them
-the following default behavior:
+default behavior:
 .IP [1]
 A button activates whenever the mouse passes over it and deactivates
 whenever the mouse leaves the button.
+.VS
+Under Windows, this binding is only active when mouse button 1 has
+been pressed over the button.
+.VE
 .IP [2]
 A button's relief is changed to sunken whenever mouse button 1 is
 pressed over the button, and the relief is restored to its original

@@ -3,7 +3,7 @@
 %
 %           Author: Erick Gallesio [eg@unice.fr]
 %    Creation date: ??-Nov-1993 ??:??
-% Last file update: 23-Jul-1996 08:59
+% Last file update:  6-Apr-1998 11:25
 %
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -177,6 +177,229 @@ otherwise returns {\schfalse}.
 \end{scheme}
 \end{entry}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%
+%%%% Section 6.13:  Modules
+%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Modules}
+\label{module}
+
+{\stk} modules can be used to organize a program into separate
+environments (or\textit{name spaces}). Modules provide a clean way to
+organize and enforce the barriers between the components of a program.
+
+
+{\stk} provides a simple module system which is largely inspired from
+the one of Tung and Dybvig exposed in \cite{Tung-Dybvig-96}. As their
+modules system, {\stk} modules are defined to be easily used in an
+interactive environment. 
+
+\begin{entry}{%
+\proto{define-module}{ name \hyper{body}} {syntax}}
+\saut
+
+\var{Define-module} evaluates the expressions which are in
+\hyper{body} in the environment of the module \var{name}. \var{name}
+must be a valid symbol. If this symbol has not already been used to
+define a module, a new module, named \var{name}, is created.
+Otherwise, \hyper{body} is evaluated in the environment of the (old)
+module \var{name}\footnote{ In fact {\tt define-module} on a given name
+  defines a new module only the first time it is invoked on this name.
+  By this way, inteactively reloading a module does not define a new entity,
+  and the other modules which use it are not altered.}.
+
+Definitions done in a module are local to the module and do not interact with 
+the definitions of other modules. Consider the following definitions,
+\begin{scheme}
+  (define-module M1
+     (define a 1))
+
+  (define-module M2
+    (define a 2)
+    (define b (* 2 x)))
+\end{scheme}
+Here, two modules are defined and they both bind the symbol \texttt{a} to a 
+value. However, since \texttt{a} has been defined in two distincts modules
+they denote two different locations. 
+
+The ``\texttt{STk}'' module, which is predefined, is a special module
+which contains all the \textit{global variables} of a {\rrrr} program.
+A symbol defined in the \texttt{STk} module, if not hidden by a local
+definition, is always visible from inside a module. So, in the
+previous exemple, the \texttt{x} symbol refers the \texttt{x} symbol 
+defined in the \texttt{STk} module.
+
+The result of \var{define-module} is undefined.
+\end{entry}
+
+
+\begin{entry}{%
+\proto{find-module}{ name} {procedure}
+\proto{find-module}{ name default} {procedure}}
+\saut
+
+{\stk} modules are first class objects and \ide{find-module} returns the
+module associated to \var{name} if it exists. If there is no module
+associated to \var{name}, an error is signaled if no \var{default} is
+provided, otherwise \ide{find-module} returns default.
+\end{entry}
+
+\begin{entry}{%
+\proto{module?}{ object} {procedure}}
+\saut
+Returns {\schtrue} if \var{object} is a module and {\schfalse} otherwise.
+\begin{scheme}
+  (module? (find-module 'STk)) \lev \schtrue
+  (module? 'STk) \lev \schfalse
+  (module? 1) \lev \schfalse
+\end{scheme}
+\end{entry}
+
+
+\begin{entry}{%
+\proto{export}{ \hyperi{symbol} \hyperii{symbol}\ldots} {syntax}}
+\saut
+
+Specifies the symbols which are exported (i.e. \textit{visible}) outside 
+the current module. By default, symbols defined in a module are not 
+visible outside this module, excepted the symbols which appear in an
+\texttt{export} clause. 
+
+If several \texttt{export} clauses appear in a module, the set of
+exported symbols is determined by {\em unioning} symbols exported
+in all the \texttt{export} clauses.
+
+The result of \var{export} is undefined.
+\end{entry}
+
+
+\begin{entry}{%
+\proto{import}{ \hyperi{module} \hyperii{module}\ldots} {syntax}}
+\saut
+
+Specifies the modules which are imported by the current module.
+Importing a module makes the symbols it exports visible to the
+importer, if not hidden by local definitions. When a symbol 
+is exported by several of the imported modules, the location denoted by
+this symbol in the importer module correspond to the one of the first module
+in the list (\hyperi{module} \hyperii{module}\ldots) which export it. 
+
+If several \texttt{import} clauses appear in a module, the set of
+imported modules  is determined by appending the various list of modules 
+in their apparition order. 
+
+\begin{scheme}
+(define-module M1
+  (export a b)
+  (define a 'M1-a)
+  (define b 'M1-b))
+
+(define-module M2
+  (export b c)
+  (define b 'M2-b)
+  (define c 'M2-c))
+
+(define-module M3
+  (import M1 M2)
+  (display (list a b c)))  \lev displays (m1-a m1-b m2-c)
+\end{scheme}
+\begin{note}
+  There is no kind of \emph{transitivity} in module importations: when
+  the module $C$ imports the module $B$ which an importer of $A$, the
+  symbols of $A$ are not visible from $C$, except by explicitly
+  importing the $A$ module from $C$.
+\end{note}
+\begin{note}
+  The module \texttt{STk}, which contains the \textit{global
+    variables} is always implicitly imported from a
+  module.Furthermore, this module is always placed at the end of the
+  list of imported modules. 
+\end{note}
+\end{entry}
+
+\begin{entry}{%
+\proto{export-symbol}{ symbol module} {procedure}}
+\saut
+Exports \var{symbol} from \var{module}. This procedure can be useful, when
+debugging a program, to make visible a given symbol without reloading
+or redefining the module where this symbol was defined.
+\end{entry}
+
+\begin{entry}{%
+\proto{export-all-symbols}{} {procedure}}
+\saut
+
+Exports all the symbols of current module . If symbols are added to
+the current \var{module} after the call to \ide{export-all-symbols},
+they are automatically exported.
+
+\begin{note}
+  The \texttt{STk} module export all the symbols which are defined in
+  it (i.e. \textit{global variables} are visible, if not hidden, from
+  all the modules of a program.
+\end{note}
+\end{entry}
+
+\begin{entry}{%
+\proto{with-module}{ module \hyperi{expr} \hyperii{expr} \ldots} {syntax}}
+\saut
+
+Evaluates the expressions of \hyperi{expr} \hyperii{expr} \ldots in
+the \var{module} environment. \var{Module} must have been created
+previously by a \ide{define-module}. The result of \ide{with-module}
+is the result of the evaluation of the last \hyper{expr}.
+
+\begin{scheme}
+  (define-module M
+    (define a 1)
+    (define b 2))
+  
+  (with-module M 
+     (+ a b))   \lev 3
+\end{scheme}
+\end{entry}
+
+\begin{entry}{%
+\proto{current-module}{} {procedure}}
+\saut
+
+Returns the current-module.
+\begin{scheme}
+  (define-module M 
+     ...)
+   
+   (with-module M
+     (cons (eq? (current-module) (find-module 'M))
+           (eq? (current-module) (find-module 'STk))))
+       \lev (\schtrue . \schfalse)
+\end{scheme}
+\end{entry}
+
+\begin{entry}{%
+\proto{module-name}{ module} {procedure}}
+\saut
+Returns the name (a symbol) associated to a \var{module}.
+\end{entry}
+
+\begin{entry}{%
+\proto{module-imports}{ module} {procedure}}
+\saut
+Returns the list modules that \var{module} imports.
+\end{entry}
+
+\begin{entry}{%
+\proto{module-exports}{ module} {procedure}}
+\saut
+Returns the list of symbols exported by \var{module}.
+\end{entry}
+
+\begin{entry}{%
+\proto{module-symbols}{ module} {procedure}}
+\saut
+Returns the list symbols that ere defined in \var{module}.
+\end{entry}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%
@@ -248,6 +471,20 @@ is not a closure.
                       \ev ((a . 1))
 \end{scheme}
 \end{entry}
+
+\begin{entry}{%
+\proto{module-environment}{ module} {procedure}}
+\saut
+Returns the environment associated to the module \var{module}.
+\begin{scheme}
+(define-module M 
+   (define a 1))
+(car (environment->list 
+         (module-environment (find-module 'M))))
+                      \ev ((a . 1))
+\end{scheme}
+\end{entry}
+
 
 \begin{entry}{%
 \proto{symbol-bound?}{ symbol}{procedure}
@@ -491,7 +728,7 @@ construct.
 \end{entry}
 
 \begin{entry}{%
-\proto{getcwd}{ string} {procedure}}
+\proto{getcwd}{} {procedure}}
 \saut
 \ide{Getcwd} returns a string containing the current working directory.
 \end{entry}
@@ -1074,7 +1311,200 @@ parenthesized subexpression of {\em pattern}. If {\em n} is equal to
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%
-%%%% Section 6.20:  Processes
+%%%% Section 6.20:  Pattern matching
+%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Pattern matching}
+
+Pattern matching\mainindex{Pattern matching} is a key feature of most
+modern functional programming languages since it allows clean and
+secure code to be written. Internally, ``pattern-matching forms''
+should be translated (compiled) into cascades of ``elementary tests''
+where code is made as efficient as possible, avoiding redundant tests;
+the {\stk} ``pattern matching compiler'' provides this\footnote{The
+  ``pattern matching compiler'' has been written by Jean-Marie Geffroy
+  and is part of the Manuel Serrano's Bigloo compiler\cite{Serrano-97}
+  since several years. The code (and documentation) included in {\stk}
+  has been stolen from the Bigloo package v1.9 (the only difference
+  between both package is the pattern matching of structures whisch is
+  absent in {\stk}).}.  The technique used is described in details
+in~\cite{Queinnec-Geffroy92}, and the code generated can be considered
+optimal due to the way this ``pattern compiler'' was obtained.
+
+The ``pattern language'' allows the expression of a wide variety of patterns,
+including:
+
+\begin{itemize}
+
+\item Non-linear patterns: pattern variables can appear more than
+once, allowing comparison of subparts of the datum (through {\tt eq?})
+
+\item Recursive patterns on lists: for example, checking that the
+datum is a list of zero or more {\tt a}s followed by zero or more {\tt
+b}s.
+
+\item Pattern matching on lists as well as on vectors.
+
+\end{itemize}
+
+
+\subsubsection*{Pattern Matching Facilities}
+
+Only two special forms are provided for this: {\tt match-case} and {\tt
+match-lambda} and these also exist, for example, in Andrew Wright and
+Bruce Duba's~\cite{Wright-Duba-93} pattern matching package.
+
+\begin{entry}{
+\proto{match-case}{ \hyper{key} \hyperi{clause} \hyperii{clause}\dotsfoo} {\exprtype}}
+\saut
+
+In this form, \hyper{key} may be any expression and each
+\hyper{clause} has the form
+\begin{scheme}
+($<$pat$>$ $<$expression$_{1}$$>$ $<$expression$_{2}$$>$ \ldots)  
+\end{scheme}
+
+A {\tt match-case} expression is evaluated as
+follows. $<$key$>$ is evaluated and the result is compared with each
+successive patterns. If the pattern in some $<$clause$>$ yields a match, then
+the expressions in that $<$clause$>$ are evaluated from left to right in an
+environment where the pattern variables are bound to the corresponding
+subparts of the datum, and the result of the last expression in that
+$<$clause$>$ is returned as the result of the {\tt match-case} expression.
+If no $<$pat$>$ in any $<$clause$>$ matches the datum, then, if there is an
+{\tt else} clause, its expressions are evaluated and the result of the last
+is the result of the whole {\tt match-case} expression; otherwise the result
+of the {\tt match-case} expression is unspecified.
+
+The equality predicate used is {\tt eq?}.
+
+\begin{scheme}
+(match-case '(a b a)
+  ((?x ?x) 'foo)
+  ((?x ?- ?x) 'bar))  \lev bar 
+\end{scheme}
+\end{entry}
+
+\begin{entry}{
+\proto{match-lambda}{ \hyperi{clause} \hyperii{clause}\dotsfoo} {\exprtype}}
+\saut
+
+The form \ide{match-lambda}expands into a lambda-expression expecting
+an argument which, once applied to an expression, behaves exactly like
+a {\tt match-case} expression.
+
+\begin{scheme}
+((match-lambda 
+    ((?x ?x) 'foo)
+    ((?x ?- ?x) 'bar)) 'bar) \lev bar 
+\end{scheme}
+\end{entry}
+
+
+%*---------------------------------------------------------------------*/
+\subsubsection*{The pattern language}
+
+The syntax is presented in Table~\ref{PatternLanguage}. It is
+described below in the same way (and nearly in the same words) as in
+\cite{Wright-Duba-93}.
+
+\begin{table} % [hptb]
+
+%\_\hrulefill\_
+
+\begin{small}
+%\begin{minipage}[t]{\textwidth}
+
+\begin{tabular}{ll}
+
+{\em $<$pattern$>$ $\longrightarrow$} & {\em Matches:} \\
+
+$<$atom$>$ $\|$ {\tt (kwote { }}$<$atom$>${\tt )} 
+        & any expression {\tt eq?} to $<$atom$>$\\
+$\|$ {\tt (and} $<$pat$_1>$ \ldots $<$pat$_n>${\tt )} 
+        & if all of $<$pat$_i>$ match \\
+$\|$ {\tt (or} $<$pat$>$ \ldots $<$pat$_n>${\tt )} 
+        & if any of $<$pat$_1>$ through $<$pat$_n> $match \\
+$\|$ {\tt (not} $<$pat$>${\tt )} 
+        & if $<$pat$>$ doesn't match \\
+$\|$ {\tt (?} $<$predicate$>${\tt )} 
+        & if  $<$predicate$>$ is true\\
+$\|$ {\tt ($<$pat$_1>$ \ldots 
+        \footnote{Here, \ldots is a meta-character denoting a finite repetition of patterns. }
+$<$pat$_n>$)}  
+    & a list of $n$ elements \\
+$\|$ $<$pat$>$ {\tt \underline{\ldots}}
+        \footnote{Here, {\tt \underline{\ldots}} means the special keyword "\ldots". }
+     & a (possibly empty) repetition of $<$pat$>$ in a list.  \\
+$\|$ {\tt \#($<$pat$>$ \ldots $<$pat$_n>$)}  
+     & a vector of n elements \\
+$\|$ {\tt ?}$<$identifier$>$ & anything, and binds $identifier$ as a variable \\
+$\|$ \verb#?-# & anything \\
+$\|$ \verb#??-# & any (possibly empty) repetition of anything in a list \\
+$\|$ \verb#???-# & any end of list \\
+
+\end{tabular}
+%\end{minipage}
+
+\end{small}
+
+\caption{Pattern Syntax}
+\label{PatternLanguage}
+\_\hrulefill\_
+\end{table}
+
+\begin{note}
+  {\tt and, or, not, check} and {\tt kwote} must be quoted in order to
+  be treated as literals. This is the only justification for having
+  the {\tt kwote} pattern since, by convention, any atom which is not
+  a keyword is quoted.
+\end{note}
+
+\paragraph{Explanations through examples}
+
+\begin{itemize}
+
+
+\item {\tt ?-} matches any s-expr
+
+\item {\tt a} matches the atom {\tt 'a}.
+
+\item {\tt ?a} matches any expression, and binds the variable {\tt a} to
+this expression.
+
+\item {\tt (? integer?)} matches any integer
+
+\item {\tt (a (a b))} matches the only list {\tt '(a (a b))}.
+
+\item {\tt ???-} can only appear at the end of a list, and always succeeds.
+For instance, {\tt (a ???-)} is equivalent to {\tt (a . ?-)}.
+
+\item when occurring in a list, {\tt ??-} matches any sequence of anything:
+{\tt (a ??- b)} matches any list whose {\tt car} is {\tt a} and last
+{\tt car} is {\tt b}. 
+
+\item \verb#(a ...)# matches any list of {\tt a}'s, possibly empty.
+
+\item {\tt (?x ?x)} matches any list of length 2 whose {\tt car} is {\em eq} to its {\tt cadr}
+
+\item {\tt ((and (not a) ?x) ?x)} matches any list of length 2 whose {\tt
+car} is not {\em eq} to {\tt 'a} but is {\em eq} to its {\tt cadr}
+
+\item {\tt \#(?- ?- ???-)} matches any vector whose length is at least 2.
+\end{itemize}
+
+\begin{note}
+{\tt ??-} and \verb#...# patterns can not appear
+inside a vector, where you should use ???-: For example, {\tt \#(a
+??- b)} or {\tt \#(a...)} are invalid patterns, whereas {\tt \#(a
+???-)} is valid and matches any vector whose first element is the atom
+{\tt a}.
+\end{note}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%
+%%%% Section 6.21:  Processes
 %%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -1223,564 +1653,6 @@ are equivalent to
 running (i.e. alive).
 \end{entry}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%
-%%%% Section 6.21: Sockets
-%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\subsection{Sockets}
-
-\label{socket-type}
-{\stk} defines sockets, on systems which support them, as first class
-objects. Sockets permits processes to communicate even if they are on
-different machines. Sockets are useful for creating client-server
-applications.
-
-\begin{entry}{
-\proto{make-client-socket}{ hostname port-number}{procedure}}
-\saut
-\ide{make-client-socket} returns a new socket object. This socket
-establishes a link between the running application listening on port
-\var{port-number} of \var{hostname}.
-\end{entry}
-
-\begin{entry}{
-\proto{socket?}{ socket}{procedure}}
-\saut
-Returns \schtrue{} if \var{socket} is a socket, otherwise returns
-{\schfalse}.
-\end{entry}
-
-\begin{entry}{
-\proto{socket-host-name}{ socket}{procedure}}
-\saut
-Returns a string which contains the name of the distant host attached to  
-\var{socket}. If \var{socket} has been created with \ide{make-client-socket}
-this procedure returns the official name of the distant machine used for 
-connection. If \var{socket} has been created with \ide{make-server-socket},
-this function returns the official name of the client connected to the socket. 
-If no client has used yet the socket, this function returns \schfalse.
-\end{entry}
-
-\begin{entry}{
-\proto{socket-host-address}{ socket}{procedure}}
-\saut
-Returns a string which contains the IP\mainindex{IP number} number of
-the distant host attached to \var{socket}. If \var{socket} has been
-created with \ide{make-client-socket} this procedure returns the
-IP number of the distant machine used for connection. If
-\var{socket} has been created with \ide{make-server-socket}, this
-function returns the address of the client connected to the
-socket.  If no client has used yet the socket, this function returns
-\schfalse.
-\end{entry}
-
-\begin{entry}{
-\proto{socket-local-address}{ socket}{procedure}}
-\saut
-Returns a string which contains the IP\mainindex{IP number} number of
-the local host attached to \var{socket}.
-\end{entry}
-
-
-\begin{entry}{
-\proto{socket-port-number}{ socket}{procedure}}
-\saut
-Returns the integer number of the port used for \var{socket}.
-\end{entry}
-
-\begin{entry}{
-\proto{socket-input} { socket}{procedure}
-\proto{socket-output}{ socket}{procedure}}
-\saut
-Returns the file port associated for reading or writing with the program 
-connected with \var{socket}. If no connection has already been established,
-these functions return \schfalse.
-
-The following example shows how to make a client socket. Here we create a
-socket on port 13 of the machine ``{\tt kaolin.unice.fr}''\footnote{Port 13
-is generally used for testing: making a connection to it permits to know
-the distant system's idea of the time of day.}:
-\begin{scheme}
-(let ((s (make-client-socket "kaolin.unice.fr" 13)))
-  (format {\schtrue}  "Time is: {\tilda}A\verb+\+n" (read-line (socket-input s)))
-  (socket-shutdown  s))
-\end{scheme}
-\end{entry}
-
-
-\begin{entry}{
-\proto{make-server-socket}{}{procedure}
-\proto{make-server-socket}{ port-number}{procedure}}
-\saut
-\ide{make-server-socket} returns a new socket object. If \var{port-number}
-is specified, the socket is listening on the specified port; otherwise, the
-communication port is choosen by the system. 
-\end{entry}
-
-
-\begin{entry}{
-\proto{socket-accept-connection}{ socket}{procedure}}
-\saut
-\ide{socket-accept-connection} waits for a client connection on the given
-\var{socket}. If no client is already waiting for a connection, this
-procedure blocks its caller; otherwise, the first connection request on the
-queue of pending connections is connected to \var{socket}. 
-This procedure must be called on a server socket created
-with \ide{make-server-socket}. The result of \ide{socket-accept-connection}
-is undefined. 
-
-The following exemple is a simple server which waits for a connection
-on the port 1234\footnote{Under Unix, you can simply connect to
-  listening socket with the {\tt telnet} command. With the given
-  example, this can be
-  achived by typing the following command in a window shell:\\
-  {\tt \$ telnet localhost 1234}}. Once the connection with the
-distant program is established, we read a line on the input port
-associated to the socket and we write the length of this line on its
-output port.
-\begin{scheme}
-(let ((s (make-server-socket 1234)))
-  (socket-accept-connection s)
-  (let ((l (read-line (socket-input s))))
-    (format (socket-output s) "Length is: {\tilda}A\verb+\+n" (string-length l))
-    (flush (socket-output s)))
-  (socket-shutdown s))
-\end{scheme}
-\end{entry}
-
-\begin{entry}{
-\proto{socket-shutdown}{ socket}{procedure}
-\proto{socket-shutdown}{ socket close}{procedure}}
-\saut
-\ide{Socket-shutdown} shutdowns the connection associated to \var{socket}.
-\var{Close} is a boolean; it indicates if the socket must be close or not, when
-the connection is dstroyed. Closing the socket forbids further connections on
-the same port with the \ide{socket-accept-connection} procedure.
-Omitting a value for \var{close} implies the closing of socket.
-The result of \ide{socket-shutdown} is undefined. 
-
-The following example shows a simple server: when there is a new connection
-on the port number 1234, the server displays the first line sent to it by the
-client, discards the others and go back waiting for further client connections.
-\begin{scheme}
-(let ((s (make-server-socket 1234)))
-  (let loop ()
-    (socket-accept-connection s)
-    (format {\schtrue} "I've read: {\tilda}A\verb+\+n" (read-line (socket-input s)))
-    (socket-shutdown s \schfalse)
-    (loop)))
-\end{scheme}
-\end{entry}
-
-\begin{entry}{
-\proto{socket-down?}{ socket}{procedure}}
-\saut
-Returns {\schtrue} if \var{socket} has been previously closed 
-with \ide{socket-shutdown}. It returns {\schfalse} otherwise.
-\end{entry}
-
-\begin{entry}{
-\proto{socket-dup}{ socket}{procedure}}
-\saut
-Returns a copy of \var{socket}. The original and the copy socket can be used 
-interchangeably. However, if a new connection is accepted on one socket, 
-the characters exchanged on this socket are not visible on the other socket.
-Duplicating a socket is useful when a server must accept multiple simultaneous
-connections.
-The following example creates a server listening on port 1234. This server is 
-duplicated and, once two clients are present, a message is sent on both 
-connections.
-\begin{scheme}
-(define s1 (make-server-socket 1234))
-(define s2 (socket-dup s1))
-(socket-accept-connection s1)
-(socket-accept-connection s2)
-;; blocks until two clients are present
-(display "Hello,\verb+\+n" (socket-output s1))
-(display "world\verb+\+n"  (socket-output s2))
-(flush (socket-output s1))
-(flush (socket-output s2))
-\end{scheme}
-\end{entry}
-
-\begin{entry}{
-\proto{when-socket-ready}{ socket handler}{procedure}
-\proto{when-socket-ready}{ socket}{procedure}}
-\saut
-Defines a handler for \var{socket}. The handler is a thumk which is 
-executed when a connection is available on \var{socket}. If the special value
-\schfalse{} is provided as \var{handler}, the current handler for \var{socket}
-is deleted. If a handler is provided, the value returned by 
-\ide{when-socket-ready} is undefined. Otherwise, it 
-returns the handler currently associated to \var{socket}.
-
-This procedure, in conjonction with \ide{socket-dup} permits to build
-multiple-clients servers which work asynchronously. Such a server is
-shown below.
-\begin{scheme}
-(define p (make-server-socket 1234))
-(when-socket-ready p 
-                  (let ((count 0))
-                    (lambda ()
-                      (set! count (+ count 1))
-                      (register-connection (socket-dup p) count))))
-
-(define register-connection
-  (let ((sockets '()))
-    (lambda (s cnt)
-      ;; Accept connection
-      (socket-accept-connection s)
-      ;; Save socket somewhere to avoid GC problems
-      (set! sockets (cons s sockets))
-      ;; Create a handler for reading inputs from this new connection
-      (let ((in  (socket-input s))
-            (out (socket-output s)))
-        (when-port-readable in 
-             (lambda ()
-               (let ((l (read-line in)))
-                 (if (eof-object? l)
-                     ;; delete current handler
-                     (when-port-readable in \schfalse)
-                     ;; Just write the line read on the socket
-                     (begin
-                       (format out "On {\sharpsign}{\tilda}A --> {\tilda}A\verb+\+n" cnt l)
-                       (flush out))))))))))
-\end{scheme}
-\end{entry}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%
-%%%% Section 6.22: Misc
-%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-\subsection{Miscellaneous}
-
-This section lists the primitives defined in {\stk} that did not fit
-anywhere else.
-
-\begin{entry}{
-\proto{eval}{ \hyper{expr}}{syntax}
-\proto{eval}{ \hyper{expr} \hyper{environment}}{syntax}}
-\saut
-Evaluates \hyper{expr} in the given environment. \hyper{Environment} may be
-omitted, in which case it defaults to the global environment.
-\begin{scheme}
-(define foo (let ((a 1)) (lambda () a)))
-(foo) \ev 1
-(eval '(set! a 2) (procedure-environment foo))
-(foo) \ev 2
-\end{scheme}
-\end{entry}
-
-\begin{entry}{
-\proto{version}{} {procedure}}
-\saut
-returns a string identifying the current version of {\stk}.
-\end{entry}
-
-\begin{entry}{
-\proto{machine-type}{} {procedure}}
-\saut
-returns a string identifying the kind of machine which is running the
-interpreter. The form of the result is {\tt [os-name]-[os-version]-[processor-type]}.
-\end{entry}
-
-\begin{entry}{
-\proto{random}{ n} {procedure}}
-\saut
-returns an integer in the range 0, $\var{n}-1$ inclusive.
-\end{entry}
-
-\begin{entry}{%
-\proto{set-random-seed!} { seed} {procedure}}
-\saut
-Set the random seed to the specified \var{seed}. {\tt Seed} must be an integer
-which fits in a C {\tt long int}.
-\end{entry}
-
-\begin{entry}{
-\proto{eval-string}{ string environment} {procedure}}
-\saut
-Evaluates the contents of the given \var{string} in the given
-\var{environment} and returns its result. 
-If \var{environment} is omitted it defaults to the global
-environment. If evaluation leads to an error, the result of \ide{eval-string} 
-is undefined.
-\begin{scheme}
-(define x 1)
-(eval-string "(+ x 1)")   \lev 2
-(eval-string "x" (let ((x 2)) (the-environment))) \lev 2
-\end{scheme}
-\end{entry}
-
-\begin{entry}{
-\proto{read-from-string}{ \hyper{string}} {procedure}}
-\saut
-Performs a read from the given \var{string}. If \var{string} is the empty
-string, an end of file object is returned. If an error occurs during string
-reading, the result of \ide{read-from-string} is undefined.
-\begin{scheme}
-(read-from-string "123 456") \lev 123
-(read-from-string "")        \lev an eof object
-\end{scheme}
-\end{entry}
-
-\begin{entry}{
-\proto{dump}{ string} {procedure}}
-\saut
-\ide{Dump} grabs the current continuation
-\mainindex{continuation} and creates an image of the current {\stk}
-interpreter in the file whose name is \var{string}{\footnote{
-Image creation is not yet implemented on all systems. The current version
-(\stkversion) allows image dumping only on some platforms: 
-SunOs~4.1.x, Linux~1, FreeBsd}}.
-This image can be used later to restart the interpreter from the saved
-state. See the {\stk} man page about the {\tt -image} option for more details.
-
-\begin{note}
-Image creation cannot be done if Tk is initialized.
-\end{note}
-\end{entry}
-
-\begin{entry}{
-\proto{trace-var}{ symbol thunk} {procedure}}
-\saut
-\ide{Trace-var} call the given \var{thunk} when the value
-of the variable denoted by \var{symbol} is changed.
-\begin{scheme}
-(define x 1)
-(define y 0)
-(trace-var 'x (lambda () (set! y 1)))
-(set! x 2)
-(cons x y)                      \lev (2 . 1)
-\end{scheme}
-
-\begin{note}
-Several traces can be associated with a single symbol. They are executed in
-reverse order to their definition. For instance, the execution of 
-\begin{scheme}
-(begin 
-  (trace-var 'z (lambda () (display "One")))
-  (trace-var 'z (lambda () (display "Two")))
-  (set! z 10))
-\end{scheme}
-will display the string {\tt"Two"} before the string {\tt"One"} on the
-current output port.
-\end{note}
-\end{entry}
-
-\begin{entry}{
-\proto{untrace-var}{ symbol} {procedure}}
-\saut
-Deletes all the traces associated to the variable denoted by \var{symbol}.
-\end{entry}
-
-\begin{entry}{
-\proto{error}{ string \vri{string} \vrii{obj} \dotsfoo}{procedure}}
-\saut
-\ide{error} prints the \var{obj}s according to the specification given in 
-\var{string} on the current error port (or in an error window if Tk is
-initialized\index{Tk toolkit}\index{toolkit}). The specification string
-follows the ``tilde conventions'' of \ide{format}(see \ref{format}). Once the
-message is printed, execution returns to toplevel.
-\end{entry}
-
-\begin{entry}{
-\proto{gc}{}{procedure}}
-\saut
-Runs the garbage collector. See \ref{GCSTART} for the signals associated to 
-garbage collection.
-\end{entry}
-
-\begin{entry}{
-\proto{gc-stats}{}{procedure}}
-\saut %
-Provides some statistics about current memory usage. This procedure is
-primarily for debugging the {\stk} interpreter, hence its weird
-printing format.
-\end{entry}
-
-
-\begin{entry}{
-\proto{expand-heap}{ n}{procedure}}
-\saut %
-Expand the heap so that it will contains at least \var{n}
-cells. Normally, the heap automatically grows when more memory is needed.
-However, using only automatic heap growing is sometimes very penalizing.
-This is particulary true for programs which uses a lot of temporary data
-(which are not pointed by any a variable) and a small amount of global
-data. In this case, the garbage collector will be often called and the heap
-will not be automatically expanded (since most of the consumed heap will be
-reclaimed by the GC). This could be annoying epecially for program where
-response time is critical. Using \ide{expand-heap} permits to enlarge 
-the heap size (which is set to 20000 cells by default), to avoid those
-continual calls to the GC.
-\end{entry}
-
-
-\begin{entry}{
-\proto{get-internal-info}{}{procedure}}
-\saut %
-Returns a 7-length vector which contains the following informations:
-\begin{enumerate}
-\item[0] total cpu used in milli-seconds
-\item[1] number of cells currently in use.
-\item[2] total number of allocated cells
-\item[3] number of cells used since the last call to \ide{get-internal-info}
-\item[4] number of gc runs
-\item[5] total time used in the gc
-\item[6] a boolean indicating if Tk is initialized
-\end{enumerate}
-\end{entry}
-
-
-\begin{entry}{
-\proto{sort}{ obj predicate}{procedure}}
-\saut
-\var{Obj} must be a list or a vector. \ide{Sort} returns a copy of \var{obj} sorted
-according to \var{predicate}. \var{Predicate} must be a procedure which takes
-two arguments and returns a true value if the first argument is strictly ``before''
-the second.
-\begin{scheme}
-(sort '(1 2 -4 12 9 -1 2 3) <) 
-               \ev (-4 -1 1 2 2 3 9 12)
-(sort \sharpsign("one" "two" "three" "four") 
-      (lambda (x y) (> (string-length x) (string-length y))))
-                       \ev \sharpsign("three" "four" "one" "two")
-\end{scheme}
-\end{entry}
-
-\begin{entry}{
-\label{uncode}
-\proto{uncode}{ form}{procedure}}
-\saut %
-When {\stk} evaluates an expression it encodes it so that further
-evaluations of this expression will be more efficient. Since encoded
-forms are generally difficult to read, \ide{uncode} can be used to
-(re-)obtain the original form.
-\begin{scheme}
-(define (foo a b) 
-   (let ((x a) (y (+ b 1))) (cons x y)))
-
-(procedure-body foo)
-                \ev (lambda (a b) 
-                       (let ((x a) (y (+ b 1))) (cons x y)))
-(foo 1 2)       \ev (1 . 3)
-(procedure-body foo)
-                \ev  (lambda (a b) 
-                       ({\sharpsign}let (x y) 
-                             ({\sharpsign}<local a @0,0)> 
-                              ({\sharpsign}<global +> {\sharpsign}<local b @0,1)> 1)) 
-                         ({\sharpsign}<global cons> {\sharpsign}<local x @0,0)> 
-                                         {\sharpsign}<local y @0,1)>)))
-
-(uncode (procedure-body foo))
-                 \ev (lambda (a b)
-                        (let ((x a) (y (+ b 1))) (cons x y)))
-\end{scheme}
-
-\begin{note}
-When a macro has been directly expanded into the macro call code, it is not
-possible to retrieve the original macro call. Set \ide{*debug*} to
-{\schtrue} to avoid macro expansion in-lining.
-\end{note}
-\end{entry}
-
-\begin{entry}{
-\proto{time} { \hyper{expr}}{macro}}
-\saut
-Evaluates the expression \hyper{expr} in the current environment. Prints the
-elapsed CPU time and the number of conses used before returning the result of
-this evaluation.
-\end{entry}
-
-\begin{entry}{%
-\proto{apropos}{ symbol}{ procedure}}
-\saut
-\ide{Apropos} returns a list of symbol whose print name contains the characters 
-of \var{symbol}. Symbols are searched for in the current environment. 
-\begin{scheme}
-(apropos 'cadd) \lev (caddar caddr cadddr)
-\end{scheme}
-\end{entry}
-
-\begin{entry}{%
-\proto{inspect}{ obj}{ procedure}}
-\saut %
-\ide{Inspect} permits to graphically inspect an object. The first call
-of this procedure creates a top level window containing the object to
-inspect and its current value. If the inspector window is already on
-screen, \var{obj} will be appended to the list of inspected objects.
-The inspector window contains menus which permit to call the viewer or
-detailer on each inspected object. See the on-line documentation for
-further details. A view of the general inspector is given in figure~1.
-
-\begin{note}
-Tk must be initialized to use \ide{inspect}.
-\end{note}
-
-\begin{figure}
-\centerline{\psfig{figure={Inspector.ps}}}
-\caption{A view of the Inspector}
-\end{figure}
-\end{entry}
-
-
-\begin{entry}{%
-\proto{view}{ obj}{ procedure}}
-\saut %
-\ide{View} permits to obtain a graphical representation of an {\stk}
-object. The type of representation depends on the type of the viewed
-object. Here again, menus are provided to switch to the inspector or
-to the detailer. See the on-line documentation for more details. A
-snapshot of the viewer is given in figure~2.
-
-\begin{note}
-Tk must be initialized to use \ide{view}.
-\end{note}
-
-\begin{figure}
-\centerline{\psfig{figure={View.ps}}}
-\caption{A view of the Viewer}
-\end{figure}
-
-\end{entry}
-
-
-\begin{entry}{%
-\proto{detail}{ obj}{ procedure}}
-\saut %
-\ide{detail} permits to display the fields of a composite Scheme
-object.  The type of detailer depends on the type of the composite
-object detailed. Here again, menus are provided to go to the inspector
-or to the viewer. See the on-line documentation for more details.
-Figure~3 shows the detailer examining a {\em tk-command}.
-
-\begin{note}
-Tk must be initialized to use \ide{detail}.
-\end{note}
-
-\begin{figure}
-\centerline{\psfig{figure={Detail.ps}}}
-\caption{A view of the Detailer}
-\end{figure}
-\end{entry}
-
-\begin{entry}{%
-\proto{quit}{ retcode} {procedure}
-\proto{quit}{} {procedure}
-\proto{exit}{ retcode} {procedure}
-\proto{exit}{} {procedure}
-\proto{bye}{ retcode} {procedure}
-\proto{bye}{} {procedure}}
-\saut
-Exits the {\stk} interpreter with the specified integer return code. If
-omitted, the interpreter terminates with a return code of 0.
-\end{entry}
 
 %%% Local Variables: 
 %%% mode: latex

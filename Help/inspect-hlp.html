@@ -1,0 +1,51 @@
+<HTML>
+  <HEAD>
+    <TITLE>STk Inspector</TITLE>
+  </HEAD>
+
+
+  <BODY>
+      <H1><IMG ALIGN=BOTTOM SRC="Img/note.gif">STk Inspector</H1>
+      <IMG ALIGN=TOP SRC="Img/colorline.gif">
+      <BR>
+      <h3>Introduction</h3>
+      The  <B>inspector</B> is the simplest tool to visualize the value of 
+      Scheme variables. To inspect the variable <I>my-variable</I>, just type:
+      <pre>
+        STk> (inspect 'my-variable)
+      </pre>
+      <p>
+      A variable can also be inspected in particular environment as in:
+      <pre>
+        STk> (inspect 'var (procedure-environment foo))
+      </pre>
+      To uninspect a variable, just enter the following expression:
+      <pre>
+        (uninspect 'var)
+      </pre>
+      or select the <B>Uninspect</B> option in the Icon menu associated 
+      with the object line inspector.
+
+      <h3>Screen organization</h3>
+      
+      The <B>inspector</B> is a toplevel window divided in 2 areas:
+      <UL>
+	<li> a menu bar with two buttons:  <b>Command</b> and <b>Help</b>
+	<li> a list of all inspected objects. Each line of this list contains
+	  4 fields which are:
+	  <ul>
+	    <li> the name of the inspected varaiable.
+	    <li> the environment of the inspected variable
+	    <li> the current value of the inpected variable.
+	      This field is editable; the  <tt>&lt;Return&gt;</tt> key sets the 
+	      inspected variable to the <ul>evaluated</ul> value contained in 
+	      this field. The  <tt>&lt;Shift-Return&gt;</tt> keys sets this
+	      variable to the content of the field without eveluation.
+	    <li> a menu icon which provides various actions on the 
+	      inspected variable.
+      </UL>
+      </ul>
+<hr>
+<A HREF="STk-hlp.html"><IMG ALIGN=TOP SRC="Img/home.gif"> Go to top </A>
+</BODY>
+</HTML>

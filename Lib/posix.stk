@@ -2,7 +2,7 @@
 ;;;; p o s i x . s t k 		-- Posix function in Scheme
 ;;;;
 ;;;;
-;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1997 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -15,7 +15,7 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 15-Mar-1995 16:31
-;;;; Last file update: 13-Aug-1996 22:31
+;;;; Last file update:  7-Oct-1997 08:44
 ;;;;
 
 (if (symbol-bound? '%init-posix)
@@ -23,6 +23,19 @@
     (%init-posix)
     ;; Try to load Posix.1 support dynamically
     (load (string-append "posix." *shared-suffix*)))
+
+;;;;
+;;;; Stat functions
+;;;;
+(define (posix-stat->list p)
+  (apply append 
+	 (map list 
+	      '(:dev :ino :mode :nlink :uid :gid :size :atime :mtime :ctime)
+	      (vector->list (posix-stat->vector p)))))
+
+(define (posix-lstat filename)
+  (posix-stat->list (posix-stat filename)))
+
 
 ;;;;
 ;;;; Time functions

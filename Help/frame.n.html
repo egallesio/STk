@@ -1,4 +1,5 @@
 <HTML><HEAD><TITLE>Tk Built-In Commands - frame manual page</TITLE></HEAD>
+<BR>
 <BODY bgcolor = #c3c3ff>
 <H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageBlue.gif"> frame</H2>
 <I>Create and manipulate frame widgets</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
@@ -53,9 +54,23 @@ This option may not be changed with the <B>configure</B>
 widget procedure.
 <P>
 <P>
+<DT><I>Name</I>:            <B>container</B>
+<DT><I>Class</I>:           <B>Container</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M15">:container</A></B>
+<DT><I>STklos slot name</I>: <B>container</B>
+<DD>The value must be a boolean.  If true, it means that this window will
+be used as a container in which some other application will be embedded
+(for example, a Tk toplevel can be embedded using the <B>:use</B> option).
+The window will support the appropriate window manager protocols for
+things like geometry requests.  The window should not have any
+children of its own in this application.
+This option may not be changed with the <B>configure</B>
+widget command.
+<P>
+<P>
 <DT><I>Name</I>:            <B>height</B>
 <DT><I>Class</I>:           <B>Height</B>
-<DT><I>Option keyword</I>:  <B><A NAME="M15">:height</A></B>
+<DT><I>Option keyword</I>:  <B><A NAME="M16">:height</A></B>
 <DT><I>STklos slot name</I>: <B>height</B>
 <DD>Specifies the desired height for the window in any of the forms
 acceptable to <B>Tk_GetPixels</B>.
@@ -65,7 +80,7 @@ not request any size at all.
 <P>
 <DT><I>Name</I>:            <B>visual</B>
 <DT><I>Class</I>:           <B>Visual</B>
-<DT><I>Option keyword</I>:  <B><A NAME="M16">:visual</A></B>
+<DT><I>Option keyword</I>:  <B><A NAME="M17">:visual</A></B>
 <DT><I>STklos slot name</I>: <B>visual</B>
 <DD>Specifies visual information for the new window in any of the
 forms accepted by <B>Tk_GetVisual</B>.
@@ -77,7 +92,7 @@ widget procedure.
 <P>
 <DT><I>Name</I>:            <B>width</B>
 <DT><I>Class</I>:           <B>Width</B>
-<DT><I>Option keyword</I>:  <B><A NAME="M17">:width</A></B>
+<DT><I>Option keyword</I>:  <B><A NAME="M18">:width</A></B>
 <DT><I>STklos slot name</I>: <B>width</B>
 <DD>Specifies the desired width for the window in any of the forms
 acceptable to <B>Tk_GetPixels</B>.
@@ -85,7 +100,7 @@ If this option is less than or equal to zero then the window will
 not request any size at all.
 <P>
 </DL>
-<H3><A NAME="M18">DESCRIPTION</A></H3>
+<H3><A NAME="M19">DESCRIPTION</A></H3>
 The <B>frame</B> procedure creates a new window (given by the
 <I>widget-name</I> argument) and makes it into a frame widget.
 Additional
@@ -100,7 +115,7 @@ spacer or container for complex window layouts.  The only features
 of a frame are its background color and an optional 3-D border to make the
 frame appear raised or sunken.
 
-<H3><A NAME="M19">WIDGET PROCEDURE</A></H3>
+<H3><A NAME="M20">WIDGET PROCEDURE</A></H3>
 The <B>frame</B> procedure creates a new STk procedure whose
 name is the same as the path name of the frame's window.  This
 procedure may be used to invoke various
@@ -112,13 +127,13 @@ determine the exact behavior of the procedure.  The following
 procedures are possible for frame widgets:
 <P>
 <DL>
-<DT><A NAME="M20">(<I>widget-name '</I><B>cget</B> <I>option</I>)</A><DD>
+<DT><A NAME="M21">(<I>widget-name '</I><B>cget</B> <I>option</I>)</A><DD>
 Returns the current value of the configuration option given
 by <I>option</I>.
 <I>Option</I> may have any of the values accepted by the <B>frame</B>
 procedure.
 <P>
-<DT><A NAME="M21">(<I>widget-name </I><B>configure</B> ?<I>option</I>? <I>?value option value ...</I>?)</A><DD>
+<DT><A NAME="M22">(<I>widget-name </I><B>configure</B> ?<I>option</I>? <I>?value option value ...</I>?)</A><DD>
 Query or modify the configuration options of the widget.
 If no <I>option</I> is specified, returns a list describing all of
 the available options for <I>widget-name</I> (see <B>Tk_ConfigureInfo</B> for
@@ -134,9 +149,9 @@ procedure.
 
 <P>
 </DL>
-<H3><A NAME="M22">BINDINGS</A></H3>
+<H3><A NAME="M23">BINDINGS</A></H3>
 When a new frame is created, it has no default event bindings:
 frames are not intended to be interactive.
-<P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif"><P>
 <A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookBlue.gif"> Back to the <B>STk</B> main page</A>
 </BODY></HTML>

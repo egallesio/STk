@@ -1,4 +1,5 @@
 <HTML><HEAD><TITLE>Tk Built-In Commands - menubutton manual page</TITLE></HEAD>
+<BR>
 <BODY bgcolor = #c3c3ff>
 <H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageBlue.gif"> menubutton</H2>
 <I>Create and manipulate menubutton widgets</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
@@ -22,9 +23,29 @@
 <H3><A NAME="M27">WIDGET-SPECIFIC OPTIONS</A></H3>
 <DL>
 <P>
+<DT><I>Name</I>:            <B>direction</B>
+<DT><I>Class</I>:           <B>Height</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M28">:direction</A></B>
+<DT><I>STklos slot name</I>: <B>direction</B>
+<DD>Specifies where the menu is going to be popup up. <B>above</B> tries to
+pop the menu above the menubutton. <B>below</B> tries to pop the menu
+below the menubutton. <B>left</B> tries to pop the menu to the left of
+the menubutton. <B>right</B> tries to pop the menu to the right of the
+menu button. <B>flush</B> pops the menu directly over the menubutton.
+<P>
+<P>
+<DT><I>Name</I>:            <B>environment</B>
+<DT><I>Class</I>:           <B>Environment</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M29">:environment</A></B>
+<DT><I>STklos slot name</I>: <B>environment</B>
+<DD>Specifies the environment in which the <B>:textvariable</B> must be taken. 
+By convention, the value <B>#f</B> denotes the
+STk global environment (the default value of this option is false).
+<P>
+<P>
 <DT><I>Name</I>:            <B>height</B>
 <DT><I>Class</I>:           <B>Height</B>
-<DT><I>Option keyword</I>:  <B><A NAME="M28">:height</A></B>
+<DT><I>Option keyword</I>:  <B><A NAME="M30">:height</A></B>
 <DT><I>STklos slot name</I>: <B>height</B>
 <DD>Specifies a desired height for the menubutton.
 If an image or bitmap is being displayed in the menubutton then the value is in
@@ -36,7 +57,7 @@ from the size of the image or bitmap or text being displayed in it.
 <P>
 <DT><I>Name</I>:            <B>indicatorOn</B>
 <DT><I>Class</I>:           <B>IndicatorOn</B>
-<DT><I>Option keyword</I>:  <B><A NAME="M29">:indicatoron</A></B>
+<DT><I>Option keyword</I>:  <B><A NAME="M31">:indicatoron</A></B>
 <DT><I>STklos slot name</I>: <B>indicator-on</B>
 <DD>The value must be a proper boolean value.  If it is true then
 a small indicator rectangle will be displayed on the right side
@@ -47,7 +68,7 @@ displayed.
 <P>
 <DT><I>Name</I>:            <B><A HREF="./menu.n.html">menu</A></B>
 <DT><I>Class</I>:           <B>MenuName</B>
-<DT><I>Option keyword</I>:  <B><A NAME="M30">:menu</A></B>
+<DT><I>Option keyword</I>:  <B><A NAME="M32">:menu</A></B>
 <DT><I>STklos slot name</I>: <B>menu-name</B>
 <DD>Specifies the path name of the menu associated with this menubutton.
 The menu must be a child of the menubutton.
@@ -55,7 +76,7 @@ The menu must be a child of the menubutton.
 <P>
 <DT><I>Name</I>:            <B>state</B>
 <DT><I>Class</I>:           <B>State</B>
-<DT><I>Option keyword</I>:  <B><A NAME="M31">:state</A></B>
+<DT><I>Option keyword</I>:  <B><A NAME="M33">:state</A></B>
 <DT><I>STklos slot name</I>: <B>state</B>
 <DD>Specifies one of three states for the menubutton:  <B>normal</B>, <B>active</B>,
 or <B>disabled</B>.  In normal state the menubutton is displayed using the
@@ -71,7 +92,7 @@ In this state the <B>disabledForeground</B> and
 <P>
 <DT><I>Name</I>:            <B>width</B>
 <DT><I>Class</I>:           <B>Width</B>
-<DT><I>Option keyword</I>:  <B><A NAME="M32">:width</A></B>
+<DT><I>Option keyword</I>:  <B><A NAME="M34">:width</A></B>
 <DT><I>STklos slot name</I>: <B>width</B>
 <DD>Specifies a desired width for the menubutton.
 If an image or bitmap is being displayed in the menubutton then the value is in
@@ -81,7 +102,7 @@ If this option isn't specified, the menubutton's desired width is computed
 from the size of the image or bitmap or text being displayed in it.
 <P>
 </DL>
-<H3><A NAME="M33">INTRODUCTION</A></H3>
+<H3><A NAME="M35">INTRODUCTION</A></H3>
 The <B>menubutton</B> command creates a new window (given by the
 <I>widget-name</I> argument) and makes it into a menubutton widget.
 Additional
@@ -120,7 +141,7 @@ There are several interactions between menubuttons and menus;  see
 the <B><A HREF="./menu.n.html">menu</A></B> manual entry for information on various menu configurations,
 such as pulldown menus and option menus.
 
-<H3><A NAME="M34">WIDGET COMMAND</A></H3>
+<H3><A NAME="M36">WIDGET COMMAND</A></H3>
 The <B>menubutton</B> command creates a new STk command whose
 name is <I>widget-name</I>.  This
 command may be used to invoke various
@@ -131,13 +152,13 @@ determine the exact behavior of the command.  The following
 commands are possible for menubutton widgets:
 <P>
 <DL>
-<DT><A NAME="M35">(<I>widget-name '</I><B>cget</B> <I>option</I>)</A><DD>
+<DT><A NAME="M37">(<I>widget-name '</I><B>cget</B> <I>option</I>)</A><DD>
 Returns the current value of the configuration option given
 by <I>option</I>.
 <I>Option</I> may have any of the values accepted by the <B>menubutton</B>
 command.
 <P>
-<DT><A NAME="M36">(<I>widget-name '</I><B>configure</B> ?<I>option</I>? ?<I>value option value ...</I>?)</A><DD>
+<DT><A NAME="M38">(<I>widget-name '</I><B>configure</B> ?<I>option</I>? ?<I>value option value ...</I>?)</A><DD>
 Query or modify the configuration options of the widget.
 If no <I>option</I> is specified, returns a list describing all of
 the available options for <I>widget-name</I> (see <B>Tk_ConfigureInfo</B> for
@@ -153,7 +174,7 @@ command.
 
 <P>
 </DL>
-<H3><A NAME="M37">DEFAULT BINDINGS</A></H3>
+<H3><A NAME="M39">DEFAULT BINDINGS</A></H3>
 Tk automatically creates class bindings for menubuttons that give them
 the following default behavior:
 <OL>
@@ -204,8 +225,8 @@ actions occur:  the menubutton is completely non-responsive.
 The behavior of menubuttons can be changed by defining new bindings for
 individual widgets or by redefining the class bindings.
 
-<H3><A NAME="M38">SEE ALSO</A></H3>
+<H3><A NAME="M40">SEE ALSO</A></H3>
 <B>menu option-menu</B>
-<P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif"><P>
 <A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookBlue.gif"> Back to the <B>STk</B> main page</A>
 </BODY></HTML>

@@ -91,4 +91,4 @@ Displays a color images in X11 pixmap format. See the \fBpixmap\fR manual entry
 for more information.
 
 .SH SEE ALSO
-bitmap, photo, pixmap
+bitmap, make-image, jpeg, photo, pixmap

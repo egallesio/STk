@@ -2,7 +2,7 @@
 ;;;; h a s h . s t k 		-- Hash table initialisation
 ;;;;
 ;;;;
-;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -15,7 +15,7 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date:  9-May-1994 11:52
-;;;; Last file update: 21-Jul-1996 18:41
+;;;; Last file update: 21-Mar-1998 15:08
 ;;;;
 
 (if (symbol-bound? '%init-hash)

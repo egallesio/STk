@@ -10,7 +10,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkText.h 1.44 96/02/15 18:51:31
+ * SCCS: @(#) tkText.h 1.46 96/11/25 11:26:12
  */
 
 #ifndef _TKTEXT
@@ -111,6 +111,35 @@ typedef struct TkTextEmbWindow {
 } TkTextEmbWindow;
 
 /*
+ * A structure of the following type holds information for each image
+ * embedded in a text widget.  This information is only used by the
+ * file tkTextImage.c
+ */
+
+typedef struct TkTextEmbImage {
+    struct TkText *textPtr;		/* Information about the overall text
+					 * widget. */
+    TkTextLine *linePtr;		/* Line structure that contains this
+					 * image. */
+    char *imageString;			/* Name of the image for this segment */
+    char *imageName;			/* Name used by text widget to identify
+    					 * this image.  May be unique-ified */
+    char *name;				/* Name used in the hash table.
+    					 * used by "image names" to identify
+    					 * this instance of the image */
+    Tk_Image image;			/* Image for this segment.  NULL
+					 * means that the image hasn't
+					 * been created yet. */
+    int align;				/* How to align image in vertical
+					 * space.  See definitions in
+					 * tkTextImage.c. */
+    int padX, padY;			/* Padding to leave around each side
+					 * of image, in pixels. */
+    int chunkCount;			/* Number of display chunks that
+					 * refer to this image. */
+} TkTextEmbImage;
+
+/*
  * The data structure below defines line segments.
  */
 
@@ -129,6 +158,8 @@ typedef struct TkTextSegment {
 	TkTextMark mark;		/* Information about mark. */
 	TkTextEmbWindow ew;		/* Information about embedded
 					 * window. */
+	TkTextEmbImage ei;		/* Information about embedded
+					 * image. */
     } body;
 } TkTextSegment;
 
@@ -275,7 +306,7 @@ typedef struct TkTextTag {
 				 * means no value specified here. */
     XColor *fgColor;		/* Foreground color for text.  NULL means
 				 * no value specified here. */
-    XFontStruct *fontPtr;	/* Font for displaying text.  NULL means
+    Tk_Font tkfont;		/* Font for displaying text.  NULL means
 				 * no value specified here. */
     Pixmap fgStipple;		/* Stipple bitmap for text and other
 				 * foreground stuff.   None means no value
@@ -434,6 +465,11 @@ typedef struct TkText {
 				 * window segment doesn't yet have an
 				 * associated window, there is no entry for
 				 * it here. */
+    Tcl_HashTable imageTable;	/* Hash table that maps from image names
+				 * to pointers to image segments.  If an
+				 * image segment doesn't yet have an
+				 * associated image, there is no entry for
+				 * it here. */
     Tk_Uid state;		/* Normal or disabled.  Text is read-only
 				 * when disabled. */
 
@@ -458,7 +494,7 @@ typedef struct TkText {
     XColor *highlightColorPtr;	/* Color for drawing traversal highlight. */
     Tk_Cursor cursor;		/* Current cursor for window, or None. */
     XColor *fgColor;		/* Default foreground color for text. */
-    XFontStruct *fontPtr;	/* Default font for displaying text. */
+    Tk_Font tkfont;		/* Default font for displaying text. */
     int charWidth;		/* Width of average character in default
 				 * font. */
     int spacing1;		/* Default extra spacing above first display
@@ -573,6 +609,13 @@ typedef struct TkText {
 				 * vertical scrollbar when view changes. */
     int flags;			/* Miscellaneous flags;  see below for
 				 * definitions. */
+#ifdef STk_CODE	 /*eg*/
+    char *imageString;		/* Name of image to display (malloc'ed), or
+				 * NULL.  If non-NULL, bitmap, text, and
+				 * textVarName are ignored. */
+    Tk_Image image;		/* Image to display in window, or NULL if
+				 * none. */
+#endif
 } TkText;
 
 /*
@@ -796,6 +839,10 @@ extern void		TkTextSetYView _ANSI_ARGS_((TkText *textPtr,
 			    TkTextIndex *indexPtr, int pickPlace));
 extern int		TkTextTagCmd _ANSI_ARGS_((TkText *textPtr,
 			    Tcl_Interp *interp, int argc, char **argv));
+extern int		TkTextImageCmd _ANSI_ARGS_((TkText *textPtr,
+			    Tcl_Interp *interp, int argc, char **argv));
+extern int		TkTextImageIndex _ANSI_ARGS_((TkText *textPtr,
+			    char *name, TkTextIndex *indexPtr));
 extern int		TkTextWindowCmd _ANSI_ARGS_((TkText *textPtr,
 			    Tcl_Interp *interp, int argc, char **argv));
 extern int		TkTextWindowIndex _ANSI_ARGS_((TkText *textPtr,

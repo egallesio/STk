@@ -346,7 +346,7 @@ static PRIMITIVE run_process(SCM l, int len)
 	     execvp(*argv, argv);
 	     
 	     /* Cannot exec if we are here */
-	     fprintf(stderr, "**** Cannot  exec %s!\n", *argv);
+	     fprintf(STk_stderr, "**** Cannot  exec %s!\n", *argv);
 	     exit(1);
     default: /* Father */
       	     info->pid = pid;
@@ -540,7 +540,7 @@ static void free_process(SCM process)
   process_kill(process);
   for(i = 0; i < 3; i++) {
     SCM p = PROCESS(process)->stream[i];
-    if (IPORTP(p) || OPORTP(p)) STk_freeport(p);
+    if (IPORTP(p) || OPORTP(p)) STk_close_port(p);
   }
   proc_arr[PROCESS(process)->index] = Ntruth;
   free(PROCESS(process));

@@ -1,7 +1,7 @@
 ;;;;
 ;;;; <Multiple-window> and <Inner-Window> classes 
 ;;;;
-;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -20,12 +20,16 @@
 ;;;; Original package is GPL'ed. However, code and way to implement
 ;;;; multiple windows and mdw_lib are completely different.
 ;;;;
+;;;; $Id: Multiwin.stklos 1.7 Fri, 10 Apr 1998 09:13:18 +0200 eg $
+;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date:  5-Apr-1996 18:04
-;;;; Last file update: 13-Aug-1996 23:22
+;;;; Last file update:  8-Apr-1998 12:10
 
-(require "Frame")
-(require "Button")
+(require "Basics")
+(select-module STklos+Tk)
+
+(export place) ;; Since it it redefined as a generic ...
 
 
 (image 'create 'bitmap '*bitmap-cross* :data
@@ -117,9 +121,9 @@ static unsigned char min_bits[] = {
   (let* ((int   (make <Frame> :parent parent :border-width 0 :cursor "left_ptr"))
 	 (title (make <Frame>  :parent int   :relief "ridge" :border-width 1))
 	 (label (make <Label>  :parent title :text "No title" :cursor "hand2"))
-	 (b1	(make <Button> :parent title :image *bitmap-cross* :cursor "arrow"))
-	 (b2	(make <Button> :parent title :image *bitmap-max*   :cursor "arrow"))
-	 (b3    (make <Button> :parent title :image *bitmap-icon* :cursor "arrow")))
+	 (b1	(make <Button> :parent title :image *bitmap-cross*))
+	 (b2	(make <Button> :parent title :image *bitmap-max*))
+	 (b3    (make <Button> :parent title :image *bitmap-icon*)))
    
     ;; Make internal sub windows
     (slot-set! self 'Id 	     (Id int))
@@ -233,11 +237,14 @@ static unsigned char min_bits[] = {
     (bind title "<B1-Motion>" 
 	  (lambda (|X| |Y|)
 	    (unless (slot-ref w 'maximized?)
+	      (update 'idle)
 	      (place w :x (+ (winfo 'x w) (- |X| pos-x)) 
 		       :y (+ (winfo 'y w) (- |Y| pos-y)))
 	      (set! pos-x |X|)
 	      (set! pos-y |Y|)
-	      (update 'idle))))
+;	      (update 'idle)
+	      )))
+
     (bind title "<2>" (lambda ()
 			(if (equal? w (slot-ref (parent w) 'current)) 
 			    (lower w))))
@@ -245,14 +252,8 @@ static unsigned char min_bits[] = {
     ;; The Destroy button
     (bind button "<Double-1>" 
 	  (lambda () 
-	    ;; Delay instruction to prvent problem with button releasing
+	    ;; Delay instruction to prevent problem with button releasing
 	    (after 'idle (lambda () (destroy w)))))))
-
-
-(define-method place ((self <Inner-window>) . args) 
-  (raise self)
-  (next-method))
-
 
 (define-method unselect-window ((self <Inner-Window>))
   (let* ((parent   (parent self))
@@ -287,30 +288,27 @@ static unsigned char min_bits[] = {
 	;; New current window is self
 	(slot-set! parent 'current self)))))
 
-
 (define-method raise ((self <Inner-Window>))
   (let* ((parent  (parent self))
-	 (current (slot-ref parent 'current)))
+         (current (slot-ref parent 'current)))
     (unless (equal? self current)
       (select-window self)
       ;; Raise this window (but just under the bottom bar)
       (if current 
-	  (raise self current)
-	  (lower self (slot-ref parent 'bottom-bar))))))
+          (raise self current)
+	  (begin 
+	    (next-method)				; The Tk raise
+	    (raise (slot-ref parent 'bottom-bar))))))) 	; let bottom bar on top
+
 
 (define-method lower ((self <Inner-Window>))
   (unselect-window self)
   (next-method))
 
 (define-method destroy ((self <Inner-window>))
-  (define (delete l) 
-    (cond ((null? l) 		   '())
-	  ((equal? (car l) self)   (cdr l))
-	  (else			   (cons (car l) (delete (cdr l))))))
-  
   (let ((parent (slot-ref self 'parent)))
     ;; Delete self from list of children
-    (slot-set! parent 'children (delete (slot-ref parent 'children)))
+    (slot-set! parent 'children (remove self (slot-ref parent 'children)))
     (unselect-window self)    
     (when (equal? self (slot-ref parent 'current))
       (set! (text-of (slot-ref parent 'bottom-bar-title)) "")
@@ -388,3 +386,20 @@ static unsigned char min_bits[] = {
     (raise self)))
 
 
+(define-method place ((self <Inner-Window>) . l)
+  (next-method)
+  (raise self))
+
+#|
+   Example:
+
+	(define mw (make <Multiple-Window> :background "gray50"))
+	(define i1 (make <Inner-Window> :parent mw :title "Win#1"))
+	(define t1 (make <Text> :parent i1))
+	(define i2 (make <Inner-Window> :parent mw :title "Win#2"))
+	(define t2 (make <Text> :parent i2))
+
+	(place i1 :x 10 :y 20)
+        (place i2 :x 50 :y 70)
+	(pack mw t1 t2 :expand #t :fill "both")
+|#

@@ -1,0 +1,66 @@
+;;;; puzzle.stk -- A puzzle written in STk (from the Tcl Demo)
+;;;;
+;;;; Copyright © 1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; $Id: puzzle.stk 1.1 Tue, 10 Mar 1998 21:43:37 +0100 eg $
+;;;;
+;;;;          Author: Erick Gallesio [eg@unice.fr]
+;;;;   Creation date:  9-Mar-1998 21:11
+;;;;Last file update:  9-Mar-1998 21:37
+
+(define (display-puzzle parent)
+
+  (define (puzzle-switch w num xpos ypos space)
+    (let ((x     (vector-ref xpos num)) 
+	  (y     (vector-ref ypos num))
+	  (x_spc (vector-ref xpos space)) 
+	  (y_spc (vector-ref ypos space)))
+      (when (or (and (>= y (- y_spc 0.01)) (<= y (+ y_spc 0.01))
+		     (>= x (- x_spc 0.26)) (<= x (+ x_spc 0.26)))
+		(and (>= x (- x_spc 0.01)) (<= x (+ x_spc 0.01))
+		     (>= y (- y_spc 0.26)) (<= y (+ y_spc 0.26))))
+	(vector-set! xpos space x)
+	(vector-set! xpos num x_spc)
+	(vector-set! ypos space y)
+	(vector-set! ypos num y_spc)
+	(place w :relx x_spc :rely y_spc))))
+  
+  (let ((order '#(3 1 6 2 5 7 15 13 4 11 8 9 14 10 12))
+	(xpos  (make-vector 16))
+	(ypos  (make-vector 16))
+	(space 0)
+	(f     (frame (format #f "~A.f" (widget-name parent)) 
+		      :width 150 :height 150 :bd 4 :relief "solid")))
+    
+    (do ((i   0 (+ i 1)))
+	((= i 15))
+      (let* ((num (vector-ref order i))
+	     (b   (button (format #f "~A.b~A" (widget-name f) i) :text num
+			  :highlightthickness 0)))
+	;; Set the command of the button (and grab current environment)
+	(tk-set! b :command (lambda ()
+			      (puzzle-switch b num xpos ypos space)))
+	
+	(vector-set! xpos num (* (modulo i 4) 0.25))
+	(vector-set! ypos num (* (floor (/ i 4)) 0.25))
+	
+	(place b :relx (vector-ref xpos num)
+	         :rely (vector-ref ypos num)
+		 :relwidth 0.25
+		 :relheight 0.25)))
+    (vector-set! xpos space 0.75)
+    (vector-set! ypos space 0.75)
+    
+    (pack f :expand #t :fill "both")
+    f))
+
+  
+

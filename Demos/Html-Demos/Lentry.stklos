@@ -1,0 +1,65 @@
+;;
+;; Resources
+;;
+(option 'add "*LabeledEntry.Entry.Background"  "white"  "widgetDefault")
+(option 'add "*LabeledEntry.Entry.Font"        "fixed"  "widgetDefault")
+(option 'add "*LabeledEntry.Entry.Relief"      "sunken" "widgetDefault")
+
+;;
+;; Class definition
+;;
+(define-class <Labeled-entry> (<Tk-composite-widget> <Entry>)
+  ((entry         :accessor      entry-of)
+   (label         :accessor      label-of)
+   (class         :init-keyword :class
+                  :init-form    "LabeledEntry")
+
+   ;; Fictive slots
+   (title         :accessor     title
+                  :init-keyword :title
+                  :allocation   :propagated
+                  :propagate-to ((label text)))
+   (title-width   :accessor     title-width
+                  :init-keyword :title-width
+                  :allocation   :propagated
+                  :propagate-to ((label width)))
+   (title-anchor  :accessor     title-anchor
+                  :init-keyword :title-anchor
+                  :allocation   :propagated
+                  :propagate-to ((label anchor)))
+   (anchor        :accessor     anchor
+                  :init-keyword :anchor
+                  :allocation   :propagated
+                  :propagate-to (label))
+   (background    :accessor     background
+                  :init-keyword :background
+                  :allocation   :propagated
+                  :propagate-to (frame entry label))
+   (foreground    :accessor     foreground
+                  :init-keyword :foreground
+                  :allocation   :propagated
+                  :propagate-to (entry label))
+   (border-width  :accessor     border-width 
+                  :allocation   :propagated
+                  :init-keyword :border-width
+                  :propagate-to (frame))
+   (relief        :accessor     relief
+                  :init-keyword :relief
+                  :allocation   :propagated
+                  :propagate-to (frame))
+   (entry-relief  :accessor     entry-relief
+                  :init-keyword :entry-relief
+                  :allocation   :propagated
+                  :propagate-to ((entry relief))) ))
+
+(define-method initialize-composite-widget ((self <Labeled-entry>) initargs frame)
+  (let* ((e (make <Entry> :parent frame))
+         (l (make <Label> :parent frame)))
+    (next-method)
+    (pack (Id l) :side "left"  :padx 2 :pady 2)
+    (pack e :side "right" :padx 2 :pady 2 :expand #t :fill "x")
+
+    (slot-set! self 'Id     (slot-ref e 'Id))
+    (slot-set! self 'entry  e)
+    (slot-set! self 'label  l)))
+

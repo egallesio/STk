@@ -1,4 +1,5 @@
 <HTML><HEAD><TITLE>Tk Built-In Commands - label manual page</TITLE></HEAD>
+<BR>
 <BODY bgcolor = #c3c3ff>
 <H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageBlue.gif"> label</H2>
 <I>Create and manipulate label widgets</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
@@ -20,9 +21,18 @@
 <H3><A NAME="M24">WIDGET-SPECIFIC OPTIONS</A></H3>
 <DL>
 <P>
+<DT><I>Name</I>:            <B>environment</B>
+<DT><I>Class</I>:           <B>Environment</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M25">:environment</A></B>
+<DT><I>STklos slot name</I>: <B>environment</B>
+<DD>Specifies the environment in which the <B>:textvariable</B> must be taken. 
+By convention, the value <B>#f</B> denotes the
+STk global environment (the default value of this option is false).
+<P>
+<P>
 <DT><I>Name</I>:            <B>height</B>
 <DT><I>Class</I>:           <B>Height</B>
-<DT><I>Option keyword</I>:  <B><A NAME="M25">:height</A></B>
+<DT><I>Option keyword</I>:  <B><A NAME="M26">:height</A></B>
 <DT><I>STklos slot name</I>: <B>height</B>
 <DD>Specifies a desired height for the label.
 If an image or bitmap is being displayed in the label then the value is in
@@ -34,7 +44,7 @@ from the size of the image or bitmap or text being displayed in it.
 <P>
 <DT><I>Name</I>:            <B>width</B>
 <DT><I>Class</I>:           <B>Width</B>
-<DT><I>Option keyword</I>:  <B><A NAME="M26">:width</A></B>
+<DT><I>Option keyword</I>:  <B><A NAME="M27">:width</A></B>
 <DT><I>STklos slot name</I>: <B>width</B>
 <DD>Specifies a desired width for the label.
 If an image or bitmap is being displayed in the label then the value is in
@@ -44,7 +54,7 @@ If this option isn't specified, the label's desired width is computed
 from the size of the image or bitmap or text being displayed in it.
 <P>
 </DL>
-<H3><A NAME="M27">DESCRIPTION</A></H3>
+<H3><A NAME="M28">DESCRIPTION</A></H3>
 The <B>label</B> procedure creates a new window (given by the
 <I>widget-name</I> argument) and makes it into a label widget.
 Additional
@@ -66,7 +76,7 @@ one of the characters may optionally be underlined using the
 The label can be manipulated in a few simple ways, such as
 changing its relief or text, using the procedures described below.
 
-<H3><A NAME="M28">WIDGET PROCEDURE</A></H3>
+<H3><A NAME="M29">WIDGET PROCEDURE</A></H3>
 The <B>label</B> procedure creates a new STk procedure whose
 name is <I>widget-name</I>.  This
 procedure may be used to invoke various
@@ -77,13 +87,13 @@ determine the exact behavior of the procedure.  The following
 procedures are possible for label widgets:
 <P>
 <DL>
-<DT><A NAME="M29">(<I>widget-name '</I><B>cget</B> <I>option</I>)</A><DD>
+<DT><A NAME="M30">(<I>widget-name '</I><B>cget</B> <I>option</I>)</A><DD>
 Returns the current value of the configuration option given
 by <I>option</I>.
 <I>Option</I> may have any of the values accepted by the <B>label</B>
 procedure.
 <P>
-<DT><A NAME="M30">(<I>widget-name '</I><B>configure</B> ?<I>option</I>? ?<I>value option value ...</I>?)</A><DD>
+<DT><A NAME="M31">(<I>widget-name '</I><B>configure</B> ?<I>option</I>? ?<I>value option value ...</I>?)</A><DD>
 Query or modify the configuration options of the widget.
 If no <I>option</I> is specified, returns a list describing all of
 the available options for <I>widget-name</I> (see <B>Tk_ConfigureInfo</B> for
@@ -99,12 +109,12 @@ procedure.
 
 <P>
 </DL>
-<H3><A NAME="M31">BINDINGS</A></H3>
+<H3><A NAME="M32">BINDINGS</A></H3>
 When a new label is created, it has no default event bindings:
 labels are not intended to be interactive.
 
-<H3><A NAME="M32">SEE ALSO</A></H3>
+<H3><A NAME="M33">SEE ALSO</A></H3>
 <B><A HREF="./message.n.html">message</A></B>
-<P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif"><P>
 <A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookBlue.gif"> Back to the <B>STk</B> main page</A>
 </BODY></HTML>

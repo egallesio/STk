@@ -4,7 +4,7 @@
 ;;;; a m i b . s t k l o s  --  A mini interface builder. I hope it will serve 
 ;;;;			        as the basis of something more complete...
 ;;;;
-;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -17,7 +17,7 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 22-May-1995 14:56
-;;;; Last file update: 26-Sep-1996 19:21
+;;;; Last file update:  3-Mar-1998 22:50
 
 (require "Tk-classes")
 
@@ -26,10 +26,10 @@
 ;;;; Definitions.
 ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(define *amib-version*		 0.3)
+(define *amib-version*		 0.5)
 (define *pretty-names*		(make-hash-table))
 (define *current-file*		#f)
-(define *special-slots*		'("id" "eid" "parent"))
+(define *special-slots*		'("id" "eid" "parent" "environment"))
 (define *delay*			100)
 ;;;;
 ;;;; All the widgets and their defaults
@@ -70,21 +70,22 @@
 				  'break))
 
 (define (make-drag-n-drop-widget type initargs)
-  (let ((m (make <Menu> :border-width 12 :background "Blue")))
+  (let ((m (make <Toplevel> :background "Blue" :override-redirect #t)))
     (pack (apply make type :parent m initargs) :padx 2 :pady 2)
     m))
 
 (define (Drag-n-Drop-Motion)
   (when d-n-d-widget
-      (apply menu-post d-n-d-widget (winfo 'pointerxy d-n-d-widget))
-      (after *delay* (lambda () (Drag-n-Drop-Motion)))))
+    (slot-set! d-n-d-widget 'geometry 
+	       (apply format #f "+~A+~A"  (winfo 'pointerxy d-n-d-widget)))
+    (after *delay* (lambda () (Drag-n-Drop-Motion)))))
 
 (define (Drag-n-Drop-Finish X Y)
   (when d-n-d-widget
     (let ((dwidth  (winfo 'width d-n-d-widget))
 	  (dheight (winfo 'height d-n-d-widget)))
-      ;; Unpost the d-n-d-widget to see on which window we depose it
-      (menu-unpost d-n-d-widget)
+      ;; iconify the d-n-d-widget and see on which window we depose it
+      (withdraw d-n-d-widget)
       
       (let* ((p    (Id->instance (winfo 'containing X Y)))
 	     (top  (Id->instance (winfo 'toplevel p))))
@@ -113,8 +114,6 @@
     (destroy d-n-d-widget)
     (set! d-n-d-widget #f)))
 
-
-
 (define (create-new-widget lb x y Xabs Yabs)
   (unless d-n-d-widget
       (let* ((index  (nearest lb y))
@@ -123,7 +122,7 @@
 	(when search 
 	    ;; Create a drag and drow window and post it under the mouse
 	    (let ((W (apply make-drag-n-drop-widget (cadr search) (cddr search))))
-	      (menu-post W Xabs Yabs)
+	      (set! (geometry W) (format #f "+~a+~a" Xabs Yabs))
 	      (bindtags W (cons "Dnd" (bindtags W)))
 	      (set! d-n-d-widget   W)
 	      (set! d-n-d-defaults (cdr search))
@@ -142,7 +141,7 @@
 		      :class "Amib-toplevel"
 		      :geometry (format #f "450x300+~A+~A" n n))))
 	(set! count (+ count 1))
-	(pack  (make <Frame> :parent t) :expand #t :fill "both")))))
+	(pack  (make <Frame> :parent t :border-width 0) :expand #t :fill "both")))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;
@@ -482,12 +481,11 @@
 ;;;; Code generation
 ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (define (Pretty-name w)
   (let ((name (hash-table-get *pretty-names* w #f)))
     (unless name
        ;; If this object has no name, a name is generated for it
-       (set! name (if (eqv? w *root*) "*root*" (gensym "W")))
+       (set! name (if (eqv? w *top-root*) "*top-root*" (gensym "W")))
        (hash-table-put! *pretty-names* w name))
     name))
 
@@ -500,7 +498,6 @@
 	 (use-pack?  (null? infos)))
     (if use-pack?
 	(set! infos (pack 'info w)))
-
     (format #t "(~A ~A " (if use-pack? "pack " "place") (pretty-name w))
 
     ;; Display informations returned by Tk
@@ -519,20 +516,19 @@
 				(loop (cddr i)))))))
 
 (define-method generate-placement ((w <Toplevel>))
-  (format #f ";; End of Toplevel ~A\n\n" (pretty-name w)))
+  #f)
 
 ;;;;
 ;;;; Generate-code-for-widget methods
 ;;;;
 (define-method generate-code-for-widget ((w <Toplevel>))
-  (format #t "\n;; Start of Toplevel ~A\n" (pretty-name w))
+  (format #t "\n;; Definition of Toplevel ~A\n" (pretty-name w))
   (next-method))
 
 (define-method generate-code-for-widget ((w <Tk-widget>))
   ;; Generate name
   (format #t ";-----------\n(define ~A (make ~A\n\t:parent ~A\n" 
 	     (pretty-name w) (class-name (class-of w)) (pretty-name (parent w)))
-
   ;; Generate non special slots
   (for-each (lambda (slot)
 	      (unless (member slot *special-slots*)
@@ -547,12 +543,10 @@
 	    (class-slots (class-of w)))
   ;; Close parenthesis
   (format #t "))\n\n")
-  
   ;; Generate code for embedded widgets. Don't do this if w is a composite
   (unless (is-a? w <Tk-composite-widget>)
      (for-each generate-code-for-widget
 	       (map Id->instance (winfo 'children w))))
-  
   ;; Generate placement for this widget
   (generate-placement w))
 
@@ -560,14 +554,19 @@
 ;;;; Generate-code (the entry point of code generation)
 ;;;;
 (define (generate-code file)
-  (with-output-to-file file
-    (lambda ()
-      (format #t ";;\n;; Code generated by Amib (v~A)\n;;\n" *amib-version*)
-      (for-each (lambda (x)
-		  (when (and (is-a? x <Toplevel>) 
-			     (not (equal? (slot-ref x 'class) "Amib")))
-			(generate-code-for-widget x)))
-		(map Id->instance (winfo 'children *root*))))))
+  (let ((all-tops (map Id->instance (winfo 'children *root*))))
+    (letrec ((dump(lambda (func)
+		    (for-each (lambda (x)
+				(when (and (is-a? x <Toplevel>) 
+					   (not (equal?(slot-ref x 'class) "Amib")))
+				  (func x)))
+			      all-tops))))
+      (with-output-to-file file
+	(lambda ()
+	  (format #t ";;\n;; Code generated by Amib (v~A)\n;;\n" *amib-version*)
+	  (format #t "(require \"Tk-classes\")")
+	  (dump generate-code-for-widget)
+	  (dump generate-placement))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;
@@ -581,11 +580,11 @@
       (write-file)))
 
 (define (load-file)
-  (let ((f (make-file-box)))
+  (let ((f (Tk:get-open-file)))
     (when f (load f))))
 
 (define (write-file)
-  (let ((f (make-file-box)))
+  (let ((f (Tk:get-save-file)))
     (when f
       (set! *current-file* f)
       (generate-code f))))

@@ -16,7 +16,7 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;    Creation date: 23-Aug-1994 16:53
-;;;; Last file update: 17-Oct-1994 18:26
+;;;; Last file update: 29-Oct-1996 16:34
 
 (format #t "
 *****
@@ -116,8 +116,6 @@
 		(unless (null? (editor-window 'tag 'ranges (car t)))
 			(format #t "Creation du tag ~S\n" (car t))
 			(make <Text-tag> :parent txt :Tid (car t) :font (cadr t))))
-	      all-fonts)))
-
-
+	      all-fonts))))
 
 (provide "compatibility")

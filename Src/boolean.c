@@ -2,7 +2,7 @@
  *
  * b o o l e a n . c			-- Booleans and Equivalence predicates
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1997 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -19,11 +19,14 @@
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 23-Oct-1993 21:37
- * Last file update: 19-Apr-1996 23:13
+ * Last file update: 30-May-1997 09:22
  */
 
 #include "stk.h"
 #include "extend.h"
+#ifdef USE_STKLOS
+#  include "stklos.h"
+#endif
 
 PRIMITIVE STk_not(SCM x)
 {
@@ -65,7 +68,8 @@ PRIMITIVE STk_eqv(SCM x, SCM y)
     		     break;
 #ifdef USE_STKLOS
     case tc_instance: {
-      			SCM fct = VCELL(STk_intern("object-eqv?"));
+      			SCM fct = STk_STklos_value(Intern("object-eqv?"));
+
 			/* Test for UNBOUND, cause gf are not defined during boot */
 			return (fct == UNBOUND) ? Ntruth : Apply(fct, LIST2(x, y));
     		      }
@@ -107,7 +111,8 @@ Top:
     		    break;
 #ifdef USE_STKLOS
     case tc_instance: {
-      			SCM fct = VCELL(STk_intern("object-equal?"));
+      			SCM fct = STk_STklos_value(Intern("object-equal?"));
+
 			/* Test for UNBOUND, cause gf are not defined during boot */
 			return (fct == UNBOUND) ? Ntruth :  Apply(fct, LIST2(x, y));
     		      }

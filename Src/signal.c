@@ -2,7 +2,7 @@
  *
  * s i g n a l . c			-- Signal handling
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -15,7 +15,7 @@
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 10-Oct-1995 07:55
- * Last file update: 23-Sep-1996 22:47
+ * Last file update: 10-Apr-1998 10:19
  *
  */
 
@@ -23,6 +23,7 @@
 #include <signal.h>
 
 #ifdef HAVE_SIGACTION
+   static sigset_t global_sigset;
 #  ifdef SA_RESTART
 #    define SA_FLAGS SA_RESTART
 #  else 
@@ -40,6 +41,16 @@ static SCM signals[MAX_SIGNAL];
  *			- #t if signal is set to default
  *			- a list of handlers
  */
+
+static void execute_signal_handlers(int sig, SCM handlers)
+{
+  SCM arg = LIST1(STk_makeinteger(sig));
+
+  for ( ; CONSP(handlers); handlers = CDR(handlers)) {
+    if (STk_apply(CAR(handlers), arg) == Sym_break) break;
+  } 
+}
+
 
 static void handle_sigint_signal(void)
 {
@@ -62,14 +73,35 @@ static void handle_sigint_signal(void)
     fprintf(STk_stderr, "*** Interrupt ***\n"); fflush(stderr);
     STk_err("", NIL);
   }
-  else {
-    SCM arg = LIST1(STk_makeinteger((long) SIGINT));
-
-    for ( ; CONSP(l); l = CDR(l)) {
-      if (STk_apply(CAR(l), arg) == Sym_break) break;
-    }
-  }
+  else
+    execute_signal_handlers(SIGINT, l);
 }
+
+#ifdef SIGSEGV
+static void handle_sigsegv_signal(void)
+{
+  SCM l = signals[SIGSEGV];
+  
+  if (l == NIL) {
+    /* User has not redefined SIGSEGV action */
+#ifdef HAVE_SIGACTION
+    /* See comment in procedure above */
+    sigset_t set;
+    
+    sigemptyset(&set);
+    sigaddset(&set, SIGSEGV);
+    sigprocmask(SIG_UNBLOCK, &set, NULL);
+#endif
+    /*  SEGV occurs generally when there is an error in the
+     * interpreter. We cannot do a lot of things here, excepted
+     * signalling this fact and go back to toplevel
+     */
+    Err("Segmentation violation: Returning to toplevel", NIL);
+  }
+  else 
+    execute_signal_handlers(SIGSEGV, l);
+}
+#endif
 
 
 void STk_handle_signal(int sig)
@@ -83,7 +115,7 @@ void STk_handle_signal(int sig)
 
   if (sig == SIGINT) {			/* SIGINT */
     if (STk_sigint_counter > 0) {
-      /* ^C is disallowed for now. (We are probably in sequence which
+      /* ^C is disallowed for now. (We are probably in a sequence which
        * uses malloc). Retain that a Control-C was issued and return
        */
       STk_control_C = 1;
@@ -92,12 +124,15 @@ void STk_handle_signal(int sig)
     }
     else handle_sigint_signal();
   }
-  
-  arg = LIST1(STk_makeinteger((long) sig));
-  for (l = signals[sig]; CONSP(l); l = CDR(l)) {
-    if (STk_apply(CAR(l), arg) == Sym_break) break;
+#ifdef SIGSEGV
+  else if (sig == SIGSEGV) {		/* SIGSEGV */
+     handle_sigsegv_signal();
   }
+#endif
+  else
+    execute_signal_handlers(sig, signals[sig]);
 }
+
 
 static SCM set_handler(long s, SCM proc)
 {
@@ -109,18 +144,21 @@ static SCM set_handler(long s, SCM proc)
   else
     /* Use our handler */
     handler = STk_handle_signal;
-      
+     
+  if (s < MAX_SYSTEM_SIG)
 #ifdef HAVE_SIGACTION
-  {
-    struct sigaction sigact;
-    
-    sigemptyset(&(sigact.sa_mask));
-    sigact.sa_handler = handler;
-    sigact.sa_flags   = SA_FLAGS;
-    sigaction(s, &sigact, NULL);
-  }
+    {
+      struct sigaction sigact;
+      
+      sigfillset(&(sigact.sa_mask));
+      /* FIXME: => handler non interruptible mais est-ce un problème en pratique? */
+      /* sigdelset(&(sigact.sa_mask), SIGINT);  */
+      sigact.sa_handler = handler;
+      sigact.sa_flags   = SA_FLAGS;
+      sigaction(s, &sigact, NULL);
+    }
 #else
-  signal(s, handler);
+    signal(s, handler);
 #endif
   return signals[s] = proc;
 }
@@ -187,6 +225,40 @@ void STk_mark_signal_table(void)
     STk_gc_mark(signals[i]);
 }
 
+
+void STk_ignore_signals(void)	/* Block all signals */
+{
+#ifdef HAVE_SIGACTION
+  sigset_t new;
+
+  sigfillset(&new);
+  sigprocmask(SIG_BLOCK, &new, &global_sigset);
+#endif
+}
+
+void STk_allow_signals(void)  /* Restore signals as  before ignore_signals */
+{
+#ifdef HAVE_SIGACTION
+  sigprocmask(SIG_SETMASK, &global_sigset, NULL);
+#endif
+}
+
+
+void STk_signal_GC(void)
+{
+  SCM old = signals[SIGHADGC];
+  
+  STk_ignore_signals();
+  /* Ignore this signal while executing the handler */
+  signals[SIGHADGC] = Ntruth;
+  execute_signal_handlers(SIGHADGC, old);
+  signals[SIGHADGC] = old;
+  STk_allow_signals();
+}
+ 
+/*******************************************************************************/
+
+
 void STk_init_signal(void)
 {
   int i;
@@ -209,117 +281,117 @@ void STk_init_signal(void)
    * POSIX.1 signals 
    */
 #ifdef SIGABRT
-  VCELL(Intern("SIGABRT")) = STk_makeinteger(SIGABRT);
+  STk_define_scheme_variable("SIGABRT", STk_makeinteger(SIGABRT));
 #endif
 #ifdef SIGALRM
-  VCELL(Intern("SIGALRM")) = STk_makeinteger(SIGALRM);
+  STk_define_scheme_variable("SIGALRM", STk_makeinteger(SIGALRM));
 #endif
 #ifdef SIGFPE
-  VCELL(Intern("SIGFPE")) = STk_makeinteger(SIGFPE);
+  STk_define_scheme_variable("SIGFPE", STk_makeinteger(SIGFPE));
 #endif
 #ifdef SIGHUP
-  VCELL(Intern("SIGHUP")) = STk_makeinteger(SIGHUP);
+  STk_define_scheme_variable("SIGHUP", STk_makeinteger(SIGHUP));
 #endif
 #ifdef SIGILL
-  VCELL(Intern("SIGILL")) = STk_makeinteger(SIGILL);
+  STk_define_scheme_variable("SIGILL", STk_makeinteger(SIGILL));
 #endif
 #ifdef SIGINT
-  VCELL(Intern("SIGINT")) = STk_makeinteger(SIGINT);
+  STk_define_scheme_variable("SIGINT", STk_makeinteger(SIGINT));
 #endif
 #ifdef SIGKILL
-  VCELL(Intern("SIGKILL")) = STk_makeinteger(SIGKILL);
+  STk_define_scheme_variable("SIGKILL", STk_makeinteger(SIGKILL));
 #endif
 #ifdef SIGPIPE
-  VCELL(Intern("SIGPIPE")) = STk_makeinteger(SIGPIPE);
+  STk_define_scheme_variable("SIGPIPE", STk_makeinteger(SIGPIPE));
 #endif
 #ifdef SIGQUIT
-  VCELL(Intern("SIGQUIT")) = STk_makeinteger(SIGQUIT);
+  STk_define_scheme_variable("SIGQUIT", STk_makeinteger(SIGQUIT));
 #endif
 #ifdef SIGSEGV
-  VCELL(Intern("SIGSEGV")) = STk_makeinteger(SIGSEGV);
+  STk_define_scheme_variable("SIGSEGV", STk_makeinteger(SIGSEGV));
 #endif
 #ifdef SIGTERM
-  VCELL(Intern("SIGTERM")) = STk_makeinteger(SIGTERM);
+  STk_define_scheme_variable("SIGTERM", STk_makeinteger(SIGTERM));
 #endif
 #ifdef SIGUSR1
-  VCELL(Intern("SIGUSR1")) = STk_makeinteger(SIGUSR1);
+  STk_define_scheme_variable("SIGUSR1", STk_makeinteger(SIGUSR1));
 #endif
 #ifdef SIGUSR2
-  VCELL(Intern("SIGUSR2")) = STk_makeinteger(SIGUSR2);
+  STk_define_scheme_variable("SIGUSR2", STk_makeinteger(SIGUSR2));
 #endif
 
   /* 
    * Following signals exist only on system which support Job Control 
    */
 #ifdef SIGCHLD
-  VCELL(Intern("SIGCHLD")) = STk_makeinteger(SIGCHLD);
+  STk_define_scheme_variable("SIGCHLD", STk_makeinteger(SIGCHLD));
 #endif
 #ifdef SIGCONT
-  VCELL(Intern("SIGCONT")) = STk_makeinteger(SIGCONT);
+  STk_define_scheme_variable("SIGCONT", STk_makeinteger(SIGCONT));
 #endif
 #ifdef SIGSTOP
-  VCELL(Intern("SIGSTOP")) = STk_makeinteger(SIGSTOP);
+  STk_define_scheme_variable("SIGSTOP", STk_makeinteger(SIGSTOP));
 #endif
 #ifdef SIGTSTP
-  VCELL(Intern("SIGTSTP")) = STk_makeinteger(SIGTSTP);
+  STk_define_scheme_variable("SIGTSTP", STk_makeinteger(SIGTSTP));
 #endif
 #ifdef SIGTTIN
-  VCELL(Intern("SIGTTIN")) = STk_makeinteger(SIGTTIN);
+  STk_define_scheme_variable("SIGTTIN", STk_makeinteger(SIGTTIN));
 #endif
 #ifdef SIGTTOU
-  VCELL(Intern("SIGTTOU")) = STk_makeinteger(SIGTTOU);
+  STk_define_scheme_variable("SIGTTOU", STk_makeinteger(SIGTTOU));
 #endif
 
   /*
-   * Non POSIX signals stolen on Suns and Linux
+   * Non POSIX signals stolen on Sun and Linux
    */
 
 #ifdef SIGTRAP
-  VCELL(Intern("SIGTRAP")) = STk_makeinteger(SIGTRAP);
+  STk_define_scheme_variable("SIGTRAP", STk_makeinteger(SIGTRAP));
 #endif
 #ifdef SIGIOT
-  VCELL(Intern("SIGIOT")) = STk_makeinteger(SIGIOT);
+  STk_define_scheme_variable("SIGIOT", STk_makeinteger(SIGIOT));
 #endif
 #ifdef SIGEMT
-  VCELL(Intern("SIGEMT")) = STk_makeinteger(SIGEMT);
+  STk_define_scheme_variable("SIGEMT", STk_makeinteger(SIGEMT));
 #endif
 #ifdef SIGBUS
-  VCELL(Intern("SIGBUS")) = STk_makeinteger(SIGBUS);
+  STk_define_scheme_variable("SIGBUS", STk_makeinteger(SIGBUS));
 #endif
 #ifdef SIGSYS
-  VCELL(Intern("SIGSYS")) = STk_makeinteger(SIGSYS);
+  STk_define_scheme_variable("SIGSYS", STk_makeinteger(SIGSYS));
 #endif
 #ifdef SIGURG
-  VCELL(Intern("SIGURG")) = STk_makeinteger(SIGURG);
+  STk_define_scheme_variable("SIGURG", STk_makeinteger(SIGURG));
 #endif
 #ifdef SIGCLD
-  VCELL(Intern("SIGCLD")) = STk_makeinteger(SIGCLD);
+  STk_define_scheme_variable("SIGCLD", STk_makeinteger(SIGCLD));
 #endif
 #ifdef SIGIO
-  VCELL(Intern("SIGIO")) = STk_makeinteger(SIGIO);
+  STk_define_scheme_variable("SIGIO", STk_makeinteger(SIGIO));
 #endif
 #ifdef SIGPOLL
-  VCELL(Intern("SIGPOLL")) = STk_makeinteger(SIGPOLL);
+  STk_define_scheme_variable("SIGPOLL", STk_makeinteger(SIGPOLL));
 #endif
 #ifdef SIGXCPU
-  VCELL(Intern("SIGXCPU")) = STk_makeinteger(SIGXCPU);
+  STk_define_scheme_variable("SIGXCPU", STk_makeinteger(SIGXCPU));
 #endif
 #ifdef SIGXFSZ
-  VCELL(Intern("SIGXFSZ")) = STk_makeinteger(SIGXFSZ);
+  STk_define_scheme_variable("SIGXFSZ", STk_makeinteger(SIGXFSZ));
 #endif
 #ifdef SIGVTALRM
-  VCELL(Intern("SIGVTALRM")) = STk_makeinteger(SIGVTALRM);
+  STk_define_scheme_variable("SIGVTALRM", STk_makeinteger(SIGVTALRM));
 #endif
 #ifdef SIGPROF
-  VCELL(Intern("SIGPROF")) = STk_makeinteger(SIGPROF);
+  STk_define_scheme_variable("SIGPROF", STk_makeinteger(SIGPROF));
 #endif
 #ifdef SIGWINCH
-  VCELL(Intern("SIGWINCH")) = STk_makeinteger(SIGWINCH);
+  STk_define_scheme_variable("SIGWINCH", STk_makeinteger(SIGWINCH));
 #endif
 #ifdef SIGLOST
-  VCELL(Intern("SIGLOST")) = STk_makeinteger(SIGLOST);
+  STk_define_scheme_variable("SIGLOST", STk_makeinteger(SIGLOST));
 #endif
 
   /* Add GC signal */
-  VCELL(Intern("SIGHADGC")) = STk_makeinteger(SIGHADGC);
+  STk_define_scheme_variable("SIGHADGC", STk_makeinteger(SIGHADGC));
 }

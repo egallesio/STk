@@ -1,7 +1,7 @@
 ;;;;
 ;;;; C a n v a s . s t k 	  --  Canvas class definition
 ;;;;
-;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -11,11 +11,24 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
+;;;; $Id: Canvas.stklos 1.4 Sun, 22 Mar 1998 20:42:56 +0100 eg $
+;;;;
 ;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;    Creation date: 18-Aug-1993 19:55
-;;;; Last file update: 23-Jul-1996 10:39
+;;;; Last file update: 22-Mar-1998 18:33
 
+(require "hash")
 (require "Basics")
+
+(select-module STklos+Tk)
+
+(export add-tag bounding-box bind canvas-x canvas-y coords (setter coords)
+	delete-chars canvas-delete delete-tag find-items item-with-focus
+	focus get-tags icursor text-index text-insert item-configure lower
+	move postscript raise rescale scan text-selection 
+	x-view x-view-scroll-units x-view-scroll-pages x-view-moveto
+	y-view y-view-scroll-units y-view-scroll-pages y-view-moveto
+	bind-for-dragging)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;
@@ -153,7 +166,7 @@
 ;;;
 ;;; Get-tags
 ;;;
-(define-method get-tags ((self <Canvas>) tag-or-Id)
+(define-method get-tags  ((self <Canvas>) tag-or-Id)
   ((slot-ref self 'Id) 'gettags (tag-value tag-or-Id)))
 
 ;;;
@@ -231,7 +244,7 @@
 (define-method x-view ((self <Canvas>) . args)
   (apply (slot-ref self 'Id) 'xview args))
 
-(define-method x-view-scroll-units((self <Canvas>) num)
+(define-method x-view-scroll-units ((self <Canvas>) num)
   ((slot-ref self 'Id) 'xview 'scroll num 'units))
 
 (define-method x-view-scroll-pages((self <Canvas>) num)
@@ -268,6 +281,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-generic bind-for-dragging)
+
 (let ()
   (define last-x 		   0)
   (define last-y 		   0)
@@ -334,5 +348,5 @@
       (bind self who (format #f "<~AButtonRelease-~A>" str but)
 	    (lambda (x y) (stop-drag self x y stop)))))))
 
-(require "Canvitem")
+(load "Canvitem")
 (provide "Canvas")

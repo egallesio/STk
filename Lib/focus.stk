@@ -1,7 +1,7 @@
 ;;;;
 ;;;; Focus management
 ;;;;
-;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1997 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -17,9 +17,10 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 27-Jul-1995 14:10
-;;;; Last file update:  4-Aug-1995 11:15
+;;;; Last file update: 27-Aug-1997 18:34
 ;;;;
 
+(select-module Tk)
 
 ;; tk_focusNext --
 ;; This procedure returns the name of the next window after "w" in
@@ -34,14 +35,6 @@
 
 (define Tk:focus-next 	#f)	; will be redefined below
 (define Tk:focus-prev	#f)	; will be redefined below
-
-;; ----------------------------------------------------------------------
-;; Default bindings for keyboard traversal.
-;; ----------------------------------------------------------------------
-
-(bind "all" "<Tab>" 	   (lambda (|W|) (focus (Tk:focus-next |W|))))
-(bind "all" "<Shift-Tab>"  (lambda (|W|) (focus (Tk:focus-prev |W|))))
-
 
 (let ()
   (define (all-children w)

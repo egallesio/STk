@@ -1,4 +1,7 @@
 ;;;;
+;;;; OBSOLETE CODE. IT WILL DISAPPEAR SOON
+;;;; DONT USE IT
+;;;;
 ;;;; h t m l . s t k 		-- HTML support (no forms yet)
 ;;;;
 ;;;;
@@ -15,7 +18,7 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date:  1-Sep-1995 09:52
-;;;; Last file update: 21-Jul-1996 18:41
+;;;; Last file update: 15-Nov-1996 18:40
 ;;;;
 
 (if (symbol-bound? '%init-html)

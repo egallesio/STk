@@ -2,7 +2,7 @@
  *
  * t k - g l u e . c 		- Glue function between the scheme and Tk worlds
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -19,7 +19,7 @@
  *
  *            Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 19-Feb-1993 22:15
- * Last file update: 13-Jun-1996 19:10
+ * Last file update: 10-Apr-1998 10:49
  *
  *
  */
@@ -33,76 +33,38 @@
 #define MAXARG 64	/* Max args on stack. Use malloc if greater */
 
 /* Scheme objects used to represent the "." pseudo widget and its name */
-SCM STk_root_window;
-SCM STk_root_window_name;
+SCM STk_root_window; ;	/* kept in a global to avoid application 
+			 * termination if redfined as UNBOUND */
 
 /* Last result of Tcl_GlobalEval (as a SCM object rather than a string) */
 SCM STk_last_Tk_result;
 
-static SCM TkResult2Scheme(Tcl_Interp *interp)
+
+SCM STk_convert_tcl_list_to_scheme(SCM l)
 {
-  register char*s= interp->result;
-  register SCM tmp1, tmp2, z, port;
-  SCM result = NIL;
-  int eof;
-
-  if (*s) {
-    /* Create a string port to read in the result */
-    port   = STk_internal_open_input_string(s);
-    result = STk_internal_read_from_string(port, &eof, TRUE);
-    if (result == Sym_dot) result = STk_root_window;
-
-    if (!eof) {
-      /*  Result was a list of value, build a proper Scheme list */
-      tmp1 = result = LIST1(result);
-      for ( ; ; ) {
-	z = STk_internal_read_from_string(port, &eof, TRUE);
-	if (z == EVAL_ERROR || EOFP(z)) break;
-	if (z == Sym_dot) z = STk_root_window;
-	NEWCELL(tmp2, tc_cons);
-	CAR(tmp2) = z; 
-	CDR(tmp1) = tmp2;
-	tmp1      = tmp2;
-      }
-      CDR(tmp1) = NIL;
-    }
-    /* close_string_port(port); */
-  }
-
-  Tcl_ResetResult(interp); 
-  return (result == EVAL_ERROR)? UNDEFINED: result;
+  if (!l) return NIL;
+  if (NCONSP(l)) return TCLOBJP(l) ? TCLOBJDATA(l) : l;
+  return Cons(STk_convert_tcl_list_to_scheme(CAR(l)),
+	      STk_convert_tcl_list_to_scheme(CDR(l)));
 }
 
-char *STk_convert_for_Tk(SCM obj, SCM *res)
+static SCM TkResult2Scheme(Tcl_Interp *interp, int objproc)
 {
-  switch (TYPE(obj)) {
-    case tc_symbol:    *res = obj; return PNAME(obj);
-    case tc_integer:
-    case tc_bignum:
-    case tc_flonum:    *res = STk_number2string(obj, UNBOUND); return CHARS(*res);
-    case tc_string:    *res = obj; return CHARS(obj);
-    case tc_tkcommand: return (obj->storage_as.tk.data)->Id;
-    case tc_keyword:   *res = obj; return obj->storage_as.keyword.data;
-    case tc_boolean:   return (obj == Truth)? "#t" : "#f";
-    default:           /* Ok, take the big hammer (i.e. use a string port for 
-			* type coercion) Here, use write (and not display) 
-			* since it handles complex data structures containing
-			* eventually special chars which must be escaped
-			* Ex: (bind .w "<Enter>" '(display "<Enter>"))
-			*     First <Enter> is unquotted and second is not
-			*/
-		       {
-			 SCM port;
-			 
-			 port = STk_open_output_string();
-			 STk_print(obj, port, TK_MODE); 
-			 *res = STk_get_output_string(port);
-			 return CHARS(*res);
-		       }
+  SCM res;
+
+  if (objproc) {
+    register SCM data = TCLOBJDATA((SCM) Tcl_GetObjResult(interp));
+    res = data ? STk_convert_tcl_list_to_scheme(data) : NIL;
   }
+  else {
+    register char *s = interp->result;
+    res = (*s) ? STk_convert_Tcl_string2list(s) : NIL;
+  }
+  Tcl_ResetResult(interp);
+
+  return res;
 }
 
- 
 SCM STk_execute_Tcl_lib_cmd(SCM cmd, SCM args, SCM env, int eval_args)
 {
   char *buffer[MAXARG+2];
@@ -111,8 +73,10 @@ SCM STk_execute_Tcl_lib_cmd(SCM cmd, SCM args, SCM env, int eval_args)
   int argc  	       = STk_llength(args);
   SCM conv_res, start  = args;
   struct Tk_command *W = cmd->storage_as.tk.data;
+  int objproc;
 
- 
+  objproc = W->objproc;
+
   if (argc >= MAXARG) {
     /* allocate dynamically the argv array (one extra for argv[0] and one 
      * for the NULL terminator -dsf
@@ -120,29 +84,44 @@ SCM STk_execute_Tcl_lib_cmd(SCM cmd, SCM args, SCM env, int eval_args)
     argv=(char **) must_malloc((argc+2) * sizeof(char *));
   }
 
-  /* 
-   * conv_res is (roughly) a vector of the values returned by convert_for_Tk. 
-   * It serves only to have pointers in the stack on the converted values. 
-   * This permits to avoid GC problems (i.e. a GC between 1 and argc 
-   * whereas convert_for_Tk has created new cells in a previous iteration 
-   */
-  conv_res = STk_makevect(argc+2, NIL);
-
   /* First initialize an argv array */
-  argv[0] = cmd->storage_as.tk.data->Id;
+  if (objproc) {
+    /* Objproc procedure (Tcl_8.0+) */
+    argv[0] = (char*) Tcl_NewStringObj(cmd->storage_as.tk.data->Id, -1);
+    for (argc = 1; NNULLP(args); argc++, args=CDR(args)) {
+      if (NCONSP(args)) Err("Malformed list of arguments", start);
+      argv[argc] = (char*) STk_create_tcl_object(eval_args ?
+						 STk_eval(CAR(args), env):
+						 CAR(args));
+    }
+  }
+  else {
+    /* Classical Tcl procedure */
+    /* 
+     * conv_res is (roughly) a vector of the values returned by convert_for_Tcl.
+     * It serves only to have pointers in the stack on the converted values. 
+     * This permits to avoid GC problems (i.e. a GC between 1 and argc 
+     * whereas convert_for_Tcl has created new cells in a previous iteration 
+     */
+    conv_res = STk_makevect(argc+2, NIL);
+
+    argv[0] = cmd->storage_as.tk.data->Id;
   
-  for (argc = 1; NNULLP(args); argc++, args=CDR(args)) {
-    if (NCONSP(args)) Err("Malformed list of arguments", start);
-    argv[argc] = STk_convert_for_Tk(eval_args ? STk_eval(CAR(args), env):CAR(args), 
-				    	      &(VECT(conv_res)[argc]));
+    for (argc = 1; NNULLP(args); argc++, args=CDR(args)) {
+      if (NCONSP(args)) Err("Malformed list of arguments", start);
+      argv[argc] = STk_convert_for_Tcl(eval_args?
+				           STk_eval(CAR(args),env):
+				           CAR(args), 
+				       &(VECT(conv_res)[argc]));
+    }
   }
   argv[argc] = NULL;
 
   /* Now, call the Tk library function */
   Tcl_ResetResult(STk_main_interp);
-
-  tkres = (*W->fct)(W->ptr, STk_main_interp, argc, argv);
   
+  tkres = (*W->fct)(W->ptr, STk_main_interp, argc, argv);
+
   if (argv != buffer) {
     /* argv was allocated dynamically. Dispose it */
     free(argv);
@@ -150,9 +129,24 @@ SCM STk_execute_Tcl_lib_cmd(SCM cmd, SCM args, SCM env, int eval_args)
 
   /* return result as a string or "evaluated" depending of string_result field */
   if (tkres == TCL_OK)
-    return TkResult2Scheme(STk_main_interp);
-  
-  Err(STk_main_interp->result, NIL);
+    return TkResult2Scheme(STk_main_interp, objproc);
+    
+  /* if we are here, we had an error. Signal it */
+  if (objproc) {
+    Tcl_Obj *mess = Tcl_GetObjResult(STk_main_interp);
+    SCM msg;
+
+    msg = TCLOBJDATA((SCM) mess);
+
+    if (!msg) msg = NIL;
+
+    if (NSTRINGP(msg))
+      Err("an error occured in a Tk procedure", msg);
+    else 
+      Err(CHARS(msg), NIL);
+  }
+  else
+    Err(STk_main_interp->result, NIL);
 }
 
 /******************************************************************************
@@ -167,7 +161,7 @@ static Tcl_HashTable Tk_callbacks;
 int STk_valid_callback(char *s, void **closure)
 {
   /* A callback is valid iff it is of the form "#pxxxx" where xxxx is composed
-   * only of hexadecimal digit.
+   * only of hexadecimal digits.
    * Furthermore, the given address must  be a valid adress
    */
   int l = strlen(s);
@@ -265,7 +259,6 @@ void STk_mark_callbacks(void)
       for (entry2 = Tcl_FirstHashEntry(secondary, &search2);
 	   entry2;
 	   entry2 = Tcl_NextHashEntry(&search2)) {
-	
 	STk_gc_mark((SCM) Tcl_GetHashValue(entry2));
       }
     }
@@ -329,30 +322,10 @@ SCM STk_get_NIL_value(void)
   return NIL;
 }
 
-
-/*
- * STk_stringify permits to transform the string "s" in a valid STk string.
- * Original string is deallocated if free_original is 1 
- */
-
-char *STk_stringify(char *s, int free_original)
+SCM STk_get_widget_value(char *name)
 {
-  char *res, *d;
-  
-  if (s == NULL) s = "";
-  res = d = must_malloc(2 * strlen(s) + 3); /* worst overestimation */
-  
-  for ( *d++ = '"'; *s; s++, d++) {
-    if (*s == '"' || *s == '\\') *d++ = '\\';
-    *d = *s;
-  }
-  *d++ = '"';
-  *d   = '\0';
-  
-  if (free_original) free(s);
-  return res;
+  return STk_lookup_variable(name, STk_Tk_module);
 }
-
 
 /******************************************************************************
  *
@@ -385,10 +358,10 @@ void STk_init_glue(void)
    * pair).
    *
    */
-  STk_root_window_name=Intern(ROOT_WINDOW);   STk_gc_protect(&STk_root_window_name);
-  STk_root_window     =STk_eval(Sym_dot, NIL);STk_gc_protect(&STk_root_window);
+  STk_root_window = STk_lookup_variable(".", STk_Tk_module);
+  STk_gc_protect(&STk_root_window);
 
-  VCELL(STk_root_window_name) = STk_root_window;
+  STk_define_variable(ROOT_WINDOW, STk_root_window, STk_Tk_module);
 
   /* Init the callback table */
   Tcl_InitHashTable(&Tk_callbacks, TCL_STRING_KEYS);

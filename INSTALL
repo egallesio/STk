@@ -95,11 +95,8 @@ available when compiling STk and their default value.
   |		|	  | systems				  |
   |-------------|-------------------------------------------------|
   | pixmap	[ enabled | Add pixmap support for Tk images	  |
-  |		|	  | Use --with-pixmap=XXX if configure	  |
-  |		|	  | can't locate your Xpm library. XXX	  |
-  |		|	  | is the linking option you need for	  |
-  |		|	  | using pixmaps. For example,		  |
-  |		|	  |   -with-pixmap='-L/home/X11 -lXpm'	  |
+  |-------------|-------------------------------------------------|
+  | jpeg	[ enabled | Add JPEG support for Tk images	  |
   |-------------|-------------------------------------------------|
   | html	| enabled | Compile support for html		  |
   |-------------|-------------------------------------------------|
@@ -141,7 +138,7 @@ can do a minimal test of stk with
 This will bring a little squared window on your screen (if your DISPLAY
 variable is correctly set). When this is done, enter the following  line
 
-	(pack (button '.test :text "Hello, world" :command '(destroy *root*)))
+	(pack (button '.test :text "Hello, world" :command (lambda () (exit 0))))
 
 at the scheme prompt. This will display an Hello world button. Clicking on it 
 will leave the scheme interpreter. A more complete demo can be obtained with:
@@ -175,6 +172,10 @@ To install stk in the definitive place, type
 Intalling STk and Tk manual pages is done with
 
 	$ make install.man
+
+Intalling STk and Tk libraries is done with
+
+	$ make install.lib
 
 Have fun
 

@@ -1,7 +1,7 @@
 ;;;;
 ;;;; P a n e d . s t k 	  	      --  HPaned and VPaned composite widgets
 ;;;;
-;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -13,51 +13,93 @@
 ;;;;
 ;;;; Idea of this implementation was found in comp.lang.tcl. 
 ;;;; Original author seems to be James Noble and the version from which this 
-;;;; stuff is derivated is Jay Schmidgall (shmdgljd@ghostwind.rchland.ibm.com).
+;;;; stuff is derivated is from Jay Schmidgall (shmdgljd@ghostwind.rchland.ibm.com).
+;;;;
+;;;; $Id: Paned.stklos 1.2 Sun, 01 Feb 1998 23:14:16 +0100 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;    Creation date: 22-Mar-1994 13:05
-;;;; Last file update: 13-Aug-1996 23:22
+;;;; Last file update: 31-Jan-1998 16:04
 
-(require "Frame")
+(require "Basics")
+
+(select-module STklos+Tk)
+
+;;;
+;;; Globals
+;;;
 
 (define paned:drag-start 0)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;
-;;;; <HPaned> class definition
-;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;=============================================================================
+;
+; 				< H P a n e d > 
+;
+;=============================================================================
+
+;;;
+;;; Resources
+;;;
+
+(option 'add "*HPaned.Grip.Background"   "Black"             "widgetDefault")
+(option 'add "*HPaned.Grip.Relief"       "raised"            "widgetDefault")
+(option 'add "*HPaned.Grip.BorderWidth"  2                   "widgetDefault")
+(option 'add "*HPaned.Grip.Cursor"       "sb_v_double_arrow" "widgetDefault")
+(option 'add "*HPaned.Grip.Width"        12                  "widgetDefault")
+(option 'add "*HPaned.Grip.Height"       8                   "widgetDefault")
+
+(option 'add "*HPaned.Separator.BorderWidth" 2       "widgetDefault")
+(option 'add "*HPaned.Separator.Relief"      "solid" "widgetDefault")
+
+
+;;;
+;;; Class definition
+;;;
 
 (define-class <HPaned> (<Tk-composite-widget>)
-  ((top-frame    :accessor     top-frame-of)
-   (bottom-frame :accessor     bottom-frame-of)
-   (grip	 :accessor     grip-of)
-   (separator	 :accessor     separator-of)
-   (fraction     :init-keyword :fraction)
+  ((class 	    :init-keyword :class
+		    :init-form    "HPaned")
+   (top-frame       :accessor     top-frame-of)
+   (bottom-frame    :accessor     bottom-frame-of)
+   (grip	    :accessor     grip-of)
+   (separator	    :accessor     separator-of)
+   (fraction        :init-keyword :fraction)
    ;; Fictives slot
-   (background   :accessor     background
-		 :init-keyword :background
-		 :allocation   :propagated
-		 :propagate-to (frame top-frame bottom-frame grip separator))
-   (width	 :accessor     width
-		 :init-keyword :width
-		 :allocation   :propagated
-		 :propagate-to (frame))
-   (height	 :accessor     height
-		 :init-keyword :height
-		 :allocation   :propagated
-		 :propagate-to (frame))))
-
+   (background      :accessor     background
+		    :init-keyword :background
+		    :allocation   :propagated
+		    :propagate-to (frame top-frame bottom-frame grip separator))
+   (grip-background :accessor     grip-background
+		    :init-keyword :grip-background
+		    :allocation   :propagated
+		    :propagate-to ((grip background)))
+   (border-width    :accessor     border-width
+		    :allocation   :propagated
+		    :propagate-to (frame))
+   (internal-relief :accessor     internal-relief
+		    :init-keyword :internal-relief
+		    :allocation   :propagated
+		    :propagate-to ((separator relief)))
+   (relief	    :accessor     relief
+		    :init-keyword :relief
+		    :allocation   :propagated
+		    :propagate-to (frame))
+   (width	    :accessor     width
+		    :init-keyword :width
+		    :allocation   :propagated
+		    :propagate-to (frame))
+   (height	    :accessor     height
+		    :init-keyword :height
+		    :allocation   :propagated
+		    :propagate-to (frame))))
 
 (define-method initialize-composite-widget ((self <HPaned>) initargs frame)
-  (let ((grip  (make <Frame> :parent frame :width 10 :height 10 :border-width 2 
-		    	     :relief "raised"  :cursor "crosshair"))
-	(separ (make <Frame> :parent frame :width 1 :height 4
-		     	     :border-width 2 :relief "ridge"))
+  (let ((grip  (make <Frame> :parent frame :class "Grip"))
+	(separ (make <Frame> :parent frame :class "Separator" :width 1 :height 4))
 	(top   (make <Frame> :parent frame :border-width 2 :relief "raised"))
 	(bot   (make <Frame> :parent frame :border-width 2 :relief "raised")))
-
+    
+    (next-method)
     
     ;; Associate bindings to the grip
     (bind grip "<Button-1>"  		(lambda (y) (start-grip  self y)))
@@ -111,41 +153,73 @@
 (define-method stop-grip ((self <HPaned>) y)
   (place-grip self))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;
-;;;; <VPaned> class definition
-;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;=============================================================================
+;
+; 			< V P a n e d >
+;
+;=============================================================================
 
+;;;
+;;; Resources
+;;;
+
+(option 'add "*VPaned.Grip.Background" "Black"     	   "widgetDefault")
+(option 'add "*VPaned.Grip.Relief"     "raised"    	   "widgetDefault")
+(option 'add "*VPaned.Grip.BorderWidth" 2          	   "widgetDefault")
+(option 'add "*VPaned.Grip.Cursor"     "sb_h_double_arrow" "widgetDefault")
+(option 'add "*VPaned.Grip.Width"       8          	   "widgetDefault")
+(option 'add "*VPaned.Grip.Height"     12          	   "widgetDefault")
+
+(option 'add "*VPaned.Separator.BorderWidth" 2       "widgetDefault")
+(option 'add "*VPaned.Separator.Relief"      "solid" "widgetDefault")
+
+;;;
+;;; Class definition
+;;;
 (define-class <VPaned> (<Tk-composite-widget>)
-  ((left-frame   :accessor     left-frame-of)
+  ((class 	 :init-keyword :class
+		 :init-form    "VPaned")
+   (left-frame   :accessor     left-frame-of)
    (right-frame  :accessor     right-frame-of)
    (grip	 :accessor     grip-of)
    (separator	 :accessor     separator-of)
    (fraction     :init-keyword :fraction)
    ;; Fictives slots
-   (background   :accessor     background
-		 :init-keyword :background
-		 :allocation   :propagated
-		 :propagate-to    (frame left-frame right-frame grip separator))
-   (width	 :accessor     width
-		 :init-keyword :width
-		 :allocation   :propagated
-		 :propagate-to (frame))
-   (height	 :accessor     height
-		 :init-keyword :height
-		 :allocation   :propagated
-		 :propagate-to (frame))))
-
+   (background      :accessor     background
+		    :init-keyword :background
+		    :allocation   :propagated
+		    :propagate-to (frame left-frame right-frame grip separator))
+   (grip-background :accessor     grip-background
+		    :init-keyword :grip-background
+		    :allocation   :propagated
+		    :propagate-to ((grip background)))
+   (border-width    :accessor     border-width
+		    :allocation   :propagated
+		    :propagate-to (frame))
+   (internal-relief :accessor     internal-relief
+		    :init-keyword :internal-relief
+		    :allocation   :propagated
+		    :propagate-to ((separator relief)))
+   (relief	    :accessor     relief
+		    :init-keyword :relief
+		    :allocation   :propagated
+		    :propagate-to (frame))
+   (width	    :accessor     width
+		    :init-keyword :width
+		    :allocation   :propagated
+		    :propagate-to (frame))
+   (height	    :accessor     height
+		    :init-keyword :height
+		    :allocation   :propagated
+		    :propagate-to (frame))))
 
 (define-method initialize-composite-widget ((self <VPaned>) initargs frame)
-  (let ((grip  (make <Frame> :parent frame :width 10 :height 10 :border-width 2 
-		    	     :relief "raised"  :cursor "crosshair"))
-	(separ (make <Frame> :parent frame :width 4 :height 1
-		     	     :border-width 2 :relief "ridge"))
-	(left   (make <Frame> :parent frame :border-width 2 :relief "raised"))
-	(right  (make <Frame> :parent frame :border-width 2 :relief "raised")))
+  (let ((grip  (make <Frame> :parent frame :class "Grip"))
+	(separ (make <Frame> :parent frame :class "Separator":width 4 :height 1))
+	(left  (make <Frame> :parent frame :border-width 2 :relief "raised"))
+	(right (make <Frame> :parent frame :border-width 2 :relief "raised")))
 
+    (next-method)
     
     ;; Associate bindings to the grip
     (bind grip "<Button-1>"  		(lambda (x) (start-grip  self x)))
@@ -201,3 +275,11 @@
 
 
 (provide "Paned")
+
+#|
+     Example:
+
+	(define x (make <HPaned> :width 200 :height 300))
+	(define y (make <VPaned> :parent (top-frame-of x) :fraction 0.75))
+	(pack x y :fill "both" :expand #t)
+|#

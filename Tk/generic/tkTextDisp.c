@@ -6,12 +6,12 @@
  *	of text widgets.
  *
  * Copyright (c) 1992-1994 The Regents of the University of California.
- * Copyright (c) 1994-1995 Sun Microsystems, Inc.
+ * Copyright (c) 1994-1997 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkTextDisp.c 1.112 96/06/12 18:12:21
+ * SCCS: @(#) tkTextDisp.c 1.124 97/07/11 18:01:03
  */
 
 #include "tkPort.h"
@@ -34,7 +34,7 @@ typedef struct StyleValues {
     Pixmap bgStipple;		/* Stipple bitmap for background.  None
 				 * means draw solid. */
     XColor *fgColor;		/* Foreground color for text. */
-    XFontStruct *fontPtr;	/* Font for displaying text. */
+    Tk_Font tkfont;		/* Font for displaying text. */
     Pixmap fgStipple;		/* Stipple bitmap for text and other
 				 * foreground stuff.   None means draw
 				 * solid.*/
@@ -330,9 +330,14 @@ static void		GetYView _ANSI_ARGS_((Tcl_Interp *interp,
 			    TkText *textPtr, int report));
 static DLine *		LayoutDLine _ANSI_ARGS_((TkText *textPtr,
 			    TkTextIndex *indexPtr));
+static int		MeasureChars _ANSI_ARGS_((Tk_Font tkfont,
+			    CONST char *source, int maxChars, int startX,
+			    int maxX, int tabOrigin, int *nextXPtr));
 static void		MeasureUp _ANSI_ARGS_((TkText *textPtr,
 			    TkTextIndex *srcPtr, int distance,
 			    TkTextIndex *dstPtr));
+static int		NextTabStop _ANSI_ARGS_((Tk_Font tkfont, int x,
+			    int tabOrigin));
 static void		UpdateDisplayInfo _ANSI_ARGS_((TkText *textPtr));
 static void		ScrollByLines _ANSI_ARGS_((TkText *textPtr,
 			    int offset));
@@ -496,7 +501,7 @@ GetStyle(textPtr, indexPtr)
     memset((VOID *) &styleValues, 0, sizeof(StyleValues));
     styleValues.relief = TK_RELIEF_FLAT;
     styleValues.fgColor = textPtr->fgColor;
-    styleValues.fontPtr = textPtr->fontPtr;
+    styleValues.tkfont = textPtr->tkfont;
     styleValues.justify = TK_JUSTIFY_LEFT;
     styleValues.spacing1 = textPtr->spacing1;
     styleValues.spacing2 = textPtr->spacing2;
@@ -505,6 +510,18 @@ GetStyle(textPtr, indexPtr)
     styleValues.wrapMode = textPtr->wrapMode;
     for (i = 0 ; i < numTags; i++) {
 	tagPtr = tagPtrs[i];
+
+	/*
+	 * On Windows and Mac, we need to skip the selection tag if
+	 * we don't have focus.
+	 */
+
+#ifndef ALWAYS_SHOW_SELECTION
+	if ((tagPtr == textPtr->selTagPtr) && !(textPtr->flags & GOT_FOCUS)) {
+	    continue;
+	}
+#endif
+
 	if ((tagPtr->border != NULL) && (tagPtr->priority > borderPrio)) {
 	    styleValues.border = tagPtr->border;
 	    borderPrio = tagPtr->priority;
@@ -531,8 +548,8 @@ GetStyle(textPtr, indexPtr)
 	    styleValues.fgColor = tagPtr->fgColor;
 	    fgPrio = tagPtr->priority;
 	}
-	if ((tagPtr->fontPtr != None) && (tagPtr->priority > fontPrio)) {
-	    styleValues.fontPtr = tagPtr->fontPtr;
+	if ((tagPtr->tkfont != None) && (tagPtr->priority > fontPrio)) {
+	    styleValues.tkfont = tagPtr->tkfont;
 	    fontPrio = tagPtr->priority;
 	}
 	if ((tagPtr->fgStipple != None)
@@ -637,7 +654,7 @@ GetStyle(textPtr, indexPtr)
     }
     mask = GCForeground|GCFont;
     gcValues.foreground = styleValues.fgColor->pixel;
-    gcValues.font = styleValues.fontPtr->fid;
+    gcValues.font = Tk_FontId(styleValues.tkfont);
     if (styleValues.fgStipple != None) {
 	gcValues.stipple = styleValues.fgStipple;
 	gcValues.fill_style = FillStippled;
@@ -1709,7 +1726,24 @@ DisplayLineBackground(textPtr, dlPtr, prevPtr, pixmap)
     xOffset = dInfoPtr->x - minX;
     maxX = minX + dInfoPtr->maxX - dInfoPtr->x;
     chunkPtr = dlPtr->chunkPtr;
-    leftX = chunkPtr->x;
+
+    /*
+     * Note A: in the following statement, and a few others later in
+     * this file marked with "See Note A above", the right side of the
+     * assignment was replaced with 0 on 6/18/97.  This has the effect
+     * of highlighting the empty space to the left of a line whenever
+     * the leftmost character of the line is highlighted.  This way,
+     * multi-line highlights always line up along their left edges. 
+     * However, this may look funny in the case where a single word is
+     * highlighted. To undo the change, replace "leftX = 0" with "leftX
+     * = chunkPtr->x" and "rightX2 = 0" with "rightX2 = nextPtr2->x"
+     * here and at all the marked points below.  This restores the old
+     * behavior where empty space to the left of a line is not
+     * highlighted, leaving a ragged left edge for multi-line
+     * highlights.
+     */
+
+    leftX = 0;
     for (; leftX < maxX; chunkPtr = chunkPtr->nextPtr) {
 	if ((chunkPtr->nextPtr != NULL)
 		&& SAME_BACKGROUND(chunkPtr->nextPtr->stylePtr,
@@ -1746,7 +1780,7 @@ DisplayLineBackground(textPtr, dlPtr, prevPtr, pixmap)
      */
 
     chunkPtr = dlPtr->chunkPtr;
-    leftX = chunkPtr->x;
+    leftX = 0;				/* See Note A above. */
     leftXIn = 1;
     rightX = chunkPtr->x + chunkPtr->width;
     if ((chunkPtr->nextPtr == NULL) && (rightX < maxX)) {
@@ -1759,7 +1793,7 @@ DisplayLineBackground(textPtr, dlPtr, prevPtr, pixmap)
 	 */
 
 	nextPtr2 = prevPtr->chunkPtr;
-	rightX2 = nextPtr2->x;
+	rightX2 = 0;			/* See Note A above. */
 	while (rightX2 <= leftX) {
 	    chunkPtr2 = nextPtr2;
 	    if (chunkPtr2 == NULL) {
@@ -1867,7 +1901,7 @@ DisplayLineBackground(textPtr, dlPtr, prevPtr, pixmap)
      */
 
     chunkPtr = dlPtr->chunkPtr;
-    leftX = chunkPtr->x;
+    leftX = 0;				/* See Note A above. */
     leftXIn = 0;
     rightX = chunkPtr->x + chunkPtr->width;
     if ((chunkPtr->nextPtr == NULL) && (rightX < maxX)) {
@@ -1880,7 +1914,7 @@ DisplayLineBackground(textPtr, dlPtr, prevPtr, pixmap)
 	 */
 
 	nextPtr2 = dlPtr->nextPtr->chunkPtr;
-	rightX2 = nextPtr2->x;
+	rightX2 = 0;			/* See Note A above. */
 	while (rightX2 <= leftX) {
 	    chunkPtr2 = nextPtr2;
 	    if (chunkPtr2 == NULL) {
@@ -2152,8 +2186,8 @@ DisplayText(clientData)
 
 	damageRgn = TkCreateRegion();
 	if (TkScrollWindow(textPtr->tkwin, dInfoPtr->scrollGC,
-		dInfoPtr->x - textPtr->padX, oldY,
-		(dInfoPtr->maxX - (dInfoPtr->x - textPtr->padX)), height,
+		dInfoPtr->x, oldY,
+		(dInfoPtr->maxX - dInfoPtr->x), height,
 		0, y - oldY, damageRgn)) {
 	    TextInvalidateRegion(textPtr, damageRgn);
 	}
@@ -2192,7 +2226,6 @@ DisplayText(clientData)
 
             goto end;
         }
-
 	Tk_Draw3DRectangle(textPtr->tkwin, Tk_WindowId(textPtr->tkwin),
 		textPtr->border, textPtr->highlightWidth,
 		textPtr->highlightWidth,
@@ -2482,9 +2515,11 @@ TextInvalidateRegion(textPtr, region)
      */
 
     inset = textPtr->borderWidth + textPtr->highlightWidth;
-    if ((rect.x < inset) || (rect.y < inset)
-	    || ((rect.x + rect.width) > (Tk_Width(textPtr->tkwin) - inset))
-	    || (maxY > (Tk_Height(textPtr->tkwin) - inset))) {
+    if ((rect.x < (inset + textPtr->padX))
+	    || (rect.y < (inset + textPtr->padY))
+	    || ((int) (rect.x + rect.width) > (Tk_Width(textPtr->tkwin)
+		    - inset - textPtr->padX))
+	    || (maxY > (Tk_Height(textPtr->tkwin) - inset - textPtr->padY))) {
 	dInfoPtr->flags |= REDRAW_BORDERS;
     }
 }
@@ -2866,8 +2901,9 @@ TkTextSetYView(textPtr, indexPtr, pickPlace)
 {
     TextDInfo *dInfoPtr = textPtr->dInfoPtr;
     register DLine *dlPtr;
-    int bottomY, close, lineIndex, lineHeight;
+    int bottomY, close, lineIndex;
     TkTextIndex tmpIndex, rounded;
+    Tk_FontMetrics fm;
 
     /*
      * If the specified position is the extra line at the end of the
@@ -2929,13 +2965,13 @@ TkTextSetYView(textPtr, indexPtr, pickPlace)
      * account for the way MeasureUp rounds.
      */
 
-    lineHeight = textPtr->fontPtr->ascent + textPtr->fontPtr->descent;
-    bottomY = (dInfoPtr->y + dInfoPtr->maxY + lineHeight)/2;
+    Tk_GetFontMetrics(textPtr->tkfont, &fm);
+    bottomY = (dInfoPtr->y + dInfoPtr->maxY + fm.linespace)/2;
     close = (dInfoPtr->maxY - dInfoPtr->y)/3;
-    if (close < 3*lineHeight) {
-	close = 3*lineHeight;
+    if (close < 3*fm.linespace) {
+	close = 3*fm.linespace;
     }
-    close += lineHeight;
+    close += fm.linespace;
     if (dlPtr != NULL) {
 	/*
 	 * The desired line is above the top of screen.  If it is
@@ -3255,8 +3291,8 @@ TkTextXviewCmd(textPtr, interp, argc, argv)
 	    if (fraction < 0) {
 		fraction = 0;
 	    }
-	    newOffset = ((fraction * dInfoPtr->maxLength) / textPtr->charWidth)
-		    + 0.5;
+	    newOffset = (int) (((fraction * dInfoPtr->maxLength) / textPtr->charWidth)
+		    + 0.5);
 	    break;
 	case TK_SCROLL_PAGES:
 	    charsPerPage = ((dInfoPtr->maxX - dInfoPtr->x) / textPtr->charWidth)
@@ -3418,7 +3454,8 @@ TkTextYviewCmd(textPtr, interp, argc, argv)
 				 * argv[1] is "yview". */
 {
     TextDInfo *dInfoPtr = textPtr->dInfoPtr;
-    int pickPlace, lineNum, type, lineHeight;
+    int pickPlace, lineNum, type, charsInLine;
+    Tk_FontMetrics fm;
     int pixels, count;
     size_t switchLength;
     double fraction;
@@ -3489,10 +3526,13 @@ TkTextYviewCmd(textPtr, interp, argc, argv)
 		fraction = 0;
 	    }
 	    fraction *= TkBTreeNumLines(textPtr->tree);
-	    lineNum = fraction;
+	    lineNum = (int) fraction;
 	    TkTextMakeIndex(textPtr->tree, lineNum, 0, &index);
-	    index.charIndex = TkBTreeCharsInLine(index.linePtr)
-		    * (fraction-lineNum) + 0.5;
+	    charsInLine = TkBTreeCharsInLine(index.linePtr);
+	    index.charIndex = (int)((charsInLine * (fraction-lineNum)) + 0.5);
+	    if (index.charIndex >= charsInLine) {
+		TkTextMakeIndex(textPtr->tree, lineNum+1, 0, &index);
+	    }
 	    TkTextSetYView(textPtr, &index, 0);
 	    break;
 	case TK_SCROLL_PAGES:
@@ -3502,10 +3542,10 @@ TkTextYviewCmd(textPtr, interp, argc, argv)
 	     * overlap between adjacent pages.
 	     */
 
-	    lineHeight = textPtr->fontPtr->ascent + textPtr->fontPtr->descent;
+	    Tk_GetFontMetrics(textPtr->tkfont, &fm);
 	    if (count < 0) {
-		pixels = (dInfoPtr->maxY - 2*lineHeight - dInfoPtr->y)*(-count)
-			+ lineHeight;
+		pixels = (dInfoPtr->maxY - 2*fm.linespace - dInfoPtr->y)*(-count)
+			+ fm.linespace;
 		MeasureUp(textPtr, &textPtr->topIndex, pixels, &new);
 		if (TkTextIndexCmp(&textPtr->topIndex, &new) == 0) {
 		    /*
@@ -3523,7 +3563,7 @@ TkTextYviewCmd(textPtr, interp, argc, argv)
 		 * top index and count through the desired vertical distance.
 		 */
 
-		pixels = (dInfoPtr->maxY - 2*lineHeight - dInfoPtr->y)*count;
+		pixels = (dInfoPtr->maxY - 2*fm.linespace - dInfoPtr->y)*count;
 		lastLinePtr = TkBTreeFindLine(textPtr->tree,
 			TkBTreeNumLines(textPtr->tree));
 		do {
@@ -3582,6 +3622,7 @@ TkTextScanCmd(textPtr, interp, argc, argv)
     TextDInfo *dInfoPtr = textPtr->dInfoPtr;
     TkTextIndex index;
     int c, x, y, totalScroll, newChar, maxChar;
+    Tk_FontMetrics fm;
     size_t length;
 
     if (argc != 5) {
@@ -3623,8 +3664,8 @@ TkTextScanCmd(textPtr, interp, argc, argv)
 	}
 	dInfoPtr->newCharOffset = newChar;
 
-	totalScroll = (10*(dInfoPtr->scanMarkY - y))
-		/ (textPtr->fontPtr->ascent + textPtr->fontPtr->descent);
+	Tk_GetFontMetrics(textPtr->tkfont, &fm);
+	totalScroll = (10*(dInfoPtr->scanMarkY - y)) / fm.linespace;
 	if (totalScroll != dInfoPtr->scanTotalScroll) {
 	    index = textPtr->topIndex;
 	    ScrollByLines(textPtr, totalScroll-dInfoPtr->scanTotalScroll);
@@ -4199,11 +4240,12 @@ TkTextCharLayoutProc(textPtr, indexPtr, segPtr, offset, maxX, maxChars,
 				 * about this chunk.  The x field has already
 				 * been set by the caller. */
 {
-    XFontStruct *fontPtr;
+    Tk_Font tkfont;
     int nextX, charsThatFit, count;
     CharInfo *ciPtr;
     char *p;
     TkTextSegment *nextPtr;
+    Tk_FontMetrics fm;
 
     /*
      * Figure out how many characters will fit in the space we've got.
@@ -4218,23 +4260,16 @@ TkTextCharLayoutProc(textPtr, indexPtr, segPtr, offset, maxX, maxChars,
      */
 
     p = segPtr->body.chars + offset;
-    fontPtr = chunkPtr->stylePtr->sValuePtr->fontPtr;
-    charsThatFit = TkMeasureChars(fontPtr, p, maxChars, chunkPtr->x,
-	    maxX, 0, TK_IGNORE_TABS, &nextX);
+    tkfont = chunkPtr->stylePtr->sValuePtr->tkfont;
+    charsThatFit = MeasureChars(tkfont, p, maxChars, chunkPtr->x, maxX, 0,
+	    &nextX);
     if (charsThatFit < maxChars) {
 	if ((charsThatFit == 0) && noCharsYet) {
 	    charsThatFit = 1;
-	    TkMeasureChars(fontPtr, p, 1, chunkPtr->x, INT_MAX, 0,
-		    TK_IGNORE_TABS, &nextX);
+	    MeasureChars(tkfont, p, 1, chunkPtr->x, INT_MAX, 0, &nextX);
 	}
-	if (p[charsThatFit] == '\n' || p[charsThatFit] == '\r') {
-	    /*
-	     * A newline character takes up no space, so if the previous
-	     * character fits then so does the newline.
-	     */
-
-	    charsThatFit++;
-	} else if ((nextX < maxX) && (isspace(UCHAR(p[charsThatFit])))) {
+	if ((nextX < maxX) && ((p[charsThatFit] == ' ')
+		|| (p[charsThatFit] == '\t'))) {
 	    /*
 	     * Space characters are funny, in that they are considered
 	     * to fit if there is at least one pixel of space left on the
@@ -4244,10 +4279,20 @@ TkTextCharLayoutProc(textPtr, indexPtr, segPtr, offset, maxX, maxChars,
 	    nextX = maxX;
 	    charsThatFit++;
 	}
+	if (p[charsThatFit] == '\n') {
+	    /*
+	     * A newline character takes up no space, so if the previous
+	     * character fits then so does the newline.
+	     */
+
+	    charsThatFit++;
+	}
 	if (charsThatFit == 0) {
 	    return 0;
 	}
     }
+	
+    Tk_GetFontMetrics(tkfont, &fm);
 
     /*
      * Fill in the chunk structure and allocate and initialize a
@@ -4260,10 +4305,8 @@ TkTextCharLayoutProc(textPtr, indexPtr, segPtr, offset, maxX, maxChars,
     chunkPtr->measureProc = CharMeasureProc;
     chunkPtr->bboxProc = CharBboxProc;
     chunkPtr->numChars = charsThatFit;
-    chunkPtr->minAscent = fontPtr->ascent
-	    + chunkPtr->stylePtr->sValuePtr->offset;
-    chunkPtr->minDescent = fontPtr->descent
-	    - chunkPtr->stylePtr->sValuePtr->offset;;
+    chunkPtr->minAscent = fm.ascent + chunkPtr->stylePtr->sValuePtr->offset;
+    chunkPtr->minDescent = fm.descent - chunkPtr->stylePtr->sValuePtr->offset;
     chunkPtr->minHeight = 0;
     chunkPtr->width = nextX - chunkPtr->x;
     chunkPtr->breakIndex = -1;
@@ -4272,7 +4315,7 @@ TkTextCharLayoutProc(textPtr, indexPtr, segPtr, offset, maxX, maxChars,
     chunkPtr->clientData = (ClientData) ciPtr;
     ciPtr->numChars = charsThatFit;
     strncpy(ciPtr->chars, p, (size_t) charsThatFit);
-    if (p[charsThatFit-1] == '\n' || p[charsThatFit-1] == '\r') {
+    if (p[charsThatFit-1] == '\n') {
 	ciPtr->numChars--;
     }
 
@@ -4369,8 +4412,8 @@ CharDisplayProc(chunkPtr, x, y, height, baseline, display, dst, screenY)
     offsetX = x;
     offsetChars = 0;
     if (x < 0) {
-	offsetChars = TkMeasureChars(sValuePtr->fontPtr, ciPtr->chars,
-	    ciPtr->numChars, x, 0, x - chunkPtr->x, TK_IGNORE_TABS, &offsetX);
+	offsetChars = MeasureChars(sValuePtr->tkfont, ciPtr->chars,
+	    ciPtr->numChars, x, 0, x - chunkPtr->x, &offsetX);
     }
 
     /*
@@ -4378,24 +4421,30 @@ CharDisplayProc(chunkPtr, x, y, height, baseline, display, dst, screenY)
      */
 
     if (ciPtr->numChars > offsetChars) {
-	TkDisplayChars(display, dst, stylePtr->fgGC, sValuePtr->fontPtr,
-		ciPtr->chars + offsetChars, ciPtr->numChars - offsetChars,
-		offsetX, y + baseline - sValuePtr->offset, x - chunkPtr->x,
-		TK_IGNORE_TABS);
+	int numChars = ciPtr->numChars - offsetChars;
+	char *string = ciPtr->chars + offsetChars;
+
+	if ((numChars > 0) && (string[numChars - 1] == '\t')) {
+	    numChars--;
+	}
+	Tk_DrawChars(display, dst, stylePtr->fgGC, sValuePtr->tkfont, string,
+		numChars, offsetX, y + baseline - sValuePtr->offset);
 	if (sValuePtr->underline) {
-	    TkUnderlineChars(display, dst, stylePtr->fgGC,
-		    sValuePtr->fontPtr, ciPtr->chars + offsetChars, offsetX,
-		    y + baseline - sValuePtr->offset, x - chunkPtr->x,
-		    TK_IGNORE_TABS, 0, ciPtr->numChars-offsetChars-1);
+	    Tk_UnderlineChars(display, dst, stylePtr->fgGC, sValuePtr->tkfont,
+		    ciPtr->chars + offsetChars, offsetX,
+		    y + baseline - sValuePtr->offset,
+		    0, numChars);
+
 	}
 	if (sValuePtr->overstrike) {
-	    TkUnderlineChars(display, dst, stylePtr->fgGC,
-		    sValuePtr->fontPtr, ciPtr->chars + offsetChars, offsetX,
+	    Tk_FontMetrics fm;
+	    
+	    Tk_GetFontMetrics(sValuePtr->tkfont, &fm);
+	    Tk_UnderlineChars(display, dst, stylePtr->fgGC, sValuePtr->tkfont,
+		    ciPtr->chars + offsetChars, offsetX,
 		    y + baseline - sValuePtr->offset
-			- sValuePtr->fontPtr->descent
-			- (sValuePtr->fontPtr->ascent*3)/10,
-		    x - chunkPtr->x, TK_IGNORE_TABS, 0,
-		    ciPtr->numChars-offsetChars-1);
+			    - fm.descent - (fm.ascent * 3) / 10,
+		    0, numChars);
 	}
     }
 }
@@ -4456,9 +4505,8 @@ CharMeasureProc(chunkPtr, x)
     CharInfo *ciPtr = (CharInfo *) chunkPtr->clientData;
     int endX;
 
-    return TkMeasureChars(chunkPtr->stylePtr->sValuePtr->fontPtr,
-	    ciPtr->chars, chunkPtr->numChars-1, chunkPtr->x, x, 0,
-	    TK_IGNORE_TABS, &endX);
+    return MeasureChars(chunkPtr->stylePtr->sValuePtr->tkfont, ciPtr->chars,
+	    chunkPtr->numChars-1, chunkPtr->x, x, 0, &endX);
 }
 
 /*
@@ -4508,9 +4556,9 @@ CharBboxProc(chunkPtr, index, y, lineHeight, baseline, xPtr, yPtr,
     int maxX;
 
     maxX = chunkPtr->width + chunkPtr->x;
-    TkMeasureChars(chunkPtr->stylePtr->sValuePtr->fontPtr,
-	    ciPtr->chars, index, chunkPtr->x, 1000000, 0, TK_IGNORE_TABS,
-	    xPtr);
+    MeasureChars(chunkPtr->stylePtr->sValuePtr->tkfont, ciPtr->chars, index,
+	    chunkPtr->x, 1000000, 0, xPtr);
+
     if (index == ciPtr->numChars) {
 	/*
 	 * This situation only happens if the last character in a line
@@ -4528,9 +4576,8 @@ CharBboxProc(chunkPtr, index, y, lineHeight, baseline, xPtr, yPtr,
 
 	*widthPtr = maxX - *xPtr;
     } else {
-	TkMeasureChars(chunkPtr->stylePtr->sValuePtr->fontPtr,
-		ciPtr->chars + index, 1, *xPtr, 1000000, 0, TK_IGNORE_TABS,
-		widthPtr);
+	MeasureChars(chunkPtr->stylePtr->sValuePtr->tkfont, 
+		ciPtr->chars + index, 1, *xPtr, 1000000, 0, widthPtr);
 	if (*widthPtr > maxX) {
 	    *widthPtr = maxX - *xPtr;
 	} else {
@@ -4578,9 +4625,7 @@ AdjustForTab(textPtr, tabArrayPtr, index, chunkPtr)
 {
     int x, desired, delta, width, decimal, i, gotDigit;
     TkTextDispChunk *chunkPtr2, *decimalChunkPtr;
-    TkTextTab *tabPtr;
-    CharInfo *ciPtr = NULL;		/* Initialization needed only to
-					 * prevent compiler warnings. */
+    CharInfo *ciPtr;
     int tabX, prev, spaceWidth;
     char *p;
     TkTextTabAlign alignment;
@@ -4605,7 +4650,7 @@ AdjustForTab(textPtr, tabArrayPtr, index, chunkPtr)
 	 * interpretation of tabs.
 	 */
 
-	TkMeasureChars(textPtr->fontPtr, "\t", 1, x, INT_MAX, 0, 0, &desired);
+	desired = NextTabStop(textPtr->tkfont, x, 0);
 	goto update;
     }
 
@@ -4629,7 +4674,6 @@ AdjustForTab(textPtr, tabArrayPtr, index, chunkPtr)
 		* (tabArrayPtr->tabs[tabArrayPtr->numTabs-1].location - prev);
     }
 
-    tabPtr = &tabArrayPtr->tabs[index];
     if (alignment == LEFT) {
 	desired = tabX;
 	goto update;
@@ -4688,9 +4732,8 @@ AdjustForTab(textPtr, tabArrayPtr, index, chunkPtr)
 	int curX;
 
 	ciPtr = (CharInfo *) decimalChunkPtr->clientData;
-	TkMeasureChars(decimalChunkPtr->stylePtr->sValuePtr->fontPtr,
-		ciPtr->chars, decimal, decimalChunkPtr->x, 1000000, 0,
-		TK_IGNORE_TABS, &curX);
+	MeasureChars(decimalChunkPtr->stylePtr->sValuePtr->tkfont,
+		ciPtr->chars, decimal, decimalChunkPtr->x, 1000000, 0, &curX);
 	desired = tabX - (curX - x);
 	goto update;
     } else {
@@ -4715,7 +4758,7 @@ AdjustForTab(textPtr, tabArrayPtr, index, chunkPtr)
 
     update:
     delta = desired - x;
-    TkMeasureChars(textPtr->fontPtr, " ", 1, 0, INT_MAX, 0, 0, &spaceWidth);
+    MeasureChars(textPtr->tkfont, " ", 1, 0, INT_MAX, 0, &spaceWidth);
     if (delta < spaceWidth) {
 	delta = spaceWidth;
     }
@@ -4765,7 +4808,7 @@ SizeOfTab(textPtr, tabArrayPtr, index, x, maxX)
     TkTextTabAlign alignment;
 
     if ((tabArrayPtr == NULL) || (tabArrayPtr->numTabs == 0)) {
-	TkMeasureChars(textPtr->fontPtr, "\t", 1, x, INT_MAX, 0, 0, &tabX);
+	tabX = NextTabStop(textPtr->tkfont, x, 0);
 	return tabX - x;
     }
     if (index < tabArrayPtr->numTabs) {
@@ -4820,9 +4863,152 @@ SizeOfTab(textPtr, tabArrayPtr, index, x, maxX)
     }
 
     done:
-    TkMeasureChars(textPtr->fontPtr, " ", 1, 0, INT_MAX, 0, 0, &spaceWidth);
+    MeasureChars(textPtr->tkfont, " ", 1, 0, INT_MAX, 0, &spaceWidth);
     if (result < spaceWidth) {
 	result = spaceWidth;
     }
     return result;
+}
+
+/*
+ *---------------------------------------------------------------------------
+ *
+ * NextTabStop --
+ *
+ *	Given the current position, determine where the next default
+ *	tab stop would be located.  This procedure is called when the
+ *	current chunk in the text has no tabs defined and so the default
+ *	tab spacing for the font should be used.
+ *
+ * Results:
+ *	The location in pixels of the next tab stop.
+ *
+ * Side effects:
+ *	None.
+ *
+ *---------------------------------------------------------------------------
+ */
+
+static int
+NextTabStop(tkfont, x, tabOrigin)
+    Tk_Font tkfont;		/* Font in which chunk that contains tab
+				 * stop will be drawn. */
+    int x;			/* X-position in pixels where last
+				 * character was drawn.  The next tab stop
+				 * occurs somewhere after this location. */
+    int tabOrigin;		/* The origin for tab stops.  May be
+				 * non-zero if text has been scrolled. */
+{
+    int tabWidth, rem;
+    
+    tabWidth = Tk_TextWidth(tkfont, "0", 1) * 8;
+    if (tabWidth == 0) {
+	tabWidth = 1;
+    }
+
+    x += tabWidth;
+    rem = (x - tabOrigin) % tabWidth;
+    if (rem < 0) {
+	rem += tabWidth;
+    }
+    x -= rem;
+    return x;
+}
+
+/*
+ *---------------------------------------------------------------------------
+ *
+ *  MeasureChars --
+ *
+ *	Determine the number of characters from the string that will fit
+ *	in the given horizontal span.  The measurement is done under the
+ *	assumption that Tk_DisplayChars will be used to actually display
+ *	the characters.
+ *
+ *	If tabs are encountered in the string, they will be expanded
+ *	to the next tab stop, unless the TK_IGNORE_TABS flag is specified.
+ *
+ *	If a newline is encountered in the string, the line will be
+ *	broken at that point, unless the TK_NEWSLINES_NOT_SPECIAL flag
+ *	is specified.  
+ *
+ * Results:
+ *	The return value is the number of characters from source
+ *	that fit in the span given by startX and maxX.  *nextXPtr
+ *	is filled in with the x-coordinate at which the first
+ *	character that didn't fit would be drawn, if it were to
+ *	be drawn.
+ *
+ * Side effects:
+ *	None.
+ *
+ *--------------------------------------------------------------
+ */
+
+static int
+MeasureChars(tkfont, source, maxChars, startX, maxX, tabOrigin, nextXPtr)
+    Tk_Font tkfont;		/* Font in which to draw characters. */
+    CONST char *source;		/* Characters to be displayed.  Need not
+				 * be NULL-terminated. */
+    int maxChars;		/* Maximum # of characters to consider from
+				 * source. */
+    int startX;			/* X-position at which first character will
+				 * be drawn. */
+    int maxX;			/* Don't consider any character that would
+				 * cross this x-position. */
+    int tabOrigin;		/* X-location that serves as "origin" for
+				 * tab stops. */
+    int *nextXPtr;		/* Return x-position of terminating
+				 * character here. */
+{
+    int curX, width, ch;
+    CONST char *special, *end, *start;
+
+    ch = 0;			/* lint. */
+    curX = startX;
+    special = source;
+    end = source + maxChars;
+    for (start = source; start < end; ) {
+	if (start >= special) {
+	    /*
+	     * Find the next special character in the string.
+	     */
+
+	    for (special = start; special < end; special++) {
+		ch = *special;
+		if ((ch == '\t') || (ch == '\n')) {
+		    break;
+		}
+	    }
+	}
+
+	/*
+	 * Special points at the next special character (or the end of the
+	 * string).  Process characters between start and special.
+	 */
+
+	if (curX >= maxX) {
+	    break;
+	}
+	start += Tk_MeasureChars(tkfont, start, special - start, maxX - curX,
+		0, &width);
+	curX += width;
+	if (start < special) {
+	    /*
+	     * No more chars fit in line.
+	     */
+
+	    break;
+	}
+	if (special < end) {
+	    if (ch == '\t') {
+		start++;
+	    } else {
+		break;
+	    }
+	}
+    }
+
+    *nextXPtr = curX;
+    return start - source;
 }

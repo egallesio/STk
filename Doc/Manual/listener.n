@@ -12,7 +12,7 @@
 '\"
 '\"           Author: Erick Gallesio [eg@unice.fr]
 '\"    Creation date: 19-Jul-1996 15:21
-'\" Last file update: 19-Jul-1996 16:31
+'\" Last file update:  9-Nov-1996 18:39
 '\" 
 '\" 
 .so STk-man.macros
@@ -73,6 +73,7 @@ evaluator.
                          (eval-string x (global-environment))))
 (pack .t)
 .CE
+.LP
 .SH "DEFAULT BINDINGS"
 .PP
 The defaults bindings are identical to the \fBtext\fR bindings.

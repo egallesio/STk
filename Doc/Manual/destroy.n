@@ -8,7 +8,7 @@
 '\" @(#) destroy.n 1.11 95/06/07 21:15:12
 '\" 
 .so STk-man.macros
-.TH destroy n "4.1" Tk "Tk Built-In Commands"
+.TH destroy n "3.1" Tk "Tk Built-In Commands"
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME

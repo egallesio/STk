@@ -1,0 +1,71 @@
+--           Author: Erick Gallesio [eg@unice.fr]
+--    Creation date: 28-Sep-1997 18:27
+-- Last file update: 14-Dec-1997 22:05
+--
+-- $Id: README 1.1 Sat, 03 Jan 1998 13:46:25 +0100 eg $
+
+
+This directory contains code which deals with the stack. It is VERY
+machine dependent and must be adapted for new architectures. In some
+circumstances, part of the code must even be written in assembler.
+
+The code contained in this directory defines a library called libstack
+which is needed for STk FFI (Foreign Functions Interface). Basically,
+this code allow to push argument on the stack (at least logically,
+since first parameters of a function are often in registers) and call
+the function when all the arguments have been pushed. The push
+functions are typed and there is a function call for each type of
+function result.
+
+The types managed by the library as arguments are:
+	- char
+	- short (signed and unsigned)
+	- int   (signed and unsigned)
+	- long  (signed and unsigned)
+	- float 
+	- double
+	- pointers (without type)
+	- strings
+	- booleans (seen as int in the C world)
+
+The types returned which can be returned by a function called by the FFI can
+be:
+	- char
+	- short (signed and unsigned)
+	- int   (signed and unsigned)
+	- long  (signed and unsigned)
+	- float 
+	- double
+	- pointers ( pointer can point static or dynamic data)
+	- strings  
+	- boolean
+
+Array are not managed yet, since they don't seem very useful.
+
+Structures are not managed by the library but their support would be
+very useful. However, most of the C library don't use C struct as
+parameters but rather pointers on C structures.
+
+
+All the symbols exported by the library are prefixed by stk (for
+"stack", not "STk" ;-)
+
+This code has been tested on the following architectures/systems
+      I386		Linux 2.0 (ELF)
+      sun4x		SunOS 4.1.x & SunOS 5.5.x
+      Alpha		OSF1 V4.0
+      HP		HP-UX B.10.20
+      MIPS32		IRIX 6.2
+
+
+To port the library on another architecture, start for the
+architecture which is the "nearest". You can compile a test program
+with "make testlib". A simple and fast test is "./testlib | uniq -c". 
+Each function call must be preceded by the number 2.
+
+If you port the library on another architecture, please send a
+patch file by mail at eg@unice.fr. Thanks.
+
+
+
+

@@ -24,7 +24,7 @@
 
 
 
-(define queen-bitmap (string-append "@" *STk-library* "/images/queen"))
+(define queen-bitmap (string-append "@" *STk-library* "/Images/queen"))
 
 ; size of board (it's square)
 

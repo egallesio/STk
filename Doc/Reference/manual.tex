@@ -13,12 +13,14 @@
 %
 %           Author: Erick Gallesio [eg@unice.fr]
 %    Creation date: ??-Nov-1993 ??:??
-% Last file update: 24-Jul-1996 13:53
+% Last file update: 10-Apr-1998 09:07
 %
 
 \documentclass[10pt,a4paper]{book}
 \usepackage{a4wide}
 \usepackage{fancyheadings}
+\usepackage{epsfig}
+%\usepackage{times}
 \pagestyle{fancy}
 \setlength{\headheight}{15pt}
 
@@ -27,7 +29,6 @@
 \begin{document}
 
 \input{commands}                        % Stolen macros from R4RS
-\input{psfig}                           % Postscript stuff
 \parindent 0pt                          % No indentation at paragraph
                                         % beginning
 \bibliographystyle{unsrt}               % Unsorted bibliography
@@ -43,7 +44,7 @@
 %
 % Some new commands
 %
-\newcommand{\stkversion}{3.1}
+\newcommand{\stkversion}{3.99}
 \newcommand{\stk}{{\sc STk}}
 \newcommand{\stklos}{{\sc STklos}}
 \newcommand{\doc}{{\em Identical to R$^{4}$RS.}}
@@ -74,7 +75,7 @@ email: eg@unice.fr}
 \end{center}
 \vskip8cm
 \begin{flushright}
-July 1996
+April 1998
 \end{flushright}
 \newpage
 \thispagestyle{empty}
@@ -82,7 +83,7 @@ July 1996
 \vskip2cm
 {\bf Document Reference}
 \begin{quote}
-Erick Gallesio, {\em STk Reference Manual}, RT 95-31b,
+Erick Gallesio, {\em STk Reference Manual}, RT 95-31d,
 I3S-CNRS~/~Universit\'e de Nice - Sophia Antipolis, juillet 1995.
 \end{quote}
 
@@ -117,6 +118,7 @@ I3S-CNRS~/~Universit\'e de Nice - Sophia Antipolis, juillet 1995.
 \thispagestyle{plain}
 \input{Reference1.tex}
 \input{Reference2.tex}
+\input{Reference3.tex}
 
 %
 % Annexes
@@ -134,8 +136,14 @@ I3S-CNRS~/~Universit\'e de Nice - Sophia Antipolis, juillet 1995.
 \chapter{An introduction to {\stklos}}
 \input{Appendix-C}
 
-\chapter{Miscellaneous Informations}
+\chapter{Modules: Examples}
 \input{Appendix-D}
+
+\chapter{Changes}
+\input{Appendix-E}
+
+\chapter{Miscellaneous Informations}
+\input{Appendix-F}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \bibliography{bibliography}

@@ -1,0 +1,52 @@
+;;;;
+;;;; c o m p o s i t e - s l o t . s t k l o s 	  --  Composite slots metaclass
+;;;;
+;;;; Copyright © 1996-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; $Id: composite-slot.stklos 1.1 Tue, 03 Feb 1998 11:13:08 +0100 eg $
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 17-Oct-1996 18:16
+;;;; Last file update:  3-Feb-1998 09:48
+
+(select-module STklos)
+
+(define-class <Composite-metaclass> (<class>)
+  ())
+
+(define-method compute-get-n-set ((class <Composite-metaclass>) slot)
+  (if (memv (slot-definition-allocation slot) '(:propagated :special))
+      (compute-propagated-get-n-set slot (class-environment class))
+      (next-method)))
+
+(define (compute-propagated-get-n-set s env)
+  (let ((prop   	(or (get-keyword :propagate-to  (cdr s) #f)
+			    (get-keyword :propagate     (cdr s) #f)))
+	(s-name   	(slot-definition-name s))
+	(build-reader   (lambda (s default)
+			  (unless (pair? s) (set! s (list s default)))
+			  `(slot-ref (slot-ref o ',(car s)) ',(cadr s))))
+	(build-writer	(lambda (s default)
+			  (unless (pair? s) (set! s (list s default)))
+			  `(slot-set! (slot-ref o ',(car s)) ',(cadr s) v))))
+
+    (unless prop (error "Propagation not specified for slot ~s" s-name))
+    (unless (pair? prop) (error "Bad propagation list for slot ~s" s-name))
+
+    (list 
+       ;; The getter
+       (make-closure `(lambda (o) 
+			,(build-reader (car prop) s-name))
+		     env)
+       ;; The setter
+       (make-closure `(lambda (o v)
+			,@(map (lambda (item) (build-writer item s-name)) prop))
+		     env))))

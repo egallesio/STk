@@ -1,125 +1,125 @@
-
-			STklos version 2.1
-			------------------
+                             STklos version 4.0
 
 
-What is STklos?
----------------
 
-STklos is an extension of STk which provides a` la CLOS objets to STk. 
-This implementation takes its inspiration from the version 1.3 of the
-Tiny-clos package defined by Gregor Kickzales 
-(available at parcftp.xerox.com:/pub/mop/*).
+What is STklos
+
+STklos is an extension of STk which provides à la CLOS objets to STk. This
+implementation is based on the
+implementation of version 1.3 of the Tiny CLOS  package defined by Gregor
+Kickzales (available by ftp at parcftp.xerox.com:/pub/mop/*).
 
 Compiling STklos
-----------------
-STklos is compiled during the interpreter construction. Normally, You don't
-have to do something in this directory. 
 
-Simple test of STklos
----------------------
+STklos is compiled during the interpreter construction. You don't have to do
+something in this directory.
+
+Simple Test of STklos
 
 STklos needs some files to run properly. Until you have installed it in its
 definitive place, you have to:
-	1. set your default directory to STklos
-	2. use the the shell script test-stklos to run the interpreter 
 
-So, you just have to type 
+  1.   set your default directory to STklos
+  2.   use the the shell script ../Src/test-stk to run the interpreter
 
-	$ cd STklos; test-stklos
+So, you just have to type
+
+     $ cd STklos; ../Src/test-stk
 
 To test, that everything is OK, you can try:
-	(let ()
-	  (define-class A () ((a :initform 10) b))
-	  (define inst (make A))
-	  (slot-set! inst 'b 20)
-	  (+ (slot-ref inst 'a) (slot-ref inst 'b)))
+
+     (let ()
+       (define-class A () ((a :initform 10) b))
+       (define inst (make A))
+       (slot-set! inst 'b 20)
+       (+ (slot-ref inst 'a) (slot-ref inst 'b)))
 
 which should yield 30 if everything is correct.
 
-Using STklos with TK
---------------------
+Using STklos with the Tk toolkit
 
 A set of classes have been defined to use Tk with object flavor. All the Tk
-commands have been re-written using STklos. 
+widgets have been  wrapped in STklos. classes.The following example creates
+a three buttons panel (button 1 & 2 being on top of button 3).
 
-Following example creates a three buttons panel (button 1 & 2 being on top of
-button 3).
-
-   (require "Frame")
-   (require "Button")
-   (define f  (make <Frame>))
-   (define b1 (make <Button> :text "Button 1" :parent f))
-   (define b2 (make <Button> :text "Button 2" :parent f))
-   (define b3 (make <Button> :text "Button 3"))
-   (pack b1 b2 :side "left")
-   (pack f b3 :fill "both" :expand #t)
+     (require "Tk-classes")
+     (define f  (make <Frame>))
+     (define b1 (make <Button> :text "Button 1" :parent f))
+     (define b2 (make <Button> :text "Button 2" :parent f))
+     (define b3 (make <Button> :text "Button 3"))
+     (pack b1 b2 :side "left")
+     (pack f b3 :fill "both" :expand #t)
 
 Note usage of Scheme names in the two preceding pack calls instead of dotted
 Tcl/Tk names.
 
-Tk options can be seen as slot in the STklos world. So getting the font of 
-button 3 can be done with 
+Tk options can be seen as slot in the STklos world. So getting the font of
+button 3 can be done with
 
-   (font b3)
+     (font b3)
 
-and changing its value can be done with 
+and changing its value can be done with
 
-   (set! (font b3) "fixed")
+      (set! (font b3) "fixed")
 
-and associating a callback to button 1 can be done with the following expression
+and associating a callback to button 1 can be done with the following
+expression
 
-   (set! (command b1) '(format #t "You have typed on \"Button1\"\n"))
+     (set! (command b1) (lambda ()
+                           (format #t "You have typed on \"Button1\"\n"))
 
-The desribe function permits to see all the slots value of a given object. For
-instance, 
+The desribe function permits to see all the slots value of a given object.
+For instance,
 
-   (describe b2)
+     (describe b2)
 
 would give something like:
 
-     #[<button> 122e44] is an instance of class <button>
-     Slots are: 
-	  id = #[Tk-command .v1.v3]
-	  eid = #[Tk-command .v1.v3]
-	  parent = #[<frame> f09d8]
-	  bitmap = ""
-	  width = 0
-	  height = 0
-	  anchor = "center"
-	  font = "-Adobe-Helvetica-Bold-R-Normal--*-120-*"
-	  foreground = "Black"
-	  pad-x = 1
-	  pad-y = 1
-	  text = "Button 2"
-	  text-variable = ""
-	  background = "#cccccc"
-	  border-width = 2
-	  cursor = ""
-	  relief = "raised"
-	  active-background = "#999999"
-	  active-foreground = "Black"
-	  command = ""
-	  disabled-foreground = "#b0b0b0"
-	  state = "normal"
+     #[<button> 401bfdbc] is an instance of class <button>
+     Slots are:
+          id = #[Tk-command .v184.v214]
+          eid = #[Tk-command .v184.v214]
+          parent = #[<frame> 401b5304]
+          bitmap = ""
+          width = 0
+          height = 0
+          anchor = "center"
+          font = "-Adobe-Helvetica-Bold-R-Normal--*-120-*-*-*-*-*-*"
+          foreground = "Black"
+          image = ""
+          justify = "center"
+          pad-x = 9
+          pad-y = 3
+          text = "Button 2"
+          text-variable = ""
+          underline = -1
+          wrap-length = 0
+          background = "#d9d9d9"
+          border-width = 2
+          cursor = ""
+          highlight-background = "#d9d9d9"
+          highlight-color = "Black"
+          highlight-thickness = 0
+          relief = "raised"
+          take-focus = ""
+          active-background = "#ececec"
+          active-foreground = "Black"
+          command = ""
+          disabled-foreground = "#a3a3a3"
+          state = "normal"
 
+Destruction of a button can be obtained with the destroy-widget generic
+function as in
 
-Destruction of a button can be obtained with the destroy-widget generic function
-as in
-
-    (destroy b2)
+     (destroy b2)
 
 Examples
---------
 
-Some examples are available in the Examples directory. What those
-examples do is not interesting but rather how they are written.  Note:
-There are not enough examples. Send me programs if you have intersting
-pieces of code to make this directory growing.
-Thanks
+Some examples (too few) are available in the Examples directory. What those
+examples do is not interesting per se but rather how they are written.
+Note:There are not enough examples. Send me programs if you have
+interestingpieces of code to make this directory growing.Thanks
 
 
-
-Have fun
-
+Have fun.
 

@@ -1,0 +1,77 @@
+;;;;
+;;;; extset.stk 			-- provide Dylan like setters
+;;;;
+;;;; Copyright © 1997-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 30-May-1997 15:29
+;;;; Last file update:  8-Jan-1998 11:20
+
+
+(when (provided? "extset") (error "Extended set! already loaded."))
+
+(select-module STk)
+
+
+(define (extended-name->scheme-name l)
+  (cond
+   ((and (list? l) (= (length l) 2) (eq? (car l) 'setter))
+       		        (string->symbol (format #f "the setter of ~A" (cadr l))))
+   ((symbol? l)		l)
+   (else    		(error "bad Scheme name ~S" l))))
+
+
+(define-macro (setter var)
+  (let ((x (extended-name->scheme-name `(setter ,var))))
+    `(if (symbol-bound? ',x (module-environment (current-module)))
+	 ,x
+	 (error "Setter of ~s is undefined" ',var))))
+
+
+;;
+;; Redefine  DEFINE and SET! 
+;;
+
+(let ((%define define)		; %define is the Scheme define
+      (%set!   set!))		; %set! is the scheme set!
+  
+  (define-macro (dylan-define var . val)
+    (when (null? val) 
+      (error "define: no value provided for ~A" var))
+    (if (and (pair? var) (eqv? (car var) 'setter))
+	`(,%define ,(extended-name->scheme-name var) ,@val)
+	`(,%define ,var ,@val)))
+
+  (define-macro (dylan-set! var val)
+    (if (list? var)
+	`(,(extended-name->scheme-name `(setter ,(car var))) ,@(cdr var) ,val)
+	`(,%set! ,(extended-name->scheme-name var) ,val)))
+
+  ;; Set the standard set! and define to the extended equivalents
+  (set! set!   dylan-set!)
+  (set! define dylan-define))
+
+
+;;
+;; SET! and DEFINE are redefined in the toplevel module first and
+;; in the STklos module after that. Work is done 2 times because
+;; users which don't want to see modules must have the new 
+;; definition in the toplevel module (even if they import STklos, 
+;; the current module for them is STk which will be looked at before 
+;; STklos). Furthermore, doing it only in STk is not suficient 
+;; since STklos import Scheme first, we should see the standard 
+;; bindings instead of the new ones. 
+;;
+
+(with-module STklos
+   (define set!   (with-module STk set!))
+   (define define (with-module STk define)))
+
+(provide "extset")

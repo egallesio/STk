@@ -4,7 +4,7 @@
  *	A photo image file handler for PPM (Portable PixMap) files.
  *
  * Copyright (c) 1994 The Australian National University.
- * Copyright (c) 1994-1996 Sun Microsystems, Inc.
+ * Copyright (c) 1994-1997 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -13,7 +13,7 @@
  *	   Department of Computer Science,
  *	   Australian National University.
  *
- * SCCS: @(#) tkImgPPM.c 1.13 96/03/18 14:56:41
+ * SCCS: @(#) tkImgPPM.c 1.15 97/02/05 13:01:20
  */
 
 #include "tkInt.h"
@@ -37,13 +37,14 @@
  * The format record for the PPM file format:
  */
 
-static int		FileMatchPPM _ANSI_ARGS_((FILE *f, char *fileName,
-			    char *formatString, int *widthPtr,
-			    int *heightPtr));
+static int		FileMatchPPM _ANSI_ARGS_((Tcl_Channel chan,
+			    char *fileName, char *formatString,
+			    int *widthPtr, int *heightPtr));
 static int		FileReadPPM  _ANSI_ARGS_((Tcl_Interp *interp,
-			    FILE *f, char *fileName, char *formatString,
-			    Tk_PhotoHandle imageHandle, int destX, int destY,
-			    int width, int height, int srcX, int srcY));
+			    Tcl_Channel chan, char *fileName,
+			    char *formatString, Tk_PhotoHandle imageHandle,
+			    int destX, int destY, int width, int height,
+			    int srcX, int srcY));
 static int		FileWritePPM _ANSI_ARGS_((Tcl_Interp *interp,
 			    char *fileName, char *formatString,
 			    Tk_PhotoImageBlock *blockPtr));
@@ -62,8 +63,9 @@ Tk_PhotoImageFormat tkImgFmtPPM = {
  * Prototypes for local procedures defined in this file:
  */
 
-static int		ReadPPMFileHeader _ANSI_ARGS_((FILE *f, int *widthPtr,
-			    int *heightPtr, int *maxIntensityPtr));
+static int		ReadPPMFileHeader _ANSI_ARGS_((Tcl_Channel chan,
+			    int *widthPtr, int *heightPtr,
+			    int *maxIntensityPtr));
 
 /*
  *----------------------------------------------------------------------
@@ -84,8 +86,8 @@ static int		ReadPPMFileHeader _ANSI_ARGS_((FILE *f, int *widthPtr,
  */
 
 static int
-FileMatchPPM(f, fileName, formatString, widthPtr, heightPtr)
-    FILE *f;			/* The image file, open for reading. */
+FileMatchPPM(chan, fileName, formatString, widthPtr, heightPtr)
+    Tcl_Channel chan;		/* The image file, open for reading. */
     char *fileName;		/* The name of the image file. */
     char *formatString;		/* User-specified format string, or NULL. */
     int *widthPtr, *heightPtr;	/* The dimensions of the image are
@@ -94,7 +96,7 @@ FileMatchPPM(f, fileName, formatString, widthPtr, heightPtr)
 {
     int dummy;
 
-    return ReadPPMFileHeader(f, widthPtr, heightPtr, &dummy);
+    return ReadPPMFileHeader(chan, widthPtr, heightPtr, &dummy);
 }
 
 /*
@@ -118,10 +120,10 @@ FileMatchPPM(f, fileName, formatString, widthPtr, heightPtr)
  */
 
 static int
-FileReadPPM(interp, f, fileName, formatString, imageHandle, destX, destY,
+FileReadPPM(interp, chan, fileName, formatString, imageHandle, destX, destY,
 	width, height, srcX, srcY)
     Tcl_Interp *interp;		/* Interpreter to use for reporting errors. */
-    FILE *f;			/* The image file, open for reading. */
+    Tcl_Channel chan;		/* The image file, open for reading. */
     char *fileName;		/* The name of the image file. */
     char *formatString;		/* User-specified format string, or NULL. */
     Tk_PhotoHandle imageHandle;	/* The photo image to write into. */
@@ -137,7 +139,7 @@ FileReadPPM(interp, f, fileName, formatString, imageHandle, destX, destY,
     unsigned char *pixelPtr;
     Tk_PhotoImageBlock block;
 
-    type = ReadPPMFileHeader(f, &fileWidth, &fileHeight, &maxIntensity);
+    type = ReadPPMFileHeader(chan, &fileWidth, &fileHeight, &maxIntensity);
     if (type == 0) {
 	Tcl_AppendResult(interp, "couldn't read raw PPM header from file \"",
 		fileName, "\"", NULL);
@@ -187,7 +189,7 @@ FileReadPPM(interp, f, fileName, formatString, imageHandle, destX, destY,
     Tk_PhotoExpand(imageHandle, destX + width, destY + height);
 
     if (srcY > 0) {
-	fseek(f, (long) (srcY * block.pitch), SEEK_CUR);
+	Tcl_Seek(chan, (srcY * block.pitch), SEEK_CUR);
     }
 
     nLines = (MAX_MEMORY + block.pitch - 1) / block.pitch;
@@ -206,11 +208,11 @@ FileReadPPM(interp, f, fileName, formatString, imageHandle, destX, destY,
 	    nLines = h;
 	    nBytes = nLines * block.pitch;
 	}
-	count = fread(pixelPtr, 1, (unsigned) nBytes, f);
+	count = Tcl_Read(chan, (char *) pixelPtr, nBytes);
 	if (count != nBytes) {
 	    Tcl_AppendResult(interp, "error reading PPM image file \"",
 		    fileName, "\": ",
-		    feof(f) ? "not enough data" : Tcl_PosixError(interp),
+		    Tcl_Eof(chan) ? "not enough data" : Tcl_PosixError(interp),
 		    (char *) NULL);
 	    ckfree((char *) pixelPtr);
 	    return TCL_ERROR;
@@ -256,19 +258,20 @@ FileWritePPM(interp, fileName, formatString, blockPtr)
     char *formatString;
     Tk_PhotoImageBlock *blockPtr;
 {
-    FILE *f;
+    Tcl_Channel chan;
     int w, h;
     int greenOffset, blueOffset, nBytes;
     unsigned char *pixelPtr, *pixLinePtr;
+    char header[30];
 
-    if ((f = fopen(fileName, "wb")) == NULL) {
-	Tcl_AppendResult(interp, fileName, ": ", Tcl_PosixError(interp),
-		(char *)NULL);
+    chan = Tcl_OpenFileChannel(interp, fileName, "w", 0666);
+    if (chan == NULL) {
 	return TCL_ERROR;
     }
 
-    fprintf(f, "P6\n%d %d\n255\n", blockPtr->width, blockPtr->height);
-
+    sprintf(header, "P6\n%d %d\n255\n", blockPtr->width, blockPtr->height);
+    Tcl_Write(chan, header, -1);
+	
     pixLinePtr = blockPtr->pixelPtr + blockPtr->offset[0];
     greenOffset = blockPtr->offset[1] - blockPtr->offset[0];
     blueOffset = blockPtr->offset[2] - blockPtr->offset[0];
@@ -276,16 +279,16 @@ FileWritePPM(interp, fileName, formatString, blockPtr)
     if ((greenOffset == 1) && (blueOffset == 2) && (blockPtr->pixelSize == 3)
 	    && (blockPtr->pitch == (blockPtr->width * 3))) {
 	nBytes = blockPtr->height * blockPtr->pitch;
-	if (fwrite(pixLinePtr, 1, (unsigned) nBytes, f) != nBytes) {
+	if (Tcl_Write(chan, (char *) pixLinePtr, nBytes) != nBytes) {
 	    goto writeerror;
 	}
     } else {
 	for (h = blockPtr->height; h > 0; h--) {
 	    pixelPtr = pixLinePtr;
 	    for (w = blockPtr->width; w > 0; w--) {
-		if ((putc(pixelPtr[0], f) == EOF)
-			|| (putc(pixelPtr[greenOffset], f) == EOF)
-			|| (putc(pixelPtr[blueOffset], f) == EOF)) {
+		if ((Tcl_Write(chan, (char *) &pixelPtr[0], 1) == -1)
+			|| (Tcl_Write(chan, (char *) &pixelPtr[greenOffset], 1) == -1)
+			|| (Tcl_Write(chan, (char *) &pixelPtr[blueOffset], 1) == -1)) {
 		    goto writeerror;
 		}
 		pixelPtr += blockPtr->pixelSize;
@@ -294,16 +297,16 @@ FileWritePPM(interp, fileName, formatString, blockPtr)
 	}
     }
 
-    if (fclose(f) == 0) {
+    if (Tcl_Close(NULL, chan) == 0) {
 	return TCL_OK;
     }
-    f = NULL;
+    chan = NULL;
 
  writeerror:
     Tcl_AppendResult(interp, "error writing \"", fileName, "\": ",
 	    Tcl_PosixError(interp), (char *) NULL);
-    if (f != NULL) {
-	fclose(f);
+    if (chan != NULL) {
+	Tcl_Close(NULL, chan);
     }
     return TCL_ERROR;
 }
@@ -331,8 +334,8 @@ FileWritePPM(interp, fileName, formatString, blockPtr)
  */
 
 static int
-ReadPPMFileHeader(f, widthPtr, heightPtr, maxIntensityPtr)
-    FILE *f;			/* Image file to read the header from */
+ReadPPMFileHeader(chan, widthPtr, heightPtr, maxIntensityPtr)
+    Tcl_Channel chan;		/* Image file to read the header from */
     int *widthPtr, *heightPtr;	/* The dimensions of the image are
 				 * returned here. */
     int *maxIntensityPtr;	/* The maximum intensity value for
@@ -340,15 +343,20 @@ ReadPPMFileHeader(f, widthPtr, heightPtr, maxIntensityPtr)
 {
 #define BUFFER_SIZE 1000
     char buffer[BUFFER_SIZE];
-    int i, numFields, firstInLine, c;
+    int i, numFields, firstInLine;
     int type = 0;
+    char c;
+    int eof = 0;
 
     /*
      * Read 4 space-separated fields from the file, ignoring
      * comments (any line that starts with "#").
      */
 
-    c = getc(f);
+    Tcl_Read(chan, &c, 1);
+    if (Tcl_Eof(chan)) {
+	eof = 1;
+    }
     firstInLine = 1;
     i = 0;
     for (numFields = 0; numFields < 4; numFields++) {
@@ -359,14 +367,20 @@ ReadPPMFileHeader(f, widthPtr, heightPtr, maxIntensityPtr)
 	while (1) {
 	    while (isspace(UCHAR(c))) {
 		firstInLine = (c == '\n');
-		c = getc(f);
+		Tcl_Read(chan, &c, 1);
+		if (Tcl_Eof(chan)) {
+		    eof = 1;
+		}
 	    }
 	    if (c != '#') {
 		break;
 	    }
 	    do {
-		c = getc(f);
-	    } while ((c != EOF) && (c != '\n'));
+		Tcl_Read(chan, &c, 1);
+		if (Tcl_Eof(chan)) {
+		    eof = 1;
+		}
+	    } while ((eof != 1) && (c != '\n'));
 	    firstInLine = 1;
 	}
 
@@ -374,12 +388,15 @@ ReadPPMFileHeader(f, widthPtr, heightPtr, maxIntensityPtr)
 	 * Read a field (everything up to the next white space).
 	 */
 
-	while ((c != EOF) && !isspace(UCHAR(c))) {
+	while ((eof != 1) && !isspace(UCHAR(c))) {
 	    if (i < (BUFFER_SIZE-2)) {
-		buffer[i]  = c;
+		buffer[i] = c;
 		i++;
 	    }
-	    c = getc(f);
+	    Tcl_Read(chan, &c, 1);
+	    if (Tcl_Eof(chan)) {
+		eof = 1;
+	    }
 	}
 	if (i < (BUFFER_SIZE-1)) {
 	    buffer[i] = ' ';

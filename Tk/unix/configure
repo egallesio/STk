@@ -517,86 +517,14 @@ else
 fi
 
 
+# SCCS: @(#) configure.in 1.87 97/08/07 10:33:08
 
-# @(#) configure.in 1.27 95/10/01 13:54:35
+TK_VERSION=8.0
+TK_MAJOR_VERSION=8
+TK_MINOR_VERSION=0
+TK_PATCH_LEVEL=""
+VERSION=${TK_VERSION}
 
-ac_aux_dir=
-for ac_dir in $srcdir $srcdir/.. $srcdir/../..; do
-  if test -f $ac_dir/install-sh; then
-    ac_aux_dir=$ac_dir
-    ac_install_sh="$ac_aux_dir/install-sh -c"
-    break
-  elif test -f $ac_dir/install.sh; then
-    ac_aux_dir=$ac_dir
-    ac_install_sh="$ac_aux_dir/install.sh -c"
-    break
-  fi
-done
-if test -z "$ac_aux_dir"; then
-  { echo "configure: error: can not find install-sh or install.sh in $srcdir $srcdir/.. $srcdir/../.." 1>&2; exit 1; }
-fi
-ac_config_guess=$ac_aux_dir/config.guess
-ac_config_sub=$ac_aux_dir/config.sub
-ac_configure=$ac_aux_dir/configure # This should be Cygnus configure.
-
-# Find a good install program.  We prefer a C program (faster),
-# so one script is as good as another.  But avoid the broken or
-# incompatible versions:
-# SysV /etc/install, /usr/sbin/install
-# SunOS /usr/etc/install
-# IRIX /sbin/install
-# AIX /bin/install
-# AFS /usr/afsws/bin/install, which mishandles nonexistent args
-# SVR4 /usr/ucb/install, which tries to use the nonexistent group "staff"
-# ./install, which can be erroneously created by make from ./install.sh.
-echo $ac_n "checking for a BSD compatible install""... $ac_c" 1>&6
-if test -z "$INSTALL"; then
-if eval "test \"`echo '$''{'ac_cv_path_install'+set}'`\" = set"; then
-  echo $ac_n "(cached) $ac_c" 1>&6
-else
-    IFS="${IFS= 	}"; ac_save_ifs="$IFS"; IFS="${IFS}:"
-  for ac_dir in $PATH; do
-    # Account for people who put trailing slashes in PATH elements.
-    case "$ac_dir/" in
-    /|./|.//|/etc/*|/usr/sbin/*|/usr/etc/*|/sbin/*|/usr/afsws/bin/*|/usr/ucb/*) ;;
-    *)
-      # OSF1 and SCO ODT 3.0 have their own names for install.
-      for ac_prog in ginstall installbsd scoinst install; do
-        if test -f $ac_dir/$ac_prog; then
-	  if test $ac_prog = install &&
-            grep dspmsg $ac_dir/$ac_prog >/dev/null 2>&1; then
-	    # AIX install.  It has an incompatible calling convention.
-	    # OSF/1 installbsd also uses dspmsg, but is usable.
-	    :
-	  else
-	    ac_cv_path_install="$ac_dir/$ac_prog -c"
-	    break 2
-	  fi
-	fi
-      done
-      ;;
-    esac
-  done
-  IFS="$ac_save_ifs"
-
-fi
-  if test "${ac_cv_path_install+set}" = set; then
-    INSTALL="$ac_cv_path_install"
-  else
-    # As a last resort, use the slow shell script.  We don't cache a
-    # path for INSTALL within a source directory, because that will
-    # break other packages using the cache if that directory is
-    # removed, or if the path is relative.
-    INSTALL="$ac_install_sh"
-  fi
-fi
-echo "$ac_t""$INSTALL" 1>&6
-
-# Use test -z because SunOS4 sh mishandles braces in ${var-val}.
-# It thinks the first close brace ends the variable substitution.
-test -z "$INSTALL_PROGRAM" && INSTALL_PROGRAM='${INSTALL}'
-
-test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
 
 # Extract the first word of "ranlib", so it can be a program name with args.
 set dummy ranlib; ac_word=$2
@@ -626,43 +554,6 @@ else
   echo "$ac_t""no" 1>&6
 fi
 
-if test "x$prefix" = xNONE; then
-echo $ac_n "checking for prefix by ""... $ac_c" 1>&6
-# Extract the first word of "wish", so it can be a program name with args.
-set dummy wish; ac_word=$2
-echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-if eval "test \"`echo '$''{'ac_cv_path_WISH'+set}'`\" = set"; then
-  echo $ac_n "(cached) $ac_c" 1>&6
-else
-  case "$WISH" in
-  /*)
-  ac_cv_path_WISH="$WISH" # Let the user override the test with a path.
-  ;;
-  *)
-  IFS="${IFS= 	}"; ac_save_ifs="$IFS"; IFS="${IFS}:"
-  for ac_dir in $PATH; do
-    test -z "$ac_dir" && ac_dir=.
-    if test -f $ac_dir/$ac_word; then
-      ac_cv_path_WISH="$ac_dir/$ac_word"
-      break
-    fi
-  done
-  IFS="$ac_save_ifs"
-  ;;
-esac
-fi
-WISH="$ac_cv_path_WISH"
-if test -n "$WISH"; then
-  echo "$ac_t""$WISH" 1>&6
-else
-  echo "$ac_t""no" 1>&6
-fi
-
-  if test -n "$ac_cv_path_WISH"; then
-    prefix=`echo $ac_cv_path_WISH|sed 's%/[^/][^/]*//*[^/][^/]*$%%'`
-  fi
-fi
-
 echo $ac_n "checking how to run the C preprocessor""... $ac_c" 1>&6
 # On Suns, sometimes $CPP names a directory.
 if test -n "$CPP" && test -d "$CPP"; then
@@ -678,7 +569,7 @@ else
   # On the NeXT, cc -E runs the code through the compiler's parser,
   # not just through cpp.
   cat > conftest.$ac_ext <<EOF
-#line 682 "configure"
+#line 573 "configure"
 #include "confdefs.h"
 #include <assert.h>
 Syntax Error
@@ -692,7 +583,7 @@ else
   rm -rf conftest*
   CPP="${CC-cc} -E -traditional-cpp"
   cat > conftest.$ac_ext <<EOF
-#line 696 "configure"
+#line 587 "configure"
 #include "confdefs.h"
 #include <assert.h>
 Syntax Error
@@ -725,7 +616,7 @@ if eval "test \"`echo '$''{'ac_cv_header_$ac_safe'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 729 "configure"
+#line 620 "configure"
 #include "confdefs.h"
 #include <$ac_hdr>
 EOF
@@ -754,6 +645,66 @@ fi
 done
 
 
+
+TCL_SRC_DIR=../../Tcl/
+
+#--------------------------------------------------------------------
+#	Supply a substitute for stdlib.h if it doesn't define strtol,
+#	strtoul, or strtod (which it doesn't in some versions of SunOS).
+#--------------------------------------------------------------------
+
+echo $ac_n "checking stdlib.h""... $ac_c" 1>&6
+cat > conftest.$ac_ext <<EOF
+#line 659 "configure"
+#include "confdefs.h"
+#include <stdlib.h>
+EOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  egrep "strtol" >/dev/null 2>&1; then
+  rm -rf conftest*
+  tk_ok=yes
+else
+  rm -rf conftest*
+  tk_ok=no
+fi
+rm -f conftest*
+
+cat > conftest.$ac_ext <<EOF
+#line 674 "configure"
+#include "confdefs.h"
+#include <stdlib.h>
+EOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  egrep "strtoul" >/dev/null 2>&1; then
+  :
+else
+  rm -rf conftest*
+  tk_ok=no
+fi
+rm -f conftest*
+
+cat > conftest.$ac_ext <<EOF
+#line 688 "configure"
+#include "confdefs.h"
+#include <stdlib.h>
+EOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  egrep "strtod" >/dev/null 2>&1; then
+  :
+else
+  rm -rf conftest*
+  tk_ok=no
+fi
+rm -f conftest*
+
+if test $tk_ok = no; then
+    cat >> confdefs.h <<\EOF
+#define NO_STDLIB_H 1
+EOF
+
+fi
+echo "$ac_t""$tk_ok" 1>&6
+
 #--------------------------------------------------------------------
 #	Include sys/select.h if it exists and if it supplies things
 #	that appear to be useful and aren't already in sys/types.h.
@@ -766,7 +717,7 @@ done
 
 echo $ac_n "checking fd_set and sys/select""... $ac_c" 1>&6
 cat > conftest.$ac_ext <<EOF
-#line 770 "configure"
+#line 721 "configure"
 #include "confdefs.h"
 #include <sys/types.h>
 int main() { return 0; }
@@ -785,7 +736,7 @@ rm -f conftest*
 
 if test $tk_ok = no; then
     cat > conftest.$ac_ext <<EOF
-#line 789 "configure"
+#line 740 "configure"
 #include "confdefs.h"
 #include <sys/select.h>
 EOF
@@ -812,63 +763,6 @@ EOF
 fi
 
 #--------------------------------------------------------------------
-#	Supply a substitute for stdlib.h if it doesn't define strtol,
-#	strtoul, or strtod (which it doesn't in some versions of SunOS).
-#--------------------------------------------------------------------
-
-echo $ac_n "checking stdlib.h""... $ac_c" 1>&6
-cat > conftest.$ac_ext <<EOF
-#line 822 "configure"
-#include "confdefs.h"
-#include <stdlib.h>
-EOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  egrep "strtol" >/dev/null 2>&1; then
-  rm -rf conftest*
-  tk_ok=yes
-else
-  rm -rf conftest*
-  tk_ok=no
-fi
-rm -f conftest*
-
-cat > conftest.$ac_ext <<EOF
-#line 837 "configure"
-#include "confdefs.h"
-#include <stdlib.h>
-EOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  egrep "strtoul" >/dev/null 2>&1; then
-  :
-else
-  rm -rf conftest*
-  tk_ok=no
-fi
-rm -f conftest*
-
-cat > conftest.$ac_ext <<EOF
-#line 851 "configure"
-#include "confdefs.h"
-#include <stdlib.h>
-EOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  egrep "strtod" >/dev/null 2>&1; then
-  :
-else
-  rm -rf conftest*
-  tk_ok=no
-fi
-rm -f conftest*
-
-if test $tk_ok = no; then
-    cat >> confdefs.h <<\EOF
-#define NO_STDLIB_H 1
-EOF
-
-fi
-echo "$ac_t""$tk_ok" 1>&6
-
-#--------------------------------------------------------------------
 #	Check for various typedefs and provide substitutes if
 #	they don't exist.
 #--------------------------------------------------------------------
@@ -882,7 +776,7 @@ else
   ac_cv_c_cross=yes
 else
 cat > conftest.$ac_ext <<EOF
-#line 886 "configure"
+#line 780 "configure"
 #include "confdefs.h"
 main(){return(0);}
 EOF
@@ -904,7 +798,7 @@ if eval "test \"`echo '$''{'ac_cv_header_stdc'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 908 "configure"
+#line 802 "configure"
 #include "confdefs.h"
 #include <stdlib.h>
 #include <stdarg.h>
@@ -926,7 +820,7 @@ rm -f conftest*
 if test $ac_cv_header_stdc = yes; then
   # SunOS 4.x string.h does not declare mem*, contrary to ANSI.
 cat > conftest.$ac_ext <<EOF
-#line 930 "configure"
+#line 824 "configure"
 #include "confdefs.h"
 #include <string.h>
 EOF
@@ -944,7 +838,7 @@ fi
 if test $ac_cv_header_stdc = yes; then
   # ISC 2.0.2 stdlib.h does not declare free, contrary to ANSI.
 cat > conftest.$ac_ext <<EOF
-#line 948 "configure"
+#line 842 "configure"
 #include "confdefs.h"
 #include <stdlib.h>
 EOF
@@ -965,7 +859,7 @@ if test "$cross_compiling" = yes; then
   :
 else
 cat > conftest.$ac_ext <<EOF
-#line 969 "configure"
+#line 863 "configure"
 #include "confdefs.h"
 #include <ctype.h>
 #define ISLOWER(c) ('a' <= (c) && (c) <= 'z')
@@ -1000,7 +894,7 @@ if eval "test \"`echo '$''{'ac_cv_type_mode_t'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 1004 "configure"
+#line 898 "configure"
 #include "confdefs.h"
 #include <sys/types.h>
 #if STDC_HEADERS
@@ -1031,7 +925,7 @@ if eval "test \"`echo '$''{'ac_cv_type_pid_t'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 1035 "configure"
+#line 929 "configure"
 #include "confdefs.h"
 #include <sys/types.h>
 #if STDC_HEADERS
@@ -1062,7 +956,7 @@ if eval "test \"`echo '$''{'ac_cv_type_size_t'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 1066 "configure"
+#line 960 "configure"
 #include "confdefs.h"
 #include <sys/types.h>
 #if STDC_HEADERS
@@ -1093,7 +987,7 @@ if eval "test \"`echo '$''{'ac_cv_type_uid_t'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 1097 "configure"
+#line 991 "configure"
 #include "confdefs.h"
 #include <sys/types.h>
 EOF
@@ -1117,6 +1011,81 @@ EOF
 
   cat >> confdefs.h <<\EOF
 #define gid_t int
+EOF
+
+fi
+
+
+#------------------------------------------------------------------------------
+#       Find out about time handling differences.
+#------------------------------------------------------------------------------
+
+for ac_hdr in sys/time.h
+do
+ac_safe=`echo "$ac_hdr" | tr './\055' '___'`
+echo $ac_n "checking for $ac_hdr""... $ac_c" 1>&6
+if eval "test \"`echo '$''{'ac_cv_header_$ac_safe'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  cat > conftest.$ac_ext <<EOF
+#line 1032 "configure"
+#include "confdefs.h"
+#include <$ac_hdr>
+EOF
+eval "$ac_cpp conftest.$ac_ext >/dev/null 2>conftest.out"
+ac_err=`grep -v '^ *+' conftest.out`
+if test -z "$ac_err"; then
+  rm -rf conftest*
+  eval "ac_cv_header_$ac_safe=yes"
+else
+  echo "$ac_err" >&5
+  rm -rf conftest*
+  eval "ac_cv_header_$ac_safe=no"
+fi
+rm -f conftest*
+fi
+if eval "test \"`echo '$ac_cv_header_'$ac_safe`\" = yes"; then
+  echo "$ac_t""yes" 1>&6
+    ac_tr_hdr=HAVE_`echo $ac_hdr | tr 'abcdefghijklmnopqrstuvwxyz./\055' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ___'`
+  cat >> confdefs.h <<EOF
+#define $ac_tr_hdr 1
+EOF
+ 
+else
+  echo "$ac_t""no" 1>&6
+fi
+done
+
+echo $ac_n "checking whether time.h and sys/time.h may both be included""... $ac_c" 1>&6
+if eval "test \"`echo '$''{'ac_cv_header_time'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  cat > conftest.$ac_ext <<EOF
+#line 1065 "configure"
+#include "confdefs.h"
+#include <sys/types.h>
+#include <sys/time.h>
+#include <time.h>
+int main() { return 0; }
+int t() {
+struct tm *tp;
+; return 0; }
+EOF
+if eval $ac_compile; then
+  rm -rf conftest*
+  ac_cv_header_time=yes
+else
+  rm -rf conftest*
+  ac_cv_header_time=no
+fi
+rm -f conftest*
+
+fi
+
+echo "$ac_t""$ac_cv_header_time" 1>&6
+if test $ac_cv_header_time = yes; then
+  cat >> confdefs.h <<\EOF
+#define TIME_WITH_SYS_TIME 1
 EOF
 
 fi
@@ -1192,7 +1161,7 @@ test -z "$x_direct_test_library" && x_direct_test_library=Xt
 test -z "$x_direct_test_function" && x_direct_test_function=XtMalloc
 test -z "$x_direct_test_include" && x_direct_test_include=X11/Intrinsic.h
 cat > conftest.$ac_ext <<EOF
-#line 1196 "configure"
+#line 1165 "configure"
 #include "confdefs.h"
 #include <$x_direct_test_include>
 EOF
@@ -1255,7 +1224,7 @@ rm -f conftest*
 ac_save_LIBS="$LIBS"
 LIBS="-l$x_direct_test_library $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 1259 "configure"
+#line 1228 "configure"
 #include "confdefs.h"
 
 int main() { return 0; }
@@ -1341,7 +1310,7 @@ not_really_there=""
 if test "$no_x" = ""; then
     if test "$x_includes" = ""; then
 	cat > conftest.$ac_ext <<EOF
-#line 1345 "configure"
+#line 1314 "configure"
 #include "confdefs.h"
 #include <X11/XIntrinsic.h>
 EOF
@@ -1362,10 +1331,10 @@ rm -f conftest*
     fi
 fi
 if test "$no_x" = "yes" -o "$not_really_there" = "yes"; then
-    echo checking for X11 header files
+    echo $ac_n "checking for X11 header files""... $ac_c" 1>&6
     XINCLUDES="# no special path needed"
     cat > conftest.$ac_ext <<EOF
-#line 1369 "configure"
+#line 1338 "configure"
 #include "confdefs.h"
 #include <X11/Intrinsic.h>
 EOF
@@ -1380,10 +1349,12 @@ else
 fi
 rm -f conftest*
     if test "$XINCLUDES" = nope; then
-        dirs="/usr/unsupported/include /usr/local/include /usr/X386/include /usr/include/X11R4 /usr/X11R5/include /usr/include/X11R5 /usr/openwin/include /usr/X11/include /usr/sww/include"
+        dirs="/usr/unsupported/include /usr/local/include /usr/X386/include /usr/X11R6/include /usr/X11R5/include /usr/include/X11R5 /usr/include/X11R4 /usr/openwin/include /usr/X11/include /usr/sww/include"
         for i in $dirs ; do
 	    if test -r $i/X11/Intrinsic.h; then
+		echo "$ac_t""$i" 1>&6
 	        XINCLUDES=" -I$i"
+		break
 	    fi
         done
     fi
@@ -1395,21 +1366,22 @@ else
     fi
 fi
 if test "$XINCLUDES" = nope; then
-  echo "Warning:  couldn't find any X11 include files."
-  XINCLUDES="# no include files found"
+    echo "$ac_t""couldn't find any!" 1>&6
+    XINCLUDES="# no include files found"
 fi
 
-
 if test "$no_x" = yes; then
+    echo $ac_n "checking for X11 libraries""... $ac_c" 1>&6
     XLIBSW=nope
-    if test "$XLIBSW" = nope; then
-	dirs="/usr/unsupported/lib /usr/local/lib /usr/X386/lib /usr/lib/X11R4 /usr/X11R5/lib /usr/lib/X11R5 /usr/openwin/lib /usr/X11/lib /usr/sww/X11/lib"
-	for i in $dirs ; do
-	    if test -r $i/libX11.a -o -r $i/libX11.so -o -r $i/libX11.sl; then
-		XLIBSW="-L$i -lX11"
-	    fi
-	done
-    fi
+    dirs="/usr/unsupported/lib /usr/local/lib /usr/X386/lib /usr/X11R6/lib /usr/X11R5/lib /usr/lib/X11R5 /usr/lib/X11R4 /usr/openwin/lib /usr/X11/lib /usr/sww/X11/lib"
+    for i in $dirs ; do
+	if test -r $i/libX11.a -o -r $i/libX11.so -o -r $i/libX11.sl; then
+	    echo "$ac_t""$i" 1>&6
+	    XLIBSW="-L$i -lX11"
+	    x_libraries="$i"
+	    break
+	fi
+    done
 else
     if test "$x_libraries" = ""; then
 	XLIBSW=-lX11
@@ -1426,7 +1398,7 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-lXwindow  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 1430 "configure"
+#line 1402 "configure"
 #include "confdefs.h"
 
 int main() { return 0; }
@@ -1454,10 +1426,32 @@ fi
 
 fi
 if test "$XLIBSW" = nope ; then
-    echo "Warning:  couldn't find the X11 library archive.  Using -lX11."
+    echo "$ac_t""couldn't find any!  Using -lX11." 1>&6
     XLIBSW=-lX11
 fi
 
+#--------------------------------------------------------------------
+#	Various manipulations on the search path used at runtime to
+#	find shared libraries:
+#	1. If the X library binaries are in a non-standard directory,
+#	   add the X library location into that search path.
+#	2. On systems such as AIX and Ultrix that use "-L" as the
+#	   search path option, colons cannot be used to separate
+#	   directories from each other. Change colons to " -L".
+#	3. Create two sets of search flags, one for use in cc lines
+#	   and the other for when the linker is invoked directly.  In
+#	   the second case, '-Wl,' must be stripped off and commas must
+#	   be replaced by spaces.
+#--------------------------------------------------------------------
+
+if test "x${x_libraries}" != "x"; then
+    LIB_RUNTIME_DIR="${LIB_RUNTIME_DIR}:${x_libraries}"
+fi
+if test "${TCL_LD_SEARCH_FLAGS}" = '-L${LIB_RUNTIME_DIR}'; then
+    LIB_RUNTIME_DIR=`echo ${LIB_RUNTIME_DIR} |sed -e 's/:/ -L/g'`
+fi
+eval "TK_CC_SEARCH_FLAGS=\"$TCL_LD_SEARCH_FLAGS\""
+TK_LD_SEARCH_FLAGS=`echo ${TK_CC_SEARCH_FLAGS} |sed -e "s|-Wl,||g" -e "s|,| |g"`
 
 #--------------------------------------------------------------------
 #	Check for the existence of various libraries.  The order here
@@ -1485,7 +1479,7 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-lXbsd  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 1489 "configure"
+#line 1483 "configure"
 #include "confdefs.h"
 
 int main() { return 0; }
@@ -1518,7 +1512,7 @@ if eval "test \"`echo '$''{'ac_cv_func_connect'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 1522 "configure"
+#line 1516 "configure"
 #include "confdefs.h"
 /* System header to define __stub macros and hopefully few prototypes,
     which can conflict with char connect(); below.  */
@@ -1567,7 +1561,7 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-lsocket  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 1571 "configure"
+#line 1565 "configure"
 #include "confdefs.h"
 
 int main() { return 0; }
@@ -1603,7 +1597,7 @@ if eval "test \"`echo '$''{'ac_cv_func_accept'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 1607 "configure"
+#line 1601 "configure"
 #include "confdefs.h"
 /* System header to define __stub macros and hopefully few prototypes,
     which can conflict with char accept(); below.  */
@@ -1649,7 +1643,7 @@ if eval "test \"`echo '$''{'ac_cv_func_gethostbyname'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 1653 "configure"
+#line 1647 "configure"
 #include "confdefs.h"
 /* System header to define __stub macros and hopefully few prototypes,
     which can conflict with char gethostbyname(); below.  */
@@ -1694,7 +1688,7 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-lnsl  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 1698 "configure"
+#line 1692 "configure"
 #include "confdefs.h"
 
 int main() { return 0; }
@@ -1741,7 +1735,7 @@ if test -d /usr/include/mit ; then
     tk_oldLibs=$LIBS
     LIBS="$LIBS -lX11-mit"
     cat > conftest.$ac_ext <<EOF
-#line 1745 "configure"
+#line 1739 "configure"
 #include "confdefs.h"
 
 	#include <X11/Xlib.h>
@@ -1771,150 +1765,6 @@ rm -f conftest*
 fi
 
 #--------------------------------------------------------------------
-#	Figure out how to find out whether a FILE structure contains
-#	buffered readable data.  Some known names for the count field:
-#		_cnt:		Most UNIX systems
-#		__cnt:		HPUX
-#		_r:		BSD
-#		readCount:	Sprite
-#	Or, in GNU libc there are two fields, _gptr and _egptr, which
-#	have to be compared.
-#--------------------------------------------------------------------
-
-echo $ac_n "checking count field in FILE structures""... $ac_c" 1>&6
-cat > conftest.$ac_ext <<EOF
-#line 1787 "configure"
-#include "confdefs.h"
-#include <stdio.h>
-int main() { return 0; }
-int t() {
-FILE *f = stdin; f->_cnt = 0;
-; return 0; }
-EOF
-if eval $ac_compile; then
-  rm -rf conftest*
-  fcnt="_cnt"
-fi
-rm -f conftest*
-
-if test "$fcnt" = ""; then
-    cat > conftest.$ac_ext <<EOF
-#line 1803 "configure"
-#include "confdefs.h"
-#include <stdio.h>
-int main() { return 0; }
-int t() {
-FILE *f = stdin; f->__cnt = 0;
-; return 0; }
-EOF
-if eval $ac_compile; then
-  rm -rf conftest*
-  fcnt="__cnt"
-fi
-rm -f conftest*
-
-fi
-if test "$fcnt" = ""; then
-    cat > conftest.$ac_ext <<EOF
-#line 1820 "configure"
-#include "confdefs.h"
-#include <stdio.h>
-int main() { return 0; }
-int t() {
-FILE *f = stdin; f->_r = 0;
-; return 0; }
-EOF
-if eval $ac_compile; then
-  rm -rf conftest*
-  fcnt="_r"
-fi
-rm -f conftest*
-
-fi
-if test "$fcnt" = ""; then
-    cat > conftest.$ac_ext <<EOF
-#line 1837 "configure"
-#include "confdefs.h"
-#include <stdio.h>
-int main() { return 0; }
-int t() {
-FILE *f = stdin; f->readCount = 0;
-; return 0; }
-EOF
-if eval $ac_compile; then
-  rm -rf conftest*
-  fcnt="readCount"
-fi
-rm -f conftest*
-
-fi
-if test "$fcnt" != ""; then
-    cat >> confdefs.h <<EOF
-#define TK_FILE_COUNT $fcnt
-EOF
-
-fi
-if test "$fcnt" = ""; then
-    cat > conftest.$ac_ext <<EOF
-#line 1860 "configure"
-#include "confdefs.h"
-#include <stdio.h>
-int main() { return 0; }
-int t() {
-FILE *f = stdin; f->_gptr = f->_egptr;
-; return 0; }
-EOF
-if eval $ac_compile; then
-  rm -rf conftest*
-  tk_ok=yes
-else
-  rm -rf conftest*
-  tk_ok=no
-fi
-rm -f conftest*
-
-    if test $tk_ok = yes; then
-	cat >> confdefs.h <<\EOF
-#define TK_FILE_GPTR 1
-EOF
-
-	fcnt="_gptr/_egptr"
-    fi
-fi
-if test "$fcnt" = ""; then
-    cat > conftest.$ac_ext <<EOF
-#line 1887 "configure"
-#include "confdefs.h"
-#include <stdio.h>
-int main() { return 0; }
-int t() {
-FILE *f = stdin; f->_IO_read_ptr = f->_IO_read_end;
-; return 0; }
-EOF
-if eval $ac_compile; then
-  rm -rf conftest*
-  tk_ok=yes
-else
-  rm -rf conftest*
-  tk_ok=no
-fi
-rm -f conftest*
-
-    if test $tk_ok = yes; then
-	cat >> confdefs.h <<\EOF
-#define TK_FILE_READ_PTR 1
-EOF
-
-	fcnt="_IO_read_ptr/_IO_read_end"
-    fi
-fi
-if test "$fcnt" = ""; then
-    echo "$ac_t""not found; must supply TkReadDataPending procedure" 1>&6
-else
-    echo "$ac_t"""$fcnt"" 1>&6
-fi
-
-#--------------------------------------------------------------------
 #	On a few very rare systems, all of the libm.a stuff is
 #	already in libc.a.  Set compiler flags accordingly.
 #	Also, Linux requires the "ieee" library for math to
@@ -1927,7 +1777,7 @@ if eval "test \"`echo '$''{'ac_cv_func_sin'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 1931 "configure"
+#line 1781 "configure"
 #include "confdefs.h"
 /* System header to define __stub macros and hopefully few prototypes,
     which can conflict with char sin(); below.  */
@@ -1975,7 +1825,7 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-lieee  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 1979 "configure"
+#line 1829 "configure"
 #include "confdefs.h"
 
 int main() { return 0; }
@@ -2002,7 +1852,6 @@ else
 fi
 
 
-
 #--------------------------------------------------------------------
 #	If this system doesn't have a memmove procedure, use memcpy
 #	instead.
@@ -2013,7 +1862,7 @@ if eval "test \"`echo '$''{'ac_cv_func_memmove'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 2017 "configure"
+#line 1866 "configure"
 #include "confdefs.h"
 /* System header to define __stub macros and hopefully few prototypes,
     which can conflict with char memmove(); below.  */
@@ -2069,7 +1918,7 @@ else
   if test "$GCC" = yes; then
   # GCC predefines this symbol on systems where it applies.
 cat > conftest.$ac_ext <<EOF
-#line 2073 "configure"
+#line 1922 "configure"
 #include "confdefs.h"
 #ifdef __CHAR_UNSIGNED__
   yes
@@ -2091,7 +1940,7 @@ if test "$cross_compiling" = yes; then
     { echo "configure: error: can not run test program while cross compiling" 1>&2; exit 1; }
 else
 cat > conftest.$ac_ext <<EOF
-#line 2095 "configure"
+#line 1944 "configure"
 #include "confdefs.h"
 /* volatile prevents gcc2 from optimizing the test away on sparcs.  */
 #if !defined(__STDC__) || __STDC__ != 1
@@ -2122,84 +1971,6 @@ fi
 
 
 #--------------------------------------------------------------------
-#	SGI systems don't use the BSD form of the gettimeofday function,
-#	but they have a BSDgettimeofday function that can be used instead.
-#
-#	Also, check for the existence of a gettimeofday declaration,
-#	to tkPort.h can declare it if it isn't already declared.
-#--------------------------------------------------------------------
-
-echo $ac_n "checking for BSDgettimeofday""... $ac_c" 1>&6
-if eval "test \"`echo '$''{'ac_cv_func_BSDgettimeofday'+set}'`\" = set"; then
-  echo $ac_n "(cached) $ac_c" 1>&6
-else
-  cat > conftest.$ac_ext <<EOF
-#line 2138 "configure"
-#include "confdefs.h"
-/* System header to define __stub macros and hopefully few prototypes,
-    which can conflict with char BSDgettimeofday(); below.  */
-#include <assert.h>
-/* Override any gcc2 internal prototype to avoid an error.  */
-char BSDgettimeofday();
-
-int main() { return 0; }
-int t() {
-
-/* The GNU C library defines this for functions which it implements
-    to always fail with ENOSYS.  Some functions are actually named
-    something starting with __ and the normal name is an alias.  */
-#if defined (__stub_BSDgettimeofday) || defined (__stub___BSDgettimeofday)
-choke me
-#else
-BSDgettimeofday();
-#endif
-
-; return 0; }
-EOF
-if eval $ac_link; then
-  rm -rf conftest*
-  eval "ac_cv_func_BSDgettimeofday=yes"
-else
-  rm -rf conftest*
-  eval "ac_cv_func_BSDgettimeofday=no"
-fi
-rm -f conftest*
-
-fi
-if eval "test \"`echo '$ac_cv_func_'BSDgettimeofday`\" = yes"; then
-  echo "$ac_t""yes" 1>&6
-  cat >> confdefs.h <<\EOF
-#define HAVE_BSDGETTIMEOFDAY 1
-EOF
-
-else
-  echo "$ac_t""no" 1>&6
-fi
-
-echo $ac_n "checking for gettimeofday declaration""... $ac_c" 1>&6
-cat > conftest.$ac_ext <<EOF
-#line 2182 "configure"
-#include "confdefs.h"
-#include <sys/time.h>
-EOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  egrep "gettimeofday" >/dev/null 2>&1; then
-  rm -rf conftest*
-  echo "$ac_t""present" 1>&6
-else
-  rm -rf conftest*
-  
-    echo "$ac_t""missing" 1>&6
-    cat >> confdefs.h <<\EOF
-#define GETTOD_NOT_DECLARED 1
-EOF
-
-
-fi
-rm -f conftest*
-
-
-#--------------------------------------------------------------------
 #	Under Solaris 2.4, strtod returns the wrong value for the
 #	terminating character under some conditions.  Check for this
 #	and if the problem exists use a substitute procedure
@@ -2211,7 +1982,7 @@ if eval "test \"`echo '$''{'ac_cv_func_strtod'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 2215 "configure"
+#line 1986 "configure"
 #include "confdefs.h"
 /* System header to define __stub macros and hopefully few prototypes,
     which can conflict with char strtod(); below.  */
@@ -2257,7 +2028,7 @@ if test "$tk_strtod" = 1; then
   tk_ok=0
 else
 cat > conftest.$ac_ext <<EOF
-#line 2261 "configure"
+#line 2032 "configure"
 #include "confdefs.h"
 
 	extern double strtod();
@@ -2292,10 +2063,48 @@ EOF
 fi
 
 #--------------------------------------------------------------------
-#	Read in configuration information generated by Tcl for shared
-#	libraries, and arrange for it to be substituted into our
-#	Makefile.
+#	The statements below define a collection of symbols related to
+#	building libtk as a shared library instead of a static library.
 #--------------------------------------------------------------------
+
+
+
+
+TK_SHLIB_CFLAGS=""
+TK_LIB_FILE=libtk.a
+MAKE_LIB="ar cr ${TK_LIB_FILE} \${OBJS}"
+
+# Note:  in the following variable, it's important to use the absolute
+# path name of the Tcl directory rather than "..":  this is because
+# AIX remembers this path and will attempt to use it at run-time to look
+# up the Tcl library.
+
+if test "${TCL_LIB_VERSIONS_OK}" = "ok"; then
+    TK_BUILD_LIB_SPEC="-L`pwd` -ltk${VERSION}"
+    TK_LIB_SPEC="-L${exec_prefix}/lib -ltk${VERSION}"
+else
+    TK_BUILD_LIB_SPEC="-L`pwd` -ltk`echo ${VERSION} | tr -d .`"
+    TK_LIB_SPEC="-L${exec_prefix}/lib -ltk`echo ${VERSION} | tr -d .`"
+fi
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2401,7 +2210,6 @@ do
 done
 
 ac_given_srcdir=$srcdir
-ac_given_INSTALL="$INSTALL"
 
 trap 'rm -fr `echo "Makefile" | sed "s/:[^ ]*//g"` conftest*; exit 1' 1 2 15
 EOF
@@ -2433,20 +2241,35 @@ s%@includedir@%$includedir%g
 s%@oldincludedir@%$oldincludedir%g
 s%@infodir@%$infodir%g
 s%@mandir@%$mandir%g
-s%@INSTALL_PROGRAM@%$INSTALL_PROGRAM%g
-s%@INSTALL_DATA@%$INSTALL_DATA%g
 s%@RANLIB@%$RANLIB%g
-s%@WISH@%$WISH%g
 s%@CPP@%$CPP%g
-s%@XINCLUDES@%$XINCLUDES%g
-s%@XLIBSW@%$XLIBSW%g
-s%@MATH_LIBS@%$MATH_LIBS%g
 s%@CC@%$CC%g
-s%@SHLIB_CFLAGS@%$SHLIB_CFLAGS%g
-s%@SHLIB_LD@%$SHLIB_LD%g
-s%@SHLIB_SUFFIX@%$SHLIB_SUFFIX%g
 s%@DL_LIBS@%$DL_LIBS%g
 s%@LD_FLAGS@%$LD_FLAGS%g
+s%@MATH_LIBS@%$MATH_LIBS%g
+s%@MAKE_LIB@%$MAKE_LIB%g
+s%@SHLIB_CFLAGS@%$SHLIB_CFLAGS%g
+s%@SHLIB_LD@%$SHLIB_LD%g
+s%@SHLIB_LD_LIBS@%$SHLIB_LD_LIBS%g
+s%@SHLIB_SUFFIX@%$SHLIB_SUFFIX%g
+s%@SHLIB_VERSION@%$SHLIB_VERSION%g
+s%@TCL_BIN_DIR@%$TCL_BIN_DIR%g
+s%@TCL_BUILD_LIB_SPEC@%$TCL_BUILD_LIB_SPEC%g
+s%@TCL_SRC_DIR@%$TCL_SRC_DIR%g
+s%@TCL_VERSION@%$TCL_VERSION%g
+s%@TK_BUILD_LIB_SPEC@%$TK_BUILD_LIB_SPEC%g
+s%@TK_CC_SEARCH_FLAGS@%$TK_CC_SEARCH_FLAGS%g
+s%@TK_LD_SEARCH_FLAGS@%$TK_LD_SEARCH_FLAGS%g
+s%@TK_LIB_FILE@%$TK_LIB_FILE%g
+s%@TK_LIB_SPEC@%$TK_LIB_SPEC%g
+s%@TK_MAJOR_VERSION@%$TK_MAJOR_VERSION%g
+s%@TK_MINOR_VERSION@%$TK_MINOR_VERSION%g
+s%@TK_PATCH_LEVEL@%$TK_PATCH_LEVEL%g
+s%@TK_SHLIB_CFLAGS@%$TK_SHLIB_CFLAGS%g
+s%@TK_SRC_DIR@%$TK_SRC_DIR%g
+s%@TK_VERSION@%$TK_VERSION%g
+s%@XINCLUDES@%$XINCLUDES%g
+s%@XLIBSW@%$XLIBSW%g
 
 CEOF
 EOF
@@ -2487,10 +2310,6 @@ for ac_file in .. $CONFIG_FILES; do if test "x$ac_file" != x..; then
     top_srcdir="$ac_dots$ac_given_srcdir" ;;
   esac
 
-  case "$ac_given_INSTALL" in
-  [/$]*) INSTALL="$ac_given_INSTALL" ;;
-  *) INSTALL="$ac_dots$ac_given_INSTALL" ;;
-  esac
   echo creating "$ac_file"
   rm -f "$ac_file"
   configure_input="Generated automatically from `echo $ac_file_in|sed 's%.*/%%'` by configure."
@@ -2503,7 +2322,6 @@ for ac_file in .. $CONFIG_FILES; do if test "x$ac_file" != x..; then
 s%@configure_input@%$configure_input%g
 s%@srcdir@%$srcdir%g
 s%@top_srcdir@%$top_srcdir%g
-s%@INSTALL@%$INSTALL%g
 " -f conftest.subs $ac_given_srcdir/$ac_file_in > $ac_file
 fi; done
 rm -f conftest.subs

@@ -1,280 +1,118 @@
 %
-% STk Reference manual (Appendix: Miscellaneous Informations)
+% STk Reference manual (Appendix: Modules)
 %
 %           Author: Erick Gallesio [eg@unice.fr]
-%    Creation date: 21-Dec-1994 12:05
-% Last file update:  8-Jul-1996 22:18
+%    Creation date:  6-Apr-1998 11:19
+% Last file update:  8-Apr-1998 10:10
 %
 
-\section{Introduction}
-This appendix list a number of things which cannot go elsewhere in this
-document. The only link between the items listed her is that they should
-ease your life when using {\stk}. 
 
-\section{About \stk}
-
-\subsection{Last release}
-
-{\stk} distribution is available on various sites. The original distribution
-site is {\tt kaolin.unice.fr} {\tt (193.48.229.225)}. Files are available
-through anonymous ftp and are located in the {\tt /pub}
-directory. Distribution file names have the form {\tt STk-x.y.tar.gz}, where {\tt
-x} and {\tt y} represent the version and the release of the package. You can
-also find interim releases of {\stk}. Interim releases are stored in file
-whose name have the form {\tt STk-x.y.z.tar.gz} where {\tt z} is the interim
-release number.
-
-David Fox maintains a mirror site of {\tt kaolin.unice.fr}. This site is
-located in the USA and is available at the following URL: 
-{\tt ftp://cs.nyu.edu/pub/local/fox/stk}.
-
-\subsection{Sharing Code}
-
-If you have written code that you want to share with the (small) {\stk}
-community, you can deposit it in the directory {\tt /pub/Incoming} of {\tt
-kaolin.unice.fr}. Mail me a small note when you deposit a file in this
-directory so I can put in in its definitive place ({\tt /pub/Contrib} 
-directory contains the contributed code).
-
-\subsection{{\stk} Mailing list}
-
-There is a mailing list for {\stk} located on {\tt kaolin.unice.fr}.  The
-intent of this mailing list is to permit to {\stk} users to share experiences,
-expose problems, submit ideas and \ldots everything which you find interesting
-(and which is related to \stk).
-
-To subscribe to the mailing list, simply send a message with the word {\tt
-subscribe} in the {\tt Subject:} field of you mail.  Mail must be sent to the
-following address: {\tt stk-request@kaolin.unice.fr}
-
-To unsubscribe from the mailing list, send a mail at previous email address with the word {\tt unsubscribe} in the {\tt Subject:} field.
-
-For more information on the mailing list management send a message with the
-word {\tt help} in the {\tt Subject:} field of your mail. In particular, it
-is possible to find all the messages which have already been sent on the {\stk} 
-mailing list.
-
-Subscription/un-subscription/information requests are processed
-automatically without human intervention. If you something goes wrong, send a
-mail to {\tt eg@unice.fr}.
-
-Once you have properly subscribe to the mailing list, 
-\begin{itemize}
-\item you can send your messages about {\stk} to {\tt stk@kaolin.unice.fr},
-\item you will receive all the messages of the mailing list to the email 
-address you used when you subscribed to the list.
-\end{itemize}
-
-\subsection{{\stk} FAQ}
-
-Marc Furrer has set up a FAQ{\index{FAQ} for {\stk}. 
-This FAQ is regularly posted on the {\stk} mailing list. It can
-also be accessed through  {\tt
-http://ltiwww.epfl.ch/~furrer/STk/FAQ.html}. ASCII version of the FAQ is
-available from {\tt http://ltiwww.epfl.ch/~furrer/STk/FAQ.txt}.
-
-\subsection{Reporting a bug}
-
-When you find a bug in {\stk}, please send its description to the following
-address {\tt stk-bugs@kaolin.unice.fr}. Don't forget to indicate the version
-you use and the architecture the system is compiled on.  {\stk} version and
-architecture can be found by using the {\tt version} and {\tt machine-type}
-Scheme primitives. If possible, try to find a small program which exhibit the bug.
-
-\section{{\stk} and Emacs}
-
-The Emacs family editors\index{Emacs editor} can be customized to ease
-viewing and editing programs of a particular sort. Hints given below
-enable a fine ``integration'' of {\stk} in Emacs.
-
-\subsection*{Automatic scheme-mode setting}
-
-Emacs mode can be chosen automatically on the file's name. To edit file
-ended by {\tt .stk }or {\tt .stklos} in Scheme mode, you have to set the
-Elisp variable {\tt auto-mode-alist} to control the correspondence between
-those suffixes and the scheme mode. The simpler way to set this variable
-consists to add the following lines in your .{\tt emacs} startup file.
+This appendix shows some usages of the {\stk} modules. Most of the
+examples which are exhibited here are derived from the Tung and Dybvig paper
+\cite{Tung-Dybvig-96}.
 
 
-\begin{quote}
-\begin{verbatim}
-;; Add the '.stk' and '.stklos' suffix in the auto-mode-alist Emacs
-;; variable. Setting this variable permits to automagically place the
-;; buffer in scheme-mode.
-(setq-default auto-mode-alist (append auto-mode-alist 
-                                      ("\\.stk$"    . scheme-mode)
-                                      ("\\.stklos$" . scheme-mode)))
-\end{verbatim}
-\end{quote}
+\subsection*{Interactive Redefinition}
 
-\subsection*{Using Emacs and {\em CMU Scheme}}
+Consider first the definitions,
+\begin{scheme}
+(define-module A
+  (export square)
+  (define square 
+    (lambda (x) (+ x x))))
 
-{\em CMU Scheme} package\index{CMU Scheme} package} permits to run the {\stk} interpreter in an Emacs
-window. Once the package is loaded, you can send  text to the inferior
-{\stk} interpreter from other buffers containing Scheme source. 
-The {\em CMU Scheme} package is distributed with Emacs (both FSF-Emacs and
-Xemacs) and you should have it if you are running this editor.
+(define-module B
+  (import A)
+  (define distance 
+    (lambda (x y)
+      (sqrt (+ (square x) (square y))))))
+\end{scheme}
+Obviously, the \texttt{square} function exported from \texttt{A} is
+incorrect, as we can see in its usage below:
+\begin{scheme}
+(with-module B (round (distance 3 4))) \lev 4.0  
+\end{scheme}
 
-To use the {\em CMU Scheme} package with {\stk}, place the following lines in
-your {\tt .emacs} startup file.
+The function can be redefined (\textit{corrected}) by the following expression:
+\begin{scheme}
+(with-module A 
+  (set! square 
+        (lambda (x) (* x x))))  
+\end{scheme}
 
-\begin{quote}
-\begin{verbatim}
-;; Use cmu-scheme rather than xscheme which is launched by default
-;; whence running 'run-scheme' (xscheme is wired with CScheme)
-(autoload 'run-scheme "cmuscheme" "Run an inferior Scheme" t)
-(setq scheme-program-name "stk")
-(setq inferior-scheme-mode-hook '(lambda() (split-window)))
-\end{verbatim}
-\end{quote}
+And now,
+\begin{scheme}
+  (with-module B (round (distance 3 4))) \lev 5
+\end{scheme}
 
+which is correct.
 
-After having entered those lines in your {\tt .emacs} file, you can simply
-run the {\stk} interpreter by typing
-\begin{quote}
-\begin{verbatim}
-M-x run-scheme
-\end{verbatim}
-\end{quote}
+\subsection*{Lexical principle}
 
+This example reuses the modules \texttt{A} and \texttt{B} of previous
+section and adds a \texttt{Compare} module that exports the
+\texttt{less-than-4?} predicates, which states if the distance from a
+point to the origin is less than 4.
 
-Read the {\em CMU Scheme} documentation (or use the describe-mode Elisp command)
-for a complete description of this package.
+\begin{scheme}
+(define-module A
+  (export square)
+  (define square (lambda (x) (* x x))))
 
-\subsection*{Using Emacs and the {\em Ilisp} package}
+(define-module B
+  (import A)
+  (export distance)
 
-{\em Ilisp}\index{Ilisp package} is another scheme package which allows to
-run the {\stk} interpreter in an Emacs window. This is a rich package with
-a lot of nice features.  {\em Ilisp} comes pre-installed with Xemacs; it
-has to be installed with FSF Emacs (the last version of {\em Ilisp} can be
-ftp'ed anonymously from {\tt ftp.cs.cmu.edu} (128.2.206.173) in the {\tt
-/user/ai/lang/lisp/util/emacs/ilisp} directory).
+  (define distance 
+    (lambda (x y) (sqrt (+ (square x) (square y))))))
 
-To use the {\em Ilisp} package with {\stk}, place the following lines in
-your {\tt .emacs} startup file.
+(define-module Compare 
+  (import B)
+  (define less-than-4? (lambda (x y) (< (distance x y) 4)))
+  (define square       (lambda (x)   (+ x x))))
+\end{scheme}
 
+Consider now the call,
+\begin{scheme}
+(with-module compare (less-than-4? 3 4)) \lev \schfalse
+\end{scheme}
 
-\begin{quote}
-\begin{verbatim}
-(autoload 'run-ilisp              "ilisp" "Select a new inferior LISP." t)
-(autoload 'stk                    "ilisp" "Run stk in ILISP." t)
-(add-hook 'ilisp-load-hook
-          '(lambda ()
-             (require 'completer)
-
-             ;; Define STk dialect characteristics
-             (defdialect stk "STk Scheme"
-               scheme
-               (setq comint-prompt-regexp "^STk> ")
-               (setq ilisp-program "stk -interactive")
-               (setq comint-ptyp t)
-               (setq comint-always-scroll t)
-               (setq ilisp-last-command "*"))))
-\end{verbatim}
-\end{quote}
+The call to \texttt{distance} done from \texttt{less-than-4?}
+indirectly calls the \texttt{square} procedure of module \texttt{A} rather than
+the one defined locally in module \texttt{Compare}.
 
 
-After having entered those lines in your {\tt .emacs} file, you can simply
-run the {\stk} interpreter by typing
-\begin{quote}
-\begin{verbatim}
-M-x stk
-\end{verbatim}
-\end{quote}
+\subsection*{Mutually Referential Modules}
+This example uses two mutually referential modules taht import and
+export to each other to implement mutually recursive even? and odd?
+procedures
+
+\begin{scheme}
+(define-module Odd)   ;; Forward declaration
+
+(define-module Even 
+  (import Odd)
+  (export even?)
+  (define even? (lambda (x) (if (zero? x) \schtrue (odd? (- x 1))))))
+
+(define-module Odd 
+  (import Even)
+  (export odd?)
+  (define odd? (lambda (x) (if (zero? x) \schfalse (even? (- x 1))))))
+\end{scheme}
+
+Hereafter are some usages of theses procedures:
+\begin{scheme}
+(with-module Odd (odd? 3))  \lev \schtrue
+(with-module Odd (odd? 10)) \lev \schfalse
+
+(with-module Even (even? 3)) \lev \schfalse
+(with-module Even (even? 10)) \lev \schtrue
+\end{scheme}
 
 
-The Ilisp package comes with a rich documentation which describe how to
-customize the package. 
+%%% Local Variables: 
+%%% mode: latex 
+%%% TeX-master:"manual" 
+%%% End:
 
-\subsection*{Other packages}
-
-Another way to use {\stk} and Emacs consists to use a special purpose
-{\stk} mode. You can find two such modes in the {\tt /pub/Contrib}
-directory of {\tt kaolin.unice.fr}.
-
-\subsection {Using the SLIB package with \stk}
-
-Aubrey Jaffer maintains a package called {\em SLIB}\index{SLIB package}
-which is a portable Scheme library which provides compatibility and utility
-functions for all standard Scheme implementations. To use this package, you
-have just to type
-\begin{quote}
-\begin{verbatim}
-(require "slib")
-\end{verbatim}
-\end{quote}
-and follow the instructions given in the {\em SLIB} library to use a
-particular package. 
-\begin{note}
-{\em SLIB} uses also the {\em require/provide} mechanism to load components
-of the library. Once {\em SLIB} has been loaded, the standard {\stk} 
-{\tt require}\schindex{require} and {\tt provide}\schindex{provide}
-are overloaded such as if their parameter
-is a string this is the old {\stk} procedure which is called, and if their
-parameter is a symbol, this is the {\em SLIB} one which is called.
-\end{note}
-
-\section{Getting information about Scheme}
-
-\subsection{The {\rrrr} document}
-
-{\rrrr}{\index{R4RS}} is the document which fully describe the Scheme
-Programming Language, it can be found in the Scheme repository
-(see~\ref{scheme-repository}) in the directory:
-\begin{quote}
-{\tt ftp.cs.indiana.edu:/pub/scheme-repository/doc}
-\end{quote}
-
-Aubrey Jaffer has also translated this document in HTML. A version of this 
-document is available at
-\begin{quote}
-{\tt file://swiss-ftp.ai.mit.edu/pub/scm/HTML/r4rs\_toc.html}
-\end{quote}
-
-\subsection{The Scheme Repository}
-
-The main site where you can find (many) informations about Scheme is
-located in the University of Indiana. The Scheme repository\index{Scheme
-Repository} is maintained by David Eby.  The repository currently consists
-of the following areas:
-\begin{itemize}
-\item      Lots of scheme code meant for benchmarking, library/support, research, education, and fun. 
-\item      On-line documents: Machine readable standards documents, standards proposals, various Scheme-related tech reports, conference papers, mail archives, etc. 
-\item      Most of the publicly distributable Scheme Implementations. 
-\item    Material designed primarily for instruction. 
-\item Freely-distributable promotional or demonstration material for Scheme-related products. 
-\item   Utilities (e.g., Schemeweb, SLaTeX). 
-\item   Extraneous stuff, extensions, etc. 
-\end{itemize}
-
-You can access the Scheme repository with
-{\tt
-\begin{itemize}
-\item ftp.cs.indiana.edu:/pub/scheme-repository
-\item http://www.cs.indiana.edu/scheme-repository/SRhome.html
-\end{itemize}
-}
-
-The Scheme Repository is mirrored in Europe: 
-{\tt
-\begin{itemize}
-\item     ftp.inria.fr:/lang/Scheme
-\item     faui80.informatik.uni-erlangen.de:/pub/scheme/yorku
-\item     ftp.informatik.uni-muenchen.de:/pub/comp/programming/languages/scheme/scheme-repository
-\end{itemize}
-}
-\subsection{Usenet newsgroup and other addresses}
-
-There is a usenet newsgroup about the Scheme Programming language: {\tt
-comp.lang.scheme}.
-
-Following addresses contains also material about the Scheme language
-
-\begin{itemize}
-\item {\tt http://www.cs.cmu.edu:8001/Web/Groups/AI/html/faqs/lang/scheme/top.html}
-contains the Scheme FAQ.
-\item {\tt http://www-swiss.ai.mit.edu/scheme-home.html} is the Scheme Home page
-at MIT
-\item {\tt http://www.ai.mit.edu/projects/su/su.html} is the Scheme Underground
-web page
-\end{itemize}

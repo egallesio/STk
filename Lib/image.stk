@@ -1,0 +1,91 @@
+;;;;
+;;;; i m a g e . s t k			--  Images functions for STk
+;;;;
+;;;; Copyright © 1996-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 15-Oct-1996 14:25
+;;;; Last file update: 28-Feb-1998 18:20
+
+(require "hash")
+
+(select-module Tk)
+
+(define find-image   #f)
+(define make-image   #f)
+(define change-image #f)
+(define delete-image #f)
+
+;;
+;; Images are cached in a local cache variable. Each image is given a key
+;; so that multple use of the same image share the same copy
+;;
+
+(let* ((image-cache (make-hash-table string=?))
+       (image-name  (lambda (key) (& "*Img " key "*")))
+       (mk-image  (lambda (name opt)
+		    (let ((img #f)
+			  (name (image-name name))) ; to avoid breaking globals
+		      ;; Try to create a bitmap then a pixmap else a photo image.
+		      (and (catch (set! img (apply image 'cre 'bitmap name opt)))
+			   (catch (set! img (apply image 'cre 'pixmap name opt)))
+			   (catch (set! img (apply image 'cre 'photo  name opt))))
+		      img)))
+       (create       (lambda (key opt)
+		       (let ((img #f))
+			 (if (null? opt)
+			     ;; No option given. Take the key as the file name
+			     (let loop ((l *image-path*))
+			       (if (null? l)
+				   #f
+				   (let ((f (string-append (car l) "/" key)))
+				     (set! img (mk-image key (list :file f)))
+				     (unless img (Loop (cdr l))))))
+			     ;. Use option given
+			     (set! img (mk-image key opt)))
+			 (when img
+			   ;; Found an image; Register it
+			   (hash-table-put! image-cache key img))
+			 img))))
+  ;;
+  ;; make-image
+  ;;
+  (set! make-image  (lambda (key . opt)
+		       (or (find-image key) (create key opt))))
+
+  ;;
+  ;; find-image
+  ;;
+  (set! find-image (lambda (key)
+		     (hash-table-get image-cache key #f)))
+  
+  ;;
+  ;; change-image
+  ;;
+  (set! change-image (lambda (key  . opt)
+		       (let ((img (find-image key)))
+			 (if img
+			     (create key opt)
+			     (error "change-image: no image with name ~S" key)))))
+  ;;
+  ;; delete-image
+  ;;
+  (set! delete-image (lambda (key)
+		       (let ((img (find-image key)))
+			 (if img
+			     (begin
+			       (image 'delete (image-name key))
+			       (hash-table-remove! image-cache key))
+			     (error "free-image: no image with name ~S" key)))))
+
+)
+
+(provide "image")

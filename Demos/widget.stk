@@ -13,7 +13,7 @@
 (require "Tk-classes")
 
 (define demo-font     "-*-Helvetica-Medium-R-Normal--*-140-*-*-*-*-*-*")
-(define *STk-images*  (string-append  *STk-library* "/images/"))
+(define *STk-images*  (string-append  *STk-library* "/Images/"))
 (set!   *load-path*   `("./Widget" 
 			,(string-append *STk-library* "/demos")
 			,@*load-path*))
@@ -28,7 +28,7 @@
 
     ;; Pack the demo text
     (when text 
-      (pack (make <Label> :font   	demo-font 
+      (pack (make <Label> :font   	demo-font
 		  	  :parent 	t
 			  :wrap-length 	"4i"
 			  :justify 	"left" 
@@ -234,9 +234,6 @@
 					       '()))
        (ELSE		      		(loop (cdr t))))))
 
-(define (NYI)
-  (error "This demo is not yet implemented"))
-
 ;;
 ;; Autolooads
 ;;
@@ -268,9 +265,10 @@
 (autoload "Wplot"	demo-plot)
 (autoload "Wctext"	demo-ctext)
 (autoload "Warrow"	demo-arrow)
-(define demo-ruler NYI)
-(define demo-floor NYI)
-(define demo-cscroll NYI)
+(autoload "Wruler"	demo-ruler)
+(autoload "Wfloor"	demo-floor)
+(autoload "Wcscroll"	demo-cscroll)
+
 
 (autoload "Wvscale"	demo-vscale)
 (autoload "Whscale"	demo-hscale)

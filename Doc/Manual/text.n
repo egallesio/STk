@@ -113,8 +113,10 @@ path name of the new window.
 .PP
 A text widget displays one or more lines of text and allows that
 text to be edited.
-Text widgets support three different kinds of annotations on the
-text, called tags, marks, and embedded windows.
+.VS
+Text widgets support four different kinds of annotations on the
+text, called tags, marks, embedded windows or embedded images.
+.VE
 Tags allow different portions of the text
 to be displayed with different fonts and colors.
 In addition, STk procedures can be associated with tags so
@@ -131,6 +133,12 @@ See MARKS below for more details.
 The third form of annotation allows arbitrary windows to be
 embedded in a text widget.
 See EMBEDDED WINDOWS below for more details.
+.PP
+.VS
+The fourth form of annotation allows Tk images to be embedded in a text
+widget.
+See EMBEDDED IMAGES below for more details.
+.VE
 
 .SH INDICES
 .PP
@@ -186,7 +194,18 @@ Indicates the position of the embedded window whose name is
 \fIwidget\-name\fR.
 This form generates an error if there is no embedded window
 by the given name.
+.TP 12
+.VS
+\fIimageName\fR
+Indicates the position of the embedded image whose name is
+\fIimageName\fR.
+This form generates an error if there is no embedded image
+by the given name.
+.VE
 .PP
+If the \fIbase\fP could match more than one of the above forms, such
+as a \fImark\fP and \fIimageName\fP both having the same value, then
+the form earlier in the above list takes precedence.
 If modifiers follow the base index, each one of them must have one
 of the forms listed below.  Keywords such as \fBchars\fR and \fBwordend\fR
 may be abbreviated as long as the abbreviation is unambiguous.
@@ -569,9 +588,80 @@ stretched.
 \fB:window \fIwidget\-name\fR
 Specifies the window to display in the annotation.
 
+.VS
+.SH EMBEDDED IMAGES
+.PP
+The final form of annotation in text widgets is an embedded image.
+Each embedded image annotation causes an image to be displayed
+at a particular point in  the text.
+There may be any number of embedded images in a text widget,
+and a particular image may be embedded in multiple places in the same
+text widget.
+The embedded image's position on the screen will be updated as the
+text is modified or scrolled.
+Each embedded image occupies one character's worth of index space
+in the text widget, and it may be referred to either by
+its position in the widget's index space, or the name it is assigned
+when the image is inserted into the text widget widh \fBimage create\fP.
+If the range of text containing the embedded image is deleted then
+that copy of the image is removed from the screen.
+.PP
+When an embedded image is added to a text widget with the \fBimage
+create\fR widget command, a name unique to this instance of the image
+is returned.  This name may then be used to refer to this image
+instance.  The name is taken to be the value of the \fB:name\fP option
+(described below).  If the \fB:name\fP option is not provided, the
+\fB:image\fP name is used instead.  If the \fIimageName\fP is already
+in use in the text widget, then \fB#\fInn\fR is added to the end of the
+\fIimageName\fP, where \fInn\fP is an arbitrary integer.  This insures
+the \fIimageName\fP is unique.
+Once this name is assigned to this instance of the image, it does not 
+change, even though the \fB:image\fP or \fB:name\fP values can be changed
+with \fBimage configure\fP.
+.PP
+When an embedded image is added to a text widget with the
+\fBimage create\fR widget command, several configuration
+options may be associated with it.
+These options may be modified later with the \fBimage configure\fR
+widget command.
+The following options are currently supported:
+.TP
+\fB\:align \fIwhere\fR
+If the image is not as tall as the line in which it is displayed,
+this option determines where the image is displayed in the line.
+\fIWhere\fR must have one of the values \fBtop\fR (align the top of the image
+with the top of the line), \fBcenter\fR (center the image
+within the range of the line), \fBbottom\fR (align the bottom of the
+image with the bottom of the line's area),
+or \fBbaseline\fR (align the bottom of the image with the baseline
+of the line).
+.TP
+\fB\:image \fIimage\fR
+Specifies the name of the Tk image to display in the annotation.
+If \fIimage\fP is not a valid Tk image, then an error is returned.
+.TP
+\fB\:name \fIImageName\fR
+Specifies the name by which this image instance may be referenced in
+the text widget. If \fIImageName\fP is not supplied, then the
+name of the Tk image is used instead.
+If the \fIimageName\fP is already in use, \fI#nn\fP is appended to
+the end of the name as described above.
+.TP
+\fB\:padx \fIpixels\fR
+\fIPixels\fR specifies the amount of extra space to leave on
+each side of the embedded image.
+It may have any of the usual forms defined for a screen distance.
+.TP
+\fB\:pady \fIpixels\fR
+\fIPixels\fR specifies the amount of extra space to leave on
+the top and on the bottom of the embedded image.
+It may have any of the usual forms defined for a screen distance.
+.VE
+
+
+
 .SH THE SELECTION
 .PP
-Text widgets support the standard X selection.
 Selection support is implemented via tags.
 If the \fBexportSelection\fR option for the text widget is true
 then the \fBsel\fR tag will be associated with the selection:
@@ -715,7 +805,6 @@ If the display line containing \fIindex\fR is not visible on
 the screen then the return value is an empty list.
 .TP
 (\fIwidget\-name \fB'dump \fR?\fIswitches\fR? \fIindex1 \fR?\fIindex2\fR?)
-.VS
 Return the contents of the text widget from \fIindex1\fR up to,
 but not including \fIindex2\fR,
 including the text and
@@ -767,7 +856,6 @@ has not been created yet.  (It must have a create script.)
 In this case an empty string is returned, and you must query the
 window by its index position to get more information.
 .RE
-.VE
 .TP
 (\fIwidget\-name \fB'get \fIindex1 \fR)
 .TP
@@ -784,6 +872,50 @@ is past the end of the file or \fIindex2\fR is less than or equal
 to \fIindex1\fR) then an empty string is returned.
 If the specified range contains embedded windows, no information
 about them is included in the returned string.
+
+.TP
+(\fwidget\-name \fB'image \fIoption \fR?\fIarg arg ...\fR?)
+This command is used to manipulate embedded images.
+The behavior of the command depends on the \fIoption\fR argument
+that follows the \fBtag\fR argument.
+The following forms of the command are currently supported:
+.RS
+.TP
+(\fwidget\-name \fB'image 'cget\fR \fIindex option\fR)
+Returns the value of a configuration option for an embedded image.
+\fIIndex\fR identifies the embedded image, and \fIoption\fR
+specifies a particular configuration option, which must be one of
+the ones listed in the section EMBEDDED IMAGES.
+.TP
+(\fwidget\-name \fB'image 'configure \fIindex\fR ?\fIoption value ...\fR?)
+Query or modify the configuration options for an embedded image.
+If no \fIoption\fR is specified, returns a list describing all of
+the available options for the embedded image at \fIindex\fR
+(see \fBTk_ConfigureInfo\fR for information on the format of this list).
+If \fIoption\fR is specified with no \fIvalue\fR, then the command
+returns a list describing the one named option (this list will be
+identical to the corresponding sublist of the value returned if no
+\fIoption\fR is specified).
+If one or more \fIoption\-value\fR pairs are specified, then the command
+modifies the given option(s) to have the given value(s);  in
+this case the command returns an empty string.
+See EMBEDDED IMAGES for information on the options that
+are supported.
+.TP
+(\fwidget\-name \fB'image 'create \fIindex\fR ?\fIoption value ...\fR?)
+This command creates a new image annotation, which will appear
+in the text at the position given by \fIindex\fR.
+Any number of \fIoption\-value\fR pairs may be specified to
+configure the annotation.
+Returns a unique identifier that may be used as an index to refer to
+this image.
+See EMBEDDED IMAGES for information on the options that
+are supported, and a description of the identifier returned.
+.TP
+(\fwidget\-name \fB'image 'names\fR)
+Returns a list whose elements are the names of all image instances currently
+embedded in \fIwindow\fR.
+.RE
 .TP
 (\fIwidget\-name '\fBindex \fIindex\fR)
 Returns the position corresponding to \fIindex\fR in the form
@@ -1007,21 +1139,22 @@ returns a list of all the sequences for which bindings have been
 defined for \fItagName\fR.
 .RS
 .PP
+.VS
 The only events for which bindings may be specified are those related
-to the mouse and keyboard, such as \fBEnter\fR, \fBLeave\fR,
-\fBButtonPress\fR, \fBMotion\fR, and \fBKeyPress\fR.
-Event bindings for a text widget use the \fBcurrent\fR mark
-described under MARKS above.
-An \fBEnter\fR event triggers for a tag when the tag first
-becomes present on the current character, and a \fBLeave\fR
-event triggers for a tag when it ceases to be present on
-the current character.
+to the mouse and keyboard (such as \fBEnter\fR, \fBLeave\fR, 
+\fBButtonPress\fR, \fBMotion\fR, and \fBKeyPress\fR) or virtual events.
+Event bindings for a text widget use the \fBcurrent\fR mark described
+under MARKS above.  An \fBEnter\fR event triggers for a tag when the tag
+first becomes present on the current character, and a \fBLeave\fR event
+triggers for a tag when it ceases to be present on the current character.
 \fBEnter\fR and \fBLeave\fR events can happen either because the
-\fBcurrent\fR mark moved or because the character at that
-position changed.
-Note that these events are different than \fBEnter\fR and \fBLeave\fR
-events for windows.
-Mouse and keyboard events are directed to the current character.
+\fBcurrent\fR mark moved or because the character at that position
+changed.  Note that these events are different than \fBEnter\fR and
+\fBLeave\fR events for windows.  Mouse and keyboard events are directed
+to the current character.  If a virtual event is used in a binding, that
+binding can trigger only if the virtual event is defined by an underlying
+mouse-related or keyboard-related event.
+.VE
 .PP
 It is possible for the current character to have multiple tags,
 and for each of them to have a binding for a particular event

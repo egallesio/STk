@@ -1,0 +1,56 @@
+;;;;
+;;;; a c t i v e - s l o t . s t k l o s   	  --  Active slots metaclass
+;;;;
+;;;; Copyright © 1996-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; $Id: active-slot.stklos 1.1 Tue, 03 Feb 1998 11:13:08 +0100 eg $
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 17-Oct-1996 18:16
+;;;; Last file update:  3-Feb-1998 10:13
+
+(select-module STklos)
+
+(define-class <Active-metaclass> (<class>)
+  ())
+
+(define-method compute-get-n-set ((class <Active-metaclass>) slot)
+  (if (eq? (get-slot-allocation slot) :active)
+      (let* ((index 	  (slot-ref class 'nfields))
+	     (name	  (car slot))
+	     (s		  (cdr slot))
+	     (env	  (class-environment class))
+	     (before-ref  (make-closure (get-keyword :before-slot-ref  s #f) env))
+	     (after-ref   (make-closure (get-keyword :after-slot-ref   s #f) env))
+	     (before-set! (make-closure (get-keyword :before-slot-set! s #f) env))
+	     (after-set!  (make-closure (get-keyword :after-slot-set!  s #f) env))
+	     (unbound	  (make-unbound)))
+	(slot-set! class 'nfields (+ index 1))
+	(list (lambda (o)
+		(if before-ref
+		    (if (before-ref o)
+			(let ((res (%fast-slot-ref o index)))
+			  (and after-ref (not (eqv? res unbound)) (after-ref o))
+			  res)
+			(make-unbound))
+		    (let ((res (%fast-slot-ref o index)))
+		      (and after-ref (not (eqv? res unbound)) (after-ref o))
+		      res)))
+
+	      (lambda (o v) 
+		(if before-set!
+		    (when (before-set! o v)
+		      (%fast-slot-set! o index v)
+		      (and after-set! (after-set! o v)))
+		    (begin
+		      (%fast-slot-set! o index v)
+		      (and after-set! (after-set! o v)))))))
+      (next-method)))

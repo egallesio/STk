@@ -1,0 +1,76 @@
+'\"
+'\" JPEG support
+'\"
+'\"
+'\" Color=Yellow
+.so STk-man.macros
+.TH jpeg n 3.2 STk "Tk Built-In Commands"
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+jpeg \- Create color images from JPEG files.
+.SH SYNOPSIS
+(\fBimage 'create 'jpeg \fR?\fIname\fR? ?\fIoptions\fR?)
+.BE
+
+.SH DESCRIPTION
+.PP
+JPG is a popular image file format for storing images.
+The \fBjpeg\fR image type can be used to create color images using
+JPEG files (aka  \fI.jpg.\fR files).
+
+.SH "CREATING JPEG IMAGES"
+.PP
+Like all images, jpegs are created using the \fBimage create\fR
+command. Jpeg images support the following \fIoptions\fR:
+.TP
+\fB\:file \fIname\fR
+'
+\fIname\fR gives the name of a file whose contents define the source
+image. 
+
+.SH "IMAGE PROCEDURE"
+.PP
+When a jpeg image is created, Tk also creates a new procedure whose
+name is the same as the image.  This procedure may be used to invoke
+various operations on the image.  It has the following general form:
+.DS C
+(\fIimageName option \fR?\fIarg arg ...\fR?)
+.DE
+\fIOption\fR and the \fIarg\fRs
+'
+determine the exact behavior of the procedure. The following
+commands are possible for jpeg images:
+.TP
+(\fIimageName \fB'cget\fR \fIoption\fR)
+'
+Returns the current value of the configuration option given by
+\fIoption\fR. \fIOption\fR may have any of the values accepted by the
+\fBimage create jpeg\fR command.
+.TP
+(\fIimageName \fB'configure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?)
+'
+Query or modify the configuration options for the image. If no
+\fIoption\fR is specified, returns a list describing all of the
+available options for \fIimageName\fR (see \fBTk_ConfigureInfo\fR for
+information on the format of this list).  If \fIoption\fR is specified
+with no \fIvalue\fR, then the command returns a list describing the
+one named option (this list will be identical to the corresponding
+sublist of the value returned if no \fIoption\fR is specified).  If
+one or more \fIoption\-value\fR pairs are specified, then the command
+modifies the given option(s) to have the given value(s); in this case
+the command returns an empty string.  \fIOption\fR may have any of the
+values accepted by the \fBimage create jpeg\fR command.
+
+.SH INITIALIZATION
+.PP
+Use \fB(require "jpeg")\fR to initialize the jpeg package.
+
+.SH CREDITS
+.PP
+This implementation of the jpeg image format was done 
+by Andrew Swan \fI<aswan@cs.berkeley.edu>\fR
+
+.SH SEE ALSO
+bitmap, make-image, image, photo, pixmap
+

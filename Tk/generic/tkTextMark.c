@@ -5,12 +5,12 @@
  *	text widgets.
  *
  * Copyright (c) 1994 The Regents of the University of California.
- * Copyright (c) 1994-1995 Sun Microsystems, Inc.
+ * Copyright (c) 1994-1997 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkTextMark.c 1.15 96/02/15 18:52:59
+ * SCCS: @(#) tkTextMark.c 1.17 97/07/28 17:19:36
  */
 
 #include "tkInt.h"
@@ -530,7 +530,7 @@ TkTextInsertDisplayProc(chunkPtr, x, y, height, baseline, display, dst, screenY)
     TkText *textPtr = (TkText *) chunkPtr->clientData;
     int halfWidth = textPtr->insertWidth/2;
 
-    if ((x + halfWidth) <= 0) {
+    if ((x + halfWidth) < 0) {
 	/*
 	 * The insertion cursor is off-screen.  Just return.
 	 */

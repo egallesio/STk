@@ -1,0 +1,70 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+  <head>
+    <title>Widgets composites</title>
+  </head>
+
+  <body bgcolor="white">
+  <script language="STk">
+      (lambda (parent url)
+        (let ((dir (dirname (expand-file-name 
+				  ((with-module URL url:filename) url)))))
+           (chdir dir)))
+  </script>
+
+
+    <h1><img src="Images/STk-tiny.gif">Widgets composites</h1>
+    <font size=+4>
+	Une widget composite consiste en fait en un assemblage de plusieurs
+	widgets (simples ou composites):
+    </font>
+
+    <pre>
+     (define le (make &lt;Labeled-entry&gt; :value 50 :title "Valeur:"))
+    </pre>
+
+    <font size=+4>
+    permet de définir <tt>le</tt> comme une instance de la classe 
+    <tt>&lt;Labeled-entry&gt;</tt>. L'affichage de cet objet est donné 
+    ci-dessous:
+    <p>
+    <center>
+      <IMG SRC="Images/compo-all.gif"><P>
+    </center>
+    <pre>
+
+
+    </pre>
+    En fait, cette image est composée de trois widgets Tk de base: une 
+    <i>frame</i>, un <i>label</i> et une <i>entry</i>:
+    <pre>
+
+    </pre>
+    <center>
+      <IMG SRC=Images/frame.gif> + <IMG SRC=Images/label.gif> + <IMG SRC=Images/entry.gif><P>
+    </center>
+
+    <pre>
+
+    </pre>
+    <ul>
+    <li> Une démonstration de quelques widgets composites peut-être exécutée d'ici
+      <ul> 
+        <li> la version non installée de STk 
+	     (<a expr=(system "test-stk -f stklos-widgets.stklos&")><tt>test-stk</tt></a>)
+        <li> la version installée de STk
+             (<a expr=(system "stk -f stklos-widgets.stklos &")><tt>stk</tt></a>)<p>
+      </ul>
+    <li> Le <a href="Lentry.stklos">code</a> complet de la classe <tt>&lt;Labeled-entry&gt;</tt> fait environ 60 lignes.
+    </ul>
+    </font>
+    <hr>
+    <A HREF="main-fr.html"><img src="Images/backward.gif" align=middle> Retour</A>
+    <hr>
+    <address><a href="mailto:eg@unice.fr">Erick Gallesio</a></address>
+<!-- Created: Tue Mar 10 18:42:29 CET 1998 -->
+<!-- hhmts start -->
+Last modified: Tue Mar 10 19:26:41 CET 1998
+<!-- hhmts end -->
+  </body>
+</html>

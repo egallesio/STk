@@ -5,6 +5,8 @@
 ;;;; embedded windows.
 ;;;;
 
+(define demo-wind-toggle "Short")
+
 (define (demo-wind)
 
   (define embedded-canvas #f)

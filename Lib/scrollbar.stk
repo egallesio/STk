@@ -1,7 +1,7 @@
 ;;;;
 ;;;; Scrollbars bindings and procs
 ;;;;
-;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -17,10 +17,13 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 17-May-1993 12:35
-;;;; Last file update:  2-Jul-1996 19:40
+;;;; Last file update: 21-Mar-1998 12:46
 ;;;;
 
-(let ()
+(select-module Tk)
+
+(when (eqv? (os-kind) 'Unix)
+  (let ()
 
 (define tk::init-pos    "")
 (define tk::init-values '())
@@ -37,7 +40,7 @@
   (|W| 'activate (|W| 'identify x y)))
 
 (define-binding "Scrollbar" "<Leave>" (|W|)
-  (if *tk-strict-motif* 
+  (if *tk-strict-motif*
       (tk-set! |W| :activebackground tk::active-bg))
   (|W| 'activate ""))
 
@@ -353,4 +356,4 @@
 	   (w 'activate 'slider)
 	   (Tk:scroll-start-drag w x y)))))
 
-)
+))

@@ -1,4 +1,5 @@
 <HTML><HEAD><TITLE>Tk Built-In Commands - wm manual page</TITLE></HEAD>
+<BR>
 <BODY bgcolor = #c3c3ff>
 <H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageBlue.gif"> wm</H2>
 <I>Communicate with window manager</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
@@ -107,7 +108,7 @@ should give the focus to <I>window</I> at appropriate times.  However,
 once the focus has been given to <I>window</I> or one of its descendants,
 the application may re-assign the focus among <I>window</I>'s descendants.
 The focus model defaults to <B>passive</B>, and Tk's <B><A HREF="./focus.n.html">focus</A></B> procedure
-assumes a passive model of focussing.
+assumes a passive model of focusing.
 <P>
 <DT><A NAME="M15">(<B>wm 'frame </B><I>window</I>)</A><DD>
 If <I>window</I> has been reparented by the window manager into a
@@ -396,7 +397,12 @@ no source has been specified yet.  Most window managers interpret
 <P>
 <DT><A NAME="M46">(<B>wm 'state </B><I>window</I>)</A><DD>
 Returns the current state of <I>window</I>:  either &quot;<B>normal</B>&quot;,
-&quot;<B>iconic</B>&quot;, or &quot;<B>withdrawn</B>&quot;.
+&quot;<B>iconic</B>&quot;, &quot;<B>withdrawn</B>&quot;, or &quot;<B>icon</B>&quot;.  The difference
+between &quot;<B>iconic</B>&quot; and &quot;<B>icon</B>&quot; is that &quot;<B>iconic</B>&quot; refers
+to a window that has been iconified (e.g., with the <B>wm iconify</B>
+command) while &quot;<B>icon</B>&quot; refers to a window whose only purpose is
+to serve as the icon for some other window (via the <B>wm iconwindow</B>
+command).
 <P>
 <DT><A NAME="M47">(<B>wm 'title </B><I>window</I>)</A><DD>
 <DT><A NAME="M48">(<B>wm 'title </B><I>window</I> <I>string</I>)</A><DD>
@@ -502,6 +508,6 @@ to be withdrawn and de-iconified in order to make the change happen.
 
 <H3><A NAME="M55">SEE ALSO</A></H3>
 <B><A HREF="./toplevel.n.html">toplevel</A></B>
-<P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif"><P>
 <A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookBlue.gif"> Back to the <B>STk</B> main page</A>
 </BODY></HTML>

@@ -13,7 +13,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkText.c 1.91 96/05/16 13:19:58
+ * SCCS: @(#) tkText.c 1.103 97/07/31 09:14:37
  */
 
 #include "default.h"
@@ -50,7 +50,7 @@ static Tk_ConfigSpec configSpecs[] = {
     {TK_CONFIG_SYNONYM, "-fg", "foreground", (char *) NULL,
 	(char *) NULL, 0, 0},
     {TK_CONFIG_FONT, "-font", "font", "Font",
-	DEF_TEXT_FONT, Tk_Offset(TkText, fontPtr), 0},
+	DEF_TEXT_FONT, Tk_Offset(TkText, tkfont), 0},
     {TK_CONFIG_COLOR, "-foreground", "foreground", "Foreground",
 	DEF_TEXT_FG, Tk_Offset(TkText, fgColor), 0},
     {TK_CONFIG_PIXELS, "-height", "height", "Height",
@@ -184,6 +184,8 @@ static int		TextSearchCmd _ANSI_ARGS_((TkText *textPtr,
 			    Tcl_Interp *interp, int argc, char **argv));
 static int		TextWidgetCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int argc, char **argv));
+static void		TextWorldChanged _ANSI_ARGS_((
+			    ClientData instanceData));
 static int		TextDumpCmd _ANSI_ARGS_((TkText *textPtr,
 			    Tcl_Interp *interp, int argc, char **argv));
 static void		DumpLine _ANSI_ARGS_((Tcl_Interp *interp, 
@@ -192,6 +194,17 @@ static void		DumpLine _ANSI_ARGS_((Tcl_Interp *interp,
 static int		DumpSegment _ANSI_ARGS_((Tcl_Interp *interp, char *key,
 			    char *value, char * command, int lineno, int offset,
 			    int what));
+
+/*
+ * The structure below defines text class behavior by means of procedures
+ * that can be invoked from generic window code.
+ */
+
+static TkClassProcs textClass = {
+    NULL,			/* createProc. */
+    TextWorldChanged,		/* geometryProc. */
+    NULL			/* modalProc. */
+};
 
 
 /*
@@ -263,6 +276,7 @@ Tk_TextCmd(clientData, interp, argc, argv)
     textPtr->numTags = 0;
     Tcl_InitHashTable(&textPtr->markTable, TCL_STRING_KEYS);
     Tcl_InitHashTable(&textPtr->windowTable, TCL_STRING_KEYS);
+    Tcl_InitHashTable(&textPtr->imageTable, TCL_STRING_KEYS);
     textPtr->state = tkTextNormalUid;
     textPtr->border = NULL;
     textPtr->borderWidth = 0;
@@ -274,7 +288,7 @@ Tk_TextCmd(clientData, interp, argc, argv)
     textPtr->highlightColorPtr = NULL;
     textPtr->cursor = None;
     textPtr->fgColor = NULL;
-    textPtr->fontPtr = NULL;
+    textPtr->tkfont = NULL;
     textPtr->charWidth = 1;
     textPtr->spacing1 = 0;
     textPtr->spacing2 = 0;
@@ -321,19 +335,20 @@ Tk_TextCmd(clientData, interp, argc, argv)
 
     textPtr->selTagPtr = TkTextCreateTag(textPtr, "sel");
     textPtr->selTagPtr->reliefString = (char *) ckalloc(7);
-    strcpy(textPtr->selTagPtr->reliefString, "raised");
+    strcpy(textPtr->selTagPtr->reliefString, DEF_TEXT_SELECT_RELIEF);
     textPtr->selTagPtr->relief = TK_RELIEF_RAISED;
     textPtr->currentMarkPtr = TkTextSetMark(textPtr, "current", &startIndex);
     textPtr->insertMarkPtr = TkTextSetMark(textPtr, "insert", &startIndex);
 
-    Tk_SetClass(new, "Text");
+    Tk_SetClass(textPtr->tkwin, "Text");
+    TkSetClassProcs(textPtr->tkwin, &textClass, (ClientData) textPtr);
     Tk_CreateEventHandler(textPtr->tkwin,
 	    ExposureMask|StructureNotifyMask|FocusChangeMask,
 	    TextEventProc, (ClientData) textPtr);
     Tk_CreateEventHandler(textPtr->tkwin, KeyPressMask|KeyReleaseMask
 	    |ButtonPressMask|ButtonReleaseMask|EnterWindowMask
-	    |LeaveWindowMask|PointerMotionMask, TkTextBindProc,
-	    (ClientData) textPtr);
+	    |LeaveWindowMask|PointerMotionMask|VirtualEventMask,
+	    TkTextBindProc, (ClientData) textPtr);
     Tk_CreateSelHandler(textPtr->tkwin, XA_PRIMARY, XA_STRING,
 	    TextFetchSelection, (ClientData) textPtr, XA_STRING);
     if (ConfigureText(interp, textPtr, argc-2, argv+2, 0) != TCL_OK) {
@@ -644,6 +659,8 @@ TextWidgetCmd(clientData, interp, argc, argv)
 	}
     } else if ((c == 'd') && (strncmp(argv[1], "dump", length) == 0)) {
 	result = TextDumpCmd(textPtr, interp, argc, argv);
+    } else if ((c == 'i') && (strncmp(argv[1], "image", length) == 0)) {
+	result = TkTextImageCmd(textPtr, interp, argc, argv);
     } else if ((c == 'm') && (strncmp(argv[1], "mark", length) == 0)) {
 	result = TkTextMarkCmd(textPtr, interp, argc, argv);
     } else if ((c == 's') && (strcmp(argv[1], "scan") == 0) && (length >= 2)) {
@@ -665,7 +682,7 @@ TextWidgetCmd(clientData, interp, argc, argv)
     } else {
 	Tcl_AppendResult(interp, "bad option \"", argv[1],
 		"\": must be bbox, cget, compare, configure, debug, delete, ",
-		"dlineinfo, get, index, insert, mark, scan, search, see, ",
+		"dlineinfo, get, image, index, insert, mark, scan, search, see, ",
 		"tag, window, xview, or yview",
 		(char *) NULL);
 	result = TCL_ERROR;
@@ -733,7 +750,6 @@ DestroyText(memPtr)
     if (textPtr->bindingTable != NULL) {
 	Tk_DeleteBindingTable(textPtr->bindingTable);
     }
-
     /*
      * NOTE: do NOT free up selBorder, selBdString, or selFgColorPtr:
      * they are duplicates of information in the "sel" tag, which was
@@ -778,7 +794,6 @@ ConfigureText(interp, textPtr, argc, argv, flags)
     int flags;			/* Flags to pass to Tk_ConfigureWidget. */
 {
     int oldExport = textPtr->exportSelection;
-    int charHeight;
 
     if (Tk_ConfigureWidget(interp, textPtr->tkwin, configSpecs,
 	    argc, argv, (char *) textPtr, flags) != TCL_OK) {
@@ -868,7 +883,7 @@ ConfigureText(interp, textPtr, argc, argv, flags)
 	    || (textPtr->selTagPtr->reliefString != NULL)
 	    || (textPtr->selTagPtr->bgStipple != None)
 	    || (textPtr->selTagPtr->fgColor != NULL)
-	    || (textPtr->selTagPtr->fontPtr != None)
+	    || (textPtr->selTagPtr->tkfont != None)
 	    || (textPtr->selTagPtr->fgStipple != None)
 	    || (textPtr->selTagPtr->justifyString != NULL)
 	    || (textPtr->selTagPtr->lMargin1String != NULL)
@@ -919,27 +934,60 @@ ConfigureText(interp, textPtr, argc, argv, flags)
     if (textPtr->height <= 0) {
 	textPtr->height = 1;
     }
-    textPtr->charWidth = XTextWidth(textPtr->fontPtr, "0", 1);
+    TextWorldChanged((ClientData) textPtr);
+    return TCL_OK;
+}
+
+/*
+ *---------------------------------------------------------------------------
+ *
+ * TextWorldChanged --
+ *
+ *      This procedure is called when the world has changed in some
+ *      way and the widget needs to recompute all its graphics contexts
+ *	and determine its new geometry.
+ *
+ * Results:
+ *      None.
+ *
+ * Side effects:
+ *	Configures all tags in the Text with a empty argc/argv, for
+ *	the side effect of causing all the items to recompute their
+ *	geometry and to be redisplayed.
+ *
+ *---------------------------------------------------------------------------
+ */
+ 
+static void
+TextWorldChanged(instanceData)
+    ClientData instanceData;	/* Information about widget. */
+{
+    TkText *textPtr;
+    Tk_FontMetrics fm;
+
+    textPtr = (TkText *) instanceData;
+
+    textPtr->charWidth = Tk_TextWidth(textPtr->tkfont, "0", 1);
     if (textPtr->charWidth <= 0) {
 	textPtr->charWidth = 1;
     }
-    charHeight = (textPtr->fontPtr->ascent + textPtr->fontPtr->descent);
+    Tk_GetFontMetrics(textPtr->tkfont, &fm);
     Tk_GeometryRequest(textPtr->tkwin,
 	    textPtr->width * textPtr->charWidth + 2*textPtr->borderWidth
 		    + 2*textPtr->padX + 2*textPtr->highlightWidth,
-	    textPtr->height * charHeight + 2*textPtr->borderWidth
+	    textPtr->height * (fm.linespace + textPtr->spacing1
+		    + textPtr->spacing3) + 2*textPtr->borderWidth
 		    + 2*textPtr->padY + 2*textPtr->highlightWidth);
     Tk_SetInternalBorder(textPtr->tkwin,
 	    textPtr->borderWidth + textPtr->highlightWidth);
     if (textPtr->setGrid) {
 	Tk_SetGrid(textPtr->tkwin, textPtr->width, textPtr->height,
-		textPtr->charWidth, charHeight);
+		textPtr->charWidth, fm.linespace);
     } else {
 	Tk_UnsetGrid(textPtr->tkwin);
     }
 
     TkTextRelayoutWindow(textPtr);
-    return TCL_OK;
 }
 
 /*
@@ -986,9 +1034,8 @@ TextEventProc(clientData, eventPtr)
 		Tk_UnsetGrid(textPtr->tkwin);
 	    }
 	    textPtr->tkwin = NULL;
-	    Tcl_DeleteCommand(textPtr->interp,
-		    Tcl_GetCommandName(textPtr->interp,
-		    textPtr->widgetCmd));
+	    Tcl_DeleteCommandFromToken(textPtr->interp,
+		    textPtr->widgetCmd);
 	}
 	Tcl_EventuallyFree((ClientData) textPtr, DestroyText);
     } else if ((eventPtr->type == FocusIn) || (eventPtr->type == FocusOut)) {
@@ -1005,6 +1052,9 @@ TextEventProc(clientData, eventPtr)
 		textPtr->flags &= ~(GOT_FOCUS | INSERT_ON);
 		textPtr->insertBlinkHandler = (Tcl_TimerToken) NULL;
 	    }
+#ifndef ALWAYS_SHOW_SELECTION
+	    TkTextRedrawTag(textPtr, NULL, NULL, textPtr->selTagPtr, 1);
+#endif
 	    TkTextMarkSegToIndex(textPtr, textPtr->insertMarkPtr, &index);
 	    TkTextIndexForwChars(&index, 1, &index2);
 	    TkTextChanged(textPtr, &index, &index2);
@@ -1424,7 +1474,10 @@ TextFetchSelection(clientData, offset, buffer, maxBytes)
  * TkTextLostSelection --
  *
  *	This procedure is called back by Tk when the selection is
- *	grabbed away from a text widget.
+ *	grabbed away from a text widget.  On Windows and Mac systems, we
+ *	want to remember the selection for the next time the focus
+ *	enters the window.  On Unix, just remove the "sel" tag from
+ *	everything in the widget.
  *
  * Results:
  *	None.
@@ -1439,6 +1492,7 @@ void
 TkTextLostSelection(clientData)
     ClientData clientData;		/* Information about text widget. */
 {
+#ifdef ALWAYS_SHOW_SELECTION
     register TkText *textPtr = (TkText *) clientData;
     TkTextIndex start, end;
 
@@ -1447,7 +1501,9 @@ TkTextLostSelection(clientData)
     }
 
     /*
-     * Just remove the "sel" tag from everything in the widget.
+     * On Windows and Mac systems, we want to remember the selection
+     * for the next time the focus enters the window.  On Unix, 
+     * just remove the "sel" tag from everything in the widget.
      */
 
     TkTextMakeIndex(textPtr->tree, 0, 0, &start);
@@ -1455,6 +1511,7 @@ TkTextLostSelection(clientData)
     TkTextRedrawTag(textPtr, &start, &end, textPtr->selTagPtr, 1);
     TkBTreeTag(&start, &end, textPtr->selTagPtr, 0);
     textPtr->flags &= ~GOT_SELECTION;
+#endif
 }
 
 /*
@@ -1480,7 +1537,8 @@ TextBlinkProc(clientData)
     ClientData clientData;	/* Pointer to record describing text. */
 {
     register TkText *textPtr = (TkText *) clientData;
-    TkTextIndex index, index2;
+    TkTextIndex index;
+    int x, y, w, h;
 
     if (!(textPtr->flags & GOT_FOCUS) || (textPtr->insertOffTime == 0)) {
 	return;
@@ -1495,8 +1553,9 @@ TextBlinkProc(clientData)
 		textPtr->insertOnTime, TextBlinkProc, (ClientData) textPtr);
     }
     TkTextMarkSegToIndex(textPtr, textPtr->insertMarkPtr, &index);
-    TkTextIndexForwChars(&index, 1, &index2);
-    TkTextChanged(textPtr, &index, &index2);
+    TkTextCharBbox(textPtr, &index, &x, &y, &w, &h);
+    TkTextRedrawRegion(textPtr, x - textPtr->insertWidth / 2, y,
+	    textPtr->insertWidth, h);
 }
 
 /*
@@ -1990,8 +2049,8 @@ TkTextGetTabs(interp, tkwin, string)
  * TextDumpCmd --
  *
  *	Return information about the text, tags, marks, and embedded windows
- *	in a text widget.  See the man page for the description of the
- *	text dump operation for all the details.
+ *	and images in a text widget.  See the man page for the description
+ *	of the text dump operation for all the details.
  *
  * Results:
  *	A standard Tcl result.
@@ -2023,7 +2082,9 @@ TextDumpCmd(textPtr, interp, argc, argv)
 #define TK_DUMP_MARK	0x2
 #define TK_DUMP_TAG	0x4
 #define TK_DUMP_WIN	0x8
-#define TK_DUMP_ALL	(TK_DUMP_TEXT|TK_DUMP_MARK|TK_DUMP_TAG|TK_DUMP_WIN)
+#define TK_DUMP_IMG	0x10
+#define TK_DUMP_ALL	(TK_DUMP_TEXT|TK_DUMP_MARK|TK_DUMP_TAG| \
+	TK_DUMP_WIN|TK_DUMP_IMG)
 
     for (arg=2 ; argv[arg] != (char *) NULL ; arg++) {
 	size_t len;
@@ -2039,22 +2100,36 @@ TextDumpCmd(textPtr, interp, argc, argv)
 	    what |= TK_DUMP_TAG;
 	} else if (strncmp("-mark", argv[arg], len) == 0) {
 	    what |= TK_DUMP_MARK;
+	} else if (strncmp("-image", argv[arg], len) == 0) {
+	    what |= TK_DUMP_IMG;
 	} else if (strncmp("-window", argv[arg], len) == 0) {
 	    what |= TK_DUMP_WIN;
 	} else if (strncmp("-command", argv[arg], len) == 0) {
 	    arg++;
 	    if (arg >= argc) {
-		Tcl_AppendResult(interp, "Usage: ", argv[0], " dump ?-all -text -mark -tag -window? ?-command script? index ?index2?", NULL);
+#ifdef STk_CODE
+		Tcl_AppendResult(interp, "Usage: ", argv[0], " dump ?:all :image :text :mark :tag :window? ?:command script? index ?index2?", NULL);
+#else
+		Tcl_AppendResult(interp, "Usage: ", argv[0], " dump ?-all -image -text -mark -tag -window? ?-command script? index ?index2?", NULL);
+#endif
 		return TCL_ERROR;
 	    }
 	    command = argv[arg];
 	} else {
-	    Tcl_AppendResult(interp, "Usage: ", argv[0], " dump ?-all -text -mark -tag -window? ?-command script? index ?index2?", NULL);
+#ifdef STk_CODE
+	    Tcl_AppendResult(interp, "Usage: ", argv[0], " dump ?:all :image :text :mark :tag :window? ?:command script? index ?index2?", NULL);
+#else
+	    Tcl_AppendResult(interp, "Usage: ", argv[0], " dump ?-all -image -text -mark -tag -window? ?-command script? index ?index2?", NULL);
+#endif
 	    return TCL_ERROR;
 	}
     }
     if (arg >= argc) {
-	Tcl_AppendResult(interp, "Usage: ", argv[0], " dump ?-all -text -mark -tag -window? ?-command script? index ?index2?", NULL);
+#ifdef STk_CODE
+	Tcl_AppendResult(interp, "Usage: ", argv[0], " dump ?:all :image :text :mark :tag :window? ?:command script? index ?index2?", NULL);
+#else
+	Tcl_AppendResult(interp, "Usage: ", argv[0], " dump ?-all -image -text -mark -tag -window? ?-command script? index ?index2?", NULL);
+#endif
 	return TCL_ERROR;
     }
     if (what == 0) {
@@ -2103,7 +2178,6 @@ TextDumpCmd(textPtr, interp, argc, argv)
     if (atEnd) {
 	DumpLine(interp, textPtr, what & ~TK_DUMP_TEXT, index2.linePtr,
 		0, 1, lineno, command);
-
     }
     return TCL_OK;
 }
@@ -2136,12 +2210,12 @@ DumpLine(interp, textPtr, what, linePtr, start, end, lineno, command)
      * character
      * toggleOn, toggleOff
      * mark
+     * image
      * window
      */
     for (offset = 0, segPtr = linePtr->segPtr ;
 	    (offset < end) && (segPtr != (TkTextSegment *)NULL) ;
 	    offset += segPtr->size, segPtr = segPtr->nextPtr) {
-	int result = TCL_OK;
 	if ((what & TK_DUMP_TEXT) && (segPtr->typePtr == &tkTextCharType) &&
 		(offset + segPtr->size > start)) {
 	    char savedChar;			/* Last char used in the seg */
@@ -2155,24 +2229,30 @@ DumpLine(interp, textPtr, what, linePtr, start, end, lineno, command)
 	    }
 	    savedChar = segPtr->body.chars[last];
 	    segPtr->body.chars[last] = '\0';
-	    result = DumpSegment(interp, "text", segPtr->body.chars + first,
+	    DumpSegment(interp, "text", segPtr->body.chars + first,
 		    command, lineno, offset + first, what);
 	    segPtr->body.chars[last] = savedChar;
 	} else if ((offset >= start)) {
 	    if ((what & TK_DUMP_MARK) && (segPtr->typePtr->name[0] == 'm')) {
 		TkTextMark *markPtr = (TkTextMark *)&segPtr->body;
 		char *name = Tcl_GetHashKey(&textPtr->markTable, markPtr->hPtr);
-		result = DumpSegment(interp, "mark", name,
+		DumpSegment(interp, "mark", name,
 			command, lineno, offset, what);
 	    } else if ((what & TK_DUMP_TAG) &&
 			(segPtr->typePtr == &tkTextToggleOnType)) {
-		result = DumpSegment(interp, "tagon",
+		DumpSegment(interp, "tagon",
 			segPtr->body.toggle.tagPtr->name,
 			command, lineno, offset, what);
 	    } else if ((what & TK_DUMP_TAG) && 
 			(segPtr->typePtr == &tkTextToggleOffType)) {
-		result = DumpSegment(interp, "tagoff",
+		DumpSegment(interp, "tagoff",
 			segPtr->body.toggle.tagPtr->name,
+			command, lineno, offset, what);
+	    } else if ((what & TK_DUMP_IMG) && 
+			(segPtr->typePtr->name[0] == 'i')) {
+		TkTextEmbImage *eiPtr = (TkTextEmbImage *)&segPtr->body;
+		char *name = (eiPtr->name ==  NULL) ? "" : eiPtr->name;
+		DumpSegment(interp, "image", name,
 			command, lineno, offset, what);
 	    } else if ((what & TK_DUMP_WIN) && 
 			(segPtr->typePtr->name[0] == 'w')) {
@@ -2183,7 +2263,7 @@ DumpLine(interp, textPtr, what, linePtr, start, end, lineno, command)
 		} else {
 		    pathname = Tk_PathName(ewPtr->tkwin);
 		}
-		result = DumpSegment(interp, "window", pathname,
+		DumpSegment(interp, "window", pathname,
 			command, lineno, offset, what);
 	    }
 	}
@@ -2211,6 +2291,28 @@ DumpSegment(interp, key, value, command, lineno, offset, what)
     int offset;			/* Character position */
     int what;			/* Look for TK_DUMP_INDEX bit */
 {
+#ifdef STk_CODE
+    char buffer[50], *s;
+    sprintf(buffer, "(%d . %d)", lineno, offset);
+    if (command == (char *) NULL) {
+        s = STk_stringify(value, 0);
+        Tcl_AppendResult(interp, "(", key, " ", s, " " , buffer, ")", NULL);
+	free(s);
+	return TCL_OK;
+    } else {
+	char *argv[4];
+	char *list;
+	int result;
+	argv[0] = key;
+	argv[1] = value;
+	argv[2] = buffer;
+	argv[3] = (char *) NULL;
+	list = Tcl_Merge(3, argv);
+	result = Tcl_VarEval(interp, command, " ", list, (char *) NULL);
+	ckfree(list);
+	return result;
+    }
+#else
     char buffer[30];
     sprintf(buffer, "%d.%d", lineno, offset);
     if (command == (char *) NULL) {
@@ -2231,5 +2333,6 @@ DumpSegment(interp, key, value, command, lineno, offset, what)
 	ckfree(list);
 	return result;
     }
+#endif
 }
 

@@ -2,7 +2,7 @@
  *
  * p o s i x . c			-- Provide some POSIX.1 functions 
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1997 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -16,17 +16,22 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
+ * $Id: posix.c 1.1 Sat, 03 Jan 1998 13:46:25 +0100 eg $ 
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 14-Mar-1995 20:14
- * Last file update: 25-Sep-1996 14:36
+ * Last file update: 30-Dec-1997 23:31
+ *
+ * This file contains also contains code additions from Shiro Kawai 
+ * <shiro@sqush.squareusa.com>
  */
+ 
 
 #include <stk.h>
 #include <sys/types.h>
 #include <sys/utsname.h>
 
-#define DefineConst(c) {VCELL(STk_intern(#c)) = STk_makeinteger(c);}
+#define DefineConst(c) {STk_define_scheme_variable(#c, STk_makeinteger(c));}
 
 /******************************************************************************
  * 
@@ -62,7 +67,7 @@ static PRIMITIVE posix_perror(SCM str)
  ******************************************************************************/
 #include <sys/stat.h>
 
-static Cpointer_stat;
+static int Cpointer_stat;
 
 static PRIMITIVE posix_stat(SCM filename)
 {
@@ -86,7 +91,7 @@ static PRIMITIVE posix_stat2vector(SCM descr)
     
   info = (struct stat *) EXTDATA(descr);
 
-  z = STk_makevect(10, NULL);
+  z = STk_makevect(10, NIL);	/* NIL because some integers are bignums */
   VECT(z)[0] = STk_makeinteger(info->st_dev);
   VECT(z)[1] = STk_makeinteger(info->st_ino);
   VECT(z)[2] = STk_makeinteger(info->st_mode);
@@ -128,7 +133,73 @@ static PRIMITIVE posix_pipe(void)
 	      STk_Cfile2port("pipe (output)", f1, tc_oport, 0));
 }
 
+/** Added by Shiro K. **/
 
+static PRIMITIVE posix_unlink(SCM filename)
+{
+  int r;
+  
+  if (NSTRINGP(filename)) Err("posix-unlink: bad string", filename);
+  r = unlink(CHARS(filename));
+  return (r < 0)? Ntruth : Truth;
+}
+
+static PRIMITIVE posix_symlink(SCM to, SCM from)
+{
+  int r;
+  if (NSTRINGP(from)) Err("posix-symlink: bad string", from);
+  if (NSTRINGP(to))   Err("posix-symlink: bad string", to);
+  r = symlink(CHARS(to), CHARS(from));
+  return (r < 0)? Ntruth : Truth;
+}
+
+
+static PRIMITIVE posix_chmod(SCM path, SCM mode)
+{
+  int r;
+  
+  if (NSTRINGP(path)) Err("posix-chmod: bad string", path);
+  if (NINTEGERP(mode)) Err("posix-chmod: bad mode", mode);
+  r = chmod(CHARS(path), (mode_t)INTEGER(mode));
+  return (r < 0)? Ntruth : Truth;
+}
+
+static PRIMITIVE posix_rename(SCM old, SCM new)
+{
+  int r;
+  
+  if (NSTRINGP(old)) Err("posix-rename: bad string", old);
+  if (NSTRINGP(new)) Err("posix-rename: bad string", new);
+  r = rename(CHARS(old), CHARS(new));
+  return (r < 0)? Ntruth : Truth;
+}
+
+static PRIMITIVE posix_getlogin()
+{
+  char *s = getlogin();
+  
+  return (s == NULL) ?  Ntruth : STk_makestring(s);
+}
+
+static PRIMITIVE posix_mkdir(SCM path, SCM mode)
+{
+    int r;
+  
+    if (NSTRINGP(path))  Err("posix-mkdir: bad path", path);
+    if (NINTEGERP(mode)) Err("posix-mkdir: bad mode", mode);
+    r = mkdir(CHARS(path), INTEGER(mode));
+    return (r < 0)? Ntruth : Truth;
+}
+
+static PRIMITIVE posix_rmdir(SCM path)
+{
+    int r;
+    
+    if (NSTRINGP(path))  Err("posix-rmdir: bad path", path);
+    r = rmdir(CHARS(path));
+    return (r < 0)? Ntruth : Truth;
+}
+/** End of addition by Shiro K. **/
 
 /******************************************************************************
  *
@@ -141,7 +212,7 @@ static PRIMITIVE posix_pipe(void)
 #define mktime(c) timegm(c)
 #endif
 
-static Cpointer_tm;
+static int Cpointer_tm;
 
 static void display_Cpointer_tm(SCM obj, SCM port, int mode)
 {
@@ -206,7 +277,7 @@ static PRIMITIVE posix_tm2vector(SCM t)
   if (NCPOINTERP(t) || EXTID(t) != Cpointer_tm) 
     Err("posix-tm->vector: bad time structure", t);
   
-  z = STk_makevect(9, NIL);
+  z = STk_makevect(9, NIL); 	/* NULL could work here. But this is safer */
   p = (struct tm *) EXTDATA(t);
 
   VECT(z)[0] = STk_makeinteger(p->tm_sec);
@@ -267,6 +338,7 @@ static PRIMITIVE posix_strftime(SCM format, SCM t)
     return STk_makestring(buffer);
   else
     Err("posix-strftime: buffer too short", NIL);
+  /*NOTREACHED*/
 }
 
 /******************************************************************************
@@ -369,6 +441,40 @@ PRIMITIVE STk_init_posix(void)
 
   DefineConst(F_OK);  	DefineConst(R_OK);  	DefineConst(W_OK);
   DefineConst(X_OK);
+
+  /** Addition by SK **/
+  STk_add_new_primitive("posix-unlink",       tc_subr_1,    posix_unlink);
+  STk_add_new_primitive("posix-symlink",      tc_subr_2,    posix_symlink);
+  STk_add_new_primitive("posix-chmod",        tc_subr_2,    posix_chmod);
+  STk_add_new_primitive("posix-rename",       tc_subr_2,    posix_rename);
+  STk_add_new_primitive("posix-getlogin",     tc_subr_0,    posix_getlogin);
+  STk_add_new_primitive("posix-mkdir",        tc_subr_2,    posix_mkdir);
+  STk_add_new_primitive("posix-rmdir",        tc_subr_1,    posix_rmdir);
+
+  DefineConst(S_ISUID);
+  DefineConst(S_ISGID);
+  DefineConst(S_ISVTX);
+  DefineConst(S_IRWXU);
+  DefineConst(S_IRUSR);
+  DefineConst(S_IWUSR);
+  DefineConst(S_IXUSR);
+  DefineConst(S_IRWXG);
+  DefineConst(S_IRGRP);
+  DefineConst(S_IWGRP);
+  DefineConst(S_IXGRP);
+  DefineConst(S_IRWXO);
+  DefineConst(S_IROTH);
+  DefineConst(S_IWOTH);
+  DefineConst(S_IXOTH);
+  DefineConst(S_IFMT);
+  DefineConst(S_IFIFO);
+  DefineConst(S_IFCHR);
+  DefineConst(S_IFDIR);
+  DefineConst(S_IFBLK);
+  DefineConst(S_IFREG);
+  DefineConst(S_IFLNK);
+  DefineConst(S_IFSOCK);
+  /** End addition by SK **/
 
   /* Time */
   Cpointer_tm = STk_new_Cpointer_id(display_Cpointer_tm);

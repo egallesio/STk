@@ -2,7 +2,7 @@
  *
  * e n v . c			-- Environment management
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -16,14 +16,16 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
+ * $Id: env.c 1.4 Fri, 23 Jan 1998 18:46:19 +0100 eg $
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 23-Oct-1993 21:37
- * Last file update: 23-Jul-1996 15:44
+ * Last file update: 23-Jan-1998 09:57
  */
 
 #include "stk.h"
 #include "extend.h"
+#include "module.h"
 
 static void makelocalvar(SCM x, int level, int position)
 {
@@ -45,6 +47,31 @@ static void makeglobalvar(SCM x)
     VCELL(z) = CAR(x);
     CAR(x) = z;
   }
+}
+
+static void makemodulevar(SCM x, SCM var, SCM module, SCM pvalue)
+{
+  return;
+  if (ModifyCode() && CONSP(x)) { /* Replace (CAR x) by a modulevar access */
+    SCM z;
+    NEWCELL(z, tc_modulevar);
+    CAR(z) = Cons(var, module);
+    CDR(z) = pvalue;
+    
+    CAR(x) = z;
+  }
+}
+
+
+SCM STk_makeframe(SCM formals, SCM actuals)
+{
+  register SCM z;
+
+  NEWCELL(z, tc_frame);
+  CAR(z) = formals;
+  CDR(z) = actuals;
+
+  return z;
 }
 
 SCM STk_makeenv(SCM l, int create_if_null)
@@ -76,17 +103,108 @@ SCM *STk_value_in_env(SCM var, SCM env)
   return &UNBOUND;
 }
 
+
+
+
+static SCM *module_lookup(SCM module, SCM var, SCM context, int err_if_unbound)
+{
+  register SCM m;
+  Tcl_HashEntry *entry;
+  SCM *avalue;
+
+  /* If module is a real module (i.e. not a fake one), we have to try 
+   * to find var in the current module and then in the exported variables
+   * of imported modules.
+   * Fake modules are created by parent-environment: when asking the
+   * parent environment of a module M importing M1 and M2, we must create
+   * a fake module similar to M1 importing solely M2. In this case,
+   * the search is done in the exported variables of M only, and then in 
+   * the exported variables of imported modules.
+   * All this complicated stuff to allow things like:
+   *     (eval 'a (parent-environment (module-environment M)))
+   */
+  if (NULLP(module) || EQ(module, STk_global_module)) {
+    if (VCELL(var) == UNBOUND)
+      m = MOD_IMPORTED(STk_global_module);
+    else 
+      goto Global;
+  }
+  else {
+    if (FAKE_MODULEP(module))
+      m = Cons(module, MOD_IMPORTED(module));
+    else {
+      /* Search variable in the current module */
+      if (entry = Tcl_FindHashEntry(MOD_TABLE(module), (char*) var)) {
+	avalue = (SCM*) &Tcl_GetHashValue(entry);
+	if (*avalue != UNBOUND) {
+	  makemodulevar(context, var, module, (SCM) entry);
+	  if (err_if_unbound && TYPEP(*avalue, tc_autoload)) 
+	    STk_do_autoload(var, *avalue);
+	  return avalue;
+	}
+      }
+      m = MOD_IMPORTED(module);
+    }
+  }
+
+  /* Variable not found in the given module (which could be the global one)
+   * Try to find it in exported variables of the "m" list of modules 
+   */
+  for (  ; NNULLP(m); m = CDR(m)) {
+    module = CAR(m);
+    if (entry = Tcl_FindHashEntry(FIND_TABLE(module), (char*) var)) {
+      if (MOD_EXPORTALL(module) || STk_memq(var, MOD_EXPORTS(module)) != Ntruth) {
+	avalue = (SCM*) &Tcl_GetHashValue(entry);
+	if (*avalue != UNBOUND) {
+	  makemodulevar(context, var, module, (SCM) entry);
+	  if (TYPEP(*avalue, tc_autoload)) STk_do_autoload(var, *avalue);
+	  return avalue;
+	}
+      }
+    }
+  }
+
+Global:
+  /* "True" global variable (i.e. one which is accessed from its symbol) */
+  {
+    SCM val = VCELL(var);
+    
+    if (err_if_unbound) {
+      if (val == UNBOUND) {
+	/* C variables are always seen as unbound variables. This tends to 
+	 * make them slower than standard variables but, in counterpart, this
+	 * doesn't slow down acceses to Scheme variable 
+	 */
+	if (var->cell_info & CELL_INFO_C_VAR) {
+	  /* This is not an unbound variable but rather a C variable */
+	  static SCM tmp;
+	  tmp = STk_apply_getter_C_variable(PNAME(var));
+	  return &tmp;
+	}
+	Err("unbound variable", var);
+      }
+      if (TYPEP(val, tc_autoload)) STk_do_autoload(var, val);
+    }
+    makeglobalvar(context);
+    return &VCELL(var);
+  }
+}
+
+
 SCM *STk_varlookup(SCM x, SCM env, int err_if_unbound)
 {
   SCM frame, fl, *al, var;
   int level, pos;
 
-  var = CONSP(x)? CAR(x) : x;
-
+  var   = CONSP(x)? CAR(x) : x;
+  frame = env;
+  
   /* Try to find var in env */ 
-  for(level=0, frame=env; CONSP(frame); frame=CDR(frame), level++) {
+  for(level=0; CONSP(frame); frame=CDR(frame), level++) {
     al = &CAR(frame);
-
+    if (MODULEP(*al))
+      return module_lookup(*al, var, x, err_if_unbound);
+    
     for (pos=0, fl=CAR(CAR(frame)); NNULLP(fl); fl=CDR(fl), pos++) {
       if (NCONSP(fl)) {
 	if (EQ(fl, var)) { makelocalvar(x, level, pos); return &CDR(*al); }
@@ -96,28 +214,10 @@ SCM *STk_varlookup(SCM x, SCM env, int err_if_unbound)
       if EQ(CAR(fl), var) { makelocalvar(x, level, pos); return &CAR(*al); }
     }
   }
-  /* Not found. Return it's value in global environment */
-  if (err_if_unbound) {
-    SCM val = VCELL(var);
 
-    if (val == UNBOUND) {
-      /* C variables are always seen as unbound variables. This tends to 
-       * make them slower than standard variables but, in counterpart, this
-       * doesn't slow down acceses to Scheme variable 
-       */
-      if (var->cell_info & CELL_INFO_C_VAR) {
-	/* This is not an unbound variable but rather a C variable */
-	static SCM tmp;
-	tmp = STk_apply_getter_C_variable(PNAME(var));
-	return &tmp;
-      }
-      Err("unbound variable", var);
-    }
-    if (TYPEP(val, tc_autoload)) STk_do_autoload(var);
-  }
-  makeglobalvar(x);
-  return &VCELL(var);
+  return module_lookup(frame, var, x, err_if_unbound);
 }
+
 
 SCM STk_localvalue(SCM var, SCM env)
 {
@@ -137,21 +237,6 @@ SCM STk_localvalue(SCM var, SCM env)
   }
   return CONSP(q) ? CAR(p) : p;
 }
-
-
-SCM STk_extend_env(SCM formals, SCM actuals, SCM env, SCM who)
-{
-  register SCM f = formals, a = actuals;
-
-  for ( ; NNULLP(f); f=CDR(f), a=CDR(a)) {
-    if (NCONSP(f)) goto Out;
-    if (NULLP(a)) Err("too few arguments to", who);
-  }
-  if (NNULLP(a)) Err("too many arguments to", who);
- Out:
-  return STk_fast_extend_env(formals, actuals, env);
-}
-
 
 
 PRIMITIVE STk_symbol_boundp(SCM x, SCM env)
@@ -175,9 +260,18 @@ PRIMITIVE STk_the_environment(SCM args, SCM env, int len)
 
 PRIMITIVE STk_parent_environment(SCM env)
 {
-  if (NENVP(env)) Err("parent->environment: bad environment", env);
+  SCM tmp, parent;
 
-  return (env==STk_globenv) ? Ntruth: STk_makeenv(CDR(env->storage_as.env.data),0);
+  if (NENVP(env)) Err("parent->environment: bad environment", env);
+  if (env==STk_globenv) return Ntruth;
+
+  tmp = env->storage_as.env.data;
+  
+  if (MODULEP(CAR(tmp))) {
+    parent = STk_make_parent_module(CAR(tmp));
+    if (MODULEP(parent)) return STk_makeenv(LIST1(parent), 0);
+  }
+  return STk_makeenv(CDR(tmp),0);
 }
 
 PRIMITIVE STk_global_environment(void)
@@ -205,9 +299,14 @@ PRIMITIVE STk_environment2list(SCM env)
 
   if (NENVP(env)) Err("environment->list: bad environment", env);
 
-  for (l=env->storage_as.env.data; NNULLP(l); l=CDR(l))
+  for (l=env->storage_as.env.data; NNULLP(l); l=CDR(l)) {
+    if (MODULEP(CAR(l))) {
+      res = STk_append2(STk_module_env2list(CAR(l)), res);
+      break;
+    }
     res = Cons(local_env2list(CAR(l)), res);
-  
+  }
+
   res = Cons(STk_global_env2list(), res);
   return Reverse(res);
 }
@@ -217,3 +316,11 @@ PRIMITIVE STk_environmentp(SCM obj)
 {
   return ENVP(obj)? Truth: Ntruth;
 }
+
+#ifdef DEBUG_STK
+PRIMITIVE STk_get_environment(SCM env)
+{
+  if (NENVP(env)) Err("%get-environment: bad environment", env);
+  return env->storage_as.env.data;
+}
+#endif

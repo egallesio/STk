@@ -2,7 +2,7 @@
  *
  * p r o c . c			-- 
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -16,10 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
+ * $Id: proc.c 1.3 Mon, 09 Mar 1998 09:31:40 +0100 eg $
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 15-Nov-1993 22:02
- * Last file update: 13-May-1996 22:41
+ * Last file update:  8-Mar-1998 11:58
  */
 
 #include "stk.h"
@@ -34,10 +35,29 @@ int STk_is_thunk(SCM obj)
 #ifdef USE_STKLOS
     case tc_instance:
 #endif
+    case tc_lsubr:
     case tc_subr_0:
     case tc_subr_0_or_1: return TRUE;
   }
   return FALSE;
+}
+
+
+SCM STk_makeclosure(SCM code, SCM env)
+{
+  SCM z, tmp;
+  register int arity = 0;
+
+  /* Find procedure arity */
+  for (tmp = CAR(code); CONSP(tmp); tmp = CDR(tmp))
+    arity += 1;
+  if (NNULLP(tmp)) arity = -(arity+1);
+
+  NEWCELL(z, tc_closure);
+  CLOSCODE(z)  = code;
+  CLOSENV(z)   = env;
+  CLOSARITY(z) = arity;
+  return z;
 }
 
 
@@ -81,7 +101,7 @@ static SCM general_map(SCM l, int map, int len)
   SCM res = NIL,*tmp = &res;
   SCM fct, args;
 
-  if (NCONSP(l)) goto error;
+  if (len <= 1) goto error;
 
   fct  = CAR(l);
   len -= 1;
@@ -119,17 +139,22 @@ PRIMITIVE STk_map(SCM l, int len)
 
 PRIMITIVE STk_for_each(SCM l, int len)
 {
-  return general_map(l, 0, len);
+  general_map(l, 0, len);
+  return UNDEFINED;
 }
 
 PRIMITIVE STk_procedure_body(SCM proc)
 {
-  return TYPEP(proc, tc_closure) ? Cons(Sym_lambda, proc->storage_as.closure.code)
-    				 : Ntruth;
+  return TYPEP(proc, tc_closure) ? Cons(Sym_lambda, CLOSCODE(proc)) : Ntruth;
 }
 
 PRIMITIVE STk_procedure_environment(SCM proc)
 {
-  return TYPEP(proc, tc_closure) ? STk_makeenv(proc->storage_as.closure.env,0)
-    				 : Ntruth;    
+  return TYPEP(proc, tc_closure) ? STk_makeenv(CLOSENV(proc), 0) : Ntruth;
+}
+
+PRIMITIVE STk_procedure_arity(SCM proc)
+{
+  if (NTYPEP(proc, tc_closure)) Err("%procedure-arity: bad closure", proc);
+  return STk_makeinteger(CLOSARITY(proc));
 }

@@ -1,0 +1,113 @@
+;;;;
+;;;; B a l l o o n . s t k l o s  	  --  Help-Balloon class definition
+;;;;
+;;;; Copyright © 1996-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; $Id: Balloon.stklos 1.1 Wed, 04 Feb 1998 11:34:59 +0100 eg $
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 23-Oct-1996 17:02
+;;;; Last file update:  3-Feb-1998 19:05
+;;;;
+
+(require "Basics")
+
+(select-module STklos+Tk)
+
+(export add-balloon)
+
+;=============================================================================
+;
+;				 <Help-Balloon>
+;
+;=============================================================================
+
+;;;;
+;;;; Resources
+;;;;
+(option 'add "*HelpBalloon*Background"  	"#ffffb0" "widgetDefault")
+(option 'add "*HelpBalloon*Font"        	"fixed"   "widgetDefault")
+(option 'add "*HelpBalloon*Relief"		"flat"    "widgetDefault")
+(option 'add "*HelpBalloon*HighlightThickness"	0 	  "widgetDefault")
+
+;;;;
+;;;; Class definition
+;;;;
+(define-class <Help-Balloon> (<Tk-composite-toplevel> <Label>)
+  ((label :accessor 	label-of)
+   (class :init-keyword :class
+	  :init-form    "HelpBalloon")
+   (delay :initform 	1000 ; ms
+	  :init-keyword :delay 
+	  :accessor	 delay)))
+
+;;
+;; Initialize-composite-widget
+;;
+(define-method initialize-composite-widget ((self <Help-balloon>) initargs parent)
+  (let ((l (make <Label> :parent parent)))
+    (next-method)
+    ;; Withdraw the toplevel and set its override-redirect flag to #t)
+    (withdraw parent)
+    (slot-set! parent 'override #t)
+    
+    ;; Pack the label in the parent window    
+    (pack (Id l) :expand #t :fill "both")
+    
+    ; Set true slots
+    (slot-set! self 'Id     (slot-ref l 'Id))
+    (slot-set! self 'label  l)))
+
+;;
+;; Add-balloon
+;;
+(define-method add-balloon ((self <Help-Balloon>) who txt)
+  (define handler #f)
+  
+  (define (display W txt)
+    (after 'cancel handler)
+    (let ((delay (delay self)))
+      (when (>= delay 0)
+	(set! handler
+	      (after delay
+		     (lambda ()
+		       (let ((height (winfo 'height W))
+			     (pos-y  (winfo 'rooty  W))
+			     (top    (frame-of self)))
+			 ;; Change the help text
+			 (set! (text-of self) txt)
+			 ;; place the balloon just outside the widget
+			 (set! (geometry top) (format #f "+~A+~A"
+						      (winfo 'pointerx W) 
+						      (+ pos-y height 2)))
+			 ;; Deiconify
+			 (deiconify top)
+			 (raise top))))))))
+  (define (delete)
+    (withdraw (frame-of self))
+    (after 'cancel  handler))
+    
+  ;; Associate new bindings to a "ballooned" widget
+  (bind who "<Enter>" (lambda () (display who txt)))
+  (bind who "<Leave>" (lambda () (delete))))
+
+(provide "Balloon")
+
+#|
+  Example:
+	(define b  (make <Help-Balloon> :background "PaleGreen"))
+	(define b1 (make <Button> :text "B1"))
+	(define b2 (make <Button> :text "B2"))
+	(pack b1 b2 :side "left")
+	 
+	(add-balloon b b1 "This is button b1")
+	(add-balloon b b2 "This one is\n called b2")
+|#

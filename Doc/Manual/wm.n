@@ -8,7 +8,7 @@
 '\" @(#) wm.n 1.30 95/08/12 17:34:53
 '\" 
 .so STk-man.macros
-.TH wm n 3.1 STk "Tk Built-In Commands"
+.TH wm n 3.2 STk "Tk Built-In Commands"
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
@@ -125,7 +125,7 @@ should give the focus to \fIwindow\fR at appropriate times.  However,
 once the focus has been given to \fIwindow\fR or one of its descendants,
 the application may re-assign the focus among \fIwindow\fR's descendants.
 The focus model defaults to \fBpassive\fR, and Tk's \fBfocus\fR procedure
-assumes a passive model of focussing.
+assumes a passive model of focusing.
 .TP
 (\fBwm 'frame \fIwindow\fR)
 If \fIwindow\fR has been reparented by the window manager into a
@@ -428,7 +428,12 @@ no source has been specified yet.  Most window managers interpret
 .TP
 (\fBwm 'state \fIwindow\fR)
 Returns the current state of \fIwindow\fR:  either "\fBnormal\fR",
-"\fBiconic\fR", or "\fBwithdrawn\fR".
+"\fBiconic\fR", "\fBwithdrawn\fR", or "\fBicon\fR".  The difference
+between "\fBiconic\fR" and "\fBicon\fR" is that "\fBiconic\fR" refers
+to a window that has been iconified (e.g., with the \fBwm iconify\fR
+command) while "\fBicon\fR" refers to a window whose only purpose is
+to serve as the icon for some other window (via the \fBwm iconwindow\fR
+command).
 .TP
 (\fBwm 'title \fIwindow\fR)
 .TP

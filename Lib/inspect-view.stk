@@ -37,14 +37,14 @@
 (define (view-menu-Inspect key)
   (let ((obj (find-object-infos key)))
     (inspect obj)
-    ((widget (view-tl-str obj) ".menu.command.m") 'disable "Inspect")
-    (if (detailed? obj) ((detail-m-wid obj) 'disable "Inspect"))))
+    ((widget (view-tl-str obj) ".menu.command.m") 'entryconfigure "Inspect" :state 'disabled)
+    (if (detailed? obj) ((detail-m-wid obj) 'entryconfigure "Inspect" :state 'disabled))))
 
 (define (view-menu-Detail key)
   (let ((obj (find-object-infos key)))
     (detail obj)
-    ((widget (view-tl-str obj) ".menu.command.m") 'disable "Detail")
-    (if (inspected? obj) ((inspect-m-wid obj) 'disable "Detail"))))
+    ((widget (view-tl-str obj) ".menu.command.m") 'entryconfigure "Detail" :state 'disabled)
+    (if (inspected? obj) ((inspect-m-wid obj) 'entryconfigure "Detail" :state 'disabled))))
 
 (define (view-menu-Unview key) 
   (unview (find-object-infos key)))
@@ -73,19 +73,20 @@
 (define (unview-object obj)
   (let ((top (view-tl-wid obj)))
     (set! viewed-objects-list (list-remove obj viewed-objects-list))
-    (if (inspected? obj) ((inspect-m-wid obj) 'enable "View"))
-    (if (detailed? obj) ((detail-m-wid obj) 'enable "View"))
+    ;; enable the viewer
+    (if (inspected? obj) ((inspect-m-wid obj) 'entryconfigure "View" :state 'normal))
+    (if (detailed? obj) ((detail-m-wid obj) 'entryconfigure "Inspect" :state 'normal))
     (unless (or (inspected? obj) (detailed? obj))
 	    (remove-object-infos obj)
 	    (if (symbol? obj) (untrace-var obj)))
     ;; If toplevel exists (i.e. it is not a <Destroy> event) destroy it
-    (if (= (winfo 'exists top) 1)
+    (if (winfo 'exists top)
 	(destroy top))))
 
 (define (view-create obj)
   (let ((obj-val (inspect::eval obj)))
     (case (inspect::typeof obj-val)
-      ((widget)  (when (= (winfo 'exists (view-tl-wid obj-val)) 0)
+      ((widget)  (when (winfo 'exists (view-tl-wid obj-val))
 			 (view-widget-create obj-val)))
       ((closure) (view-procedure-create obj))
       (else      (view-object-create obj)))))
@@ -152,11 +153,11 @@
   (define cmd-w (eval [menu (& menu-w ".command.m")]))
   (tk-set! (widget menu-w ".command") :menu cmd-w)
   (cmd-w 'add 'command :label "Inspect" 
-	 	       :command `(view-menu-Inspect ',(object-symbol obj)))
-  (if (inspected? obj) (cmd-w 'disable "Inspect"))
+	 	       :command `(view-menu-Inspect ',(object-symbol obj))
+		       :state (if (inspected? obj) 'disabled 'normal))
   (cmd-w 'add 'command :label "Detail" 
-	 		:command `(view-menu-Detail ',(object-symbol obj)))
-  (if (detailed? obj) (cmd-w 'disable "Detail"))
+	 		:command `(view-menu-Detail ',(object-symbol obj))
+			:state (if (detailed? obj) 'disabled 'normal))
   (cmd-w 'add 'command :label "Unview" 
 	 	       :command `(view-menu-Unview ',(object-symbol obj)))
 
@@ -175,12 +176,14 @@
 	:side "left" :fill "y")
   (pack [scrollbar (& w ".f3.hsb") :orient "horizontal"]
 	:side "bottom" :fill "x")
-  (pack [canvas (view-c-str obj) :relief "raised" :bd 2]
+  (pack [canvas (view-c-str obj) :relief "raised" :bd 2
+		:yscrollcommand (& w ".f3.vsb 'set")
+		:xscrollcommand (& w ".f3.hsb 'set")]
 	:fill "both" :expand "yes")
-  (tk-set! (widget w ".f3.vsb") :command (& (view-c-str obj) " 'yview"))
-  (tk-set! (widget w ".f3.hsb") :command (& (view-c-str obj) " 'xview"))
-  (tk-set! (view-c-wid obj) :yscroll (& w ".f3.vsb 'set"))
-  (tk-set! (view-c-wid obj) :xscroll (& w ".f3.hsb 'set"))
+  (tk-set! (widget w ".f3.vsb")
+	   :command (lambda l (apply (string->widget (view-c-str obj)) 'yview l)))
+  (tk-set! (widget w ".f3.hsb")
+	   :command (lambda l (apply (string->widget (view-c-str obj)) 'xview l)))
   (bind w "<Destroy>" `(view-menu-Unview ',(object-symbol obj)))
   w)
 
@@ -477,8 +480,8 @@
 		       (tk-set! canv :scrollregion
 				(&& (- x1 offset) (- y1 offset)
 				    (+ x2 offset) (+ y2 offset))))
-  (canv 'xview 0)
-  (canv 'yview 0))
+  (canv 'xview 'moveto 0)
+  (canv 'yview 'moveto 0))
 
 (define (view-widget obj)
   (view-widget-create obj)

@@ -1,45 +1,44 @@
-/* 
+/**
  * tixImgXpm.c --
  *
  *	This file implements images of type "pixmap" for Tix.
+ * ______________________________________________________________________
  *
  * Copyright statement for tixImgXpm.c
- *        Copyright 1996 Ioi Kim Lam
+ *	Copyright 1996, Expert Interface Technologies
  *
  * The following terms apply only to this file and no other parts of the
  * Tix library.
  *
- *  Permission is hereby granted, without written agreement and
- *  without license or royalty fees, to use, copy, modify, and
- *  distribute this file, for any purpose, provided that existing
- *  copyright notices are retained in all copies and that this
- *  notice is included verbatim in any distributions.
+ *	Permission is hereby granted, without written agreement and
+ *	without license or royalty fees, to use, copy, modify, and
+ *	distribute this file, for any purpose, provided that existing
+ *	copyright notices are retained in all copies and that this
+ *	notice is included verbatim in any distributions.
  *
- * DISCLAIMER OF ALL WARRANTIES
+ *	DISCLAIMER OF ALL WARRANTIES
  *
- *  IN NO EVENT SHALL THE AUTHOR OF THIS SOFTWARE BE LIABLE TO ANY PARTY
- *  FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES
- *  ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN
- *  IF THE AUTHOR OF THIS SOFTWARE HAS BEEN ADVISED OF THE POSSIBILITY OF
- *  SUCH DAMAGE.
+ *	IN NO EVENT SHALL THE AUTHOR OF THIS SOFTWARE BE LIABLE TO ANY
+ *	PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR
+ *	CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE
+ *	AND ITS DOCUMENTATION, EVEN IF THE AUTHOR OF THIS SOFTWARE HAS
+ *	BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *  THE AUTHOR OF THIS SOFTWARE SPECIFICALLY DISCLAIMS ANY WARRANTIES,
- *  INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- *  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE
- *  PROVIDED HEREUNDER IS ON AN "AS IS" BASIS, AND THE AUTHOR OF THIS
- *  SOFTWARE HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
- *  ENHANCEMENTS, OR MODIFICATIONS.
- *  ___________________________________________________________________
- *
+ *	THE AUTHOR OF THIS SOFTWARE SPECIFICALLY DISCLAIMS ANY
+ *	WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ *	WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ *	PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS ON AN "AS IS"
+ *	BASIS, AND THE AUTHOR OF THIS SOFTWARE HAS NO OBLIGATION TO
+ *	PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR
+ *	MODIFICATIONS.
+ * ___________________________________________________________________
  *
  * This file is adapted from the Tk 4.0 source file tkImgBmap.c
- * Original tkImgBmap.c copyright information
- *   Copyright (c) 1994 The Regents of the University of California.
- *   Copyright (c) 1994-1995 Sun Microsystems, Inc.
+ * Original tkImgBmap.c copyright information:
  *
- *   See the file "license.terms.tcltk" for information
- *   on usage and redistribution of the original tkImgBmap.c file, and for 
- *   a DISCLAIMER OF ALL WARRANTIES from the authors of tkImgBmap.c.
+ *	Copyright (c) 1994 The Regents of the University of California.
+ *	Copyright (c) 1994-1995 Sun Microsystems, Inc.
+ *
  */
 #ifdef USE_TK
 #ifdef STk_CODE
@@ -48,6 +47,18 @@
 
 #include "tkInt.h"
 #include "tkPort.h"
+#ifndef STk_CODE
+#  include <tix.h>
+#endif
+
+/* constants used only in this file */
+
+#define XPM_MONO		1
+#define XPM_GRAY_4		2
+#define XPM_GRAY		3
+#define XPM_COLOR		4
+#define XPM_SYMBOLIC		5
+#define XPM_UNKNOWN		6
 
 /*
  * The following data structure represents the master for a pixmap
@@ -163,8 +174,10 @@ static Tk_ConfigSpec configSpecs[] = {
 	(char *) NULL, Tk_Offset(PixmapMaster, dataString), TK_CONFIG_NULL_OK},
     {TK_CONFIG_STRING, "-file", (char *) NULL, (char *) NULL,
 	(char *) NULL, Tk_Offset(PixmapMaster, fileString), TK_CONFIG_NULL_OK},
+#ifndef STk_CODE
     {TK_CONFIG_UID, "-id", (char *) NULL, (char *) NULL,
 	(char *) NULL, Tk_Offset(PixmapMaster, id), TK_CONFIG_NULL_OK},
+#endif
     {TK_CONFIG_END, (char *) NULL, (char *) NULL, (char *) NULL,
 	(char *) NULL, 0, 0}
 };
@@ -189,7 +202,7 @@ static char ** 		ImgXpmGetDataFromId _ANSI_ARGS_((Tcl_Interp * interp,
 			    char * id));
 static char ** 		ImgXpmGetDataFromString _ANSI_ARGS_((Tcl_Interp*interp,
 			    char * string, int * numLines_return));
-static int 		ImgXpmGetPixmapFromData _ANSI_ARGS_((
+static void 		ImgXpmGetPixmapFromData _ANSI_ARGS_((
 			    Tcl_Interp * interp,
 			    PixmapMaster *masterPtr,
 			    PixmapInstance *instancePtr));
@@ -305,7 +318,11 @@ ImgXpmConfigureMaster(masterPtr, argc, argv, flags)
 	}
     } else {
 	Tcl_AppendResult(masterPtr->interp,
+#ifdef STk_CODE
+	    "must specify  :data or :file", NULL);
+#else
 	    "must specify one of -data, -file or -id", NULL);
+#endif
 	goto error;
     }
 
@@ -327,7 +344,6 @@ ImgXpmConfigureMaster(masterPtr, argc, argv, flags)
 	Tk_ImageChanged(masterPtr->tkMaster, 0, 0, 0, 0, 0, 0);
     }
 
-  done:
     return TCL_OK;
 
   error:
@@ -361,7 +377,7 @@ ImgXpmGetData(interp, masterPtr)
     Tcl_Interp *interp;			/* For reporting errors. */
     PixmapMaster *masterPtr;
 {
-    char ** data;
+    char ** data = NULL;
     int  isAllocated;			/* do we need to free "data"? */
     int listArgc;
     char ** listArgv = NULL;
@@ -369,6 +385,7 @@ ImgXpmGetData(interp, masterPtr)
     int size[2];
     int cpp;
     int ncolors;
+    int code = TCL_OK;
 
     if (masterPtr->id != NULL) {
 	data = ImgXpmGetDataFromId(interp, masterPtr->id);
@@ -384,34 +401,38 @@ ImgXpmGetData(interp, masterPtr)
     }
     else {
 	/* Should have been enforced by ImgXpmConfigureMaster() */
+#ifdef STk_CODE
+	panic("ImgXpmGetData(): :data and :file are both NULL");
+#else
 	panic("ImgXpmGetData(): -data, -file and -id are all NULL");
+#endif
     }
 
     if (data == NULL) {
+	/* nothing has been allocated yet. Don't need to goto done */
 	return TCL_ERROR;
     }
 
     /* Parse the first line of the data and get info about this pixmap */
     if (Tcl_SplitList(interp, data[0], &listArgc, &listArgv) != TCL_OK) {
-	goto error;
+	code = TCL_ERROR; goto done;
     }
 
-    if (listArgc < 4) {
-	Tcl_AppendResult(interp, "File format error", NULL);
-	goto error;
+    if (listArgc < 4) {	/* file format error */
+	code = TCL_ERROR; goto done;
     }
 
     if (Tcl_GetInt(interp, listArgv[0], &size[0]) != TCL_OK) {
-	goto error;
+	code = TCL_ERROR; goto done;
     }
     if (Tcl_GetInt(interp, listArgv[1], &size[1]) != TCL_OK) {
-	goto error;
+	code = TCL_ERROR; goto done;
     }
     if (Tcl_GetInt(interp, listArgv[2], &ncolors) != TCL_OK) {
-	goto error;
+	code = TCL_ERROR; goto done;
     }
     if (Tcl_GetInt(interp, listArgv[3], &cpp) != TCL_OK) {
-	goto error;
+	code = TCL_ERROR; goto done;
     }
 
     if (isAllocated) {
@@ -419,35 +440,35 @@ ImgXpmGetData(interp, masterPtr)
 	    /* the number of lines read from the file/data
 	     * is not the same as specified in the data
 	     */
-	    goto error;
+	    code = TCL_ERROR; goto done;
 	}
     }
 
   done:
-    if (masterPtr->isDataAlloced && masterPtr->data) {
-	ckfree((char*)masterPtr->data);
-    }
-    masterPtr->isDataAlloced = isAllocated;
-    masterPtr->data = data;
-    masterPtr->size[0] = size[0];
-    masterPtr->size[1] = size[1];
-    masterPtr->cpp = cpp;
-    masterPtr->ncolors = ncolors;
-    
-    return TCL_OK;
+    if (code == TCL_OK) {
+	if (masterPtr->isDataAlloced && masterPtr->data) {
+	    ckfree((char*)masterPtr->data);
+	}
+	masterPtr->isDataAlloced = isAllocated;
+	masterPtr->data = data;
+	masterPtr->size[0] = size[0];
+	masterPtr->size[1] = size[1];
+	masterPtr->cpp = cpp;
+	masterPtr->ncolors = ncolors;
+    } else {
+	if (isAllocated && data) {
+	    ckfree((char*)data);
+	}
 
-  error:
-    Tcl_ResetResult(interp);
-    Tcl_AppendResult(interp, "File format error", NULL);
-
-    if (isAllocated && data) {
-	ckfree((char*)data);
+	Tcl_ResetResult(interp);
+	Tcl_AppendResult(interp, "File format error", NULL);
     }
+
     if (listArgv) {
 	ckfree((char*)listArgv);
     }
 		   
-    return TCL_ERROR;
+    return code;
 }
 
 static char ** ImgXpmGetDataFromId(interp, id)
@@ -476,8 +497,7 @@ static char ** ImgXpmGetDataFromString(interp, string, numLines_return)
     char * string;
     int * numLines_return;
 {
-    int skipped;
-    int quoated;
+    int quoted;
     char * p, * list;
     int numLines;
     char ** data;
@@ -492,40 +512,20 @@ static char ** ImgXpmGetDataFromString(interp, string, numLines_return)
     }
 
     /* parse the header */
-    if (strncmp("/* XPM ", string, 7) != 0) {
+    if (strncmp("/* XPM", string, 6) != 0) {
 	goto error;
     }
-    /* skip the first two lines */
-    for (skipped=0,p=string;;) {
-	while (*p && *p != '\n') {
-	    ++ p;
-	}
-	if (*p) {
-	    ++ p;
-	    ++ skipped;
-	} else {
-	    goto error;
-	}
-	if (skipped == 2) {
-	    break;
-	}
-    }
 
-    /* Change the buffer in to a proper TCL list */
-    quoated = 0;
-    list = p;
-    while (*p) {
-	if (quoated) {
+    /* strip the comments */
+    for (quoted = 0, p=string; *p;) {
+	if (!quoted) {
 	    if (*p == '"') {
-		quoated = 1;
+		quoted = 1;
+		++ p;
+		continue;
 	    }
-	    ++ p;
-	}
-	else {
+
 	    if (*p == '/' && *(p+1) == '*') {
-		/*
-		 * Skip comments
-		 */
 		*p++ = ' ';
 		*p++ = ' ';
 		while (1) {
@@ -539,17 +539,40 @@ static char ** ImgXpmGetDataFromString(interp, string, numLines_return)
 		    }
 		    *p++ = ' ';
 		}
+		continue;
 	    }
-
+	    ++ p;
+	} else {
 	    if (*p == '"') {
-		quoated = 0;
+		quoted = 0;
+	    }
+	    ++ p;
+	}
+    }
+
+    /* Search for the opening brace */
+    for (p=string; *p;) {
+	if (*p != '{') {
+	    ++ p;
+	} else {
+	    ++p;
+	    break;
+	}
+    }
+
+    /* Change the buffer in to a proper TCL list */
+    quoted = 0;
+    list = p;
+
+    while (*p) {
+	if (!quoted) {
+	    if (*p == '"') {
+		quoted = 1;
 		++ p;
 		continue;
 	    }
-	    if (*p == '\r') {
-		*p = ' ';
-	    }
-	    else if (*p == '\n') {
+
+	    if (isspace(*p)) {
 		*p = ' ';
 	    }
 	    else if (*p == ',') {
@@ -560,6 +583,12 @@ static char ** ImgXpmGetDataFromString(interp, string, numLines_return)
 		break;
 	    }
 	    ++p;
+	}
+	else {
+	    if (*p == '"') {
+		quoted = 0;
+	    }
+	    ++ p;
 	}
     }
 
@@ -635,7 +664,6 @@ static char ** ImgXpmGetDataFromFile(interp, fileName, numLines_return)
     }
     cmdBuffer[size] = 0;
 
-  done:
     data = ImgXpmGetDataFromString(interp, cmdBuffer, numLines_return);
     ckfree(cmdBuffer);
     Tcl_DStringFree(&buffer);
@@ -648,6 +676,113 @@ static char ** ImgXpmGetDataFromFile(interp, fileName, numLines_return)
     Tcl_DStringFree(&buffer);
     return (char**)NULL;
 }
+
+
+static char * GetType(colorDefn, type_ret)
+    char * colorDefn;
+    int  * type_ret;
+{
+    char * p = colorDefn;
+
+    /* skip white spaces */
+    while (*p && isspace(*p)) {
+	p ++;
+    }
+
+    /* parse the type */
+    if (p[0] != '\0' && p[0] == 'm' &&
+	p[1] != '\0' && isspace(p[1])) {
+	*type_ret = XPM_MONO;
+	p += 2;
+    }
+    else if (p[0] != '\0' && p[0] == 'g' &&
+	     p[1] != '\0' && p[1] == '4' &&
+	     p[2] != '\0' && isspace(p[2])) {
+	*type_ret = XPM_GRAY_4;
+	p += 3;
+    }
+    else if (p[0] != '\0' && p[0] == 'g' &&
+	     p[1] != '\0' && isspace(p[1])) {
+	*type_ret = XPM_GRAY;
+	p += 2;
+    }
+    else if (p[0] != '\0' && p[0] == 'c' &&
+	     p[1] != '\0' && isspace(p[1])) {
+	*type_ret = XPM_COLOR;
+	p += 2;
+    }
+    else if (p[0] != '\0' && p[0] == 's' &&
+	     p[1] != '\0' && isspace(p[1])) {
+	*type_ret = XPM_SYMBOLIC;
+	p += 2;
+    }
+    else {
+	*type_ret = XPM_UNKNOWN;
+	return NULL;
+    }
+
+    return p;
+}
+
+/* colorName is guaranteed to be big enough */
+static char * GetColor(colorDefn, colorName, type_ret)
+    char * colorDefn;
+    char * colorName;		/* if found, name is copied to this array */
+    int  * type_ret;
+{
+    int type;
+    char * p;
+
+    if (!colorDefn) {
+	return NULL;
+    }
+
+    if ((colorDefn = GetType(colorDefn, &type)) == NULL) {
+	/* unknown type */
+	return NULL;
+    }
+    else {
+	*type_ret = type;
+    }
+
+    /* skip white spaces */
+    while (*colorDefn && isspace(*colorDefn)) {
+	colorDefn ++;
+    }
+
+    p = colorName;
+
+    while (1) {
+	int dummy;
+
+	while (*colorDefn && !isspace(*colorDefn)) {
+	    *p++ = *colorDefn++;
+	}
+
+	if (!*colorDefn) {
+	    break;
+	}
+
+	if (GetType(colorDefn, &dummy) == NULL) {
+	    /* the next string should also be considered as a part of a color
+	     * name */
+	    
+	    while (*colorDefn && isspace(*colorDefn)) {
+		*p++ = *colorDefn++;
+	    }
+	} else {
+	    break;
+	}
+	if (!*colorDefn) {
+	    break;
+	}
+    }
+
+    /* Mark the end of the colorName */
+    *p = '\0';
+
+    return colorDefn;
+}
 
 /*----------------------------------------------------------------------
  * ImgXpmGetPixmapFromData --
@@ -655,15 +790,13 @@ static char ** ImgXpmGetDataFromFile(interp, fileName, numLines_return)
  *	Creates a pixmap for an image instance.
  *----------------------------------------------------------------------
  */
-static int ImgXpmGetPixmapFromData(interp, masterPtr, instancePtr)
+static void ImgXpmGetPixmapFromData(interp, masterPtr, instancePtr)
     Tcl_Interp * interp;
     PixmapMaster *masterPtr;
     PixmapInstance *instancePtr;
 {
     XImage * image = NULL, * mask = NULL;
-    int pad, depth, i, j, k, n, lOffset, isTransp = 0, isMono;
-    int listArgc;
-    char ** listArgv;
+    int pad, depth, i, j, k, lOffset, isTransp = 0, isMono;
     ColorStruct * colors;
     GC gc;
     Display *display = Tk_Display(instancePtr->tkwin);
@@ -710,7 +843,6 @@ static int ImgXpmGetPixmapFromData(interp, masterPtr, instancePtr)
      */
     lOffset = 1;
     colors = (ColorStruct*)ckalloc(sizeof(ColorStruct)*masterPtr->ncolors);
-    listArgv = 0;
 
     /* Initialize the color structures */
     for (i=0; i<masterPtr->ncolors; i++) {
@@ -724,65 +856,66 @@ static int ImgXpmGetPixmapFromData(interp, masterPtr, instancePtr)
     }
 
     for (i=0; i<masterPtr->ncolors; i++) {
-	char * colorName = NULL;
+	char * colorDefn;		/* the color definition line */
+	char * colorName;		/* temp place to hold the color name
+					 * defined for one type of visual */
+	char * useName;			/* the color name used for this
+					 * color. If there are many names
+					 * defined, choose the name that is
+					 * "best" for the target visual
+					 */
+	int found;
 
-	if (Tcl_SplitList(interp,
-		masterPtr->data[i+lOffset]+masterPtr->cpp,
-		&listArgc, &listArgv) != TCL_OK) {
-	    colors[i].colorPtr = NULL;
-	    continue;
-	}
-	if (listArgc < 2) {
-	    colors[i].colorPtr = NULL;
-	    continue;
-	}
-	for (j=0; j<listArgc; j+=2) {
-	    /* The symbolic color names are not implemented
-	     */
-	    if (listArgv[j][0] == 'm') {
-		if (isMono) {
-		    if (depth == 1) {
-			colorName = listArgv[j+1];
-			break;
-		    } else if (colorName == NULL) {	/* use as default */
-			colorName = listArgv[j+1];
-			continue;
-		    }
+	colorDefn = masterPtr->data[i+lOffset]+masterPtr->cpp;
+	colorName = (char*)ckalloc(strlen(colorDefn));
+	useName   = (char*)ckalloc(strlen(colorDefn));
+	found     = 0;
+
+	while (colorDefn && *colorDefn) {
+	    int type;
+
+	    if ((colorDefn=GetColor(colorDefn, colorName, &type)) == NULL) {
+		break;
+	    }
+	    if (colorName[0] == '\0') {
+		continue;
+	    }
+
+	    switch (type) {
+	      case XPM_MONO:
+		if (isMono && depth == 1) {
+		    strcpy(useName, colorName);
+		    found = 1; goto gotcolor;
+		}
+		break;
+	      case XPM_GRAY_4:
+		if (isMono && depth == 4) {
+		    strcpy(useName, colorName);
+		    found = 1; goto gotcolor;
+		}
+		break;
+	      case XPM_GRAY:
+		if (isMono && depth > 4) {
+		    strcpy(useName, colorName);
+		    found = 1; goto gotcolor;
+		}
+		break;
+	      case XPM_COLOR:
+		if (!isMono) {
+		    strcpy(useName, colorName);
+		    found = 1; goto gotcolor;
+		}
+		break;
+	    }
+	    if (type != XPM_SYMBOLIC && type != XPM_UNKNOWN) {
+		if (!found) {			/* use this color as default */
+		    strcpy(useName, colorName);
+		    found = 1;
 		}
 	    }
-	    else if (listArgv[j][0] == 'g' && listArgv[j][1] == '4') {
-		if (isMono) {
-		    if (depth == 4) {
-			colorName = listArgv[j+1];
-			break;
-		    } else if (colorName == NULL) {	/* use as default */
-			colorName = listArgv[j+1];
-			continue;
-		    }
-		}
-	    }
-	    else if (listArgv[j][0] == 'g') {
-		if (isMono) {
-		    if (depth > 4) {
-			colorName = listArgv[j+1];
-			break;
-		    } else if (colorName == NULL) {	/* use as default */
-			colorName = listArgv[j+1];
-			continue;
-		    }
-		}
-	    }
-	    else if (listArgv[j][0] == 'c') {
-		if (!isMono || colorName == NULL) {
-		    colorName = listArgv[j+1];
-		    break;
-		}
-	    }
-	}
-	if (colorName == NULL) {
-	    colorName = listArgv[1];
 	}
 
+      gotcolor:
 	if (masterPtr->cpp == 1) {
 	    colors[i].c = masterPtr->data[i+lOffset][0];
 	} else {
@@ -790,16 +923,22 @@ static int ImgXpmGetPixmapFromData(interp, masterPtr, instancePtr)
 		(size_t)masterPtr->cpp);
 	} 
 
-	if (strcasecmp(listArgv[j+1], "none") != 0) {
-	    colors[i].colorPtr = Tk_GetColor(interp,
-		instancePtr->tkwin, Tk_GetUid(colorName));
-	    if (colors[i].colorPtr == NULL) {
+	if (found) {
+	    if (strcasecmp(useName, "none") != 0) {
 		colors[i].colorPtr = Tk_GetColor(interp,
-		instancePtr->tkwin, Tk_GetUid("black"));
+		    instancePtr->tkwin, Tk_GetUid(useName));
+		if (colors[i].colorPtr == NULL) {
+		    colors[i].colorPtr = Tk_GetColor(interp,
+			instancePtr->tkwin, Tk_GetUid("black"));
+		}
 	    }
+	} else {
+	    colors[i].colorPtr = Tk_GetColor(interp,
+		instancePtr->tkwin, Tk_GetUid("black"));
 	}
-	ckfree((char*)listArgv);
-	listArgv = 0;
+
+	ckfree(colorName);
+	ckfree(useName);
     }
 
     lOffset += masterPtr->ncolors;
@@ -860,8 +999,10 @@ static int ImgXpmGetPixmapFromData(interp, masterPtr, instancePtr)
 	masterPtr->size[0], masterPtr->size[1], depth);
 
     gc = Tk_GetGC(instancePtr->tkwin, 0, NULL);
-    XPutImage(display, instancePtr->pixmap,
+
+    TkPutImage(NULL, 0, display, instancePtr->pixmap,
 	gc, image, 0, 0, 0, 0, masterPtr->size[0], masterPtr->size[1]);
+
     Tk_FreeGC(display, gc);
 
     /* mask, if necessary */
@@ -870,7 +1011,7 @@ static int ImgXpmGetPixmapFromData(interp, masterPtr, instancePtr)
 	    Tk_WindowId(instancePtr->tkwin),
 	    masterPtr->size[0], masterPtr->size[1], 1);
 	gc = XCreateGC(display, instancePtr->mask, 0, NULL);
-	XPutImage(display, instancePtr->mask,
+	TkPutImage(NULL, 0, display, instancePtr->mask,
 	    gc, mask,  0, 0, 0, 0, masterPtr->size[0], masterPtr->size[1]);
 	XFreeGC(display, gc);
     } else {
@@ -887,10 +1028,6 @@ static int ImgXpmGetPixmapFromData(interp, masterPtr, instancePtr)
 	ckfree((char*)mask->data);
 	mask->data = NULL;
 	XDestroyImage(mask);
-    }
-
-    if (listArgv) {
-	ckfree((char*)listArgv);
     }
 }
 
@@ -918,16 +1055,15 @@ ImgXpmConfigureInstance(instancePtr)
     PixmapInstance *instancePtr;	/* Instance to reconfigure. */
 {
     PixmapMaster *masterPtr = instancePtr->masterPtr;
-    int xpmCode;
     XGCValues gcValues;
     GC gc;
     unsigned int gcMask;
 
     if (instancePtr->pixmap != None) {
-	XFreePixmap(Tk_Display(instancePtr->tkwin), instancePtr->pixmap);
+	Tk_FreePixmap(Tk_Display(instancePtr->tkwin), instancePtr->pixmap);
     }
     if (instancePtr->mask != None) {
-	XFreePixmap(Tk_Display(instancePtr->tkwin), instancePtr->mask);
+	Tk_FreePixmap(Tk_Display(instancePtr->tkwin), instancePtr->mask);
     }
 
     if (instancePtr->colors != NULL) {
@@ -1010,6 +1146,7 @@ ImgXpmCmd(clientData, interp, argc, argv)
     }
     c = argv[1][0];
     length = strlen(argv[1]);
+
     if ((c == 'c') && (strncmp(argv[1], "cget", length) == 0)
 	    && (length >= 2)) {
 	if (argc != 3) {
@@ -1033,13 +1170,24 @@ ImgXpmCmd(clientData, interp, argc, argv)
 		    TK_CONFIG_ARGV_ONLY);
 	}
 	return code;
+    } else if ((c == 'r') && (strncmp(argv[1], "refcount", length) == 0)) {
+	/* For debugging only */
+	PixmapInstance *instancePtr;
+	int count = 0;
+	char buff[30];
+
+	for (instancePtr=masterPtr->instancePtr; instancePtr;
+	     instancePtr = instancePtr->nextPtr) {
+	    count += instancePtr->refCount;
+	}
+	sprintf(buff, "%d", count);
+	Tcl_SetResult(interp, buff, TCL_VOLATILE);
+	return TCL_OK;
+    } else {
+	Tcl_AppendResult(interp, "bad option \"", argv[1],
+	    "\": must be cget, configure or refcount", (char *) NULL);
+	return TCL_ERROR;
     }
-
-  error:
-
-    Tcl_AppendResult(interp, "bad option \"", argv[1],
-	"\": must be cget or configure", (char *) NULL);
-    return TCL_ERROR;
 }
 
 /*
@@ -1207,10 +1355,10 @@ ImgXpmFree(clientData, display)
      * the instance structure.
      */
     if (instancePtr->pixmap != None) {
-	XFreePixmap(display, instancePtr->pixmap);
+	Tk_FreePixmap(display, instancePtr->pixmap);
     }
     if (instancePtr->mask != None) {
-	XFreePixmap(display, instancePtr->mask);
+	Tk_FreePixmap(display, instancePtr->mask);
     }
     if (instancePtr->gc != None) {
 	Tk_FreeGC(display, instancePtr->gc);
@@ -1307,7 +1455,13 @@ ImgXpmCmdDeletedProc(clientData)
 	Tk_DeleteImage(masterPtr->interp, Tk_NameOfImage(masterPtr->tkMaster));
     }
 }
-
+#ifdef STk_CODE
+PRIMITIVE STk_init_pixmap(void)
+{
+  Tk_CreateImageType(&tixPixmapImageType);
+  return UNDEFINED;
+}
+#else
 
 /*
  *----------------------------------------------------------------------
@@ -1357,15 +1511,6 @@ Xpm_Init(interp)
 {
     Tk_CreateImageType(&tixPixmapImageType);
     return TCL_OK;
-}
-
-#ifdef STk_CODE
-PRIMITIVE STk_init_pixmap(void)
-{
-  extern Tcl_Interp *STk_main_interp;
-
-  Xpm_Init(STk_main_interp);
-  return UNDEFINED;
 }
 #endif
 

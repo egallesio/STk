@@ -1,4 +1,5 @@
 <HTML><HEAD><TITLE>STk procedures - ftp manual page</TITLE></HEAD>
+<BR>
 <BODY bgcolor = #ffffa0>
 <H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageYellow.gif"> ftp </H2>
 <I>A small (and very incomplete) FTP library</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
@@ -94,11 +95,11 @@ Hereafter is a simple session which prints the content of the /pub
 directory and gets the last release of STk on the <I>kaolin</I>
 workstation:
 <PRE>(define f (make &lt;FTP-connection&gt; :host &quot;kaolin.unice.fr&quot;))
-(when (ftp-login &quot;anonymous&quot; &quot;eg@unice.fr&quot;)
+(when (ftp-login  f &quot;anonymous&quot; &quot;eg@unice.fr&quot;)
    (ftp-chdir f &quot;/pub&quot;)
    (ftp-dir f &quot;-lsa&quot;)
    (ftp-get f &quot;STk.tar.gz&quot;)
    (ftp-quit f))</PRE>
-<P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif"><P>
 <A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookYellow.gif"> Back to the <B>STk</B> main page</A>
 </BODY></HTML>

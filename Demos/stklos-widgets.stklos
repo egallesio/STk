@@ -1,0 +1,219 @@
+#!/bin/sh
+:;exec /usr/local/bin/stk -f "$0" "$@"
+;;
+;; A quick demo of the STklos widgets
+;; This code is a contribution of Drew.Whitehouse@anu.edu.au
+;;
+;; Multiple-window added by eg on 96/04/14
+;; Gauges and help balloon added by eg on 96/10/23
+
+(require "Tk-classes")
+
+(define main-frame (make <Frame>))
+(define title (make <Label> :parent main-frame :text "STklos Widgets Demo"))
+(define button-box (make <Frame> :parent main-frame :width 200 :height 100))
+(define quit (make <Button> :parent main-frame 
+                   :text " quit "
+                   :command (lambda () 
+			      (destroy *root*))))
+
+(define composite-widgets '(Choice-box 
+			    Color-Box
+                            Default-button 
+                            File-box 
+			    Gauge
+			    Help-Balloon
+                            Labeled-Entry 
+			    Labeled-Frame
+			    Multiple-Window
+                            Paned 
+			    Scroll-Canvas
+                            Scroll-Listbox
+			    Scroll-text
+			    Valued-Gauge))
+
+(for-each (lambda (x)
+            (let ((cmd (string-append "(demo-" (symbol->string x) ")")))
+              (pack (make <Button> :parent button-box :text x :command cmd)
+                    :fill 'x :padx 5 )))
+          composite-widgets)
+
+(pack title button-box :fill 'x :padx 10 :pady 10)
+(pack quit :padx 10 :pady 10 )
+(pack main-frame)
+
+;=============================================================================
+(define (demo-choice-box)
+  (let* ((tl (make <Toplevel> :title "Choice Box"))
+         (cb (make <Choice-box> :value "empty for now!" :parent tl)))
+    ;; add some entries
+    (for-each (lambda (x) (add-choice cb (symbol->string x))) 
+	      composite-widgets)
+    (pack cb)))
+
+;=============================================================================
+(define (demo-color-box)
+  (let ((f (make <Color-Box> :value "gray75")))
+    (colorbox-wait-result f)))
+
+;=============================================================================
+(define (demo-default-button)
+  (pack (make <Default-button> 
+	      :text "button"
+	      :width 20
+	      :parent (make <Toplevel> :title "Default Button"))))
+
+;=============================================================================
+(define (demo-file-box)
+  (let ((f (make-file-box)))
+    (if f
+	(format #t "You have selected ~S\n" f)
+	(format #t "Cancel\n"))))
+
+;=============================================================================
+(define (demo-gauge)
+  (let* ((top (make <Toplevel> :title "Gauge widget"))
+	 (g   (make <Gauge> :parent top :width 400 :height 15 
+		    :foreground "IndianRed4")))
+    (pack g :expand #t :fill "both")
+    (dotimes (i 101)
+      (slot-set! g 'value i)
+      (after 5)
+      (update))))
+
+;=============================================================================
+(define (demo-help-balloon)
+   (let* ((top (make <Toplevel> :title "Balloon Help"))
+	  (f   (make <Frame> :parent top))
+	  (txt (make <Label> :parent top 
+		     :text "Place the mouse on a button\n and wait a while"))
+	  (h   (make <Help-Balloon>)))
+     (for-each (lambda (x)
+		 (let ((b (make <Button> :parent f :text x :side "left")))
+		   (add-balloon h b (format #f "This is ~S" x))
+		   (pack b :side "left")))
+	       '("Button1" "Button2" "Button3" "Button4" "Button5" "Button6"))
+     (pack f )
+     (pack txt :expand #t :fill "both")))
+
+;=============================================================================
+(define (demo-labeled-entry)
+  (pack (make <Labeled-entry> 
+	      :title "Enter your name" 
+	      :parent (make <Toplevel> :title "Labeled entry"))
+	:padx 5 :pady 5))
+
+;=============================================================================
+(define (demo-labeled-frame)
+  (define top (make <Toplevel> :title "Labeld Frames"))
+  (define lf (make <Labeled-Frame> :title "Font" :parent top))
+  (pack lf :fill "both" :expand #t :side "left")
+  
+  (for-each (lambda (x)
+	      (pack (make <Radio-button> :anchor "w" :parent lf :variable 'font
+			  :text x :string-value #f :width 8 :font "fixed" :value x)
+		    :fill "x" :expand #f :anchor "w" :side "top"))
+	    '("10pt" "12pt" "14pt" "18pt"))
+  
+  
+  (define lf2 (make <Labeled-Frame> :title "Type" :parent top))
+  (pack lf2 :fill "both" :expand #t :side "left")
+  
+  (for-each (lambda (x)
+	      (pack (make <Radio-button> :anchor "w" :parent lf2 :variable 'type
+			  :text x :string-value #f :width 15 :font "fixed" :value x)
+		    :fill "x" :expand #f :anchor "w" :side "top"))
+	    '("Bold" "Italic" "Normal")))
+
+;=============================================================================
+(define (demo-paned)
+  (let* ((tl (make <Toplevel> :title "Paned demo"))
+         (hp (make <HPaned> :fraction 0.3 :width 300 :height 300 :parent tl))
+         (f1 (make <Label> :text "top pane" :parent (top-frame-of hp)))
+         (f2 (make <Label> :text "bottom-pane" :parent (bottom-frame-of hp)))
+         (vp (make <VPaned> :fraction 0.3 :width 300 :height 300 :parent tl))
+         (f3 (make <Label> :text "left pane" :parent (left-frame-of vp)))
+         (f4 (make <Label> :text "right-pane" :parent (right-frame-of vp))))
+    (pack f1 f2 f3 f4 :expand #t)
+    (pack hp vp)))
+
+;=============================================================================
+(define (demo-scroll-canvas . parent)
+  (let* ((top (if (null? parent) 
+		  (make <Toplevel> :title "Scroll Canvas") 
+		  (car parent)))
+	 (c   (make <Scroll-Canvas> :parent top :background "#c4b6a7"
+		    :h-scroll-side "bottom" :scroll-region '(0 0 1000 1000))))
+    (make <Rectangle> :parent c :fill "IndianRed1"     :coords '(0 0 50 50))
+    (make <Oval>      :parent c :fill "DarkOliveGreen" :coords '(100 100 150 150))
+    (bind-for-dragging c)
+    (pack c :fill "both" :expand #t)))
+
+;=============================================================================
+(define (demo-scroll-listbox)
+  (let* ((tl (make <Toplevel> :title "Scroll box"))
+         (sb (make <Scroll-listbox> :parent tl :geometry "20x6")))
+    ;; add some entries into the listbox
+    (for-each (lambda (x) 
+                (insert (listbox-of sb) 0 x))
+              (append composite-widgets composite-widgets))
+    (pack sb)))
+
+;=============================================================================
+(define (demo-scroll-text . parent)
+  (let* ((top (if (null? parent) 
+		  (make <Toplevel> :title "Scroll Canvas") 
+		  (car parent)))
+	 (t1 (make <Scroll-Text> :highlight-thickness 0 :parent top :height 8 
+		   :background "lightblue3" :wrap "word"
+		   :value "Hi!I'm a text window\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nEnd"))
+	 (t2 (make <Scroll-Text> :highlight-thickness 0 :parent top
+		   :background "lightblue3" :wrap "word" :height 4
+		   :value "Hi, I'm also embedded in a window.\nUse the mouse in the border of my enclosing window to enlarge or shrink this editor")))
+  (pack t1 t2 :fill "both" :expand #t)))
+
+;=============================================================================
+
+(define (demo-multiple-window) 
+  ;;
+  ;; Make a Menu bar
+  ;;
+  (define tl   (make <Toplevel> :title "Multiple and Inner windows demo"))
+  (define top  (make <Frame> :parent tl))
+  (define col '#("violet" "skyblue1" "Misty Rose" "Plum" "grey40"))
+  (define menu (make-menubar top 
+     `(("Menu" 
+	("Add one"  ,(let ((counter 0))
+		       (lambda () 
+			 (place (make <Inner-window> :parent f
+				      :title (format #f "Window #~A" counter)
+				      :background (vector-ref col (random 5)))
+				:x (random 200) :y (random 200))
+			 (set! counter (1+ counter)))))
+	("")
+	("Quit"     ,(lambda () (destroy tl)))))))
+  (pack menu :side "left" :expand #f)
+  (pack top :fill "x")
+  ;;
+  ;; Make a multiple window
+  ;;
+  (define f (make <Multiple-window> :parent tl :background "cyan4"))
+  (pack f :fill "both" :expand #t)
+
+  (define f1 (make <Inner-window> :parent f :title "A Text window"))
+  (define f2 (make <Inner-window> :parent f :title "A canvas window"))
+  (demo-scroll-text f1)
+  (demo-scroll-canvas f2)
+
+  (place f1 :x 100 :y 70)
+  (place f2 :x 10 :y 10))
+
+;=============================================================================
+(define (demo-valued-gauge)
+  (let* ((top (make <Toplevel> :title "Valued Gauge widget"))
+	 (g   (make <Valued-Gauge> :parent top :width 400 :height 15)))
+    (pack g :expand #t :fill "both")
+    (dotimes (i 101)
+      (slot-set! g 'value i)
+      (after 5)
+      (update))))

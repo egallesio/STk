@@ -4,12 +4,12 @@
  *	This file contains Unix-specific interpreter initialization
  *	functions.
  *
- * Copyright (c) 1995-1996 Sun Microsystems, Inc.
+ * Copyright (c) 1995-1997 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkUnixInit.c 1.12 96/05/17 16:27:32
+ * SCCS: @(#) tkUnixInit.c 1.24 97/07/24 14:46:09
  */
 
 #include "tkInt.h"
@@ -17,57 +17,23 @@
 
 #ifndef STk_CODE
 /*
+ * The Init script (common to Windows and Unix platforms) is
+ * defined in tkInitScript.h
+ */
+#include "tkInitScript.h"
+#endif
+
+/*
  * Default directory in which to look for libraries:
  */
 
 static char defaultLibraryDir[200] = TK_LIBRARY;
 
-/*
- * The following string is the startup script executed in new
- * interpreters.  It looks on disk in several different directories
- * for a script "tk.tcl" that is compatible with this version
- * of Tk.  The tk.tcl script does all of the real work of
- * initialization.
- */
-
-static char initScript[] =
-"proc init {} {\n\
-    global tk_library tk_version tk_patchLevel env\n\
-    rename init {}\n\
-    set dirs {}\n\
-    if [info exists env(TK_LIBRARY)] {\n\
-	lappend dirs $env(TK_LIBRARY)\n\
-    }\n\
-    lappend dirs $tk_library\n\
-    lappend dirs [file dirname [info library]]/lib/tk$tk_version\n\
-    set parentDir [file dirname [file dirname [info nameofexecutable]]] \n\
-    lappend dirs $parentDir/lib/tk$tk_version\n\
-    if [string match {*[ab]*} $tk_patchLevel] {\n\
-	set lib tk$tk_patchLevel\n\
-    } else {\n\
-	set lib tk$tk_version\n\
-    }\n\
-    lappend dirs [file dirname $parentDir]/$lib/library\n\
-    lappend dirs [file dirname [file dirname [info library]]]/$lib/library\n\
-    lappend dirs $parentDir/library\n\
-    foreach i $dirs {\n\
-	set tk_library $i\n\
-	if ![catch {uplevel #0 source $i/tk.tcl}] {\n\
-	    return\n\
-	}\n\
-    }\n\
-    set msg \"Can't find a usable tk.tcl in the following directories: \n\"\n\
-    append msg \"    $dirs\n\"\n\
-    append msg \"This probably means that Tk wasn't installed properly.\n\"\n\
-    error $msg\n\
-}\n\
-init";
-#endif
 
 /*
  *----------------------------------------------------------------------
  *
- * TkPlatformInit --
+ * TkpInit --
  *
  *	Performs Unix-specific interpreter initialization related to the
  *      tk_library variable.
@@ -83,7 +49,7 @@ init";
  */
 
 int
-TkPlatformInit(interp)
+TkpInit(interp)
     Tcl_Interp *interp;
 {
     char *libDir;
@@ -91,18 +57,85 @@ TkPlatformInit(interp)
 #ifdef STk_CODE
     extern char *STk_library_path;
     
-    Tcl_SetVar(interp, "*stk-library*", STk_library_path, 
-	       STk_STRINGIFY | TCL_GLOBAL_ONLY);
+    STk_tcl_setvar("*stk-library*", STk_library_path, STk_STRINGIFY, "");
+    TkCreateXEventSource();
+    return TCL_OK;
 #else
     libDir = Tcl_GetVar(interp, "tk_library", TCL_GLOBAL_ONLY);
     if (libDir == NULL) {
 	Tcl_SetVar(interp, "tk_library", defaultLibraryDir, TCL_GLOBAL_ONLY);
     }
-#endif
     TkCreateXEventSource();
-#ifdef STk_CODE
-    return TCL_OK;
-#else
     return Tcl_Eval(interp, initScript);
 #endif
 }
+
+#ifndef STk_CODE
+/*
+ *----------------------------------------------------------------------
+ *
+ * TkpGetAppName --
+ *
+ *	Retrieves the name of the current application from a platform
+ *	specific location.  For Unix, the application name is the tail
+ *	of the path contained in the tcl variable argv0.
+ *
+ * Results:
+ *	Returns the application name in the given Tcl_DString.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+void
+TkpGetAppName(interp, namePtr)
+    Tcl_Interp *interp;
+    Tcl_DString *namePtr;	/* A previously initialized Tcl_DString. */
+{
+    char *p, *name;
+
+    name = Tcl_GetVar(interp, "argv0", TCL_GLOBAL_ONLY);
+    if ((name == NULL) || (*name == 0)) {
+	name = "tk";
+    } else {
+	p = strrchr(name, '/');
+	if (p != NULL) {
+	    name = p+1;
+	}
+    }
+    Tcl_DStringAppend(namePtr, name, -1);
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TkpDisplayWarning --
+ *
+ *	This routines is called from Tk_Main to display warning
+ *	messages that occur during startup.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	Generates messages on stdout.
+ *
+ *----------------------------------------------------------------------
+ */
+
+void
+TkpDisplayWarning(msg, title)
+    char *msg;			/* Message to be displayed. */
+    char *title;		/* Title of warning. */
+{
+    Tcl_Channel errChannel = Tcl_GetStdChannel(TCL_STDERR);
+    if (errChannel) {
+	Tcl_Write(errChannel, title, -1);
+	Tcl_Write(errChannel, ": ", 2);
+	Tcl_Write(errChannel, msg, -1);
+	Tcl_Write(errChannel, "\n", 1);
+    }
+}
+#endif

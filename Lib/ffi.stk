@@ -1,0 +1,98 @@
+;;;;
+;;;; f f i . s t k		--  Foreign Function Interface for STk
+;;;;
+;;;; Copyright © 1997-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 17-Sep-1997 12:35
+;;;; Last file update:  8-Apr-1998 10:18
+
+
+(select-module STk)
+
+(define (ffi:arg-type type return?)
+  (let ((type  (if (and (pair? type) (eq? '* (cadr type)))
+		   ;; We have (:xxx *). If xxx=char return :string, 
+		   ;; :dynamic-ptr otherwise
+		   (if (eq? :char (car type)) :string :dynamic-ptr)
+		   type)))
+    ;; DO NOT CHANGE the following values without changing the correponding
+    ;; constants in the file dynload.c!!!!
+    (case type
+      ((:void)		(if return? 
+			    0 
+			    (error "define-external: void argument forbidden")))
+      ((:char)		1)
+      ((:short)		2)
+      ((:ushort)	3)
+      ((:int)		4)
+      ((:uint)		5)
+      ((:long)		6)
+      ((:ulong)		7)
+      ((:float)		8)
+      ((:double)	9)
+      ((:static-ptr)	10)
+      ((:dynamic-ptr)	11)
+      ((:string)	12)
+      ((:boolean) 	13)
+      (else 		(error "define-external: bad type: ~S" type)))))
+
+(define (ffi:interface-type type)	;available calling conventions
+  (case type
+    ((:c)          0)			;args pushed right-to-left, caller pops
+    ((:argc/argv)  1)			;argv pushed, then argc, caller pops
+    ((:winapi)     2)))			;args pushed left-to-right, callee pops
+
+(define (ffi:parse-arglist l)
+  (letrec ((aux (lambda (l names types)
+		  (cond 
+		     ((null? l) (list names types names))
+		     ((pair? l) (aux (cdr l) 
+				     (append names (list (caar l)))
+				     (append types 
+					     (list (ffi:arg-type (cadar l) #f)))))
+		     (else      (list (append names l)
+				      (append types (ffi:arg-type :void #t))
+				      (append names (list l))))))))
+    (aux l '() '())))
+	
+
+(define-macro (define-external  name args . l)
+  (let* ((args	      (ffi:parse-arglist args))
+	 (lib-name    (get-keyword :library-name l ""))
+	 (entry-name  (get-keyword :entry-name   l (symbol->string name)))
+	 (return-type (ffi:arg-type (get-keyword :return-type l :void) #t))
+	 (interface   (ffi:interface-type (get-keyword :interface l :C)))
+	 (names	      (car args))
+	 (types	      (cadr args))
+	 (actuals     (caddr args))
+	 (prologue   `(,(if (string=? lib-name "")
+			    ""
+			    (string-append lib-name "." *shared-suffix*))
+		       ,entry-name 
+		       ,return-type 
+		       ',names 
+		       ',types)))
+
+    `(define ,name (lambda ,names
+		     ,(if (list? names)
+			  `(%call-external ,@prologue ,@(copy-tree actuals))
+			  `(apply %call-external ,@prologue 
+				  ,@(copy-tree actuals)))))))
+
+(define (external-exists?  entry . lib)
+  (apply %external-exists? 
+	 entry 
+	 (list (if (null? lib) 
+		   ""
+		   (string-append (car lib) "." *shared-suffix*)))))
+
+(provide "ffi")

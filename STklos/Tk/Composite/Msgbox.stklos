@@ -1,0 +1,229 @@
+;;;;
+;;;; M s g b o x . s t k l o s  	  --  Various Messsage boxes classes
+;;;;
+;;;; Copyright © 1996-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; $Id: Msgbox.stklos 1.3 Wed, 04 Feb 1998 11:34:59 +0100 eg $
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 29-Aug-1997 21:06
+;;;; Last file update:  4-Feb-1998 10:33
+
+(require "image")
+(require "Basics")
+
+(select-module STklos+Tk)
+
+;;;;
+;;;; Utilities
+;;;;
+
+(define msgbox-button #f)
+
+(define (msgbox-create-button  name parent box)
+  (make <Button> :parent parent 
+	         :text   name 
+		 :width  6
+		 :command (lambda ()
+			    (set! msgbox-button 
+				  (string->symbol (string-lower name)))
+			    (destroy box))))
+
+(define msgbox-default-image (make-image "error"))
+
+;=============================================================================
+;
+;			< T k - m e s s a g e - b o x >
+;
+;
+; This class is not intended for the user. It is in fact the ancestor of
+; the class defined below.
+;=============================================================================
+
+;;;;
+;;;; Resources
+;;;;
+(option 'add "*MessageBox*icon.Image" 	msgbox-default-image  "widgetDefault")
+(option 'add "*MessageBox*msg.Font"     '(Helvetica -16 bold) "widgetDefault")
+(option 'add "*MessageBox*msg.Aspect"   1000                  "widgetDefault")
+
+;;;;
+;;;;  Class definition
+;;;;
+
+(define-class <Tk-message-box> (<Tk-composite-toplevel> <Message>)
+  (icon msg
+   (class 	    :init-keyword :class
+		    :init-form    "MessageBox")
+   (default-button  :accessor     default-button 
+     		    :init-keyword :default-button)
+   ;; fictive slots
+   (font            :accesssor     font
+		    :init-keyword :font
+		    :allocation	  :propagated
+		    :propagate-to (msg))
+   (bitmap 	    :accessor 	   bitmap
+		    :init-keyword :bitmap
+		    :allocation	  :propagated
+		    :propagate-to (icon))))
+
+(define-method initialize-composite-widget ((self <Tk-message-box>) initargs frame)
+  (let* ((top  (make <Frame>   :parent frame :relief "raised" :border-width 1))
+	 (bot  (make <Frame>   :parent frame :relief "raised" :border-width 1))
+	 (icon (make <Label>   :parent top :Id 'icon))
+	 (msg  (make <Message> :parent top :anchor 'w :Id 'msg :justify 'left)))
+
+    (next-method)
+
+    ;; Top window
+    (pack icon :side 'left  :padx '5m :pady '5m :expand #f :fill "both")
+    (pack msg  :side 'right :padx '3m :pady '3m :expand #t :fill "both")
+    (pack top  :side 'top :fill 'both :expand #t)
+
+    ;; Bottom window
+    (initialize-message-box-buttons self bot frame)
+    (pack bot :side 'bottom :fill 'x :expand #f)
+
+    ;; True slots initialization
+    (slot-set! self 'Id    (slot-ref msg 'Id))
+    (slot-set! self 'icon  icon)
+    (slot-set! self 'msg   msg)))
+
+(define-method initialize-message-box-buttons((self <Tk-composite-widget>)frame box)
+  (error "initialize-message-box-button: ~S must be a subclass of <Tk-message-box>"
+	 self))
+
+;=============================================================================
+;
+; 	    < A b o r t - r e t r y - i g n o r e - m e s s a g e - b o x > 
+;
+;=============================================================================
+
+(define-class <Abort-retry-ignore-message-box> (<Tk-message-box>)
+  ())
+
+(define-method initialize-message-box-buttons
+  			((self <Abort-retry-ignore-message-box>) frame box)
+  (let ((abt (msgbox-create-button "Abort"  frame box))
+	(rty (msgbox-create-button "Retry"  frame box))
+	(ign (msgbox-create-button "Ignore" frame box)))
+    (pack abt rty ign :side 'left :expand #t :padx '3m :pady '2m)))
+
+;=============================================================================
+;
+; 			< O k - m e s s a g e - b o x >
+;
+;=============================================================================
+(define-class <Ok-message-box> (<Tk-message-box>)
+  ())
+
+(define-method initialize-message-box-buttons((self <Ok-message-box>) frame box)
+  (let ((ok (msgbox-create-button "Ok" frame box)))
+    (pack ok :side 'left :expand #t :padx '3m :pady '2m)))
+
+;=============================================================================
+;
+; 		< O k - c a n c e l - m e s s a g e - b o x >
+;
+;=============================================================================
+(define-class <Ok-cancel-message-box> (<Tk-message-box>)
+  ())
+
+(define-method initialize-message-box-buttons
+  			((self <Ok-cancel-message-box>) frame box)
+  (let ((ok  (msgbox-create-button "Ok"     frame box))
+	(cnl (msgbox-create-button "Cancel" frame box)))
+
+    (pack ok cnl :side 'left :expand #t :padx '3m :pady '2m)))
+
+;=============================================================================
+;
+; 	   < R e t r y - c a n c e l - m e s s a g e - b o x >
+;
+;=============================================================================
+(define-class <Retry-cancel-message-box> (<Tk-message-box>)
+  ())
+
+(define-method initialize-message-box-buttons
+                           ((self <Retry-cancel-message-box>) frame box)
+  (let ((rty (msgbox-create-button "Retry"  frame box))
+	(cnl (msgbox-create-button "Cancel" frame box)))
+
+    (pack rty cnl :side 'left :expand #t :padx '3m :pady '2m)))
+
+;=============================================================================
+;
+;  		    < Y e s - n o - m e s s a g e - b o x > 
+;
+;=============================================================================
+(define-class <Yes-no-message-box> (<Tk-message-box>)
+  ())
+
+(define-method initialize-message-box-buttons((self <Yes-no-message-box>) frame box)
+  (let ((yes (msgbox-create-button "Yes" frame box))
+	(no  (msgbox-create-button "No"  frame box)))
+
+    (pack yes no :side 'left :expand #t :padx '3m :pady '2m)))
+
+;=============================================================================
+;
+; 		< Y e s - n o - c a n c e l - m e s s a g e - b o x >
+;
+;=============================================================================
+(define-class <Yes-no-cancel-message-box> (<Tk-message-box>)
+  ())
+
+(define-method initialize-message-box-buttons
+                                ((self <Yes-no-cancel-message-box>) frame box)
+  (let ((yes (msgbox-create-button "Yes"    frame box))
+	(no  (msgbox-create-button "No"     frame box))
+	(cnl (msgbox-create-button "Cancel" frame box)))
+
+    (pack yes no cnl :side 'left :expand #t :padx '3m :pady '2m)))
+
+
+;=============================================================================
+;
+; Tk:message-box (for Unix)
+;
+;=============================================================================
+
+(when (eqv? (os-kind) 'Unix)
+
+  (define (Tk:message-box . l)
+    (let* ((default (get-keyword :default l ""))
+	   (icon    (get-keyword :icon    l #f))
+	   (text    (get-keyword :text    l ""))
+	   (title   (get-keyword :title   l ""))
+	   (class   (case (get-keyword :type  l 'ok)
+		      ((abortretryignore) <Abort-retry-ignore-message-box>)
+		      ((okcancel)	  <Ok-cancel-message-box>)
+		      ((retrycancel)	  <Retry-cancel-message-box>)
+		      ((yesno)		  <Yes-no-message-box>)
+		      ((yesnocancel)	  <Yes-no-cancel-message-box>)
+		      (else		  <Ok-message-box>)))
+	   (box     (make class :text text :title title)))
+      
+      ;; Default
+      ;/////// must be done ////////
+      
+      ;; Icon 
+      (if icon (set! (icon box) (make-image icon)))
+           
+      (let ((old-grab (grab 'current box)))
+	(tkwait 'visibility box)
+	(grab 'set box)
+	(tkwait 'window box)
+	(and old-grab (grab 'set old-grab))
+	msgbox-button)))
+)
+
+(provide "MsgBox")

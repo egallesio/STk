@@ -1,7 +1,7 @@
 /*
  * m a c r o s . c			-- Simple statically scoped macros
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -17,7 +17,7 @@
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: ??-Oct-1993 ??:?? 
- * Last file update:  2-Jun-1995 22:42
+ * Last file update: 16-Mar-1998 10:06
  *
  */
 
@@ -28,13 +28,23 @@ PRIMITIVE STk_macro(SCM args, SCM env, int len)
 {
   SCM z, code;
   
-  if (len != 2) Err("macro: Bad parameter list", args);
+  if (len != 2) Err("macro: Bad definition", args);
 
   code = Cons(Sym_lambda, args); /* Create code before to avoid GC problems */
   NEWCELL(z, tc_macro);
   z->storage_as.macro.code = EVAL(code);
+  z->storage_as.macro.env  = Ntruth;
   return z;
 }
+
+PRIMITIVE STk_macro_R5(SCM args, SCM env, int len)
+{
+  SCM z = STk_macro(args, env, len);
+
+  z->storage_as.macro.env  = env;
+  return z;
+}
+
 
 /*
  * macro_expand and macro_expand_1 are defined as fsubr rather than subr_1.

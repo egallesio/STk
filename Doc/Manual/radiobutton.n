@@ -63,7 +63,6 @@ the radiobutton is displayed using the \fBactiveForeground\fR and
 \fBactiveBackground\fR options.  Disabled state means that the radiobutton
 should be insensitive:  the default bindings will refuse to activate
 the widget and will ignore mouse button presses.
-.VE
 In this state the \fBdisabledForeground\fR and
 \fBbackground\fR options determine how the radiobutton is displayed.
 .OP :stringvalue stringvalue StringValue string-value

@@ -1,0 +1,220 @@
+;;;;
+;;;; w w w  . s t k			--  WWW for STk
+;;;;
+;;;; Copyright © 1996-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; This version uses some of the enhancements done by Harvey J. Stein:
+;;;;         Copyright (c) 1995 Harvey J. Stein (hjstein@math.huji.ac.il)
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date:  4-Oct-1996 16:14
+;;;; Last file update: 28-Feb-1998 13:53
+
+;; 
+;; This module needs a library of protocol getters & file viewers to be
+;; useful. It is merely an interface for structuring access to said
+;; libraries. Here the entry points defined here:
+;; 
+;; (www:insert-url txt url . parent)
+;;    Reads in URL and insert it in text widget TXT.  URL is parsed
+;;    relative to PARENT (when provided).  Basically, this routine
+;;    determines the protocol to use to fetch the URL, and the file type of
+;;    the url.  Based on the protocol it selects a protocol getter to open a
+;;    port through which the document can be read.  Based on the file type
+;;    it selects a document viewing function with which to view the
+;;    document.
+;; 
+;; (www:view-url txt url . parent)
+;;    Reads in URL and displays it in text widget TXT. The main difference
+;;    with www:insert-url is that this function clears the txt widget 
+;;    before inserting the URL content.
+;; 
+;; (www:add-protocol proto port-maker)
+;;    adds protocol getter for specified protocol. Protocol should be
+;;    something one would see at the beginning of a url (such as http).
+;;    It should be a symbol.  port-maker is a closures taking 1 argument
+;;    - a parsed url.  It should return a pair formed of a port through
+;;    which the specified URL can be read and a thunk to close this port.
+;; 
+;; (www:add-viewer regexp viewer) 
+;;    adds a viewer for files which satisfy the given regexp.  The viewer
+;;    should take 3 arguments, a text widget, a port and a parsed url.
+;;    The viewer should read the document from the port, and display it
+;;    in the text widget.  However, the viewer is free to take some
+;;    action other than viewing the document (such as poping up a save-to
+;;    dialog box, or an auxiliary handler for the document).
+;;
+;; This module also exports the following hooks
+;;       (www:hook-title title)      called when title change
+;;       (www:hook-location title)   called when location URL change
+;;       (www:hook-start-loading)    called when a new page is loaded
+;;       (www:hook-stop-loading)     called when a new page has been loaded
+;;       (www:hook-formatting)       called often when formatting (pulse)
+;; These hooks are set by default to #f (no action)
+;;
+;; The exported variable 
+;;          www:stop-loading 
+;; is read periodically during  loading. Setting it to #t interrupts loading
+;;
+
+(require "hash")
+(require "www-url")
+;;
+;; Module stuff
+;;
+(define-module WWW
+  (import Scheme Tk URL)
+
+  (export WWW:view-url WWW:insert-url WWW:add-protocol WWW:add-viewer
+	  WWW:stop-loading
+	  www:hook-title www:hook-location www:hook-start-loading
+	  www:hook-stop-loading www:hook-formatting))
+
+(select-module WWW)
+
+;=============================================================================
+
+
+;; Exported variables and Hooks
+(define WWW:stop-loading	  #f) ;; Set it to #t to interrupt loading
+
+(define (www:hook-title title)    #f) ;; called when title change
+(define (www:hook-location title) #f) ;; called when location URL change
+(define (www:hook-start-loading)  #f) ;; called when a new page is loaded
+(define (www:hook-stop-loading)   #f) ;; called when a new page has been loaded
+(define (www:hook-formatting)     #f) ;; called often when formatting (pulse)
+
+
+;=============================================================================
+;
+; 			P r o t o c o l s   m a n a g e m e n t
+;
+;=============================================================================
+(define *protocols* (make-hash-table)) 		; Table of recognized protocols
+
+(define (www:add-protocol proto port-maker)
+  (hash-table-put! *protocols* proto port-maker))
+
+(define (get-protocol->port proto)
+  (hash-table-get *protocols* proto #f))
+
+;=============================================================================
+;
+; 			V i e w e r s   m a n a g e m e n t
+;
+;=============================================================================  
+(define *viewers* (make-hash-table)) 		; Table of document viewers
+
+(define (www:add-viewer key viewer)
+  (hash-table-put! *viewers* key  viewer))
+
+(define (get-viewer filename)
+  ;; Try to find a viewer for a given file. We work only on the filename 
+  ;; suffix, here. That's clearly not sufficient.
+  (let loop ((l (hash-table->list *viewers*)))
+    (if (null? l) 
+	#f
+	(let ((item (car l)))
+	  (if (and (regexp? (car item)) ((car item) filename))
+	      ;; regexp matches
+	      (cdr item)
+	      ;; continue search
+	      (loop (cdr l)))))))
+
+;=============================================================================
+;
+; 				v i e w - u r l
+;
+;=============================================================================
+
+(define *loading-document* #f)
+
+(define (WWW:view-url txt url . parent)
+  (when *loading-document*
+    ;; We are loading a document. Stop this loading
+    (set! www:stop-loading #t)
+    (update))
+  ;;
+  ;; Start the loading of the new document
+  ;;
+  (set! *loading-document* #t)
+  ; Reset text
+  (tk-set! txt :state "normal" :wrap "word" :tabs 8 :font "fixed")
+  (txt 'delete 1.0 "end")
+  ; Insert url
+  (set! www:stop-loading #f)
+  (www:hook-start-loading)
+  
+  (let ((res (apply www:insert-url txt url parent)))
+    (www:hook-location (url:pretty-url url parent))
+    (tk-set! txt :state "disabled")     ; make text read-only
+    (www:hook-stop-loading)
+    (set! *loading-document* #f)
+    res))
+
+;=============================================================================
+;
+;				 i n s e r t - u r l 
+;
+;=============================================================================
+
+(define (port-on-url url . parent)
+  (letrec ((url->port (lambda (url)
+			(let* ((service   (url:service url))
+			       (converter (get-protocol->port service)))
+			  (and converter (converter url)))))
+	   (parsed-url (if (and (list? url) (null? parent))
+			   url				 ;already parsed
+			   (apply url:parse-url url parent))))
+    
+    (let ((p (url->port parsed-url))) ; Return <port, full-url, close-port>
+      (when p
+	(vector (car p) parsed-url (cdr p))))))
+
+
+(define (WWW:insert-url txt url . parent)
+  (let* ((P          (apply port-on-url url parent))
+	 (port       (vector-ref P 0))
+	 (parsed-url (vector-ref P 1))
+	 (close      (vector-ref P 2))
+	 (viewer     (get-viewer (url:filename parsed-url))))
+    (unless viewer
+      ;; No viewer, try to guess one depending of protocol used
+      (case (url:service parsed-url)
+	((HTTP) (set! viewer (hash-table-get *viewers* 'html #f)))
+	((FILE) (set! viewer (hash-table-get *viewers* 
+					     (if (input-string-port? port)
+						 ;; this is generated HTML 
+						 ;; (e.g. a dir listing)
+						 'html
+						 'txt)
+					     #f))))
+      (unless viewer ; again
+	(error "Don't know how to view the URL ~S" (url:pretty-url url parent))))
+    
+    ;; Viewer is known now. Here we go
+    (let ((res (viewer txt port parsed-url)))
+      (close)
+      res)))
+
+;==============================================================================
+
+;; File formats
+(require "www-html")
+(require "www-txt")
+(require "www-img")
+(require "www-snd")
+
+;;----  Protocols
+(require "www-http")
+(require "www-file")
+
+(provide "www")

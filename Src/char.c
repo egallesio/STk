@@ -2,7 +2,7 @@
  *
  * c h a r . c				-- Characters management
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1997 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -19,7 +19,7 @@
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: ??????
- * Last file update:  4-May-1996 11:18
+ * Last file update: 14-Apr-1997 14:14
  */
 
 #include <ctype.h>
@@ -27,7 +27,7 @@
 
 struct charelem {
   char *name;
-  char value;
+  unsigned char value;
 };
 
 static struct charelem chartable [] = { 
@@ -95,11 +95,10 @@ static int my_strcmpi(register char *p1, register char *p2)
 
 
 
-char STk_string2char(char *s)
+unsigned char STk_string2char(char *s)
 /* converts a char name to a char */
 {
   register struct charelem *p;
-  int diff;
   
   if (s[1] == '\000') return s[0];
   for (p=chartable; *(p->name); p++) {
@@ -109,9 +108,9 @@ char STk_string2char(char *s)
   return '\0'; /* never reached */
 }
 
-char *STk_char2string(char c)  /* convert a char to it's external representation */
+char *STk_char2string(unsigned char c)  /* convert a char to it's external rep. */
 {
-  static char result[2] = " ";  /* sets the \0 */
+  static unsigned char result[2] = " ";  /* sets the \0 */
   register struct charelem *p;
 
   for (p=chartable; *(p->name); p++)
@@ -122,14 +121,14 @@ char *STk_char2string(char c)  /* convert a char to it's external representation
   return result;
 }
 
-SCM STk_makechar(char c)
+SCM STk_makechar(unsigned char c)
 {
   SCM z;
 
 #ifndef COMPACT_SMALL_CST
   NEWCELL(z,tc_char);
 #endif
-  SET_CHARACTER(z, c);
+  SET_CHARACTER(z, (int) c);
   return z;
 }
 
@@ -224,4 +223,3 @@ PRIMITIVE STk_char_lower(SCM c)
   if (NCHARP(c)) Err("char-downcase: bad character", c);
   return STk_makechar(tolower(CHAR(c)));
 }
-

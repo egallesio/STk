@@ -2,7 +2,7 @@
  *
  * e v a l . c				-- The evaluator
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -16,10 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
+ * $Id: eval.c 1.10 Fri, 10 Apr 1998 14:05:25 +0200 eg $
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 23-Oct-1993 21:37
- * Last file update:  2-Sep-1996 19:18
+ * Last file update: 10-Apr-1998 10:45
  */
 
 #include "stk.h"
@@ -28,7 +29,7 @@
 #  include "stklos.h"
 #endif
 
-#define RETURN(x)		{tmp = (x); goto Out; }
+#define RETURN(x)			 {tmp = (x); goto Out; }
 
 /*
  * STk_eval_flag indicates if eval has something to test (a ^C has
@@ -43,71 +44,37 @@
 
 int STk_eval_flag = 0;
 
+
 /*
- * Eval stack
- * 
- * The eval stack is a stack of the arguments passed to eval. This stack permits
- * to facilitate debugging  of Scheme programs. Its contents is displayed 
- * when an error occurs.
- * Note that "STk_eval_stack" does'nt need to be protected since it contains 
- * pointers which are themselves copies of the eval C routine. Eval parameters
- * will be marked as are all the objects which are in the C stack
- * */
+ *
+ * Utilities 
+ *
+ */
 
-static struct Stack_info {
-  SCM expr, env;
-  struct Stack_info *previous;
-} *stack = NULL;
-
-
-void STk_show_eval_stack(int depth)
+static SCM extend_env(SCM proc, SCM actuals, SCM call, int len)
 {
-  int j;
-  struct Stack_info *p;
+  register int arity = CLOSARITY(proc);
 
-  fprintf(STk_stderr, "\nCurrent eval stack:\n__________________\n");
-  for (p=stack, j=0; p && j<=depth ; p=p->previous, j++) {
-    fprintf(STk_stderr, "%3d    ", j);
-    STk_print(STk_uncode(p->expr), STk_curr_eport, WRT_MODE);
-    Putc('\n', STk_stderr);
-    if (j == depth && p->previous) fprintf(STk_stderr, "...\n");
+  /* Code is weird, but we do only 2 tests for corrects call */
+  if (arity >= 0) {
+    if (arity == len) return add_frame(CLOSPARAMS(proc), actuals, CLOSENV(proc));
+    if (len < arity) goto TooFew;
+    goto TooMuch;
   }
-}
-
-void STk_reset_eval_stack(void)
-{
-  stack = NULL;
-}
-
-PRIMITIVE STk_get_eval_stack(void)
-{
-  struct Stack_info *p;
-  SCM 		     z = NIL;
-  
-  for (p = stack; p ; p = p->previous) z = Cons(p->expr, z);
-  
-  return STk_reverse(z);
-}
-
-PRIMITIVE STk_get_env_stack(void)
-{
-  struct Stack_info *p;
-  SCM 		     z = NIL;
-  
-  for (p = stack; p ; p = p->previous)  {
-    /* Avoid to create an environment for each item */
-    SCM tmp = (z!=NIL && STk_equal(CAR(z)->storage_as.env.data,p->env)==Truth) ?
-      		CAR(z): 
-      		STk_makeenv(p->env, 0);
-    z = Cons(tmp, z);
-  }
-  return  STk_reverse(z);
-}
-
-
-SCM STk_top_env_stack(void)
-{
-  return stack ? STk_makeenv(stack->env, 0): STk_globenv;
+  /* arity is < 0  <=>  proc has an &rest argument */
+  if (len >= (-arity)-1) 
+    /* When the procedure has a &rest parameter, we add a new environment
+     * in front of the extended environment. This environment is only useful
+     * for procedures which have internal defines (which will be placed in
+     * this empty environment). This empty environment is not created for 
+     * non &rest procedure since it costs (and there is perhaps no define 
+     * in the proc!).
+     */
+    return add_frame(NIL, NIL, add_frame(CLOSPARAMS(proc), actuals, CLOSENV(proc)));
+TooFew:
+  Err("too few arguments to", call);
+TooMuch:
+  Err("too many arguments to", call);
 }
 
 static SCM eval_args(SCM l, SCM env)
@@ -153,6 +120,73 @@ Error:
   Err("cond: bad clause body", clause);
   return UNDEFINED; /* never reached */
 }
+
+
+/*
+ * Eval stack
+ * 
+ * The eval stack is a stack of the arguments passed to eval. This stack permits
+ * to facilitate debugging  of Scheme programs. Its contents is displayed 
+ * when an error occurs.
+ * Note that "STk_eval_stack" does'nt need to be protected since it contains 
+ * pointers which are themselves copies of the eval C routine. Eval parameters
+ * will be marked as are all the objects which are in the C stack
+ * */
+
+static struct Stack_info {
+  SCM expr, env;
+  struct Stack_info *previous;
+} *stack = NULL;
+
+void STk_show_eval_stack(int depth, int uncode)
+{
+  int j;
+  struct Stack_info *p;
+
+  fprintf(STk_stderr, "\nCurrent eval stack:\n__________________\n");
+  for (p=stack, j=0; p && j<=depth ; p=p->previous, j++) {
+    fprintf(STk_stderr, "%3d    ", j);
+    /* if !uncode we are in panic mode (i.e. don't allocate during printing) */
+    if (uncode)
+      STk_print(STk_uncode(p->expr), STk_curr_eport, WRT_MODE);
+    else
+      STk_print(p->expr, STk_curr_eport, PANIC_MODE);
+    Putc('\n', STk_stderr);
+    if (j == depth && p->previous) fprintf(STk_stderr, "...\n");
+  }
+}
+
+void STk_reset_eval_stack(void)
+{
+  stack = NULL;
+}
+
+
+PRIMITIVE STk_user_get_eval_stack(void)
+{
+  struct Stack_info *p;
+  SCM 		     z = NIL;
+  
+  for (p = stack; p ; p = p->previous) z = Cons(p->expr, z);
+  
+  return STk_reverse(z);
+}
+
+PRIMITIVE STk_get_env_stack(void)
+{
+  struct Stack_info *p;
+  SCM 		     z = NIL;
+  
+  for (p = stack; p ; p = p->previous)  {
+    /* Avoid to create an environment for each item */
+    SCM tmp = (z!=NIL && STk_equal(CAR(z)->storage_as.env.data,p->env)==Truth) ?
+      		CAR(z): 
+      		STk_makeenv(p->env, 0);
+    z = Cons(tmp, z);
+  }
+  return  STk_reverse(z);
+}
+
 
 /*
  * *eval-hook* management.
@@ -294,9 +328,11 @@ Top:
     case tc_symbol:
          RETURN(*STk_varlookup(x, env, 1));
     case tc_globalvar:
-	 RETURN(VCELL(VCELL(x)));
+         RETURN(VCELL(VCELL(x)));
     case tc_localvar:
 	 RETURN(STk_localvalue(x, env));
+    case tc_modulevar:
+      	 RETURN(STk_modulevalue(x));
     case tc_cons: {
  	 /* Evaluate the first argument of this list (without calling eval) */
 	 tmp = CAR(x);
@@ -307,9 +343,11 @@ Top:
 	   case tc_cons:
 		fct = EVAL(tmp); break;
 	   case tc_globalvar:
-		fct = VCELL(VCELL(tmp)); break;
+	        fct = VCELL(VCELL(tmp)); break;
 	   case tc_localvar:
 		fct = STk_localvalue(tmp, env); break;
+	   case tc_modulevar:
+	     	fct = STk_modulevalue(tmp); break;
            default:
 		fct = tmp;
   	 }
@@ -372,26 +410,27 @@ Top:
 #ifdef USE_STKLOS
 	   case tc_instance:
 	        tmp = eval_args(tmp, env);
-
 	        if (PUREGENERICP(fct)) {
 		  /* Do it in C */
+		  SCM methods;
+		  
 		  if (NULLP(THE_SLOT_OF(fct, S_methods)))
-		    Apply(VCELL(Intern("no-method")), LIST2(fct, tmp));
+		    Apply(STk_STklos_value(Intern("no-method")), LIST2(fct, tmp));
 
-		  fct = STk_compute_applicable_methods(fct, tmp, len, FALSE);
-		  /* fct is the list of applicable methods. Apply the
+		  methods = STk_compute_applicable_methods(fct, tmp, len, FALSE);
+		  /* methods is the list of applicable methods. Apply the
 		   * first one with the tail of the list as first
 		   * parameter (next-method). If fct is NIL, that's because
 		   * the no-applicable-method triggered didn't call error.
 		   */
-		  if (NULLP(fct)) RETURN(UNDEFINED);
-		  tmp = Cons(STk_make_next_method(CDR(fct), tmp), tmp);
-		  fct = THE_SLOT_OF(CAR(fct), S_procedure);
-		  env = STk_extend_env(CLOSURE_PARAMETERS(fct),
-				       tmp,
-				       fct->storage_as.closure.env,
-				       x);
-		  tmp = CDR(fct->storage_as.closure.code);
+		  if (NULLP(methods)) RETURN(UNDEFINED);
+		  tmp = Cons(FASTMETHODP(CAR(methods))? 
+			     		UNBOUND: 
+			     		STk_make_next_method(CDR(methods),tmp,fct),
+			     tmp);
+		  fct = THE_SLOT_OF(CAR(methods), S_procedure);
+		  env = extend_env(fct, tmp, x, len+1);
+		  tmp = CLOSBODY(fct);
 		  goto Begin;
 		}
 		else
@@ -408,11 +447,8 @@ Top:
 	    	RETURN(STk_execute_Tcl_lib_cmd(fct, tmp, env, 1));
 #endif
 	   case tc_closure:
-		env = STk_extend_env(CLOSURE_PARAMETERS(fct),
-				     eval_args(tmp, env),
-				     fct->storage_as.closure.env,
-				     x);
-		tmp = CDR(fct->storage_as.closure.code);
+	        env = extend_env(fct, eval_args(tmp, env), x, len);
+		tmp = CLOSBODY(fct);
 		/* NOBREAK */
 Begin:	   case tc_begin:
 		for( ; NNULLP(CDR(tmp)); tmp=CDR(tmp))
@@ -423,19 +459,16 @@ Begin:	   case tc_begin:
 		if (len == 1) STk_throw(fct, EVALCAR(tmp));
 		goto Error;
 	   case tc_let:
-		env = STk_fast_extend_env(CAR(tmp), 
-					  eval_args(CAR(CDR(tmp)),env), 
-					  env);
+		env = add_frame(CAR(tmp), eval_args(CAR(CDR(tmp)),env), env);
 		tmp = CDR(CDR(tmp));
 		goto Begin;
 	   case tc_letstar:
 		{
 		  SCM l1=CAR(tmp), l2=CAR(CDR(tmp));
 		  /* Create a rib to avoid that internal def be seen as global  */
-		  env = STk_fast_extend_env(NIL, NIL, env); 
+		  env = add_frame(NIL, NIL, env); 
 		  for ( ; NNULLP(l1); l1=CDR(l1), l2=CDR(l2))
-		    env = STk_fast_extend_env(Cons(CAR(l1), NIL), 
-					      Cons(EVALCAR(l2), NIL), env);
+		    env = add_frame(LIST1(CAR(l1)), LIST1(EVALCAR(l2)), env);
 		  tmp =  CDR(CDR(tmp));
 		  goto Begin;
 		}
@@ -446,7 +479,7 @@ Begin:	   case tc_begin:
 		  /* Make a binding list an extend current with it */
 		  for (len=STk_llength(l1); len; len--) 
 		    bindings=Cons(UNBOUND,bindings);
-		  env = STk_fast_extend_env(l1, bindings, env);
+		  env = add_frame(l1, bindings, env);
 
 		  /* Eval init forms in the new environment */
 		  for (l1 = CAR(tmp); NNULLP(l1); l1=CDR(l1), l2=CDR(l2))
@@ -458,14 +491,17 @@ Begin:	   case tc_begin:
 		}
            case tc_macro:
 	        x = Apply(fct->storage_as.macro.code, x);
+/*FIXME:        x = Apply(fct->storage_as.macro.code, Cons(fct, tmp));
+/*		if (fct->storage_as.macro.env != Ntruth) {
+		  printf("EG: ==========>R5 macro\n");
+		  env = fct->storage_as.macro.env;
+		}		  
+*/
 	        goto Top;
 	   case tc_quote:
 		RETURN(CAR(tmp));
 	   case tc_lambda:
-		NEWCELL(x, tc_closure);
-		x->storage_as.closure.env  = env;
-		x->storage_as.closure.code = tmp;
-		RETURN(x);
+		RETURN(STk_makeclosure(tmp, env));
 	   case tc_if:
 		x = NEQ(EVALCAR(tmp), Ntruth) ? CAR(CDR(tmp))
 					      : CAR(CDR(CDR(tmp)));
@@ -501,23 +537,20 @@ Begin:	   case tc_begin:
 		RETURN(x);
 	   case tc_extend_env:
 	     	fct = EVALCAR(tmp);
-	        if (NENVP(fct)) Err("extend-env: bad environment", fct);
+	        if (NENVP(fct)) Err("extend-environment: bad environment", fct);
 		tmp = CDR(tmp);
-		env = STk_append(LIST2(fct->storage_as.env.data, env), 2);
+		env = STk_append2(fct->storage_as.env.data, env);
 		goto Begin;
 	   case tc_apply:
 		tmp = eval_args(tmp, env);
 		fct = CAR(tmp);
 		tmp = STk_liststar(CDR(tmp),len-1);
-		if (STk_llength(tmp) == -1) Err("apply: bad parameter list", tmp);
+		len = STk_llength(tmp);
+		if (len == -1) Err("apply: bad parameter list", tmp);
 
 		switch (TYPE(fct)) {
-		  case tc_closure: env=STk_extend_env(
-		    				CAR(fct->storage_as.closure.code),
-						tmp,
-						fct->storage_as.closure.env,
-						x);
-		    		   tmp = CDR(fct->storage_as.closure.code);
+		  case tc_closure: env = extend_env(fct, tmp, x, len);
+		    		   tmp = CLOSBODY(fct);
 		    		   goto Begin;
 		    case tc_apply: /* Here we are not tail recursive. (i.e. when
 				    * we have something like (apply apply f ...)
@@ -601,15 +634,12 @@ Top:
 	 return SUBRF(fct)(param, STk_llength(param));
     case tc_cont:
 	 if (STk_llength(param) == 1)
-	   STk_throw(fct, CAR(param));	 
+	   STk_throw(fct, CAR(param));
     case tc_closure: { 
-         register SCM env = STk_extend_env(CAR(fct->storage_as.closure.code),
-				       param,
-				       fct->storage_as.closure.env,
-				       fct);
 	 register SCM code;
+         register SCM env = extend_env(fct, param, fct, STk_llength(param));
 	 
-	 for(code=CDR(fct->storage_as.closure.code); NNULLP(code); code=CDR(code))
+	 for(code=CLOSBODY(fct); NNULLP(code); code=CDR(code))
 	   param = EVALCAR(code);
 	 return param;
        }
@@ -637,7 +667,6 @@ Top:
   Err("apply: bad number of arguments to apply", Cons(fct,param));
   return UNDEFINED; /* never reached */
 }
-
 
 PRIMITIVE STk_user_eval(SCM expr, SCM env)
 {

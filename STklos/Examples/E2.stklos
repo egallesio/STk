@@ -13,7 +13,7 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;    Creation date:  4-Aug-1994 15:22 
-;;;; Last file update: 17-Jan-1996 23:14
+;;;; Last file update: 22-Mar-1998 17:07
 
 
 (require "Canvas")

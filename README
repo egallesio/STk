@@ -1,9 +1,9 @@
+<
+		    This is the release 3.99 of STk
+		   ---------------------------------
 
-		    This is the release 3.1 of STk
-		   --------------------------------
 
-
-(Last release is always available from kaolin.unice.fr [193.48.229.225])
+(Last release is always available from <ftp://kaolin.unice.fr/pub/STk> )
 
 STk is a R4RS Scheme interpreter which can access the Tk graphical
 package.  Concretely it can be seen as the John Ousterhout's Tk
@@ -13,74 +13,42 @@ STk also provides an efficient object oriented system called STklos.
 STklos is an extensive OO system with multiple inheritance, generic
 functions, multi-methods and a Meta Object Protocol).
 
-This release runs on several Unix boxes (see below) and on Microsoft
-Win32. It uses the Tk 4.1 package for the graphical part.
+This release runs on majors Unix versions (Linux, Solaris, OSF, ...)
+
+The previous version was also running on Microsoft Win32 (port of
+current version is planned but has not be done yet).
+
+Version 3.99.0 uses the Tk 8.0 package for the graphical part.
+
 
 DIFFERENCE PREVIOUS RELEASE
 ---------------------------
 
-	- Version of Tk is now at Tk4.1 level. 
+Only major changes are listed here. See the file 'CHANGES' in the
+distribution main directory for more informations.
 
-	- STk run now on Win32!!! 
-	Some details need a little more work (some oddities on file names
-	due to difference conventions between Unix and DOS, and things like 
-	that). No socket support and no dynamic loading on Win32
 
-	- A complete documentation of STk widgets pages (both in nroff 
-	and HTML format). The help command really allow you to browse
-	man pages now. Man pages are prefixed by "stk_" now to avoid confusion 
-	with original Tk manual pages. 
+   * A module system has been added
+   * Integration of the Bigloo MATCH-CASE and MATCH-LAMBDA
+     primitives. Furthermore, the file bigloo.stk provide
+     some compatibility between STk and bigloo modules.
+   * A simple FFI has been added. It allows to access C
+     functions without writing C code (works only on a
+     limited set of architectures for now).
+   * Integration of the Tk8.0 toolkit
+   * The MOP of STklos is now very similar to the CLOS one.
+   * When a class is redefined, the instances and methods
+     which uses it are redefined accordingly, as in CLOS.
+   * Generic functions can be now traced with the standard
+     TRACE function.
+   * Some new composite widgets: Gauge, Valued-Gauge,
+     Balloon-help, ...
+   * The HTML-browser has been enhanced to access now the
+     web (i.e. you can grab distant texts or images). The
+     Web browser admit now applets written in Scheme.
+   * Numerous bug corrections
+   * ...
 
-	- STklos is now integrated to STk (it was dynamically loaded before).
-	  This simplify its implementation and speed up generic functions:
-		o gf are now 2-4 time faster
-		o gf are now tail recursive
-		o the MOP for gf is now "public" (i.e. you can change the way 
-		  gf are called in Scheme -- it was not possible with previous 
-		  versions without using C).
-
-	- Port implementation is different: A port contains now its
-	input and output handler. New primitives to access the handler:
-	when-port-readable and when-port-writable.
-	BTW, The Tk function fileevent function is no more useful
-	(it is written in Scheme now for compatibility, but its usage 
-	is deprecated). It may not be supported in a future release.
-
-	- New composite widgets: <Multiple-window> and <Inner-window>
-	which allow to have embedded windows. A multiple window 
-	has a task bar below and allow to iconify inner-windows. 
-	Some people think it looks like Win95 desktop ;-)	
-
-	- pixmap extension doesn't require anymore the Xpm library. Code
-	is stolen from the Tix Library.
-
-	- New socket code which allow multiple concurrent connection
-
-	- Extended types can now have a compare function which	is called
-	 when eqv? or equal? is called. This modification should be 
-	 compatible with the previous extensions (I hope so)
-	
-	- STklos: Two new methods: object-eqv? and object-equal? which are 
-	called when applying eqv? or equal? to instances.
-
-	- A rewriting of bind-for-dragging canvas method. You can now specify 
-	a :before-motion, which if it returns #f, forbid to move the selected 
-	canvas item.
-
-	- New primitives:setenv!, posix-host-name, posix-domain-name, 
-	posix-uname	  
-	
-	- Option separator "--" allows to pass reserved keyword 
-	  (such as -help) to a script. Option and parameter cannot
-	   be mixed anymore:
-		stk xyz -help ==> *argv* = ("xyz" "-help")
-
-	- HTML browser enhancement (support of the <FONT> tag with SIZE 
-	  and COLOR sub-tags. This must be compatible with the HTML spec. 
-
-	- and of course many many bug corrections.
-
-See file 'CHANGES' in the distribution main directory for more informations.
 
 SCHEME WITHOUT TK
 -----------------
@@ -111,6 +79,8 @@ Stk
   |___ Doc	   Documentation of STk.		   
   |___ Help	   Various (HTML) help files for STk.
   |___ Lib	   a set of Scheme files used by the interpreter
+  |___ Stack       files (very architecture dependant) for pushing args on 
+  |		   the C stack. Used by the FFI of STk.
   |___ Src	   contains source files of stk (i.e. the sources files of the 
   |		   interpreter + some glue files between Tk and Scheme).
   |___ Snow	   contains (mostly) links over Src files. This directory 
@@ -147,7 +117,10 @@ For now, STk is known to run on the following machine/systems
 	- Sony WS (Sony NEWS, NEWSOS 4.2R)
 	- ...
 
-	- Windows 95 (and probably Windows NT) 
+
+Version 3.1.1 is also known to run on Windows 95 (and probably Windows NT).
+The version 3.99 has not been ported yet on this environment. Sorry for that.
+
 
 If you install it on another architecture/system, please let me now the
 diffs you used such I can integrate them in the next release.
@@ -201,17 +174,14 @@ Subscription requests are processed automatically without human
 intervention. If you have a problem, send a mail to
 eg@kaolin.unice.fr.
 
-Messages sent to the mailing list are archived 
-     - in raw format at 
-		ftp://kaolin.unice.fr/pub/Mailing-list/
-     - as hypertext at 
-		http://kaolin.unice.fr/Mlist
+Messages sent to the mailing list are archived and can be browsed from
+the STk home page.
 
 STk W3 HOME PAGE
 ----------------
 
 The STk W3 home page is located at
-	http://kaolin.unice.fr/STk.html
+	http://kaolin.unice.fr/STk
 
 BUGS
 ----
@@ -228,6 +198,9 @@ Route des colles
 BP 145
 06903 Sophia Antipolis CEDEX
 FRANCE
+
+     
+
 
      
 

@@ -1,4 +1,5 @@
 <HTML><HEAD><TITLE>Tk Built-In Commands - button manual page</TITLE></HEAD>
+<BR>
 <BODY bgcolor = #c3c3ff>
 <H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageBlue.gif"> button</H2>
 <I>Create and manipulate button widgets</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
@@ -29,11 +30,32 @@
 <DD>Specifies a STk procedure to associate with the button.  This procedure
 is typically invoked when mouse button 1 is released over the button
 window.
+OP :default default Default default
+Specifies one of three states for the default ring: <B>&quot;normal&quot;</B>,
+<B>&quot;active&quot;</B>, or <B>&quot;disabled&quot;</B>.  In active state, the button is drawn
+with the platform specific appearance for a default button.  In normal
+state, the button is drawn with the platform specific appearance for a
+non-default button, leaving enough space to draw the default button
+appearance.  The normal and active states will result in buttons of
+the same size.  In disabled state, the button is drawn with the
+non-default button appearance without leaving space for the default
+appearance.  The disabled state may result in a smaller button than
+the active state.
+ring.
+<P>
+<P>
+<DT><I>Name</I>:            <B>environment</B>
+<DT><I>Class</I>:           <B>Environment</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M29">:environment</A></B>
+<DT><I>STklos slot name</I>: <B>environment</B>
+<DD>Specifies the environment in which the <B>:textvariable</B> must be taken. 
+By convention, the value <B>#f</B> denotes the
+STk global environment (the default value of this option is false).
 <P>
 <P>
 <DT><I>Name</I>:            <B>height</B>
 <DT><I>Class</I>:           <B>Height</B>
-<DT><I>Option keyword</I>:  <B><A NAME="M29">:height</A></B>
+<DT><I>Option keyword</I>:  <B><A NAME="M30">:height</A></B>
 <DT><I>STklos slot name</I>: <B>height</B>
 <DD>Specifies a desired height for the button.
 If an image or bitmap is being displayed in the button then the value is in
@@ -45,7 +67,7 @@ from the size of the image or bitmap or text being displayed in it.
 <P>
 <DT><I>Name</I>:            <B>state</B>
 <DT><I>Class</I>:           <B>State</B>
-<DT><I>Option keyword</I>:  <B><A NAME="M30">:state</A></B>
+<DT><I>Option keyword</I>:  <B><A NAME="M31">:state</A></B>
 <DT><I>STklos slot name</I>: <B>state</B>
 <DD>Specifies one of three states for the button:  <B>normal</B>, <B>active</B>,
 or <B>disabled</B>.  In normal state the button is displayed using the
@@ -61,7 +83,7 @@ In this state the <B>disabledForeground</B> and
 <P>
 <DT><I>Name</I>:            <B>width</B>
 <DT><I>Class</I>:           <B>Width</B>
-<DT><I>Option keyword</I>:  <B><A NAME="M31">:width</A></B>
+<DT><I>Option keyword</I>:  <B><A NAME="M32">:width</A></B>
 <DT><I>STklos slot name</I>: <B>width</B>
 <DD>Specifies a desired width for the button.
 If an image or bitmap is being displayed in the button then the value is in
@@ -71,7 +93,7 @@ If this option isn't specified, the button's desired width is computed
 from the size of the image or bitmap or text being displayed in it.
 <P>
 </DL>
-<H3><A NAME="M32">DESCRIPTION</A></H3>
+<H3><A NAME="M33">DESCRIPTION</A></H3>
 The <B>button</B> procedure creates a new window (given by the
 <I>widget-name</I> argument) and makes it into a button widget.
 Additional
@@ -83,8 +105,7 @@ text, and initial relief.  The <B>button</B> procedure returns its
 there must not exist a window named <I>widget-name</I>, but
 <I>widget-name</I>'s parent must exist.
 <P>
-A button is a widget
-that displays a textual string, bitmap or image.
+A button is a widget that displays a textual string, bitmap or image.
 If text is displayed, it must all be in a single font, but it
 can occupy multiple lines on the screen (if it contains newlines
 or if wrapping occurs because of the <B>wrapLength</B> option) and
@@ -99,7 +120,7 @@ button (by pressing mouse button 1 with the cursor over the
 button), then the STk procedure specified in the <B>:command</B>
 option is invoked.
 
-<H3><A NAME="M33">WIDGET PROCEDURE</A></H3>
+<H3><A NAME="M34">WIDGET PROCEDURE</A></H3>
 The <B>button</B> procedure creates a new STk procedure whose
 name is <I>widget-name</I>.  This
 procedure may be used to invoke various
@@ -110,13 +131,13 @@ determine the exact behavior of the procedure.  The following
 procedures are possible for button widgets:
 <P>
 <DL>
-<DT><A NAME="M34">(<I>widget-name </I><B>'cget</B> <I>option</I>)</A><DD>
+<DT><A NAME="M35">(<I>widget-name </I><B>'cget</B> <I>option</I>)</A><DD>
 Returns the current value of the configuration option given
 by <I>option</I>.
 <I>Option</I> may have any of the values accepted by the <B>button</B>
 procedure.
 <P>
-<DT><A NAME="M35">(<I>widget-name </I><B>'configure</B> ?<I>option</I>? ?<I>value option value ...</I>?)</A><DD>
+<DT><A NAME="M36">(<I>widget-name </I><B>'configure</B> ?<I>option</I>? ?<I>value option value ...</I>?)</A><DD>
 Query or modify the configuration options of the widget.
 If no <I>option</I> is specified, returns a list describing all of
 the available options for <I>widget-name</I> (see <B>Tk_ConfigureInfo</B> for
@@ -130,27 +151,29 @@ this case the procedure returns an empty string.
 <I>Option</I> may have any of the values accepted by the <B>button</B>
 procedure.
 <P>
-<DT><A NAME="M36">(<I>widget-name </I><B>'flash</B>)</A><DD>
+<DT><A NAME="M37">(<I>widget-name </I><B>'flash</B>)</A><DD>
 Flash the button.  This is accomplished by redisplaying the button
 several times, alternating between active and normal colors.  At
 the end of the flash the button is left in the same normal/active
 state as when the procedure was invoked.
 This procedure is ignored if the button's state is <B>disabled</B>.
 <P>
-<DT><A NAME="M37">(<I>widget-name </I><B>'invoke</B>)</A><DD>
+<DT><A NAME="M38">(<I>widget-name </I><B>'invoke</B>)</A><DD>
 Invoke the STk procedure associated with the button, if there is one
 (return value is undefined).
 This procedure is ignored if the button's state is <B>disabled</B>.
 
 <P>
 </DL>
-<H3><A NAME="M38">DEFAULT BINDINGS</A></H3>
+<H3><A NAME="M39">DEFAULT BINDINGS</A></H3>
 Tk automatically creates class bindings for buttons that give them
-the following default behavior:
+default behavior:
 <OL>
 <LI>
 A button activates whenever the mouse passes over it and deactivates
 whenever the mouse leaves the button.
+Under Windows, this binding is only active when mouse button 1 has
+been pressed over the button.
 <LI>
 A button's relief is changed to sunken whenever mouse button 1 is
 pressed over the button, and the relief is restored to its original
@@ -170,8 +193,8 @@ actions occur:  the button is completely non-responsive.
 The behavior of buttons can be changed by defining new bindings for
 individual widgets or by redefining the class bindings.
 
-<H3><A NAME="M39">SEE ALSO</A></H3>
+<H3><A NAME="M40">SEE ALSO</A></H3>
 <B><A HREF="./checkbutton.n.html">checkbutton</A></B>, <B><A HREF="./radiobutton.n.html">radiobutton</A></B>
-<P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif"><P>
 <A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookBlue.gif"> Back to the <B>STk</B> main page</A>
 </BODY></HTML>

@@ -1,7 +1,7 @@
 ;;;;
 ;;;; B a s i c s . s t k 		--  Basic object class definition
 ;;;;
-;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -11,34 +11,69 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
+;;;; $Id: Basics.stklos 1.10 Sun, 22 Mar 1998 17:16:09 +0100 eg $
+;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 30-Mar-1993 15:39
-;;;; Last file update: 24-Sep-1996 17:49
-
+;;;; Last file update: 22-Mar-1998 11:46
 
 (require "Tk-meta")
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(select-module STklos+Tk)
+
+(export Id->instance 		    ; really necessary?
+	parent			    ; Parent of a widget
+	Id			    ; Tk Id of a widget
+	Eid			    ; External Id of widget
+	tk-widget? 		    ; a predicate
+	initialize-composite-widget ; must be overloaded for composite widgets
+	get-Tk-default-value	    ; Find the default value of a given Tk option
+	destroy			    ; A redefinition of the Tk destroy
+	<destroyed-object>	    ; Class in which destroyed objects are mapped
+	focus			    ; A redefinition of the Tk focus
+	bind			    ; A redefinition of the Tk bind
+	unpack)			    ; to avoid the (pack 'unpack ...) construction
+
 ;;;;
-;;;; <Tk-object> class
+;;;; Utilities
 ;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;
+;; Stuff for generating Tcl variable names
+;;
+(define (Tk::make-tk-name parent subname)
+  (format #f "~A.~A"
+	  [if (or (eq? parent *root*) (eq? parent *top-root*))
+	      "" 
+	      (widget->string (slot-ref parent 'Id))]
+	  [or subname (gensym "v")]))
+;;
+;; Setter for read-only slots
+;;
+(define (Tk:slot-is-read-only object slot)
+  (error "Value of the slot ``~S'' in ~S cannot be changed." slot object))
+
+
+;=============================================================================
+;
+; 				<Tk-object>
+;
+;=============================================================================
 
 (define-class <Tk-object> ()
   ((Id      :getter Id)				    ;; Widget Id
-   (Eid	    :getter Eid)			    ;; External widget Id
+   (Eid	    :getter Eid)	     		    ;; External widget Id
    (parent  :getter parent :init-keyword :parent))) ;; Parent widget
 
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;
-;;;; <Tk-widget> class
-;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
+;=============================================================================
+;
+;				 <Tk-widget>
+;
+;=============================================================================
 
 (define-class <Tk-widget> (<Tk-object>)
-  ())
+  ()
+  :metaclass <Tk-metaclass>)
 
 ;;;
 ;;; Utility method Id->instance
@@ -46,26 +81,45 @@
 
 (define-method Id->instance ((id <widget>))
   (let ((plist (get-widget-data id)))
-    (if plist 
-	(get-keyword :instance plist #f)
-	#f)))
-
-(define-method Id->instance ((id <string>))
-  (let ((var (read-from-string id)))
-    (if (and (not (equal? id "")) (symbol-bound? var))
-	(Id->instance (eval var))
-	#f)))
+    (and plist (get-keyword :instance plist #f))))
 
 (define-method Id->instance ((id <symbol>))
-  (if (symbol-bound? id)
-      (Id->instance (eval id))
-      #f))
+  (let ((env (module-environment (find-module 'Tk))))
+    (and (symbol-bound? id env)	(Id->instance (eval id env)))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;
-;;;; <Tk-simple-widget> class
-;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define-method Id->instance ((id <string>))
+  (Id->instance (sring->symbol id)))
+
+(define-method Id ((self <widget>))
+  self)
+
+;;;
+;;; A kind of predicate to determine if an object is a Tk-widget descendant
+;;;
+(define-method tk-widget? ((self <Tk-widget>))  #t)
+(define-method tk-widget? ((self <top>))        #f)
+
+;;;
+;;; Tk-write-object is called when a STklos object is passed to a Tk-command.
+;;; By default, we do the same job as write; but if an object is a <Tk-widget>
+;;; we will pass it its Eid. This method does this job.
+;;;
+(define-method Tk-write-object((self <Tk-widget>) port)
+  (write (widget-name (slot-ref self 'Eid)) port))
+
+
+;;;
+;;; get-Tk-default-value (find the default value of a given Tk option)
+;;;
+(define-method get-Tk-default-value ((self <Tk-widget>) slot)
+  (list-ref ((slot-ref self 'Id) 'configure (make-keyword slot)) 3))
+
+
+;=============================================================================
+;
+;				<Tk-simple-widget>
+;
+;=============================================================================
 
 (define-class <Tk-simple-widget> (<Tk-widget>)
   ((background   	 :accessor     background   
@@ -96,41 +150,26 @@
    (take-focus		 :accessor     take-focus
 			 :init-keyword :take-focus
 			 :tk-name      takefocus
-			 :allocation   :tk-virtual))
-  :metaclass <Tk-metaclass>)
-
+			 :allocation   :tk-virtual)))
 
 (define-method initialize ((self <Tk-simple-widget>) initargs)
-  (let* ((parent	(get-keyword :parent     initargs *root*))
-	 (Id		(get-keyword :Id         initargs #f))
-	 (Eid		(get-keyword :Eid        initargs #f))
-	 (tk-options	(get-keyword :tk-options initargs '())))
+  (unless (get-keyword :Eid  initargs #f)
+    ;; This is not a composite widget. Initialize it
+    (let* ((parent     (get-keyword :parent     initargs *top-root*))
+	   (Id	       (get-keyword :Id         initargs #f))
+	   (tk-options (get-keyword :tk-options initargs '()))
+	   (Eid        (apply (tk-constructor self) 
+			      (Tk::make-tk-name parent Id) 
+			      tk-options)))
+      (slot-set! self 'Id  Eid)  ; retain Tk command which implement this object
+      (slot-set! self 'Eid Eid)  ; Eid an Id are the same for non composite
+      (slot-set! self 'parent parent)
+      
+      ;; Store the information <self> in the Tk command to allow widget->instance
+      ;; conversion
+      (set-widget-data! Eid (list :instance self))))
 
-    (if Eid 
-	;; Eid is already defined. All we have to do is to reconfigure self
-	(letrec ((valids (slot-ref (class-of self) 'tk-valid-options))
-		 (find   (lambda (k l)
-			   (cond
-			    ((null? l) #f)
-			    ((eq? k (vector-ref (car l) 1)) (vector-ref (car l) 2))
-			    (else   (find k (cdr l)))))))
-
-	  (do ((l tk-options (cddr l)))
-	      ((null? l))
-	    (slot-set! self (find (car l) valids) (cadr l))))
-	;; Eid is undefined. Ask Tk to create the widget
-	(begin
-	  (set! Eid (apply (tk-constructor self) 
-			   (Tk::make-tk-name parent Id) 
-			   tk-options))
-	  (slot-set! self 'Id  Eid)  ; retain Tk command which implement this object
-	  (slot-set! self 'Eid Eid))); Eid an Id are the same for non composite 
-
-    ;; Udate parent
-    (slot-set! self 'parent parent)
-    ;; Store the information <self> in the Tk command to allow widget->instance
-    ;; conversion
-    (set-widget-data! Eid (list :instance self)))
+  ;; Continue initializing
   (next-method))
 
 (define-method tk-constructor ((self <Tk-simple-widget>))
@@ -139,23 +178,42 @@
 	 (class-name (class-of self))))
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;
-;;;; <Tk-composite-widget>
-;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;=============================================================================
+;
+;			      <Tk-composite-widget>
+;
+;=============================================================================
 
 (define-class <Tk-composite-widget> (<Tk-widget>)
-  ((frame	 :accessor   frame-of))
+  ((frame :accessor     frame-of)
+   (class :accessor     class
+	  :init-form    "Composite"
+	  :init-keyword :class))
   :metaclass <Tk-composite-metaclass>)
 
 (define-method initialize ((self <Tk-composite-widget>) initargs)
-  ;; To work properly, the parent slot must be set before anything
-  (let* ((parent (get-keyword  :parent initargs *root*))
-	 (Id     (get-keyword  :Id     initargs #f))
-	 (frame	 (make <Frame> :parent parent :Id Id))
-	 (Eid    (slot-ref frame 'Id)))
+  ;; Initialize the class resource name of the object.
+  ;; The code below is a little bit tricky because 
+  ;;     1. We don't use a clean object approach for composites (i.e
+  ;;	  we use inheritance to avoid a lot of redefinitions). 
+  ;;     2. The class of a Tk frame or toplevel must be defined before 
+  ;;     the object is created.
+  ;;
+  (let* ((kwd   (slot-definition-init-keyword 
+		     (class-slot-definition (class-of self) 'class)))
+	 (class (and kwd (get-keyword kwd initargs #f))))
+    (if class
+	(slot-set! self 'class class)
+	(let ((init (slot-init-function (class-of self) 'class)))
+	  (if init
+	      (slot-set! self 'class (init))))))
 
+  ;; To work properly, the parent slot must be set before anything
+  (let* ((parent (get-keyword  :parent initargs *top-root*))
+	 (Id     (get-keyword  :Id     initargs #f))
+	 (frame	 (make-composite-container self parent Id (slot-ref self 'class)))
+	 (Eid    (slot-ref frame 'Id)))
+    
     (slot-set! self 'parent parent)
     (slot-set! self 'Eid    Eid)
     (slot-set! self 'frame  frame)
@@ -165,37 +223,69 @@
 
     ;; Continue to initialize with value passed to "make" (and signal that 
     ;; Eid is already initialized)
-    (next-method self (cons :Eid (cons Eid initargs)))
-
+    (next-method self `(:Eid #t ,@initargs))
     ;; Store the information <self> in the Tk command to allow widget->instance
     ;; conversion
     (set-widget-data! (slot-ref frame 'Id) (list :instance self))))
 
+
+(define-method make-composite-container((self <Tk-composite-widget>)parent Id class)
+  (make <Frame> :parent parent 	:Id Id :border-width 0 
+	        :highlight-thickness 0 :class class))
+
 (define-method initialize-composite-widget ((c <Tk-composite-widget>) args parent)
-  ;; We are here is no initialize-composite-widget metho is provided for c
+  ; Just fall thru when a composite inherit from a composite
+  (next-method))
+
+(define-method initialize-composite-widget (c args parent)
+  ;; We are here if no initialize-composite-widget method is provided for c
   #f)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;
-;;;; <Tk-sizeable> class
-;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;=============================================================================
+;
+;	 		 <Tk-composite-toplevel>
+;
+; (as <Tk-composite-widget>, but in a separate window)
+;
+;=============================================================================
+
+(define-class <Tk-composite-toplevel> (<Tk-composite-widget>)
+  ((title :initform 	""
+	  :accessor 	title 
+	  :init-keyword :title
+	  :allocation   :propagated 
+	  :propagate-to (frame))))
+
+
+(define-method make-composite-container((self <Tk-composite-toplevel>) parent 
+								       Id class)
+  (make <Toplevel> :Id Id :border-width 0 :highlight-thickness 0 :class class))
+
+;=============================================================================
+;
+;				 <Tk-sizeable>
+;
+;=============================================================================
 
 (define-class <Tk-sizeable> ()
   ((width  :accessor width  :init-keyword :width  :allocation :tk-virtual)
    (height :accessor height :init-keyword :height :allocation :tk-virtual))
   :metaclass <Tk-metaclass>)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;
-;;;; <Tk-simple-text> class
-;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;=============================================================================
+;
+;				<Tk-simple-text>
+;
+;=============================================================================
 
 (define-class <Tk-simple-text> ()
   ((anchor	  :accessor     anchor
 		  :init-keyword :anchor
 		  :allocation   :tk-virtual)
+   (environment	  :accessor	environment
+		  :init-keyword :environment
+		  :allocation	:tk-virtual)
    (font	  :accessor     font
 		  :init-keyword :font
 		  :allocation   :tk-virtual)
@@ -232,21 +322,23 @@
 		  :allocation   :tk-virtual))
   :metaclass <Tk-metaclass>)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;
-;;;; <Tk-bitmap> class
-;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;=============================================================================
+;
+;				<Tk-bitmap>
+;
+;=============================================================================
 
 (define-class <Tk-bitmap> ()
   ((bitmap  :accessor bitmap :init-keyword :bitmap :allocation :tk-virtual))
   :metaclass <Tk-metaclass>)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;
-;;;; <Tk-reactive> class
-;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;=============================================================================
+;
+;				<Tk-reactive>
+;
+;=============================================================================
 
 (define-class <Tk-reactive> ()
   ((active-background   :accessor     active-background
@@ -269,14 +361,11 @@
 			:allocation   :tk-virtual))
   :metaclass <Tk-metaclass>)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;
-;;;; <Tk-xyscrollable> class
-;;;;
-;;;; 		A Tk-xyscrollable is an object which can be scrolled 
-;;;; 		both horizontally and vertically.
-;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;=============================================================================
+;
+;			 <Tk-xyscrollable> 
+;
+;=============================================================================
 
 (define-class <Tk-xyscrollable> ()
   ((x-scroll-command :init-keyword :x-scroll-command
@@ -289,15 +378,11 @@
 		     :allocation   :tk-virtual))
   :metaclass <Tk-metaclass>)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;
-;;;; <Tk-editable> class 
-;;;;
-;;;; 		A Tk-editable object is not a graphical object per se. It's a 
-;;;;		recipient for the common slots of all editable objects 
-;;;;		(canvas, entry, ...)
-;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;=============================================================================
+;
+;				<Tk-editable> 
+;
+;=============================================================================
 
 (define-class <Tk-editable> ()
   ((insert-background   :init-keyword :insert-background
@@ -322,11 +407,11 @@
 			:allocation   :tk-virtual))
   :metaclass <Tk-metaclass>)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;
-;;;; <Tk-selectable> class
-;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;=============================================================================
+;
+;				<Tk-selectable>
+;
+;=============================================================================
 
 (define-class <Tk-selectable> ()
   ((select-background   :init-keyword :select-background
@@ -343,11 +428,11 @@
 			:allocation   :tk-virtual))
   :metaclass <Tk-metaclass>)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;
-;;;; <Tk-text-selectable> class
-;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;=============================================================================
+;
+;			    <Tk-text-selectable>
+;
+;=============================================================================
 
 (define-class <Tk-text-selectable> ()
   ((export-selection	:init-keyword :export-selection
@@ -362,16 +447,75 @@
 			:allocation   :tk-virtual))
   :metaclass <Tk-metaclass>)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;
-;;;; <Destroyed-object>
-;;;;		This class serves only for destroyed objects (i.e. when a
-;;;;		widget or a canvas item is destroyed, its class is changed 
-;;;;		to destroyed 
-;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(define-class <Destroyed-object> ()
-  ())
+;=============================================================================
+;
+;				 <Destroyed-object>
+;
+;
+; This class serves only for destroyed objects (i.e. when a widget or
+; a canvas item is destroyed, its class is changed to <destroyed-object>
+;=============================================================================
+
+(define-class <Destroyed-object> () ())
+
+
+;=============================================================================
+;
+;			Redefine some Tk-commands as generics
+;
+;=============================================================================
+
+;;;
+;;; A general destroy
+;;;
+
+(define-method destroy ((self <Tk-widget>))
+  (let ((Eid        (slot-ref self 'Eid))
+	(Tk:destroy (with-module Tk destroy)))
+    ;; Destroy all the sons of this widget
+    (apply destroy (map (lambda (x) (or (Id->instance x) x))
+			(winfo 'children Eid)))	   
+    ;; Suicide
+    (Tk:destroy Eid)
+    (change-class self <Destroyed-object>)))
+
+(define-method destroy (obj)    	
+  ;; Method called when not using objects (e.g. [destroy .b])
+  (let ((Tk:destroy (with-module Tk destroy))
+	(inst 	    (Id->instance obj)))
+    ;; Destroy all the sons of this widget  
+    (for-each destroy (winfo 'children obj))
+
+    ;; Suicide
+    (when inst (change-class inst <Destroyed-object>))
+    (Tk:destroy obj)))
+
+(define-method destroy l		  ;; Destroy a list of widgets
+  (for-each destroy l))
+
+;;;
+;;; A general focus
+;;;
+(define-method focus ()
+  (let ((w (Tk:focus)))
+    (and w (Id->instance w))))
+
+(define-method focus l (apply Tk:focus l))
+
+
+;;;
+;;; A general bind
+;;;
+(define-method bind ((self <Tk-widget>) . l)
+  ;; Use the Id slot of a widget (instead of its Eid) for bind
+  (apply Tk:bind (slot-ref self 'Id) l))
+
+
+;;;
+;;; A general unpack (to avoid [pack 'forget ...] which is ugly
+;;;
+(define (unpack . l)
+  (apply pack 'forget l))
+
 
 (provide "Basics")
-(require "Tk-methods")

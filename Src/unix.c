@@ -2,7 +2,7 @@
  *
  * u n i x . c					-- Some Unix primitives
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -19,7 +19,7 @@
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 29-Mar-1994 10:57
- * Last file update: 13-Sep-1996 10:17
+ * Last file update: 27-Feb-1998 21:07
  */
 #ifndef WIN32
 #  include <unistd.h>
@@ -696,11 +696,37 @@ PRIMITIVE STk_file_glob(SCM l, int len) /* len is unused here */
     
     tilde_expand(CHARS(CAR(l)), s);
 
-    res = STk_append(LIST2(res, 
-			   (ISDIRSEP(*s)) ? fileglob(SDIRSEP, s+1, NIL) :
-			   fileglob("", s, NIL)),
-		     2);
+    res = STk_append2(res, (ISDIRSEP(*s)) ? fileglob(SDIRSEP, s+1, NIL) :
+		                            fileglob("", s, NIL));
   }
   return res;
 }
 
+PRIMITIVE STk_remove_file(SCM filename)
+{
+  ENTER_PRIMITIVE("remove-file");
+  if (NSTRINGP(filename)) Serror("bad string", filename);
+  if (remove(CHARS(filename)) != 0)
+    Serror("cannot remove file", filename);
+  return UNDEFINED;
+}
+
+PRIMITIVE STk_rename_file(SCM filename1, SCM filename2)
+{
+  ENTER_PRIMITIVE("rename-file");
+  if (NSTRINGP(filename1)) Serror("bad string", filename1);
+  if (NSTRINGP(filename2)) Serror("bad string", filename2);
+  if (rename(CHARS(filename1), CHARS(filename2)) != 0)
+    Serror("cannot rename file", filename1);
+  return UNDEFINED;
+}
+
+PRIMITIVE STk_temporary_file_name(void)
+{
+  ENTER_PRIMITIVE("temporary-file-name");
+  return STk_makestring(tmpnam(NULL));
+}
+
+
+  
+    

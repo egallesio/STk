@@ -9,7 +9,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkGrab.c 1.50 96/02/15 18:53:34
+ * SCCS: @(#) tkGrab.c 1.52 97/03/21 11:14:34
  */
 
 #include "tkPort.h"
@@ -394,7 +394,7 @@ Tk_Grab(interp, tkwin, grabGlobal)
 					 * Zero means the grab only applies
 					 * within this application. */
 {
-    int grabResult;
+    int grabResult, numTries;
     TkWindow *winPtr = (TkWindow *) tkwin;
     TkDisplay *dispPtr = winPtr->dispPtr;
     TkWindow *winPtr2;
@@ -449,10 +449,28 @@ Tk_Grab(interp, tkwin, grabGlobal)
 
 	XUngrabPointer(dispPtr->display, CurrentTime);
 	serial = NextRequest(dispPtr->display);
-	grabResult = XGrabPointer(dispPtr->display, winPtr->window,
-		True, ButtonPressMask|ButtonReleaseMask|ButtonMotionMask
-		|PointerMotionMask, GrabModeAsync, GrabModeAsync, None,
-		None, CurrentTime);
+
+	/*
+	 * Another tricky point: there are races with some window
+	 * managers that can cause grabs to fail because the window
+	 * manager hasn't released its grab quickly enough.  To work
+	 * around this problem, retry a few times after AlreadyGrabbed
+	 * errors to give the grab release enough time to register with
+	 * the server.
+	 */
+
+	grabResult = 0;			/* Needed only to prevent gcc
+					 * compiler warnings. */
+	for (numTries = 0; numTries < 10; numTries++) {
+	    grabResult = XGrabPointer(dispPtr->display, winPtr->window,
+		    True, ButtonPressMask|ButtonReleaseMask|ButtonMotionMask
+		    |PointerMotionMask, GrabModeAsync, GrabModeAsync, None,
+		    None, CurrentTime);
+	    if (grabResult != AlreadyGrabbed) {
+		break;
+	    }
+	    Tcl_Sleep(100);
+	}
 	if (grabResult != 0) {
 	    grabError:
 	    if (grabResult == GrabNotViewable) {
@@ -1230,9 +1248,9 @@ EatGrabEvents(dispPtr, serial)
 
     info.display = dispPtr->display;
     info.serial = serial;
-    XSync(dispPtr->display, False);
+    TkpSync(info.display);
     oldProc = Tk_RestrictEvents(GrabRestrictProc, (ClientData)&info, &oldArg);
-    while (Tcl_DoOneEvent(TCL_DONT_WAIT|TCL_WINDOW_EVENTS)) {
+    while (Tcl_ServiceEvent(TCL_WINDOW_EVENTS)) {
     }
     Tk_RestrictEvents(oldProc, oldArg, &dummy);
 }

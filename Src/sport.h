@@ -18,7 +18,7 @@
  *
  *            Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 17-Feb-1993 12:27
- * Last file update:  1-Feb-1995 13:38
+ * Last file update:  6-Oct-1996 22:07
  *
  *
  * This is achieved in a (surely very) dependant way. A string port is implemented
@@ -32,12 +32,12 @@
 #define WRITING		02
 
 struct str_iob {
-       long int	signature;
-       short	flag;
-       int	cnt;
-       char 	*ptr;
-       char 	*base;
-       int	bufsiz;
+  long int		signature;
+       short		flag;
+       int		cnt;
+       unsigned char 	*ptr;
+       unsigned char 	*base;
+       int		bufsiz;
 };
 
 

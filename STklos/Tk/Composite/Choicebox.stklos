@@ -1,7 +1,7 @@
 ;;;;
 ;;;; C h o i c e b o x . s t k 	  --  Choice Box composite widget
 ;;;;
-;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -11,32 +11,84 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
+;;;; $Id: Choicebox.stklos 1.3 Wed, 04 Feb 1998 11:34:59 +0100 eg $
+;;;;
 ;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;    Creation date: 22-Mar-1994 13:05
-;;;; Last file update: 24-Sep-1996 17:49
+;;;; Last file update:  3-Feb-1998 19:22
 
-(require "Lentry")
-(require "Menu")
+(require "Basics")
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;
-;;;; <Choice-box> class definition
-;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(select-module STklos+Tk)
 
+(export add-choice)
+
+;=============================================================================
+;
+; 			      < C h o i c e - b o x >
+;
+;=============================================================================
+;;
+;; Resources
+;;
+(option 'add "*ChoiceBox*Entry*Background"  "white" "widgetDefault")
+(option 'add "*ChoiceBox*Entry*Relief"      "ridge" "widgetDefault")
+(option 'add "*ChoiceBox*Menu*TearOff"      "false" "widgetDefault")
+
+;;
+;; Utilities for accesing the set of choices as a whole (slot 'choices)
+;;
+
+(define (get-choices cb)
+  ;; This is a little bit compilated because the type of the element of the 
+  ;; list depends of the :string-value option
+  (letrec ((menu     (menu-of cb))
+	   (last     (menu-index menu 'last))
+	   (get-item (lambda (i res)
+		       (if (< i 0)
+			   res
+			   (let ((item ((Id menu) 'entrycget i :label)))
+			     (get-item (- i 1)
+				       (cons (if (string-value cb)
+						 item
+						 (read-from-string item))
+					     res)))))))
+    (if (equal? last "none")
+	'()
+	(get-item last '()))))
+
+(define (set-choices! cb v)
+  (let ((menu (menu-of cb)))
+    ;; Delete the current choices
+    (delete menu 0 (menu-index menu 'last))
+    ;; Add the current value by suuceesive calls to add-choice
+    (for-each (lambda (x) (add-choice cb x)) v)))
+
+;;
+;; Class definition
+;;
 (define-class <Choice-box> (<Tk-composite-widget> <Labeled-Entry>)
-  (lentry 	 :accessor   lentry-of)
-   (menu	 :accessor   menu-of)
-   (menubutton   :accessor   menubutton-of)
+  ((lentry 	 :accessor     lentry-of)
+   (menu	 :accessor     menu-of)
+   (menubutton   :accessor     menubutton-of)
+   (class 	 :init-keyword :class
+		 :init-form    "ChoiceBox")
+
    ;; Non allocated slots
    (background   :accessor     background
 		 :init-keyword :background
 		 :allocation   :propagated
 		 :propagate-to (frame lentry menu menubutton))
+
    (border-width :accessor     border-width 
 		 :allocation   :propagated
 		 :init-keyword :border-width
 		 :propagate-to (frame))
+   (choices	 :accessor     choices
+		 :init-keyword :choices
+		 :allocation   :virtual
+		 :slot-ref     get-choices
+		 :slot-set!    set-choices!)
    (relief	 :accessor     relief
 		 :init-keyword :relief
 		 :allocation   :propagated
@@ -47,15 +99,15 @@
 ;;;;
 
 (define-method initialize-composite-widget ((self <Choice-box>) initargs parent)
-  (let* ((l  (make <Labeled-entry> :parent parent))
-	 (mb (make <Menu-button>   :parent parent
-		   		   :text ""
-				   :relief "flat"
-		   		   :indicator-on #t
-		   		   :relief "raised"))
+  (let* ((l #f)
+	 (mb (make <Menu-button>   :parent parent :text "" :relief "flat"
+				   :borderwidth 0 :highlight-thickness 0
+		   		   :indicator-on #t))
 	 (m  (make <Menu>          :parent mb)))
+    (next-method)
 
-    (pack l  :side "left"  :fill "x" :expand #t)
+    (set! l self)
+    (pack (Id l)  :side "left"  :fill "x" :expand #t)
     (pack mb :side "right")
     
     ;; Initialize true slots
@@ -63,10 +115,6 @@
     (slot-set! self 'lentry l)
     (slot-set! self 'menu   m)
     (slot-set! self 'menubutton mb)
-
-    ;; Initialize inherited slots
-    (slot-set! self 'label  (label-of l))
-    (slot-set! self 'entry  (entry-of l))
 
     ;; Attach menu m to menu button mb
     (set! (menu-of mb) m)))
@@ -77,9 +125,28 @@
 ;;
 
 (define-method add-choice ((self <Choice-box>) mess)
-  (menu-add (Menu-of self) 'command 
-	    		   :label mess 
-			   :command (lambda () 
-				      (set! (value self) mess))))
+  (menu-add (Menu-of self) 
+	    'command 
+	    :label   mess 
+	    :command (lambda () 
+		       (let ((s (state self)))
+			 (set! (state self) "normal")
+			 (set! (value self) mess)
+			 (set! (state self) s)))))
 
 (provide "Choicebox")
+
+#|
+
+  Examples:
+	(define c1  (make <Choice-box> :title "Enter your choice" 
+			  :title-anchor 'e :title-width 20 
+			  :value "Type <Return> to add"))
+	(bind c1 "<Return>" (lambda () (add-choice c1 (value c1))))
+
+        ;; Now one with a set of value pre-defined and no other value allowed
+	(define c2  (make <Choice-box> :title "Enter another choice" 
+			  :title-anchor 'e :title-width 20 
+			  :state "disabled" :choices '(1 2 3 4)))
+	(pack c1 c2)
+|#

@@ -1,4 +1,5 @@
 <HTML><HEAD><TITLE>Tk Built-In Commands - canvas manual page</TITLE></HEAD>
+<BR>
 <BODY bgcolor = #c3c3ff>
 <H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageBlue.gif"> canvas</H2>
 <I>Create and manipulate canvas widgets</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
@@ -136,6 +137,12 @@ When a new item is created it is placed at the end of the
 display list, on top of everything else.
 Widget procedures may be used to re-arrange the order of the
 display list.
+<P>
+Window items are an exception to the above rules.  The underlying
+window systems require them always to be drawn on top of other items.
+In addition, the stacking order of window items
+is not affected by any of the canvas widget commands; you must use
+the <B><A HREF="./raise.n.html">raise</A></B> and <B><A HREF="./lower.n.html">lower</A></B> Tk commands instead.
 
 <H3><A NAME="M32">ITEM IDS AND TAGS</A></H3>
 Items in a canvas widget may be named in either of two ways:
@@ -379,18 +386,19 @@ Example:
 </UL>
 <UL>
 <P>
-The only events for which bindings may be specified are those related
-to the mouse and keyboard, such as <B>Enter</B>, <B>Leave</B>,
-<B>ButtonPress</B>, <B>Motion</B>, and <B>KeyPress</B>.
-The handling of events in canvases uses the current item defined
-in ITEM IDS AND TAGS above.
-<B>Enter</B> and <B>Leave</B> events trigger for an item when it
-becomes the current item or ceases to be the current item;  note
-that these events are different than <B>Enter</B> and <B>Leave</B>
-events for windows.
-Mouse-related events are directed to the current item, if any.
-Keyboard-related events are directed to the focus item, if any
-(see the <B>focus</B> widget procedure below for more on this).
+The only events for which bindings may be specified are those related to
+the mouse and keyboard (such as <B>Enter</B>, <B>Leave</B>,
+<B>ButtonPress</B>, <B>Motion</B>, and <B>KeyPress</B>) or virtual events.
+The handling of events in canvases uses the current item defined in ITEM
+IDS AND TAGS above.  <B>Enter</B> and <B>Leave</B> events trigger for an
+item when it becomes the current item or ceases to be the current item;
+note that these events are different than <B>Enter</B> and <B>Leave</B>
+events for windows.  Mouse-related events are directed to the current
+item, if any.  Keyboard-related events are directed to the focus item, if
+any (see the <B>focus</B> widget command below for more on this).  If a
+virtual event is used in a binding, that binding can trigger only if the
+virtual event is defined by an underlying mouse-related or
+keyboard-related event.
 <P>
 It is possible for multiple bindings to match a particular event.
 This could occur, for example, if one binding is associated with the
@@ -417,14 +425,14 @@ for the window as a whole.
 <DL>
 <DT><A NAME="M53">(<I>widget-name '</I><B>canvasx </B><I>screenx</I>)</A><DD>
 <DT><A NAME="M54">(<I>widget-name '</I><B>canvasx </B><I>screenx</I> <I>gridspacing</I>)</A><DD>
-Given a screen x-coordinate <I>screenx</I> this procedure returns
+Given a window x-coordinate in the canvas <I>screenx</I>, this command returns
 the canvas x-coordinate that is displayed at that location.
 If <I>gridspacing</I> is specified, then the canvas coordinate is
 rounded to the nearest multiple of <I>gridspacing</I> units.
 <P>
 <DT><A NAME="M55">(<I>widget-name '</I><B>canvasy </B><I>screeny</I>)</A><DD>
 <DT><A NAME="M56">(<I>widget-name '</I><B>canvasy </B><I>screeny</I> <I>gridspacing</I>)</A><DD>
-Given a screen y-coordinate <I>screeny</I> this procedure returns
+Given a window y-coordinate in the canvas <I>screeny</I> this command returns
 the canvas y-coordinate that is displayed at that location.
 If <I>gridspacing</I> is specified, then the canvas coordinate is
 rounded to the nearest multiple of <I>gridspacing</I> units.
@@ -501,6 +509,7 @@ meet the constraints specified by <I>searchProcedure</I> and
 <I>arg</I>'s.
 <I>SearchProcedure</I> and <I>args</I> have any of the forms
 accepted by the <B>addtag</B> procedure.
+The items are returned in stacking order, with the lowest item first.
 <P>
 <DT><A NAME="M67">(<I>widget-name '</I><B>focus </B>)</A><DD>
 <DT><A NAME="M68">(<I>widget-name '</I><B>focus </B><I>tagOrId</I>)</A><DD>
@@ -616,6 +625,10 @@ but the relative order of the moved items will not be changed.
 <I>BelowThis</I> is a tag or id;  if it refers to more than one
 item then the first (lowest) of these items in the display list is used
 as the destination location for the moved items.
+Note: this procedure has no effect on window items.  Window items always
+obscure other item types, and the stacking order of window items is
+determined by the <B><A HREF="./raise.n.html">raise</A></B> and <B><A HREF="./lower.n.html">lower</A></B> commands, not the
+<B><A HREF="./raise.n.html">raise</A></B> and <B><A HREF="./lower.n.html">lower</A></B> widget commands for canvases.
 This procedure returns an empty list.
 <P>
 <DT><A NAME="M77">(<I>widget-name '</I><B>move </B><I>tagOrId xAmount yAmount</I>)</A><DD>
@@ -743,6 +756,10 @@ but the relative order of the moved items will not be changed.
 <I>AboveThis</I> is a tag or id;  if it refers to more than one
 item then the last (topmost) of these items in the display list is used
 as the destination location for the moved items.
+Note: this procedure has no effect on window items.  Window items always
+obscure other item types, and the stacking order of window items is
+determined by the <B><A HREF="./raise.n.html">raise</A></B> and <B><A HREF="./lower.n.html">lower</A></B> commands, not the
+<B><A HREF="./raise.n.html">raise</A></B> and <B><A HREF="./lower.n.html">lower</A></B> widget commands for canvases.
 This procedure returns an empty list.
 <P>
 <DT><A NAME="M95">(<I>widget-name '</I><B>scale </B><I>tagOrId xOrigin yOrigin xScale yScale</I>)</A><DD>
@@ -1112,7 +1129,7 @@ This option defaults to <B>center</B>.
 <DT><A NAME="M133"><B>:image </B><I>name</I></A><DD>
 Specifies the name of the image to display in the item.
 This image must have been created previously with the
-<B><A HREF=.././image.n.html>image create</A></B> procedure.
+<B><A HREF=../Help/./image.n.html>image create</A></B> procedure.
 <P>
 <DT><A NAME="M134"><B>:tags </B><I>tagList</I></A><DD>
 Specifies a set of tags to apply to the item.
@@ -1185,7 +1202,7 @@ irrelevant.
 <DT><A NAME="M141"><B>:smooth </B><I>boolean</I></A><DD>
 <I>Boolean</I> must have one of the forms accepted by <B>Tk_GetBoolean</B>.
 It indicates whether or not the line should be drawn as a curve.
-If so, the line is rendered as a set of Bezier splines: one spline
+If so, the line is rendered as a set of parabolic splines: one spline
 is drawn for the first and second line segments, one for the second
 and third, and so on.  Straight-line segments can be generated within
 a curve by duplicating the end-points of the desired line segment.
@@ -1312,7 +1329,7 @@ This option defaults to empty (no outline).
 <I>Boolean</I> must have one of the forms accepted by <B>Tk_GetBoolean</B>
 It indicates whether or not the polygon should be drawn with a
 curved perimeter.
-If so, the outline of the polygon becomes a set of Bezier splines,
+If so, the outline of the polygon becomes a set of parabolic splines,
 one spline for the first and second line segments, one for the second
 and third, and so on.  Straight-line segments can be generated in a
 smoothed polygon by duplicating the end-points of the desired line segment.
@@ -1544,9 +1561,15 @@ Specifies the window to associate with this item.
 The window specified by <I>widget-name</I> must either be a child of
 the canvas widget or a child of some ancestor of the canvas widget.
 <I>PathName</I> may not refer to a top-level window.
-
 <P>
 </DL>
+<P>
+Note:  due to restrictions in the ways that windows are managed, it is not
+possible to draw other graphical items (such as lines and images) on top
+of window items.  A window item always obscures any graphics that
+overlap it, regardless of their order in the display list.
+
+
 <H3><A NAME="M181">APPLICATION-DEFINED ITEM TYPES</A></H3>
 It is possible for individual applications to define new item
 types for canvas widgets using C code.
@@ -1565,6 +1588,6 @@ environment and preceded canvases by a year or two.  Its simple
 mechanisms for placing and animating graphical objects inspired the
 functions of canvases.
 
-<P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif"><P>
 <A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookBlue.gif"> Back to the <B>STk</B> main page</A>
 </BODY></HTML>

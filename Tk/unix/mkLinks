@@ -115,6 +115,10 @@ if test -r WindowId.3; then
     rm -f Tk_Changes.3
     ln WindowId.3 Tk_Changes.3
 fi
+if test -r TextLayout.3; then
+    rm -f Tk_CharBbox.3
+    ln TextLayout.3 Tk_CharBbox.3
+fi
 if test -r SetClass.3; then
     rm -f Tk_Class.3
     ln SetClass.3 Tk_Class.3
@@ -134,6 +138,10 @@ fi
 if test -r WindowId.3; then
     rm -f Tk_Colormap.3
     ln WindowId.3 Tk_Colormap.3
+fi
+if test -r TextLayout.3; then
+    rm -f Tk_ComputeTextLayout.3
+    ln TextLayout.3 Tk_ComputeTextLayout.3
 fi
 if test -r ConfigWidg.3; then
     rm -f Tk_ConfigureInfo.3
@@ -191,6 +199,14 @@ if test -r CrtSelHdlr.3; then
     rm -f Tk_CreateSelHandler.3
     ln CrtSelHdlr.3 Tk_CreateSelHandler.3
 fi
+if test -r CrtWindow.3; then
+    rm -f Tk_CreateWindow.3
+    ln CrtWindow.3 Tk_CreateWindow.3
+fi
+if test -r CrtWindow.3; then
+    rm -f Tk_CreateWindowFromPath.3
+    ln CrtWindow.3 Tk_CreateWindowFromPath.3
+fi
 if test -r GetBitmap.3; then
     rm -f Tk_DefineBitmap.3
     ln GetBitmap.3 Tk_DefineBitmap.3
@@ -235,6 +251,10 @@ if test -r WindowId.3; then
     rm -f Tk_Depth.3
     ln WindowId.3 Tk_Depth.3
 fi
+if test -r CrtWindow.3; then
+    rm -f Tk_DestroyWindow.3
+    ln CrtWindow.3 Tk_DestroyWindow.3
+fi
 if test -r WindowId.3; then
     rm -f Tk_Display.3
     ln WindowId.3 Tk_Display.3
@@ -242,6 +262,10 @@ fi
 if test -r WindowId.3; then
     rm -f Tk_DisplayName.3
     ln WindowId.3 Tk_DisplayName.3
+fi
+if test -r TextLayout.3; then
+    rm -f Tk_DistanceToTextLayout.3
+    ln TextLayout.3 Tk_DistanceToTextLayout.3
 fi
 if test -r 3DBorder.3; then
     rm -f Tk_Draw3DPolygon.3
@@ -251,9 +275,17 @@ if test -r 3DBorder.3; then
     rm -f Tk_Draw3DRectangle.3
     ln 3DBorder.3 Tk_Draw3DRectangle.3
 fi
+if test -r MeasureChar.3; then
+    rm -f Tk_DrawChars.3
+    ln MeasureChar.3 Tk_DrawChars.3
+fi
 if test -r DrawFocHlt.3; then
     rm -f Tk_DrawFocusHighlight.3
     ln DrawFocHlt.3 Tk_DrawFocusHighlight.3
+fi
+if test -r TextLayout.3; then
+    rm -f Tk_DrawTextLayout.3
+    ln TextLayout.3 Tk_DrawTextLayout.3
 fi
 if test -r 3DBorder.3; then
     rm -f Tk_Fill3DPolygon.3
@@ -266,6 +298,14 @@ fi
 if test -r FindPhoto.3; then
     rm -f Tk_FindPhoto.3
     ln FindPhoto.3 Tk_FindPhoto.3
+fi
+if test -r FontId.3; then
+    rm -f Tk_FontId.3
+    ln FontId.3 Tk_FontId.3
+fi
+if test -r FontId.3; then
+    rm -f Tk_FontMetrics.3
+    ln FontId.3 Tk_FontMetrics.3
 fi
 if test -r 3DBorder.3; then
     rm -f Tk_Free3DBorder.3
@@ -287,9 +327,9 @@ if test -r GetCursor.3; then
     rm -f Tk_FreeCursor.3
     ln GetCursor.3 Tk_FreeCursor.3
 fi
-if test -r GetFontStr.3; then
-    rm -f Tk_FreeFontStruct.3
-    ln GetFontStr.3 Tk_FreeFontStruct.3
+if test -r GetFont.3; then
+    rm -f Tk_FreeFont.3
+    ln GetFont.3 Tk_FreeFont.3
 fi
 if test -r GetGC.3; then
     rm -f Tk_FreeGC.3
@@ -306,6 +346,10 @@ fi
 if test -r GetPixmap.3; then
     rm -f Tk_FreePixmap.3
     ln GetPixmap.3 Tk_FreePixmap.3
+fi
+if test -r TextLayout.3; then
+    rm -f Tk_FreeTextLayout.3
+    ln TextLayout.3 Tk_FreeTextLayout.3
 fi
 if test -r FreeXId.3; then
     rm -f Tk_FreeXId.3
@@ -367,9 +411,9 @@ if test -r GetCursor.3; then
     rm -f Tk_GetCursorFromData.3
     ln GetCursor.3 Tk_GetCursorFromData.3
 fi
-if test -r GetFontStr.3; then
-    rm -f Tk_GetFontStruct.3
-    ln GetFontStr.3 Tk_GetFontStruct.3
+if test -r GetFont.3; then
+    rm -f Tk_GetFont.3
+    ln GetFont.3 Tk_GetFont.3
 fi
 if test -r GetGC.3; then
     rm -f Tk_GetGC.3
@@ -378,6 +422,10 @@ fi
 if test -r GetImage.3; then
     rm -f Tk_GetImage.3
     ln GetImage.3 Tk_GetImage.3
+fi
+if test -r CrtImgType.3; then
+    rm -f Tk_GetImageMasterData.3
+    ln CrtImgType.3 Tk_GetImageMasterData.3
 fi
 if test -r CrtItemType.3; then
     rm -f Tk_GetItemTypes.3
@@ -459,6 +507,10 @@ if test -r WindowId.3; then
     rm -f Tk_InternalBorderWidth.3
     ln WindowId.3 Tk_InternalBorderWidth.3
 fi
+if test -r TextLayout.3; then
+    rm -f Tk_IntersectTextLayout.3
+    ln TextLayout.3 Tk_IntersectTextLayout.3
+fi
 if test -r WindowId.3; then
     rm -f Tk_IsMapped.3
     ln WindowId.3 Tk_IsMapped.3
@@ -479,6 +531,10 @@ if test -r MaintGeom.3; then
     rm -f Tk_MaintainGeometry.3
     ln MaintGeom.3 Tk_MaintainGeometry.3
 fi
+if test -r CrtWindow.3; then
+    rm -f Tk_MakeWindowExist.3
+    ln CrtWindow.3 Tk_MakeWindowExist.3
+fi
 if test -r ManageGeom.3; then
     rm -f Tk_ManageGeometry.3
     ln ManageGeom.3 Tk_ManageGeometry.3
@@ -486,6 +542,10 @@ fi
 if test -r MapWindow.3; then
     rm -f Tk_MapWindow.3
     ln MapWindow.3 Tk_MapWindow.3
+fi
+if test -r MeasureChar.3; then
+    rm -f Tk_MeasureChars.3
+    ln MeasureChar.3 Tk_MeasureChars.3
 fi
 if test -r ConfigWind.3; then
     rm -f Tk_MoveResizeWindow.3
@@ -527,9 +587,9 @@ if test -r GetCursor.3; then
     rm -f Tk_NameOfCursor.3
     ln GetCursor.3 Tk_NameOfCursor.3
 fi
-if test -r GetFontStr.3; then
-    rm -f Tk_NameOfFontStruct.3
-    ln GetFontStr.3 Tk_NameOfFontStruct.3
+if test -r GetFont.3; then
+    rm -f Tk_NameOfFont.3
+    ln GetFont.3 Tk_NameOfFont.3
 fi
 if test -r NameOfImg.3; then
     rm -f Tk_NameOfImage.3
@@ -598,6 +658,14 @@ fi
 if test -r FindPhoto.3; then
     rm -f Tk_PhotoSetSize.3
     ln FindPhoto.3 Tk_PhotoSetSize.3
+fi
+if test -r TextLayout.3; then
+    rm -f Tk_PointToChar.3
+    ln TextLayout.3 Tk_PointToChar.3
+fi
+if test -r FontId.3; then
+    rm -f Tk_PostscriptFontName.3
+    ln FontId.3 Tk_PostscriptFontName.3
 fi
 if test -r QWinEvent.3; then
     rm -f Tk_QueueWindowEvent.3
@@ -695,6 +763,14 @@ if test -r StrictMotif.3; then
     rm -f Tk_StrictMotif.3
     ln StrictMotif.3 Tk_StrictMotif.3
 fi
+if test -r TextLayout.3; then
+    rm -f Tk_TextLayoutToPostscript.3
+    ln TextLayout.3 Tk_TextLayoutToPostscript.3
+fi
+if test -r MeasureChar.3; then
+    rm -f Tk_TextWidth.3
+    ln MeasureChar.3 Tk_TextWidth.3
+fi
 if test -r GetUid.3; then
     rm -f Tk_Uid.3
     ln GetUid.3 Tk_Uid.3
@@ -702,6 +778,14 @@ fi
 if test -r ConfigWind.3; then
     rm -f Tk_UndefineCursor.3
     ln ConfigWind.3 Tk_UndefineCursor.3
+fi
+if test -r MeasureChar.3; then
+    rm -f Tk_UnderlineChars.3
+    ln MeasureChar.3 Tk_UnderlineChars.3
+fi
+if test -r TextLayout.3; then
+    rm -f Tk_UnderlineTextLayout.3
+    ln TextLayout.3 Tk_UnderlineTextLayout.3
 fi
 if test -r MaintGeom.3; then
     rm -f Tk_UnmaintainGeometry.3
@@ -743,6 +827,10 @@ if test -r palette.n; then
     rm -f tk_bisque.n
     ln palette.n tk_bisque.n
 fi
+if test -r chooseColor.n; then
+    rm -f tk_chooseColor.n
+    ln chooseColor.n tk_chooseColor.n
+fi
 if test -r dialog.n; then
     rm -f tk_dialog.n
     ln dialog.n tk_dialog.n
@@ -759,9 +847,21 @@ if test -r focusNext.n; then
     rm -f tk_focusPrev.n
     ln focusNext.n tk_focusPrev.n
 fi
+if test -r getOpenFile.n; then
+    rm -f tk_getOpenFile.n
+    ln getOpenFile.n tk_getOpenFile.n
+fi
+if test -r getOpenFile.n; then
+    rm -f tk_getSaveFile.n
+    ln getOpenFile.n tk_getSaveFile.n
+fi
 if test -r menubar.n; then
     rm -f tk_menuBar.n
     ln menubar.n tk_menuBar.n
+fi
+if test -r messageBox.n; then
+    rm -f tk_messageBox.n
+    ln messageBox.n tk_messageBox.n
 fi
 if test -r optionMenu.n; then
     rm -f tk_optionMenu.n

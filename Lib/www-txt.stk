@@ -1,0 +1,29 @@
+;;;;
+;;;; w w w - t x t . s t k		--  WWW for STk (txt files reader)
+;;;;
+;;;; Copyright © 1996-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; This version uses some of the enhancements done by Harvey J. Stein:
+;;;;         Copyright (c) 1995 Harvey J. Stein (hjstein@math.huji.ac.il)
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date:  4-Oct-1996 22:27
+;;;; Last file update: 27-Feb-1998 11:47
+;;;;
+
+;; Add the Text viewer 
+
+(with-module WWW
+   (let ((view (lambda (txt fd url) (txt 'insert "end" (port->string fd)))))
+     (www:add-viewer (string->regexp "\\.txt$") view)
+     (www:add-viewer 'txt	     		view)))
+
+(provide "www-txt")

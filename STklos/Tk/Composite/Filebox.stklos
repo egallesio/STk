@@ -1,7 +1,7 @@
 ;;;;
 ;;;; F i l e b o x . s t k 	  --  File Box composite widget
 ;;;;
-;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -11,223 +11,132 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
+;;;; $Id: Filebox.stklos 1.6 Tue, 03 Mar 1998 23:48:24 +0100 eg $
+;;;;
 ;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;    Creation date: 22-Mar-1994 13:05
-;;;; Last file update: 13-Aug-1996 23:18
+;;;; Last file update:  3-Mar-1998 22:54
 
 (require "unix")
-(require "Toplevel")
-(require "Button")
-(require "Paned")
-(require "Scrollbox")
-(require "Lentry")
+(require "Basics")
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;
-;;;; <File-box> class-definition
-;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(select-module STklos+Tk)
 
-(define-class <File-box> (<Tk-composite-widget>)
-  (paned	 		;; paned and button are not intended to the user
-   buttons
-   (left-frame  :accessor left-frame-of)
-   (right-frame :accessor right-frame-of)
-   (left-title  :accessor left-title-of)
-   (right-title :accessor right-title-of)
-   (lentry	:accessor lentry-of)
-   but-frame
-   (ok-button	:accessor ok-button-of)
-   (canc-button :accessor cancel-button-of)
-   (help-button :accessor help-button-of)
-   (all-button  :accessor all-button-of)
+(export make-file-box file-chooser)
 
-   ;; Fictives slots
-   (value	 :accessor     value
-		 :allocation   :propagated
-		 :propagate-to (lentry))
-   (background   :accessor     background
-		 :allocation   :propagated
-		 :propagate-to (frame paned buttons left-frame right-frame 
-				left-title right-title lentry 
-				ok-button canc-button help-button all-button))
-   (width	 :accessor     width
-		 :init-keyword :width
-		 :allocation   :propagated
-		 :propagate-to (frame))
-   (height	 :accessor     height
-		 :init-keyword :height
-		 :allocation   :propagated
-		 :propagate-to (frame))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;
-;;;; <File-box> methods
-;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;;;
-;;; Interface
-;;; 
-
-(define-method initialize-composite-widget ((self <File-box>) initargs frame)
-  (let* ((paned  (make <VPaned> :parent frame :fraction 0.3))
-	 (f      (make <Frame>  :parent frame))
-	 (lf     (left-frame-of  paned))
-	 (rf     (right-frame-of paned)))
-
-    (slot-set! self 'paned 	 paned)
-    (slot-set! self 'buttons	 f) 
-    (slot-set! self 'left-frame  (make <Scroll-Listbox> :parent lf))
-    (slot-set! self 'right-frame (make <Scroll-Listbox> :parent rf))
-    (slot-set! self 'left-title  (make <Label>          :parent lf :text "Parents"))
-    (slot-set! self 'right-title (make <Label>          :parent rf :text "Files"))
-    (slot-set! self 'lentry	 (make <Labeled-entry>  :parent frame 
-				       			:title "File name"))
-    (slot-set! self 'ok-button   (make <Button> :text " Ok "     :parent f))
-    (slot-set! self 'canc-button (make <Button> :text " Cancel " :parent f))
-    (slot-set! self 'help-button (make <Button> :text " Help "   :parent f))
-    (slot-set! self 'all-button	 (make <Check-button> :text "All files" 
-				       :parent f))
-
-    ;; Pack everybody
-    (pack [left-title-of self] [right-title-of self] :fill "x") ; lists titles
-    (pack [left-frame-of self]					; paned
-	  [right-frame-of self]
-	  paned
-	  :expand #t :fill "both" :padx 4 :pady 5)
-    (pack [lentry-of self] :fill "x" :padx 5 :pady 5)		; lentry
-    (pack [ok-button-of self]					; bottom buttons
-	  [cancel-button-of self]
-	  [all-button-of self]
-	  [help-button-of self]
-	  :side "left" :expand #t :ipadx 3 :ipady 3)
-    (pack f :fill "x" :side "bottom" :padx 10 :pady 10)		; bot but's frame
-
-    ;; Set grip visible
-    (set! (background (grip-of paned)) "red")
-
-    ;; Set geometry of this widget (necessary to avoid a 0x0 widget).
-    (slot-set! paned 'width  (get-keyword :width  initargs 400))
-    (slot-set! paned 'height (get-keyword :height initargs 200))
-
-    ;; Don't export selection on Listboxes
-    (slot-set! (left-frame-of  self) 'export-selection #f)
-    (slot-set! (right-frame-of self) 'export-selection #f)
-
-    ;; Associate bindings 
-    (STk:associate-bindings self)
-
-    ;; Initialize listboxes
-    (let ((dir (getcwd)))
-      (slot-set! self 'value dir)
-      (scan-directory self dir))))
+;=============================================================================
+;
+;				< F i l e - b o x > 
+;
+;=============================================================================
 
 ;;;;
-;;;; Bindings association
+;;;; Resources
 ;;;;
-(define-method STk:associate-bindings ((self <File-box>))
-  (let ((directory (slot-ref self 'value))
-	(&	   string-append))
-    ;;
-    ;; toggle-all-files
-    ;; 
-    (define (toggle-all-files fb)
-      (let ((val (slot-ref fb 'value)))
-	(unless (file-is-directory? val)
-	  (set! val (dirname val)))
-	(slot-set! fb 'value val)
-	(scan-directory fb val)))
 
-    ;;
-    ;; choose-parent
-    ;;
-    (define (choose-parent fb)
-      (let* ((lb  (left-frame-of fb))
-	     (sel (current-selection lb)))
-	(when  sel
-	    ;; Read all component from 0 to sel and append them in a string
-	    (let ((dir "")
-		  (sel (car sel)))
-	      (do ((i 1 (+ i 1)))
-		  ((> i sel))
-		(set! dir (& dir "/" (get lb i))))
-	      (let ((new-dir (if (string=? dir "") "/" dir)))
-		(slot-set! fb 'value new-dir)
-		(scan-directory fb new-dir))))))
+(option 'add "*FileBox.FileName.Entry.Background" "white"  "widgetDefault")
+(option 'add "*FileBox.FileName.Entry.Relief"  	  "sunken" "widgetDefault")
 
-    ;;
-    ;; choose-file
-    ;;
-    (define (choose-file fb)
-      (let* ((lb  (right-frame-of fb))
-	     (sel (current-selection lb)))
-	(when  sel
-	    (let* ((sel (car sel))
-		   (val (& (slot-ref fb 'value) "/" (get lb sel))))
-	      (if (file-is-directory? val)
-		  (begin
-		    ;; Make a new file name
-		    (catch 
-		     (let ((cur (getcwd)))
-		       ;; Make a pretty name (i.e. avoid things such as /a/b/../c)
-		       (chdir val)
-		       (set! val (getcwd))
-		       (chdir cur)))
-		    (slot-set! fb 'value val)
-		    (scan-directory fb val))
-		  (invoke fb))))))
-    ;;
-    ;; complete-file
-    ;;
-    (define (complete-file fb)
-      (let ((val (sort (glob (& (value fb) "*")) string<?)))
-	(when (= (length val) 1)
-	    (let ((f (car val)))
-	      (if (file-is-directory? f) (set! f (& f "/")))
-	      (slot-set! fb 'value f)
-	      (scan-directory fb f))))
-      ;; Keep focus on the labeled entry widget
-      'break)
-  
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;; STk:associate-binding starts here
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  
-    ;;Display current directory in the labeled entry
-    (slot-set! self 'value (getcwd))
-    
-    ;; All files button
-    (slot-set! (all-button-of self) 'command (lambda () (toggle-all-files self)))
-    
-    ;; Help button
-    (slot-set! (help-button-of self) 'command 
-	       (lambda ()
-		 (STk:show-help-file "fbox-hlp.html")))
-    
-    ;; Button release in paned
-    (bind (listbox-of (left-frame-of self)) "<Double-1>" (lambda () 
-							   (choose-parent self)))
-    (bind (listbox-of (right-frame-of self)) "<Double-1>" (lambda ()
-							    (choose-file self)))
-    
-    ;; Tab in the entry
-    (bind (entry-of (lentry-of self)) "<space>" (lambda () (complete-file self)))
-    (bind (entry-of (lentry-of self)) "<Tab>"   (lambda () (complete-file self)))
-    
-    ;; Return in the entry
-    (bind (entry-of (lentry-of self)) "<Return>" (lambda () (invoke self)))))
+(option 'add "*FileBox*VPaned.Width"		  450	   "widgetDefault")
+(option 'add "*FileBox*VPaned.Height"		  200	   "widgetDefault")
 
-;;;
-;;; invoke
-;;;
-(define-method invoke ((self <File-box>))
-  (invoke (ok-button-of self)))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Utilities
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define filebox-lock  #F)  ;; lock variable
 
 ;;
-;; Directory listing
+;; Filebox-associate-bindings
 ;;
-(define-method scan-directory ((fb <File-box>) directory)
+(define (filebox-associate-bindings fb)
+
+  (define & string-append)
+
+  (define (toggle-all-files)
+    (let ((val (slot-ref fb 'value)))
+      (unless (file-is-directory? val)
+	(set! val (dirname val)))
+      (slot-set! fb 'value val)
+      (filebox-scan-directory fb val)))
+  
+  (define (choose-parent)
+    (let* ((lb  (left-frame-of fb))
+	   (sel (current-selection lb)))
+      (when  sel
+	  ;; Read all component from 0 to sel and append them in a string
+	  (let ((dir "")
+		(sel (car sel)))
+	    (do ((i 1 (+ i 1)))
+		((> i sel))
+	      (set! dir (& dir "/" (get lb i))))
+	    (let ((new-dir (if (string=? dir "") "/" dir)))
+	      (slot-set! fb 'value new-dir)
+	      (filebox-scan-directory fb new-dir))))))
+
+  (define (choose-file)
+    (letrec ((box1      (left-frame-of fb))
+	     (box2      (right-frame-of fb))
+	     (sel       (current-selection box2))
+	     (res       #t)
+	     (make-dir  (lambda (l res)
+			  (if (null? l)
+			      res
+			      (make-dir (cdr l) (string-append res (car l) "/")))))
+	     (val       (& (make-dir (cdr (value box1)) "/") (get box2 (car sel)))))
+
+      (set! (value fb) val)
+      (if (file-is-directory? val)
+	  (filebox-scan-directory fb val)
+	  (filebox-validate fb))))
+  
+  (define (complete-file)
+    (catch (let ((val (sort (glob (& (value fb) "*")) string<?)))
+	     (when (= (length val) 1)
+	         (let ((f (car val)))
+		   (if (file-is-directory? f) (set! f (& f "/")))
+		   (slot-set! fb 'value f)
+		   (filebox-scan-directory fb f)))))
+    ; Keep focus on the labeled entry widget
+    'break)
+  
+  (define (invoke)
+    (let* ((box (right-frame-of fb))
+	   (sel (current-selection box))
+	   (val (value fb)))
+      (set! (value fb) (if (and (file-is-directory? val) sel)
+			   (string-append val "/" (get box (car sel)))
+			   val)))
+    (filebox-validate fb))
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; filebox-associate-binding starts here
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    
+  (bind fb "<Destroy>"                 (lambda () (set! filebox-lock 'destroy)))
+  (set! (command (cancel-button-of fb))(lambda () (set! filebox-lock 'cancel)))
+  (set! (command (ok-button-of fb))    (lambda () (filebox-validate fb)))
+  (set! (command (all-button-of fb))              toggle-all-files)
+  (set! (command (help-button-of fb))  (lambda () (STk:show-help-file
+						           "fbox-hlp.html")))
+  
+  ;; Button release in paned
+  (bind (listbox-of (left-frame-of fb))  "<Double-1>" choose-parent)
+  (bind (listbox-of (right-frame-of fb)) "<Double-1>" choose-file)
+  
+  ;; Character bindings in the entry
+  (let ((ent (lentry-of fb)))
+    (bind ent "<space>"  complete-file)
+    (bind ent "<Tab>"    complete-file)
+    (bind ent "<Return>" invoke))
+)
+
+;;
+;; Filebox-scan-directory
+;;
+(define (filebox-scan-directory fb directory)
   (let ((& string-append))
     (when (file-is-directory? directory)
 	(let ((files (if (value (all-button-of fb))
@@ -241,57 +150,225 @@
 	  ;; Display the left part
 	  (delete (left-frame-of fb) 0 'end)
 	  (apply insert (left-frame-of fb) 0 (decompose-file-name directory))))))
+;;
+;; Filebox-set-value!
+;;
+(define (filebox-set-value! fb value)
+  (let ((name  (expand-file-name value)))
+    (if (file-is-directory? name)
+	;; Value given is a directory
+	(filebox-scan-directory fb name)
+	;; Value given is not a directory ...
+	(let ((parent (dirname name)))
+	  (if (file-is-directory? parent)
+	      ;; ... and its parent is a valid directory
+	      (filebox-scan-directory fb parent)
+	      ;; ... and its is not validd too.
+	      (error "Directory ~S does not exist" parent))))
+    (set! (value (lentry-of fb)) name)))
 
+;;
+;; Filebox-validate
+;;
+(define (filebox-validate fb)
+  (if ((validate fb) fb (value fb))
+      (set! filebox-lock 'ok)))
+
+;;
+;; Filebox-wait-result
+;;
+(define (filebox-wait-result fb)
+  (let ((cur-grab (grab 'current fb)))
+    (tkwait 'visibility fb)
+    (grab 'set fb) 
+    (tkwait 'variable 'filebox-lock) 
+    (and cur-grab (grab 'set cur-grab))
+
+    ;; Compute result
+    (case filebox-lock
+      ((ok)      (let ((res (value fb))) (destroy fb) res))
+      ((cancel)  (destroy fb) #f)
+      ((destroy) #f))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;
-;;;; make-file-box
-;;;;		User function which permits to create a toplevel containing a 
-;;;;		file selection box. Result is the value of the file choosen
-;;;;		or #f if the CANCEL button has been depressed
+;;;; Class definition
 ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define-class <File-box> (<Tk-composite-toplevel>)
+  ((class 	:init-keyword :class
+		:init-form    "FileBox")
+   (title 	:initform     "File Selection"
+		:accessor     title 
+		:init-keyword :title
+		:allocation   :propagated 
+		:propagate-to (frame))
+   (validate    :accessor     validate
+		:init-form    (lambda (fb path) #t)
+		:init-keyword :validate)
 
-(define stk:filebox-lock   #F)  ;; lock variable
+   (paned)	 		;; paned and buttons are not intended to the user
+   (buttons)
+   (left-frame  :accessor left-frame-of)
+   (right-frame :accessor right-frame-of)
+   (left-title  :accessor left-title-of)
+   (right-title :accessor right-title-of)
+   (lentry	:accessor lentry-of)
+   (ok-button	:accessor ok-button-of)
+   (canc-button :accessor cancel-button-of)
+   (help-button :accessor help-button-of)
+   (all-button  :accessor all-button-of)
+   ;; Fictives slots
+   (value	 :accessor     value
+		 :init-keyword :value
+		 :init-form    (getcwd)
+		 :allocation   :virtual
+		 :slot-ref     (lambda (o) 
+				 (expand-file-name (value (lentry-of o))))
+		 :slot-set!    filebox-set-value!
+		 :propagate-to (lentry))
+   (background   :accessor     background
+		 :allocation   :propagated
+		 :propagate-to (frame buttons left-frame right-frame 
+				left-title right-title lentry 
+				ok-button canc-button help-button all-button))
+   (width	 :accessor     width
+		 :init-keyword :width
+		 :allocation   :propagated
+		 :propagate-to (frame))
+   (height	 :accessor     height
+		 :init-keyword :height
+		 :allocation   :propagated
+		 :propagate-to (frame))))
+
+;==================================================
+
+(define-method initialize-composite-widget ((self <File-box>) initargs frame)
+  (let* ((paned  (make <VPaned> :parent frame :fraction 0.3))
+	 (f      (make <Frame>  :parent frame))
+	 (lf     (left-frame-of  paned))
+	 (rf     (right-frame-of paned)))
+
+    (next-method)
+
+    (slot-set! self 'Id          (Id frame))
+    (slot-set! self 'paned 	 paned)
+    (slot-set! self 'buttons	 f) 
+    (slot-set! self 'left-frame  (make <Scroll-Listbox> :parent lf))
+    (slot-set! self 'right-frame (make <Scroll-Listbox> :parent rf))
+    (slot-set! self 'left-title  (make <Label>          :parent lf :text "Parents"))
+    (slot-set! self 'right-title (make <Label>          :parent rf :text "Files"))
+    (slot-set! self 'lentry	 (make <Labeled-entry>  :parent frame
+				       			:class  "FileName"
+				       			:title "File name"))
+    (slot-set! self 'ok-button   (make <Button> :text "Ok"     :parent f))
+    (slot-set! self 'canc-button (make <Button> :text "Cancel" :parent f))
+    (slot-set! self 'help-button (make <Button> :text "Help"   :parent f))
+    (slot-set! self 'all-button	 (make <Check-button> :text "All" 
+				       :font "fixed" :parent f))
+
+    ;; Pack everybody
+    (pack [left-title-of self] [right-title-of self] :fill "x") ; lists titles
+    (pack [left-frame-of self]					; paned
+	  [right-frame-of self]
+	  paned
+	  :expand #t :fill "both" :padx 4 :pady 5)
+    (pack [lentry-of self] :fill "x" :padx 5 :pady 5)		; lentry
+
+    (pack [ok-button-of self]					; bottom buttons
+	  [cancel-button-of self] :side 'left)
+    (pack [help-button-of self] 
+	  [all-button-of self]
+	  :side 'right)
+    (pack f :fill "x" :side "bottom" :padx 4 :pady 4)		; bot but's frame
+
+    ;; Don't export selection on Listboxes
+    (slot-set! (left-frame-of  self) 'export-selection #f)
+    (slot-set! (right-frame-of self) 'export-selection #f)
+
+    ;; Associate bindings 
+    (filebox-associate-bindings self)
+
+    ;; Initialize listboxes
+    '(filebox-scan-directory self (getcwd))))
+
+
+;=============================================================================
+;
+; Tk:get-file / Tk:get-open-file / Tk:get-save-file
+;
+; User functions to ease usage of <File-box> class. 
+;
+;=============================================================================
+(when (eqv? (os-kind) 'Unix)
+  
+  (define (file-read-validate fb file)
+    (or (and (file-exists? file) 
+	     (not (file-is-directory? file)))
+	(and (Tk:message-box :type 'ok 
+			     :text (format #f "File ~S does not exists" file))
+	     #f)))
+  
+  (define (file-write-validate fb file)
+    (if (file-exists? file)
+	(if (file-is-directory? file)
+	    (begin
+	      (Tk:message-box
+	         :type 'ok 
+		 :text (format #f "~S is a directory" file))
+	      #f)
+	    (eqv? (Tk:message-box 
+	             :type 'yesno
+		     :text (format #f "File ~S already exists\nOverwrite it?" file))
+		  'yes))
+	#t))
+
+  ;;;;
+  ;;;; Tk:get-file
+  ;;;;
+  (define (Tk:get-file . args)
+    (let* ((val      (get-keyword :value args (getcwd)))
+	   (title    (get-keyword :title args ""))
+	   (mode     (get-keyword :mode  args #f))
+	   (f        (make <File-Box> :value val :title title)))
+      ;; Set filebox slots accordingly to option
+      (if mode
+	  (set! (validate f) 
+		(if (eqv? mode 'read) file-read-validate file-write-validate)))
+      
+      ;; wait a result
+      (filebox-wait-result f)))
+
+  ;;;;
+  ;;;; Tk:get-open-file
+  ;;;;
+  (define (Tk:get-open-file . l)
+    (apply Tk:get-file
+	   :mode 'read 
+	   :value (string-append (get-keyword :initial-dir  l (getcwd))
+				 "/"
+				 (get-keyword :initial-file l ""))
+	   l))
+  ;;;;
+  ;;;; Tk:get-save-file		
+  ;;;;
+  (define (Tk:get-save-file . l)
+    (apply Tk:get-file
+	   :mode 'write 
+	   :value (string-append (get-keyword :initial-dir  l (getcwd))
+				 "/"
+				 (get-keyword :initial-file l ""))
+	   l))
+)
+;=============================================================================
+;
+; Make-file-boxFile-chooser (for compatibilty with old STk versions).
+;
+;=============================================================================
 
 (define (make-file-box . title)
-
-  (define (file-box-value fb)
-    (let* ((lb  (right-frame-of fb))
-	   (sel (current-selection lb))
-	   (val (value fb)))
-      (if (file-is-directory? val)
-	  (string-append val (if sel (string-append "/" (get lb (car sel))) ""))
-	  val)))
-
-  (let* ((t   (make <Toplevel> :class "FileSelector" 
-		    :title (if (null? title) "File Selection" (car title))))
-	 (f   (make <File-Box> :parent t))
-	 (res #t))
-
-    ;; map the filebox
-    (pack f :expand #t :fill "both")
-
-    ;; Associate actions to Ok and Cancel button
-    (set! (command (ok-button-of f)) 
-	  (lambda ()
-	    (set! res (file-box-value f))
-	    (set! stk:filebox-lock 'ok)))
-    (set! (command (cancel-button-of f)) 
-	  (lambda ()
-	    (set! res #f)
-	    (set! stk:filebox-lock 'cancel)))
-
-    (bind t "<Destroy>" (lambda () (set! stk:filebox-lock 'destroy)))
-
-    ;; and now wait an event
-    (tkwait 'variable 'stk:filebox-lock)
-
-    ;; Destroy the window
-    (catch (destroy t))
-
-    ;; Return the value of res
-    res))
-
+ (if (null? title)
+     (Tk:get-file)
+     (Tk:get-file :title (car title))))
 
 (provide "Filebox")

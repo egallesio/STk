@@ -11,7 +11,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkImage.c 1.11 96/03/01 17:19:28
+ * SCCS: @(#) tkImage.c 1.14 97/08/11 17:02:02
  */
 
 #include "tkInt.h"
@@ -110,14 +110,8 @@ Tk_CreateImageType(typePtr)
 				 * in by caller.  Must not have been passed
 				 * to Tk_CreateImageType previously. */
 {
-    Tk_ImageType *typePtr2;
-
-    typePtr2 = (Tk_ImageType *) ckalloc(sizeof(Tk_ImageType));
-    *typePtr2 = *typePtr;
-    typePtr2->name = (char *) ckalloc((unsigned) (strlen(typePtr->name) + 1));
-    strcpy(typePtr2->name, typePtr->name);
-    typePtr2->nextPtr = imageTypeList;
-    imageTypeList = typePtr2;
+    typePtr->nextPtr = imageTypeList;
+    imageTypeList = typePtr;
 }
 
 /*
@@ -255,8 +249,12 @@ Tk_ImageCmd(clientData, interp, argc, argv)
 		   imagePtr->tkwin, masterPtr->masterData);
 	}
 #ifdef STk_CODE
-	STk_sharp_dot_result(interp, 
- 			     Tcl_GetHashKey(&winPtr->mainPtr->imageTable, hPtr));
+	/* Beware of space characters in the image */
+	Tcl_ResetResult(interp);
+	Tcl_AppendResult(interp, "#.|",
+			         Tcl_GetHashKey(&winPtr->mainPtr->imageTable, hPtr),
+			         "|",
+			         (char*) NULL);
 #else
 	interp->result = Tcl_GetHashKey(&winPtr->mainPtr->imageTable, hPtr);
 #endif
@@ -668,13 +666,9 @@ Tk_DeleteImage(interp, name)
     char *name;			/* Name of image. */
 {
     Tcl_HashEntry *hPtr;
-    Tcl_CmdInfo info;
     TkWindow *winPtr;
 
-    if (Tcl_GetCommandInfo(interp, "winfo", &info) == 0) {
-	return;
-    }
-    winPtr = (TkWindow *) info.clientData;
+    winPtr = (TkWindow *) Tk_MainWindow(interp);
     hPtr = Tcl_FindHashEntry(&winPtr->mainPtr->imageTable, name);
     if (hPtr == NULL) {
 	return;
@@ -760,4 +754,48 @@ TkDeleteAllImages(mainPtr)
 	DeleteImage(masterPtr);
     }
     Tcl_DeleteHashTable(&mainPtr->imageTable);
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * Tk_GetImageMasterData --
+ *
+ *	Given the name of an image, this procedure returns the type
+ *	of the image and the clientData associated with its master.
+ *
+ * Results:
+ *	If there is no image by the given name, then NULL is returned
+ *	and a NULL value is stored at *typePtrPtr.  Otherwise the return
+ *	value is the clientData returned by the createProc when the
+ *	image was created and a pointer to the type structure for the
+ *	image is stored at *typePtrPtr.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+ClientData
+Tk_GetImageMasterData(interp, name, typePtrPtr)
+    Tcl_Interp *interp;		/* Interpreter in which the image was
+				 * created. */
+    char *name;			/* Name of image. */
+    Tk_ImageType **typePtrPtr;	/* Points to location to fill in with
+				 * pointer to type information for image. */
+{
+    Tcl_HashEntry *hPtr;
+    TkWindow *winPtr;
+    ImageMaster *masterPtr;
+
+    winPtr = (TkWindow *) Tk_MainWindow(interp);
+    hPtr = Tcl_FindHashEntry(&winPtr->mainPtr->imageTable, name);
+    if (hPtr == NULL) {
+	*typePtrPtr = NULL;
+	return NULL;
+    }
+    masterPtr = (ImageMaster *) Tcl_GetHashValue(hPtr);
+    *typePtrPtr = masterPtr->typePtr;
+    return masterPtr->masterData;
 }

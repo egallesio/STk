@@ -748,7 +748,7 @@
 ;;; play.
   (set! quit-now #t)
   (after (* 2 fall-delay)
-	 '(begin
+	 (lambda()
 	   (reset-vars)
 	   (for-each destroy (find-items stetris-canvas 'all))
 	   (set! current-piece (make-new-stetris-piece))

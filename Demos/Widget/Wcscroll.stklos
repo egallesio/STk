@@ -1,0 +1,69 @@
+;;;;
+;;;; STk adaptation of the Tk widget demo.
+;;;;
+;;;; This demonstration script creates a simple canvas that can be
+;;;; scrolled in two dimensions.
+;;;;
+
+(require "Tk-classes")
+
+(define canv-old-fill     "")
+(define canv-current-item #f)
+
+(define (demo-cscroll)
+  (define w (make-demo-toplevel "cscroll"
+				"Scrollable Canvas Demonstration"
+				"This window displays a canvas widget that can be scrolled either using the scrollbars or by dragging with button 2 in the canvas.  If you click button 1 on one of the rectangles, its indices will be printed on stdout."))
+  (define (scroll-enter)
+    (let* ((item (car (find-items c 'with 'current)))
+	   (rect (if (is-a? item <Rectangle>)
+		     item
+		     (Cid->instance c (- (Cid item) 1)))))
+
+      (set! canv-current-item rect)
+      (when (> (winfo 'depth c) 1)
+	(set! canv-old-fill (fill rect))
+	(set! (fill rect) "RoyalBlue1"))))
+
+  (define (scroll-leave)
+    (when (and canv-current-item (> (winfo 'depth c) 1))
+      (set! (fill canv-current-item) canv-old-fill)
+      (set! canv-current-item #f)))
+
+  (define (scroll-button)
+    (let* ((item (car (find-items c 'with 'current)))
+	   (txt (if (is-a? item <Text-item>)
+		    item
+		    (Cid->instance c (+ (Cid item) 1)))))
+      (format #t "You buttoned at ~A\n" (text-of txt))))
+
+  (define c (make <Scroll-Canvas> :parent w :scroll-region '(-11c -11c 20c 20c)
+		  :h-scroll-side "bottom" :border-width 2 :relief "raised"))
+
+  ;; Make internal objects
+  (let ((bg (background c)))
+    (dotimes (i 10)
+      (let ((x (+ -10 (* 3 i)))
+	    (y -10))
+	(dotimes (j 10)
+	  (make <Rectangle> :parent c 
+		:ouline "black" :fill bg :tags "rect"
+		:coords (read-from-string (format #f "(~Ac ~Ac ~Ac ~Ac)"
+						  x y (+ x 2) (+ y 2))))
+	  (make <Text-item> :parent c :text (cons i j) :anchor 'center 
+		:font "fixed"
+		:tags "text" :coords (read-from-string 
+				          (format #f "(~Ac ~Ac)"
+						  (+ x 1) (+ y 1))))
+	  (set! y (+ y 3))))))
+
+  ;; Pack canvas
+  (pack c :fill "both" :expand #t)
+
+  ;; Some bindings
+  (bind c "all" "<Any-Enter>" scroll-enter)
+  (bind c "all" "<Any-Leave>" scroll-leave)
+  (bind c "all" "<1>"         scroll-button)
+  
+  (bind c "<2>"         (lambda (x y) (scan c 'mark   x y)))
+  (bind c "<B2-Motion>" (lambda (x y) (scan c 'dragto x y))))

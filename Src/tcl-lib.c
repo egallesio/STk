@@ -3,7 +3,7 @@
  * t c l - l i b . c 		- A library remplacement for simulating 
  *				  a Tcl interpreter in Scheme
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -20,12 +20,13 @@
  *
  *            Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 19-Feb-1993 22:15
- * Last file update: 29-Aug-1996 12:49
+ * Last file update:  1-Feb-1998 17:56
  *
  */
 
 
 #include "stk.h"
+#include "module.h"
 
 #ifdef USE_TK
 #  include "tk-glue.h"
@@ -69,7 +70,7 @@ int Tcl_GlobalEval(interp, s)
     sprintf(ptr, "(%s)", s);
     s = ptr;
   }
-  result = STk_internal_eval_string(s, ERR_TCL_BACKGROUND, NIL);
+  result = STk_internal_eval_string(s, ERR_TCL_BACKGROUND, MOD_ENV(STk_Tk_module));
   Tcl_ResetResult(interp);
     
   if (ptr != buffer) free(ptr);
@@ -78,7 +79,7 @@ int Tcl_GlobalEval(interp, s)
     SCM dumb;
 
     Tcl_SetResult(interp, 
-		  STk_stringify(STk_convert_for_Tk(result, &dumb), 0), 
+		  STk_stringify(STk_convert_for_Tcl(result, &dumb), 0), 
 		  TCL_DYNAMIC);
     /* 
      * Store also the "true" result in STk_last_Tk_result
@@ -162,8 +163,8 @@ char *Tcl_GetVar(interp, var, flags)
      char *var;
      int flags;
 {
-  SCM dumb, V = VCELL(Intern(var));
-  return (V == UNBOUND) ? NULL : STk_convert_for_Tk(V, &dumb);
+  Debug("Usage of Tcl_GetVar for ", STk_makestring(var));
+  return STk_tcl_getvar(var, "#f");
 }
 
 char *Tcl_GetVar2(interp, name1, name2, flags)
@@ -171,15 +172,9 @@ char *Tcl_GetVar2(interp, name1, name2, flags)
      char *name1, *name2;
      int flags;
 {
-  if (name2 && *name2) {
-    char *res, *s = must_malloc(strlen(name1) + strlen(name2) + 3);
+  Debug("Usage of Tcl_GetVar2 for ", STk_makestring(name1));
+  return STk_tcl_getvar2(name1, name2, "#f");
 
-    sprintf(s, "%s{%s}", name1, name2);
-    res = Tcl_GetVar(interp, s, flags);
-    free(s);
-    return res;
-  }
-  return Tcl_GetVar(interp, name1, flags);
 }
 
 char *Tcl_SetVar(interp, var, val, flags)
@@ -187,30 +182,8 @@ char *Tcl_SetVar(interp, var, val, flags)
      char *var, *val;
      int flags;
 {
-  register SCM tmp, value;
-
-  tmp = Intern(var);
-  if (flags & STk_STRINGIFY) {
-    /* Val is already a string, since it comes from Tk */
-    value = STk_makestring(val);
-  }
-  else {
-    if (*val) {
-      SCM port;
-      int eof;
-      
-      port  = STk_internal_open_input_string(val);
-      value = STk_internal_read_from_string(port, &eof, TRUE);
-      if (value == EVAL_ERROR) return NULL;
-    }
-    else 
-      value =  STk_makestring("");
-  }
-
-  VCELL(tmp) = value;
-  if (TRACED_VARP(tmp)) STk_change_value(tmp, NIL);
-
-  return val;
+  Debug("Usage of Tcl_SetVar for ", STk_makestring(var));
+  return STk_tcl_setvar(var, val, flags, "#f");
 }
 
 char *Tcl_SetVar2(interp, name1, name2, val, flags)
@@ -218,15 +191,8 @@ char *Tcl_SetVar2(interp, name1, name2, val, flags)
      char *name1, *name2, *val;
      int flags;
 { 
-  if (name2 && *name2) {
-    char *res, *s = must_malloc(strlen(name1) + strlen(name2) + 3);
-
-    sprintf(s, "%s{%s}", name1, name2);
-    res = Tcl_SetVar(interp, s, val, flags);
-    free(s);
-    return res;
-  }
-  return Tcl_SetVar(interp, name1, val, flags);
+  Debug("Usage of Tcl_SetVar for ", STk_makestring(name1));
+  return STk_tcl_setvar2(name1, name2, val, flags, "#f");
 }
 
 /******************************************************************************
@@ -248,7 +214,7 @@ int Tcl_internal_DeleteCommand(interp, cmdName)
    * Consequently, GC calls this function, whereas Tk call the true 
    * DeleteCommand
    */
-  hPtr = Tcl_FindHashEntry(&iPtr->commandTable, cmdName);
+  hPtr = Tcl_FindHashEntry(&iPtr->globalNsPtr->cmdTable, cmdName);
   if (hPtr == NULL) return -1;
 
   W = (struct Tk_command *) Tcl_GetHashValue(hPtr);
@@ -280,9 +246,31 @@ int Tcl_DeleteCommand(interp, cmdName)
     return result;
   
   /* Undefine "cmdName" by doing a (set! cmdname #<unbound>) */
-  VCELL(Intern(cmdName)) = UNBOUND;
+  STk_define_variable(cmdName, UNBOUND, STk_Tk_module);
 
   return 0;
+}
+
+
+/* 
+ * Tcl_DeleteCommandFromToken --
+ *
+ *	Removes the given command from the given interpreter. This procedure
+ *	resembles Tcl_DeleteCommand, but takes a Tcl_Command token instead
+ *	of a command name for efficiency.
+ */
+
+int
+Tcl_DeleteCommandFromToken(interp, cmd)
+    Tcl_Interp *interp;		/* Token for command interpreter returned by
+				 * a previous call to Tcl_CreateInterp. */
+    Tcl_Command cmd;            /* Token for command to delete. */
+{
+  /* In STk this function is less efficient than the Tcl one since it 
+   * searches the name of the given command and call Tcl_DeleteCommand
+   * However, the time penalty should be lower than in Tcl here.
+   */
+  return Tcl_DeleteCommand(interp, Tcl_GetCommandName(interp, cmd));
 }
 
 
@@ -316,7 +304,6 @@ Tcl_CreateCommand(interp, cmdName, proc, clientData, deleteProc)
 {
   struct Tk_command * W;
   Interp *iPtr = (Interp *) interp;
-  register struct Tk_command *cmdPtr;
   Tcl_HashEntry *hPtr;
   int new;
   SCM z;
@@ -339,10 +326,11 @@ Tcl_CreateCommand(interp, cmdName, proc, clientData, deleteProc)
   W->delproc    = deleteProc;
   W->deldata	= clientData;
   W->deleted	= 0;
+  W->objproc	= 0;
   strcpy(W->Id, cmdName);
 
   /* Register the command in the Tcl command hash table */
-  hPtr = Tcl_CreateHashEntry(&iPtr->commandTable, cmdName, &new);
+  hPtr = Tcl_CreateHashEntry(&iPtr->globalNsPtr->cmdTable, cmdName, &new);
   if (!new) {
     /* Command already exists: delete the old one */
     Tcl_DeleteCommand(interp, cmdName); /* not efficient but safer */
@@ -355,11 +343,10 @@ Tcl_CreateCommand(interp, cmdName, proc, clientData, deleteProc)
   z->storage_as.tk.l_data = Ntruth;
     
   /* Define a variable whose name is the command name */
-  VCELL(Intern(cmdName)) = z;
+  STk_define_variable(cmdName, z, STk_Tk_module);
 
   return (Tcl_Command) W;
 }
-
 
 /*
  *----------------------------------------------------------------------
@@ -416,12 +403,13 @@ Tcl_GetCommandInfo(interp, cmdName, infoPtr)
     Tcl_CmdInfo *infoPtr;		/* Where to store information about
 					 * command. */
 {
-    SCM v = Intern(cmdName);
+    SCM v;
     struct Tk_command *p;
     
-    if (NTKCOMMP(VCELL(v))) return 0;
+    v = STk_lookup_variable(cmdName, STk_Tk_module);
+    if (NTKCOMMP(v)) return 0;
 
-    p =  VCELL(v)->storage_as.tk.data;
+    p =  v->storage_as.tk.data;
 
     infoPtr->proc       = p->fct;
     infoPtr->clientData = p->ptr;
@@ -450,12 +438,17 @@ Tcl_Interp *Tcl_CreateInterp()
   iPtr->appendAvl	 = 0;
   iPtr->appendUsed	 = 0;
 
-  strcpy(iPtr->pdFormat, "%g");
+  /* strcpy(iPtr->pdFormat, "%g"); No more needed for 8.0 */
 
   iPtr->assocData 	 = (Tcl_HashTable *) NULL;
 
   /* See Tcl_CreateCommand for this table utility  */
-  Tcl_InitHashTable(&iPtr->commandTable, TCL_STRING_KEYS);
+  iPtr->globalNsPtr	= (Namespace*) STk_must_malloc(sizeof(Namespace));
+  Tcl_InitHashTable(&iPtr->globalNsPtr->cmdTable, TCL_STRING_KEYS);
+
+  /* Protect the Tcl_Obj result */
+  Tcl_ResetObjResult(iPtr);
+  STk_gc_protect((SCM*) &(iPtr->objResultPtr));
 
   return (Tcl_Interp *) iPtr;
 }
@@ -657,13 +650,16 @@ void Tcl_DeleteInterp(interp)
   }
   
   /* delete hash table of Tk commands (see Tcl_CreateCommand) */
-  for (hPtr = Tcl_FirstHashEntry(&iPtr->commandTable, &search);
+  for (hPtr = Tcl_FirstHashEntry(&iPtr->globalNsPtr->cmdTable, &search);
        hPtr != NULL; 
        hPtr = Tcl_NextHashEntry(&search)) {
     W = (struct Tk_command *) Tcl_GetHashValue(hPtr);
     Tcl_DeleteCommand(interp, W->Id);
   }
-  Tcl_DeleteHashTable(&iPtr->commandTable);
+  Tcl_DeleteHashTable(&iPtr->globalNsPtr->cmdTable);
+
+  /* Unprotect the Tcl_Obj result */
+  STk_gc_unprotect((SCM*) &(iPtr->objResultPtr));
 
   ckfree((char *) iPtr);
 }
@@ -760,7 +756,15 @@ Tcl_GetOpenFile(interp, string, forWriting, checkUsage, filePtr)
 Tcl_Channel Tcl_OpenFileChannel(Tcl_Interp *interp, char *fileName, 
 				char *modeString, int permissions)
 {
-  return (Tcl_Channel) fopen(fileName, modeString);
+  FILE *f = fopen(fileName, modeString);
+  
+  if (f == NULL) {
+    if (interp != (Tcl_Interp *) NULL) {
+      Tcl_AppendResult(interp, "couldn't open \"", fileName, "\": ",
+		       Tcl_PosixError(interp), (char *) NULL);
+    }
+  }
+  return (Tcl_Channel) f;
 }
 
 int Tcl_Close(Tcl_Interp *interp, Tcl_Channel chan)
@@ -770,18 +774,26 @@ int Tcl_Close(Tcl_Interp *interp, Tcl_Channel chan)
 
 int Tcl_Read(Tcl_Channel chan, char *bufPtr, int toRead)
 {
-  return read(fileno((FILE *)chan), bufPtr, toRead);
+  clearerr((FILE*) chan);
+  return fread(bufPtr, 1, toRead, (FILE*) chan);
 }
 
 int Tcl_Write(Tcl_Channel chan, char *s, int slen)
 {
-  return write(fileno((FILE *)chan), s, slen);
+  int len = (slen < 0) ? strlen(s) : slen;
+  
+  return fwrite(s, 1, len, (FILE*) chan);
 }
 
 
 int Tcl_Seek(Tcl_Channel chan, int offset, int mode)
 {
-  return fseek((FILE*) chan, (long) offset, mode);
+  int res;
+
+  if ((res=fseek((FILE*) chan, (long) offset, mode)) != -1)
+    return (int) ftell((FILE*) chan);
+
+  return res;
 }
 
 int Tcl_Flush(Tcl_Channel chan)
@@ -797,4 +809,359 @@ Tcl_Channel Tcl_GetStdChannel(int type) /*  TCL_STDIN, TCL_STDOUT, TCL_STDERR. *
     case TCL_STDERR: return (Tcl_Channel) STk_stderr;
   }
   return NULL;
+}
+
+int Tcl_Eof(Tcl_Channel chan)		/* Does this channel have EOF? */
+{
+  return feof((FILE *) chan);
+}
+
+int Tcl_SetChannelOption(Tcl_Interp *interp, Tcl_Channel chan, char *optionName, 
+			 char *newValue)
+{
+  /* Do nothing */
+  return TCL_OK;
+}
+
+  
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * Tcl_JoinPath --
+ *
+ *	Combine a list of paths in a platform specific manner.
+ *
+ * Results:
+ *	Appends the joined path to the end of the specified
+ *	returning a pointer to the resulting string.  Note that
+ *	the Tcl_DString must already be initialized.
+ *
+ * Side effects:
+ *	Modifies the Tcl_DString.
+ *
+ *----------------------------------------------------------------------
+ */
+
+char *
+Tcl_JoinPath(argc, argv, resultPtr)
+    int argc;
+    char **argv;
+    Tcl_DString *resultPtr;	/* Pointer to previously initialized DString. */
+{
+    int oldLength, length, i, needsSep;
+    Tcl_DString buffer;
+    char *p, *dest;
+
+    Tcl_DStringInit(&buffer);
+    oldLength = Tcl_DStringLength(resultPtr);
+
+#ifndef STk_CODE
+    switch (tclPlatform) {
+   	case TCL_PLATFORM_UNIX:
+#endif
+#ifndef WIN32
+	    for (i = 0; i < argc; i++) {
+		p = argv[i];
+		/*
+		 * If the path is absolute, reset the result buffer.
+		 * Consume any duplicate leading slashes or a ./ in
+		 * front of a tilde prefixed path that isn't at the
+		 * beginning of the path.
+		 */
+
+		if (*p == '/') {
+		    Tcl_DStringSetLength(resultPtr, oldLength);
+		    Tcl_DStringAppend(resultPtr, "/", 1);
+		    while (*p == '/') {
+			p++;
+		    }
+		} else if (*p == '~') {
+		    Tcl_DStringSetLength(resultPtr, oldLength);
+		} else if ((Tcl_DStringLength(resultPtr) != oldLength)
+			&& (p[0] == '.') && (p[1] == '/')
+			&& (p[2] == '~')) {
+		    p += 2;
+		}
+
+		if (*p == '\0') {
+		    continue;
+		}
+
+		/*
+		 * Append a separator if needed.
+		 */
+
+		length = Tcl_DStringLength(resultPtr);
+		if ((length != oldLength)
+			&& (Tcl_DStringValue(resultPtr)[length-1] != '/')) {
+		    Tcl_DStringAppend(resultPtr, "/", 1);
+		    length++;
+		}
+
+		/*
+		 * Append the element, eliminating duplicate and trailing
+		 * slashes.
+		 */
+
+		Tcl_DStringSetLength(resultPtr, (int) (length + strlen(p)));
+		dest = Tcl_DStringValue(resultPtr) + length;
+		for (; *p != '\0'; p++) {
+		    if (*p == '/') {
+			while (p[1] == '/') {
+			    p++;
+			}
+			if (p[1] != '\0') {
+			    *dest++ = '/';
+			}
+		    } else {
+			*dest++ = *p;
+		    }
+		}
+		length = dest - Tcl_DStringValue(resultPtr);
+		Tcl_DStringSetLength(resultPtr, length);
+	    }
+#endif
+#ifndef STk_CODE
+	    break;
+	case TCL_PLATFORM_WINDOWS:
+#endif
+#ifdef WIN32
+	    /*
+	     * Iterate over all of the components.  If a component is
+	     * absolute, then reset the result and start building the
+	     * path from the current component on.
+	     */
+
+	    for (i = 0; i < argc; i++) {
+		p = ExtractWinRoot(argv[i], resultPtr, oldLength);
+		length = Tcl_DStringLength(resultPtr);
+		
+		/*
+		 * If the pointer didn't move, then this is a relative path
+		 * or a tilde prefixed path.
+		 */
+
+		if (p == argv[i]) {
+		    /*
+		     * Remove the ./ from tilde prefixed elements unless
+		     * it is the first component.
+		     */
+
+		    if ((length != oldLength)
+			    && (p[0] == '.')
+			    && ((p[1] == '/') || (p[1] == '\\'))
+			    && (p[2] == '~')) {
+			p += 2;
+		    } else if (*p == '~') {
+			Tcl_DStringSetLength(resultPtr, oldLength);
+			length = oldLength;
+		    }
+		}
+
+		if (*p != '\0') {
+		    /*
+		     * Check to see if we need to append a separator.
+		     */
+
+		    
+		    if (length != oldLength) {
+			c = Tcl_DStringValue(resultPtr)[length-1];
+			if ((c != '/') && (c != ':')) {
+			    Tcl_DStringAppend(resultPtr, "/", 1);
+			}
+		    }
+
+		    /*
+		     * Append the element, eliminating duplicate and
+		     * trailing slashes.
+		     */
+
+		    length = Tcl_DStringLength(resultPtr);
+		    Tcl_DStringSetLength(resultPtr, (int) (length + strlen(p)));
+		    dest = Tcl_DStringValue(resultPtr) + length;
+		    for (; *p != '\0'; p++) {
+			if ((*p == '/') || (*p == '\\')) {
+			    while ((p[1] == '/') || (p[1] == '\\')) {
+				p++;
+			    }
+			    if (p[1] != '\0') {
+				*dest++ = '/';
+			    }
+			} else {
+			    *dest++ = *p;
+			}
+		    }
+		    length = dest - Tcl_DStringValue(resultPtr);
+		    Tcl_DStringSetLength(resultPtr, length);
+		}
+	    }
+#endif
+#ifndef STk_CODE
+	    break;
+	case TCL_PLATFORM_MAC:
+	    needsSep = 1;
+	    for (i = 0; i < argc; i++) {
+		Tcl_DStringSetLength(&buffer, 0);
+		p = SplitMacPath(argv[i], &buffer);
+		if ((*p != ':') && (*p != '\0')
+			&& (strchr(p, ':') != NULL)) {
+		    Tcl_DStringSetLength(resultPtr, oldLength);
+		    length = strlen(p);
+		    Tcl_DStringAppend(resultPtr, p, length);
+		    needsSep = 0;
+		    p += length+1;
+		}
+
+		/*
+		 * Now append the rest of the path elements, skipping
+		 * : unless it is the first element of the path, and
+		 * watching out for :: et al. so we don't end up with
+		 * too many colons in the result.
+		 */
+
+		for (; *p != '\0'; p += length+1) {
+		    if (p[0] == ':' && p[1] == '\0') {
+			if (Tcl_DStringLength(resultPtr) != oldLength) {
+			    p++;
+			} else {
+			    needsSep = 0;
+			}
+		    } else {
+			c = p[1];
+			if (*p == ':') {
+			    if (!needsSep) {
+				p++;
+			    }
+			} else {
+			    if (needsSep) {
+				Tcl_DStringAppend(resultPtr, ":", 1);
+			    }
+			}
+			needsSep = (c == ':') ? 0 : 1;
+		    }
+		    length = strlen(p);
+		    Tcl_DStringAppend(resultPtr, p, length);
+		}
+	    }
+	    break;
+			       
+    }
+#endif
+    Tcl_DStringFree(&buffer);
+    return Tcl_DStringValue(resultPtr);
+}
+
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * Tcl_IsSafe --
+ *
+ *	Determines whether an interpreter is safe
+ *
+ *----------------------------------------------------------------------
+ */
+
+int
+Tcl_IsSafe(interp)
+    Tcl_Interp *interp;		/* Is this interpreter "safe" ? */
+{
+  return STk_is_safe;		/* STk is always unsafe for now, but this 
+				   could change ... */
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * Tcl_HideCommand --
+ *
+ *	Makes a command hidden so that it cannot be invoked from within
+ *	an interpreter, only from within an ancestor.
+ *
+ *----------------------------------------------------------------------
+ */
+
+int
+Tcl_HideCommand(interp, cmdName, hiddenCmdName)
+    Tcl_Interp *interp;		/* Interpreter in which to hide command. */
+    char *cmdName;		/* Name of hidden command. */
+    char *hiddenCmdName;	/* Name of to-be-hidden command. */
+{
+  /* Easy job */
+  return TCL_OK;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * Tcl_WrongNumArgs --
+ *
+ *	This procedure generates a "wrong # args" error message in an
+ *	interpreter.  It is used as a utility function by many command
+ *	procedures.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	An error message is generated in interp's result object to
+ *	indicate that a command was invoked with the wrong number of
+ *	arguments.  The message has the form
+ *		wrong # args: should be "foo bar additional stuff"
+ *	where "foo" and "bar" are the initial objects in objv (objc
+ *	determines how many of these are printed) and "additional stuff"
+ *	is the contents of the message argument.
+ *
+ *----------------------------------------------------------------------
+ */
+
+void
+Tcl_WrongNumArgs(interp, objc, objv, message)
+    Tcl_Interp *interp;			/* Current interpreter. */
+    int objc;				/* Number of arguments to print
+					 * from objv. */
+    Tcl_Obj *CONST objv[];		/* Initial argument objects, which
+					 * should be included in the error
+					 * message. */
+    char *message;			/* Error message to print after the
+					 * leading objects in objv. */
+{
+    Tcl_Obj *objPtr;
+    int i;
+#ifdef STk_CODE
+    int stk_hack = (objc == 2);
+#endif
+    
+    objPtr = Tcl_GetObjResult(interp);
+#ifdef STk_CODE
+    Tcl_AppendToObj(objPtr, "wrong # args: should be (", -1);
+    for (i = 0; i < objc; i++) {
+
+      if (stk_hack && i == 1) {
+	/* VERY VERY HACKY: place a quote in front of the second element
+	 * of the message. This is a special case for messages such as
+	 *      wrong # args: should be (.but 'configure ....)
+	 *  But this code is so frequent.
+	 */
+	Tcl_AppendStringsToObj(objPtr, "'",
+			       Tcl_GetStringFromObj(objv[i], (int *) NULL), " ",
+			       (char *) NULL);
+      }	  
+      else {
+	Tcl_AppendStringsToObj(objPtr,
+			       Tcl_GetStringFromObj(objv[i], (int *) NULL), " ",
+			       (char *) NULL);
+      }
+    }
+    Tcl_AppendStringsToObj(objPtr, message, ")", (char *) NULL);
+#else
+    Tcl_AppendToObj(objPtr, "wrong # args: should be \"", -1);
+    for (i = 0; i < objc; i++) {
+	Tcl_AppendStringsToObj(objPtr,
+		Tcl_GetStringFromObj(objv[i], (int *) NULL), " ",
+		(char *) NULL);
+    }
+    Tcl_AppendStringsToObj(objPtr, message, "\"", (char *) NULL);
+#endif
 }

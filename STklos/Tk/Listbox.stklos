@@ -1,7 +1,7 @@
 ;;;;
 ;;;; L i s t b o x . s t k 		--  Listbox class definition
 ;;;;
-;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -11,17 +11,26 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
+;;;; $Id: Listbox.stklos 1.3 Sat, 24 Jan 1998 15:12:00 +0100 eg $
+;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 28-Feb-1994 14:38
-;;;; Last file update:  2-Aug-1995 12:39
+;;;; Last file update: 24-Jan-1998 13:36
 
 (require "Basics")
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;
-;;;; <Listbox> class
-;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(select-module STklos+Tk)
+
+(export listbox-activate bounding-box current-selection delete get
+	listbox-index insert nearest text-mark text-drag-to see-item
+	selection-anchor selection-clear selection-includes selection-set
+	size x-view y-view)
+
+;=============================================================================
+;
+; 				<Listbox> class
+;
+;=============================================================================
 
 (define-class <Listbox> (<Tk-simple-widget> <Tk-selectable> <Tk-sizeable>
 			 <Tk-text-selectable> <Tk-xyscrollable>)

@@ -1,7 +1,7 @@
 ;;;;
 ;;;; i n i t . s t k			-- The file launched at startup
 ;;;;
-;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -11,22 +11,48 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
+;;;; $Id: init.stk 1.13 Fri, 10 Apr 1998 09:13:18 +0200 eg $
+;;;;
 ;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;    Creation date: ??-Sep-1993 ??:??
-;;;; Last file update: 22-Jul-1996 15:47
+;;;; Last file update:  8-Apr-1998 11:41
 ;;;;
 
+;;;==============================================================================
+;;;
+;;; Define some global variables (i.e. in the STk module)
+;;; 
+;;;==============================================================================
 
-(define *debug*    	#f)	; #t for debuggging (disable macro inlining)
-(define *gc-verbose* 	#f)	; #t to have a message at start/stop of a GC
-(define *print-banner*  #t)	; #f to avoid the copyright message
+(with-module STk
+  (import Scheme)
+  (define *print-banner*   #t)	     ; #f to avoid the Copyright message
+  (define *debug*    	   #f)	     ; #t for debuggging (disable macro inlining)
+  (define *argc* 	   (length *argv*))
+  (define Tk:initialized?  #f)
+  (define *shared-suffix* (cond 
+			   ((string=? (substring (machine-type) 0 2) "HP") "sl")
+			   (else      "so")))
+  (define *load-suffixes*  (list "stk" "stklos" "scm" *shared-suffix*))
+  (define *load-path*	   #f)
+  (define *load-verbose*   #f))
 
+;;;==============================================================================
+;;;
+;;; The following code is in the Scheme module (since this file is loaded in the 
+;;; Scheme module)
+;;; 
+;;;==============================================================================
 
-(define @undefined (if #f #t))
-(define *argc* (length *argv*)) 
+(define call-with-current-continuation			;; The R5RS one
+  (let ((call/cc call-with-current-continuation))	;; The R4RS one
+    (lambda (proc)
+      (call/cc (lambda (cont)
+		 (proc (lambda l (cont (apply values l)))))))))
 
-(define call/cc		call-with-current-continuation)
-(define !		system)
+(define call/cc call-with-current-continuation)		;; To make life easier
+
+(define !		 system)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;
@@ -85,11 +111,11 @@
 (define (apropos s)
   (if (not (symbol? s)) (error "apropos: bad symbol" s))
   (let ((res '())
-	(env (the-environment)) 
+	(env (the-environment))
 	(str (symbol->string s)))
 
     (do ((l (cdr (environment->list env)) (cdr l))); cdr to avoid the binding to "s"
-	((null? l) (if (null? res) #f res))
+	((null? l) (if (null? res) #f (list->set res)))
       (do ((v (car l) (cdr v)))
 	  ((null? v))
 	(if (and (string-find? str (symbol->string (caar v))) 
@@ -106,6 +132,25 @@
 			(format #t "~A\n" (caddr body))
 			(nodoc))))))
 
+(define make-unbound 
+  (let ((unbound (make-vector 1)))
+    (lambda ()
+      (vector-ref unbound 0))))
+
+(define unbound?
+  (let ((unbound (make-unbound)))
+    (lambda (o)
+      (eq? o unbound))))
+
+(define (make-undefined)
+  (if #f #t))
+
+(define (undefined? o)
+  (eq? o (if #f #t)))
+
+(define-macro (define-variable var value)  ;; The Elisp/CL defvar
+  `(with-module STk
+	(unless  (symbol-bound? ',var) (define ,var ,value))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;
@@ -141,7 +186,7 @@
 	       (lambda ,(map car inits)
 		 (if ,(car test)
 		     (begin ,@(if (null? (cdr test)) 
-				  (list @undefined) 
+				  (list (make-undefined))
 				  (cdr test)))
 		     (begin ,@body
 			    (,loop-name ,@(map (lambda (init)
@@ -238,9 +283,6 @@
 (define 1+ (macro form (list + (cadr form) 1)))
 (define 1- (macro form (list - (cadr form) 1)))
 
-(define macroexpand-1 macro-expand)
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;
 ;;;; Section 6.10
@@ -273,70 +315,49 @@
 ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define *shared-suffix* (cond 
-			 ((string=? (substring (machine-type) 0 2) "HP") "sl")
-			 (ELSE      "so")))
-(define *load-suffixes*	(list "stk" "stklos" "scm" *shared-suffix*))
+(define (build-path-from-shell-variable var)
+  (let ((path (getenv var)))	
+    (if path 
+	(split-string path ":")
+	'())))
 
-(define *load-path*	#f)
-(define *help-path*	#f)
-(define *load-verbose* 	#f)
-
-
-(let ((build-path (lambda (path)
-		    (and path 
-			 (let ((len (string-length path))
-			       (new '())
-			       (i 0))
-			   (do ((j 0 (+ j 1)))
-			       ((= j len))
-			     (if (eqv? (string-ref path j) #\:)
-				 (begin
-				   (set! new (cons (substring path i j) 
-						   new))
-				   (set! i (+ j 1)))))
-			   ;; don't forget the last path
-			   (reverse (cons (substring path i len) new))))))
-      (lib	   (%library-location)))
-
+(let ((lib  (%library-location)))
   ;; If user has specified a load path with STK_LOAD_PATH, use it
-  ;; Always append STK_LIBRARY at end to be sure to find our files
+  ;; Always append STK_LIBRARY at end to be sure to find our files  
   (set! *load-path* (append (list ".")
-			    (or (build-path (getenv "STK_LOAD_PATH")) '())
-			    (list (expand-file-name 
-				         (string-append lib "/../site-scheme"))
+			    (build-path-from-shell-variable "STK_LOAD_PATH")
+			    (list (expand-file-name
+				        (string-append lib "/../site-scheme"))
 				  (string-append lib "/STk")
-				  (string-append lib "/" (machine-type)))))
-  ;; The same thing for the *help-path*
-  (set! *help-path* (append (list ".")
-			    (or (build-path (getenv "STK_HELP_PATH")) '())
-			    (list lib
-				  (string-append lib "/Help")))))
-  
+				  (string-append lib "/" (machine-type))))))
 
-;
-; Require/Provide/Provided?
-;
-(define require   #f)
-(define provide   #f)
-(define provided? #f)
+;;;
+;;; Require/Provide/Provided?
+;;;
 
-(let ((provided '()))
+(define require   #f)   ; This is a little bit tricky here: variables are
+(define provide   #f)	; defined in the Scheme module, but their associated
+(define provided? #f)	; closure is in the STk module. In this way, the
+			; LOAD done in the REQUIRE procedure is done in the
+			; global namespace, which is what is desired for REQUIRE.
 
-  (set! require (lambda (what)
-		  (unless (member what provided)
-		     (load what)
-		     (unless (member what provided)
-			(format #t "WARNING: ~S was not provided~%" what)))
-		  what))
+(with-module STk
+   (let ((provided '()))
 
-  (set! provide (lambda (what)
-		  (unless (member what provided)
-			  (set! provided (cons what provided)))
-		  what))
-	
-  (set! provided? (lambda (what)
-		    (and (member what provided) #t))))
+     (set! require   (lambda (what)
+		       (unless (member what provided)
+			 (load what (current-module))
+			 (unless (member what provided)
+			   (format #t "WARNING: ~S was not provided~%" what)))
+		       what))
+
+     (set! provide   (lambda (what)
+		       (unless (member what provided)
+			 (set! provided (cons what provided)))
+		       what))
+     
+     (set! provided? (lambda (what)
+		       (and (member what provided) #t)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;
@@ -374,7 +395,6 @@
 (define (exec-string-list command)
   (call-with-input-file (string-append "| " command) port->string-list))
     
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;
 ;;;; Misc
@@ -420,11 +440,16 @@
 (define-macro (multiple-value-bind vars form . body)
   `(apply (lambda ,vars ,@body) ,form))
 
+(define (os-kind)
+  (case (machine-type)
+    (("MS_Win32") 'Windows)	
+    (else	  'Unix)))
 
-;;; 
-;;; Set functions
-;;;
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; 
+;;;; Set functions
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (define (list->set l)
   (letrec ((rem-dupl (lambda (l res)
 		       (cond
@@ -449,28 +474,35 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;
-;;;; Autoloads
+;;;; Module stuff
 ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define-macro (export . l)
+  `(begin
+     ,@(map (lambda (x)
+	      (let ((x (if (and (pair? x) (eq? (car x) 'setter))
+			   (extended-name->scheme-name x)
+			   x)))
+		`(export-symbol ',x (current-module))))
+	    l)
+     ,(make-undefined)))
+  
 
-(autoload "unix" 	basename dirname decompose-file-name)
-(autoload "process"	run-process process?)
-(autoload "regexp"	string->regexp regexp? regexp-replace regexp-replace-all)
+(define ~ with-module)
 
-;; STklos
-(autoload "stklos" 	define-class define-method make define-generic slot-ref 
-	  		slot-set!)
+#| FIXME: Probably more harmful than useful. Delete it?
 
-(autoload "describe"	describe)
-(autoload "hash"   	make-hash-table hash-table-hash)
-(autoload "socket"   	make-server-socket make-client-socket)
-
-
-;; martine packages 
-(autoload "pp"    pp)
-(autoload "trace" trace)
-
-
+(define-macro (duplicate-module-exports from to . prefix)
+  (let* ((prefix  (if (null? prefix) "" (symbol->string (car prefix))))
+	 (exports (module-exports (find-module from)))
+	 (symbols (map (lambda (x) 
+			 (string->symbol (string-append prefix (symbol->string x))))
+		       exports)))
+    `(with-module ,to
+	,@(map (lambda (x y) 
+		 `(define ,x (with-module ,from ,y)))
+	       symbols exports))))
+|#
 
 ;;;
 ;;; quit and bye procedures. Since Tk redefine exit, they cannot be simple aliases
@@ -478,25 +510,59 @@
 (define quit (lambda l (apply exit l)))
 (define bye  (lambda l (apply exit l)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;
-;;;; Tk initializations
-;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;==============================================================================
+;;;
+;;; Code for STklos autoloading 
+;;;
+;;;==============================================================================
 
-(define Tk:initialized?  #f)
+(define-module STklos
+  (import Scheme)
+  (export  define-class define-method define-generic describe make method)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;
-;;;; Try to load user init file 
-;;;; Idea from (Olaf Burkart) burkart@zeus.informatik.rwth-aachen.de
-;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  (autoload "stklos" 	define-class define-method define-generic make method)
+  (autoload "describe"	describe))
 
-(let ((user-init ".stkrc"))
-  ;; First look in the current directory for an user initialization file.
-  (or (try-load (string-append "./" user-init))
-      ;; Otherwise have a look in the HOME directory.
-      (let ((home-dir (getenv "HOME")))
-	(and home-dir
-	     (try-load (string-append home-dir "/" user-init))))))
+
+;;;==============================================================================
+;;;
+;;; Finish initializations
+;;;
+;;;==============================================================================
+
+(with-module STk
+  ;; Make the STklos autoload symbols accessible from the global scope
+  (import STklos)
+
+  ;; Define some useful autoload
+  (autoload "unix" 	basename dirname decompose-file-name)
+  (autoload "process"	run-process process?)
+  (autoload "regexp"	string->regexp regexp? regexp-replace regexp-replace-all)
+  (autoload "trace" 	trace untrace)
+  (autoload "hash"   	make-hash-table hash-table-hash)
+  (autoload "socket"   	make-server-socket make-client-socket)
+  (autoload "match"	match-case match-lambda)
+  (autoload "ffi"	define-external external-exists?)
+  (autoload "extset"	setter extended-name->scheme-name)
+  (autoload "pp"    	pp) ;; martine pretty-print package 
+  
+
+  ;; Procedure called for prompting the user
+  (define (repl-display-prompt module)    
+    (let ((p (current-error-port))
+	  (n (module-name module)))
+      (flush)	; flush *stdout* before printing the prompt
+      (format p "~A> " (case n
+			 ((stk)    "STk")
+			 ((stklos) "STklos")
+			 ((scheme) "Scheme")
+			 ((tk)	   "Tk")
+			 (else	  n)))
+      (flush p)))
+  
+  ;; Procedure called for printing toplevel evals
+  (define (repl-display-result result)
+    (unless (eqv? result (make-undefined))
+      (call-with-values (lambda () result)
+			(lambda l 
+			  (for-each (lambda (x) (write* x) (newline)) l))))))

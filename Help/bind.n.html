@@ -1,4 +1,5 @@
 <HTML><HEAD><TITLE>Tk Built-In Commands - bind manual page</TITLE></HEAD>
+<BR>
 <BODY bgcolor = #c3c3ff>
 <H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageBlue.gif"> bind</H2>
 <I>Arrange for X events to invoke STk scripts</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
@@ -55,7 +56,7 @@ the binding applies to all windows in the application.
 The <I>sequence</I> argument specifies a sequence of one or more
 event patterns, with optional white space between the patterns.  Each
 event pattern may
-take either of two forms.  In the simplest case it is a single
+take one of three forms.  In the simplest case it is a single
 printing ASCII character, such as <B>a</B> or <B>[</B>.  The character
 may not be a space character or the character <B>&lt;</B>.  This form of
 pattern matches a <B>KeyPress</B> event for the particular
@@ -68,7 +69,17 @@ type, and an extra piece of information (<I>detail</I>) identifying
 a particular button or keysym.  Any of the fields may be omitted,
 as long as at least one of <I>type</I> and <I>detail</I> is present.
 The fields must be separated by white space or dashes.
-
+<P>
+The third form of pattern is used to specify a user-defined, named virtual
+event.  It has the following syntax:
+<PRE><B>&lt;&lt;</B><I>name</I><B>&gt;&gt;</B></PRE>
+The entire virtual event pattern is surrounded by double angle brackets.
+Inside the angle brackets is the user-defined name of the virtual event.
+Modifiers, such as <B>Shift</B> or <B>Control</B>, may not be combined with a
+virtual event to modify it.  Bindings on a virtual event may be created
+before the virtual event is defined, and if the definition of a virtual
+event changes dynamically, all windows bound to that virtual event will
+respond immediately to the new definition.  
 <H3><A NAME="M5">MODIFIERS</A></H3>
 Modifiers consist of any of the following values:
 <PRE><B>Control</B>	 	<B>Mod2, M2</B>
@@ -125,7 +136,8 @@ Circulate	FocusOut	Property
 Colormap	Gravity	Reparent
 Configure	KeyPress, Key	Unmap
 Destroy	KeyRelease	Visibility
-Enter	Leave</B></PRE>
+Enter	Leave	Activate
+Deactivate</B></PRE>
 <P>
 The last part of a long event specification is <I>detail</I>.  In the
 case of a <B>ButtonPress</B> or <B>ButtonRelease</B> event, it is the
@@ -208,8 +220,8 @@ The <I>focus</I> field from the event (<B>#f</B> or <B>#t</B>).  Valid only
 for <B>Enter</B> and <B>Leave</B> events.
 <P>
 <DT><A NAME="M15"><B>h</B></A><DD>
-The <I>height</I> field from the event.  Valid only for <B>Configure</B>,
-<B>Expose</B>, and <B>GraphicsExpose</B> events.
+The <I>height</I> field from the event.  Valid only for <B>Configure</B> and
+<B>Expose</B> events.
 <P>
 <DT><A NAME="M16"><B>k</B></A><DD>
 The <I>keycode</I> field from the event.  Valid only for <B>KeyPress</B>
@@ -218,8 +230,8 @@ and <B>KeyRelease</B> events.
 <DT><A NAME="M17"><B>m</B></A><DD>
 The <I>mode</I> field from the event.  The substituted string is one of
 <B>NotifyNormal</B>, <B>NotifyGrab</B>, <B>NotifyUngrab</B>, or
-<B>NotifyWhileGrabbed</B>.  Valid only for <B>EnterWindow</B>,
-<B>FocusIn</B>, <B>FocusOut</B>, and <B>LeaveWindow</B> events.
+<B>NotifyWhileGrabbed</B>.  Valid only for <B>Enter</B>,
+<B>FocusIn</B>, <B>FocusOut</B>, and <B>Leave</B> events.
 <P>
 <DT><A NAME="M18"><B>o</B></A><DD>
 The <I>override_redirect</I> field from the event.  Valid only for
@@ -233,8 +245,7 @@ for <B>Circulate</B> events.
 <DT><A NAME="M20"><B>s</B></A><DD>
 The <I>state</I> field from the event.  For <B>ButtonPress</B>,
 <B>ButtonRelease</B>, <B>Enter</B>, <B>KeyPress</B>, <B>KeyRelease</B>,
-<B>Leave</B>, and <B>Motion</B> events,
-a decimal string
+<B>Leave</B>, and <B>Motion</B> events, a decimal string
 is substituted.  For <B>Visibility</B>, one of the strings
 <B>VisibilityUnobscured</B>, <B>VisibilityPartiallyObscured</B>,
 and <B>VisibilityFullyObscured</B> is substituted.
@@ -245,7 +256,7 @@ contain a <I>time</I> field.
 <P>
 <DT><A NAME="M22"><B>w</B></A><DD>
 The <I>width</I> field from the event.  Valid only for
-<B>Configure</B>, <B>Expose</B>, and <B>GraphicsExpose</B> events.
+<B>Configure</B> and <B>Expose</B> events.
 <P>
 <DT><A NAME="M23"><B>x</B></A><DD>
 The <I>x</I> field from the event.  Valid only for events containing
@@ -348,11 +359,30 @@ than one that doesn't;
 (c) if the modifiers specified in one pattern are a subset of the
 modifiers in another pattern, then the pattern with more modifiers
 is more specific.
-If the matching sequences contain more than
-one event, then tests (c)-(e) are applied in order from the most
-recent event to the least recent event in the sequences.  If these
-tests fail to determine a winner, then the most recently registered
-sequence is the winner.
+(d) a virtual event whose physical pattern matches the sequence is less
+specific than the same physical pattern that is not associated with a 
+virtual event.
+(e) given a sequence that matches two or more virtual events, one 
+of the virtual events will be chosen, but the order is undefined.
+<P>
+If the matching sequences contain more than one event, then tests
+(c)-(e) are applied in order from the most recent event to the least recent
+event in the sequences.  If these tests fail to determine a winner, then the
+most recently registered sequence is the winner.
+<P>
+If there are two (or more) virtual events that are both triggered by the
+same sequence, and both of those virtual events are bound to the same window
+tag, then only one of the virtual events will be triggered, and it will
+be picked at random:
+<PRE>(event 'add &quot;&lt;&lt;Paste&gt;&gt;&quot;  &quot;&lt;Control-y&gt;&quot;)
+(event 'add &quot;&lt;&lt;Paste&gt;&gt;&quot;  &quot;&lt;Button-2&gt;&quot;)
+(event 'add &quot;&lt;&lt;Scroll&gt;&gt;&quot; &quot;&lt;Button-2&gt;&quot;)
+(bind &quot;Entry&quot; &quot;&lt;&lt;Paste&gt;&gt;&quot;  (lambda () (display &quot;Paste\n&quot;)))
+(bind &quot;Entry&quot; &quot;&lt;&lt;Scroll&gt;&gt;&quot; (lambda () (display &quot;Scroll\n&quot;)))</PRE>
+If the user types Control-y, the <B>&lt;&lt;Paste&gt;&gt;</B> binding
+will be invoked, but if the user presses button 2 then one of
+either the <B>&lt;&lt;Paste&gt;&gt;</B> or the <B>&lt;&lt;Scroll&gt;&gt;</B> bindings will
+be invoked, but exactly which one gets invoked is undefined.
 <P>
 If an X event does not match any of the existing bindings, then the
 event is ignored.
@@ -401,10 +431,10 @@ the last one is used for purposes of matching binding sequences.
 
 <H3><A NAME="M38">ERRORS</A></H3>
 If an error occurs in executing the script for a binding then the
-<B>tkerror</B> mechanism is used to report the error.
+<B>bgerror</B> mechanism is used to report the error.
 
 <H3><A NAME="M39">SEE ALSO</A></H3>
 <B><A HREF="./bindtags.n.html">bindtags</A></B>, <B>tkerror</B>
-<P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif"><P>
 <A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookBlue.gif"> Back to the <B>STk</B> main page</A>
 </BODY></HTML>

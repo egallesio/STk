@@ -17,7 +17,7 @@
  *
  *****
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -34,7 +34,7 @@
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 12-May-1993 10:34
- * Last file update: 25-Sep-1996 14:40
+ * Last file update:  7-Jan-1998 18:44
  */
 
 #include "stk.h"
@@ -105,6 +105,15 @@ static SCM int2bignum(long n)
   return z;
 }
 
+static SCM uint2bignum(unsigned long n)
+{
+  SCM z;
+  NEWCELL(z, tc_bignum);
+  BIGNUM(z) = must_malloc(sizeof(MP_INT));
+  mpz_init_set_ui(BIGNUM(z), n);
+  return z;
+}
+
 static double bignum2double(MP_INT *bn)
 {
   char   *s= mpz_get_str(NULL, 10, bn);
@@ -170,31 +179,25 @@ char *STk_number2Cstr(SCM n, long base, char buffer[])
 	   long tmp, val = INTEGER(n);
 	   int u;
 
-	   if (base==2 || base==8 || base==10 || base==16) {
-	     if (val < 0) {
-	       val  = -val;
-	       *s++ = '-';
-	     }
-	     for (s++, tmp=val; tmp >= base; tmp /= base) s++;
-	     *s = '\000'; tmp = val;
-	     do {
-	       u = tmp % base;
-	       *(--s) = u + ((u < 10) ? '0' : 'a'-10);
-	       tmp   /= base;
-	     }
-	     while (tmp);
-	     return buffer;
+	   if (val < 0) {
+	     val  = -val;
+	     *s++ = '-';
 	   }
+	   for (s++, tmp=val; tmp >= base; tmp /= base) s++;
+	   *s = '\000'; tmp = val;
+	   do {
+	     u = tmp % base;
+	     *(--s) = u + ((u < 10) ? '0' : 'a'-10);
+	     tmp   /= base;
+	   }
+	   while (tmp);
+	   return buffer;
 	 }
     case tc_bignum:
-	   if (base==2 || base==8 || base==10 || base==16) {
-	     s = must_malloc(mpz_sizeinbase(BIGNUM(n), base) + 2);
-	     s = mpz_get_str(s, base, BIGNUM(n));
-	     return s;
-	   }
+           s = must_malloc(mpz_sizeinbase(BIGNUM(n), base) + 2);
+	   s = mpz_get_str(s, base, BIGNUM(n));
+	   return s;
   }
-
-  Err("base must be 2, 8, 10 or 16", (base == LONG_MIN) ? NIL: makesmallint(base));
   return NULL; /* never reached */
 }
 
@@ -203,7 +206,6 @@ char *STk_number2Cstr(SCM n, long base, char buffer[])
 SCM STk_Cstr2number(char *str, long base)
 {
   int i, adigit=0, isint=1, exact=' ', radix = 0;
-  char *start      = str;
   register char *p = str;
 
   for (i = 0; i < 2; i++) {
@@ -216,16 +218,13 @@ SCM STk_Cstr2number(char *str, long base)
 	case 'o': if (!radix) {base = 8;  radix = 1; break;} else return Ntruth;
 	case 'd': if (!radix) {base = 10; radix = 1; break;} else return Ntruth;
 	case 'x': if (!radix) {base = 16; radix = 1; break;} else return Ntruth;
-	default:  Err("bad # syntax", STk_makestring(str));
+	default:  return Ntruth;
       }
       str += 2;
     }
     if (*p != '#') break;
   }
 
-  if (base != 2 && base != 8 && base != 10 && base != 16)
-    Err("base must be 2, 8, 10 or 16", (base==LONG_MIN) ? NIL: makesmallint(base));
-  
   if (*p == '-' || *p == '+') p+=1;
   if (*p == '#') goto End;
   while(digitp(*p, base)) { p+=1; adigit=1; if (*p == '#') isint = 0; }
@@ -275,8 +274,7 @@ SCM STk_Cstr2number(char *str, long base)
   }
   
   /* It's a float */
-  if (exact == 'e')
-    Err("#e cannot be specified on this number", STk_makestring(str));
+  if (exact == 'e') return Ntruth; /* e cannot be specified on e float */
   if (base == 10) {
     /* Replace sharp signs by 0 */
     for(p=str; *p; p++) 
@@ -288,7 +286,6 @@ SCM STk_Cstr2number(char *str, long base)
     return STk_makenumber((double) atof(str));
   }
 End:
-  if (*start ==  '#') Err("Bad # syntax", STk_makestring(start));
   return Ntruth;
 }
 
@@ -314,6 +311,50 @@ int STk_equal_numbers(SCM number1, SCM number2) /* number1 = number2 */
 {
   return do_compare(number1, number2) == 0;
 }
+
+long STk_integer2long(SCM x)
+{
+  if (BIGNUMP(x))  return mpz_get_si(BIGNUM(x));
+  return INTEGER(x);
+}
+
+unsigned long STk_integer2ulong(SCM x)
+{
+  if (BIGNUMP(x)) return mpz_get_ui(BIGNUM(x));
+  return (unsigned long) INTEGER(x);
+}
+
+/******************************************************************************/
+
+SCM STk_makenumber(double x)
+{
+  /* Floats are not stored in a struct obj since this leads to memory consumption
+   * This  memory consumption due to alignment problems. 
+   * For instance on a Sun 4, where double are 8 bytes, a struct obj with a double
+   * in line will occupy 16 bytes whereas it occupies only 12 bytes if the double
+   * is mallocated.
+   * This change (94/08/29) will give worst performances when crunching numbers,
+   * but use Fortran if this is your job :->
+   */
+
+  SCM z;
+  NEWCELL(z,tc_flonum); 
+  (*z).storage_as.flonum.data = must_malloc(sizeof(double));
+  FLONM(z) = x; 
+  return z;
+}
+
+
+SCM STk_makeinteger(long x)
+{
+  return (SMALLINT_MIN <= x && x <= SMALLINT_MAX) ? makesmallint(x): int2bignum(x);
+}
+
+SCM STk_makeunsigned(unsigned long x)
+{
+  return (SMALLINT_MIN <= x && x <= SMALLINT_MAX) ? makesmallint(x): uint2bignum(x);
+}
+
 
 /******************************************************************************
  *
@@ -352,8 +393,12 @@ void _STk_do_multiply(SCM *x, SCM y)
 		  if (SMALLNUMP(prod=(double) INTEGER(*x) * INTEGER(y)))
 		    SET_INTEGER(*x, (long) prod);
 		  else {
+		    MP_INT tmp;
+		    
 		    *x = int2bignum(INTEGER(*x));
-		    mpz_mul_ui(BIGNUM(*x), BIGNUM(*x), INTEGER(y));
+		    mpz_init_set_si(&tmp, INTEGER(y));
+		    mpz_mul(BIGNUM(*x), BIGNUM(*x), &tmp);
+		    mpz_clear(&tmp);
 		  }
 		}
 		break;
@@ -660,32 +705,6 @@ static double do_compare(SCM x, SCM y)
  *
  ******************************************************************************/
 
-SCM STk_makenumber(double x)
-{
-  /* Floats are not stored in a struct obj since this leads to memory consumption
-   * This  memory consumption due to alignment problems. 
-   * For instance on a Sun 4, where double are 8 bytes, a struct obj with a double
-   * in line will occupy 16 bytes whereas it occupies only 12 bytes if the double
-   * is mallocated.
-   * This change (94/08/29) will give worst performances when crunching numbers,
-   * but use Fortran if this is your job :->
-   */
-
-  SCM z;
-  NEWCELL(z,tc_flonum); 
-  (*z).storage_as.flonum.data = must_malloc(sizeof(double));
-  FLONM(z) = x; 
-  return z;
-}
-
-
-SCM STk_makeinteger(long x)
-{
-  return (SMALLINT_MIN <= x && x <= SMALLINT_MAX) ? makesmallint(x): int2bignum(x);
-}
-    
-
-/******************************************************************************/
 
 /**** Section 6.5 ****/
 
@@ -1222,17 +1241,26 @@ PRIMITIVE STk_inexact2exact(SCM z)
 
 PRIMITIVE STk_string2number(SCM str, SCM base)
 {
+  long b = (base==UNBOUND)? 10L : STk_integer_value(base);
+
   if (NSTRINGP(str)) Err("string->number: not a string", str);
-  return STk_Cstr2number(CHARS(str), (base==UNBOUND)? 10 : STk_integer_value(base));
+  if (b != 2 && b != 8 && b != 10 && b != 16)
+    Err("string->number: base must be 2, 8, 10 or 16", NIL);
+
+  return STk_Cstr2number(CHARS(str), b);
 }
 
 PRIMITIVE STk_number2string(SCM n, SCM base)
 {
+  long b = (base==UNBOUND)? 10L : STk_integer_value(base);
   char *s, buffer[100];
   SCM z;
 
   if (NNUMBERP(n))   Err("number->string: bad number", n);
-  s = STk_number2Cstr(n, (base == UNBOUND)? 10 : STk_integer_value(base), buffer);
+  if (b != 2 && b != 8 && b != 10 && b != 16)
+    Err("number->string: base must be 2, 8, 10 or 16", NIL);
+
+  s = STk_number2Cstr(n, b, buffer);
   z = STk_makestring(s);
   if (s != buffer) free(s);
   return z;

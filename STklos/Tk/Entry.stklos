@@ -1,7 +1,7 @@
 ;;;;
 ;;;; E n t r y . s t k 		--  Entry class definition
 ;;;;
-;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -11,39 +11,50 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
+;;;; $Id: Entry.stklos 1.5 Sun, 01 Feb 1998 23:14:16 +0100 eg $
+;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 28-Feb-1994 11:36
-;;;; Last file update:  8-Jul-1996 00:12
+;;;; Last file update: 29-Jan-1998 17:26
 
 (require "Basics")
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;
-;;;; <Entry> class
-;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(select-module STklos+Tk)
+
+(export bounding-box text-delete text-cursor (setter text-cursor)
+	text-index text-insert text-mark text-drag-to selection-adjust
+	selection-set! selection-to! text-x-view)
+
+;=============================================================================
+;
+;				 <Entry> class
+;
+;=============================================================================
 
 (define-class <Entry> (<Tk-simple-widget> <Tk-editable> <Tk-selectable> 
 		       <Tk-text-selectable>)
-  ((justify	     :accessor     justify
+  ((environment	     :accessor	   environment
+		     :init-keyword :environment
+		     :allocation   :tk-virtual)
+   (justify	     :accessor	   justify
 		     :init-keyword :justify
 		     :allocation   :tk-virtual)
    (x-scroll-command :init-keyword :x-scroll-command
-		     :accessor     x-scroll-command
-		     :tk-name      xscrollcommand
+		     :accessor	   x-scroll-command
+		     :tk-name	   xscrollcommand
 		     :allocation   :tk-virtual)
-   (text-variable    :accessor     text-variable
+   (text-variable    :accessor	   text-variable
 		     :init-keyword :text-variable
 		     :allocation   :tk-virtual
-		     :tk-name      textvar)
+		     :tk-name	   textvar)
    (show-chars	     :accessor	   show-chars
 		     :init-keyword :show-chars
 		     :allocation   :tk-virtual
 		     :tk-name	   show)
-   (state	     :accessor     state
+   (state	     :accessor	   state
 		     :init-keyword :state
 		     :allocation   :tk-virtual)
-   (string-value     :accessor     string-value
+   (string-value     :accessor	   string-value
 		     :init-keyword :string-value
 		     :tk-name      stringval
 		     :allocation   :tk-virtual)
@@ -51,7 +62,7 @@
 		     :init-keyword :width 
 		     :allocation   :tk-virtual)
    ;; Fictive slot 
-   (value     	     :accessor	 value
+   (value     	     :accessor	   value
 	      	     :init-keyword :value
 	      	     :allocation   :virtual
 	             :slot-ref     (lambda (o)  

@@ -1,6 +1,6 @@
 '\"
 '\" Copyright (c) 1994 The Australian National University
-'\" Copyright (c) 1994-1995 Sun Microsystems, Inc.
+'\" Copyright (c) 1994-1996 Sun Microsystems, Inc.
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -9,7 +9,7 @@
 '\"	    Department of Computer Science,
 '\"	    Australian National University.
 '\"
-'\" "@(#) photo.n 1.9 95/08/12 17:35:29"
+'\" "@(#) photo.n 1.11 96/12/04 14:13:45"
 '\" 
 .so STk-man.macros
 .TH photo n 3.1 STk "Tk Built-In Commands"
@@ -343,4 +343,4 @@ based on his earlier photo widget and some suggestions from
 John Ousterhout.
 
 .SH SEE ALSO
-bitmap, image, pixmap
+bitmap, make-image, image, jpeg, pixmap

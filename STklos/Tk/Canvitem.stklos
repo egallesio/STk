@@ -1,7 +1,7 @@
 ;;;;
 ;;;; C a n v i t e m . s t k 	  --  Canvas Items classes definition
 ;;;;
-;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -11,10 +11,20 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
+;;;; $Id: Canvitem.stklos 1.5 Sun, 22 Mar 1998 20:42:56 +0100 eg $
+;;;;
 ;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;    Creation date: 24-Aug-1993 11:24
-;;;; Last file update: 17-Jan-1996 23:53
+;;;; Last file update: 22-Mar-1998 18:34
 
+;;;
+;;; This file must not be loaded directly but from Canvas.stklos 
+;;;
+
+(select-module STklos+Tk)
+
+(export initialize-item add-to-group delete-from-group 
+	items-of-group tag-value Cid->instance)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;
@@ -32,7 +42,7 @@
 
     ;; Verify that parent exists and that it is a canvas 
     (unless parent
-       (error "**** You must specify the canvas which contain this object"))
+       (error "**** You must specify the canvas which contains this object"))
     (unless (is-a? parent <Canvas>)
        (error "**** Specified canvas ~A is not valid" parent))
 
@@ -45,6 +55,7 @@
 	(slot-set! self 'Cid Cid)
 	(hash-table-put! (slot-ref parent 'items) Cid self)))
     (next-method)))
+
 
 (define-method initialize-item ((self <Tk-canvas-item>) canv-Id coords args)
   (error "initialize-item: no method for ~S subclass" self))
@@ -184,9 +195,11 @@
     ;; Change class of the group to <Destroyed-object>
     (change-class self <Destroyed-object>))
 
+#|
 (define-method delete ((self <Tk-canvas-item>))
   ;; For compatibility with older versions
   (destroy self))
+|#
 
 ;;;
 ;;; Delete-tag
@@ -453,6 +466,3 @@
    (window  :accessor window  :init-keyword :window  :allocation :tk-virtual)))
 
 (define-method canvas-item-initializer((self <Canvas-window>))	"window")
-
-
-(provide "Canvitem")

@@ -1,14 +1,14 @@
 '\"
 '\" Copyright (c) 1990-1994 The Regents of the University of California.
-'\" Copyright (c) 1994-1995 Sun Microsystems, Inc.
+'\" Copyright (c) 1994-1997 Sun Microsystems, Inc.
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" @(#) menubutton.n 1.29 95/08/12 17:35:13
+'\" SCCS: @(#) menubutton.n 1.35 97/05/20 20:32:02
 '\" 
 .so STk-man.macros
-.TH menubutton n 3.1 STk "Tk Built-In Commands"
+.TH menubutton n 4.0 STk "Tk Built-In Commands"
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
@@ -24,6 +24,17 @@ menubutton \- Create and manipulate menubutton widgets
 :borderwidth	:highlightcolor	:relief
 .SE
 .SH "WIDGET-SPECIFIC OPTIONS"
+.VS
+.OP :direction direction Height direction
+Specifies where the menu is going to be popup up. \fBabove\fR tries to
+pop the menu above the menubutton. \fBbelow\fR tries to pop the menu
+below the menubutton. \fBleft\fR tries to pop the menu to the left of
+the menubutton. \fBright\fR tries to pop the menu to the right of the
+menu button. \fBflush\fR pops the menu directly over the menubutton.
+.OP :environment environment Environment environment
+Specifies the environment in which the \fB:textvariable\fR must be taken. 
+By default, the value of this option is the STk global environment.
+.VE
 .OP :height height Height height
 Specifies a desired height for the menubutton.
 If an image or bitmap is being displayed in the menubutton then the value is in

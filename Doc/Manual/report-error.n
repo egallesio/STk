@@ -2,7 +2,7 @@
 '\"
 '\" 
 .so STk-man.macros
-.TH report-error n 3.1 STk "Tk Built-In Commands"
+.TH report-error n 3.1 STk "STk procedure"
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME

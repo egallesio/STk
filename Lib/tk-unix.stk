@@ -1,0 +1,83 @@
+;;;;
+;;;; t k - u n i x . s t k		-- Some Tk functions which are loaded  
+;;;;					   on Unix only
+;;;;
+;;;; Copyright © 1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; $Id: tk-unix.stk 1.1 Fri, 10 Apr 1998 09:13:18 +0200 eg $
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date:  1-Feb-1998 19:03
+;;;; Last file update:  2-Feb-1998 12:19
+
+(require "Tk-classes")
+
+(select-module STklos+Tk)
+
+(export Tk:message-box Tk:get-open-file Tk:get-save-file)
+
+;=============================================================================
+;
+; Tk:message-box		
+;
+;=============================================================================
+
+(define (Tk:message-box . l)
+  (let* ((default (get-keyword :default l ""))
+	 (icon 	  (get-keyword :icon    l #f))
+	 (text    (get-keyword :text    l ""))
+	 (title   (get-keyword :title   l ""))
+	 (class   (case (get-keyword :type  l 'ok)
+		    ((abortretryignore)	<Abort-retry-ignore-message-box>)
+		    ((okcancel)		<Ok-cancel-message-box>)
+		    ((retrycancel)	<Retry-cancel-message-box>)
+		    ((yesno)		<Yes-no-message-box>)
+		    ((yesnocancel)	<Yes-no-cancel-message-box>)
+		    (else		<Ok-message-box>)))
+	 (box     (make class :text text :title title)))
+
+    ;; Default
+    ;/////// must be done ////////
+
+    ;; Icon 
+    (if icon (set! (icon box) (make-image icon)))
+    
+    (grab 'set box)
+    (tkwait 'window box)
+    msgbox-button))
+
+;=============================================================================
+;
+; Tk:get-open-file		
+;
+;=============================================================================
+
+(define (Tk:get-open-file . l)
+  (apply file-chooser 
+	 :mode 'read 
+	 :value (string-append (get-keyword :initial-dir  l (getcwd))
+			       "/"
+			       (get-keyword :initial-file l ""))
+	 l))
+
+;=============================================================================
+;
+; Tk:get-save-file		
+;
+;=============================================================================
+
+(define (Tk:get-save-file . l)
+  (apply file-chooser 
+	 :mode 'write 
+	 :value (string-append (get-keyword :initial-dir  l (getcwd))
+			       "/"
+			       (get-keyword :initial-file l ""))
+	 l))

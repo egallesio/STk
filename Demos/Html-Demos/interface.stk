@@ -1,0 +1,49 @@
+;; C'est très laid. puisque ca peremt de définir une globale et donc de 
+;; truander les controles d'accès.
+;; (scale '.s :variable 'speed)
+;; (.s 'set 1)
+;; (destroy .s)
+
+(require "image")
+
+(define (make-animation pattern parent delay)
+  (let* ((files  (sort (glob pattern) string<?)) 
+	 (size   (length files)) 
+	 (images (make-vector size)) 
+	 (name   (gensym (& (if (eq? parent *root*) "" parent) ".l"))) 
+	 (widget (label name :bd 0 :relief "flat" :background "white"
+			:env (the-environment))))
+    ;; Store in the image vector all the components of the animation
+    (dotimes (i size)
+      (let ((key (list-ref files i)))
+	(vector-set! images 
+		     i 
+		     (make-image key :file key))))
+    
+    ;; Display the first image of the animation
+    (tk-set! widget :image (vector-ref images 0))
+
+    ;; Animate the image 
+    (letrec ((anim (let ((i 0))
+		     (lambda () 
+		       (when (winfo (quote exists) widget) 
+			 (when (>= i size)
+			   (set! i 0))
+			 (tk-set! widget :image (vector-ref images i))
+			 (set! i (+ i 1))
+			 (update) 
+			 (after delay anim))))))
+      (after 'idle anim))
+    widget))
+
+
+(define (change-animation-delay w delay)
+  (let ((env (tk-get w :env)))
+    (eval `(set! delay ,delay) env)))
+
+
+(define x (make-animation "/users/eg/PublicHtml/img*.gif" *root* 100))
+(pack x :fill "both" :expand #t)
+
+(change-animation-delay x 1000)
+

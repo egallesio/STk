@@ -1,4 +1,5 @@
 <HTML><HEAD><TITLE>Tk Built-In Commands - checkbutton manual page</TITLE></HEAD>
+<BR>
 <BODY bgcolor = #c3c3ff>
 <H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageBlue.gif"> checkbutton</H2>
 <I>Create and manipulate checkbutton widgets</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
@@ -30,6 +31,10 @@
 is typically invoked when mouse button 1 is released over the button
 window.  The button's global variable (<B>:variable</B> option) will
 be updated before the procedure is invoked.
+OP :environment environment Environment environment
+Specifies the environment in which the <B>:textvariable</B> or  
+<B>:variable</B>must be taken. By convention, the value <B>#f</B> denotes the
+STk global environment (the default value of this option is false).
 <P>
 <P>
 <DT><I>Name</I>:            <B>height</B>
@@ -75,7 +80,9 @@ this button is selected.  Defaults to <B>#t</B>.
 <DT><I>Option keyword</I>:  <B><A NAME="M33">:selectcolor</A></B>
 <DT><I>STklos slot name</I>: <B>select-color</B>
 <DD>Specifies a background color to use when the button is selected.
-If <B>indicatorOn</B> is true then the color applicies to the indicator.
+If <B>indicatorOn</B> is true then the color applies to the indicator.
+Under Windows, this color is used as the background for the indicator
+regardless of the select state.
 If <B>indicatorOn</B> is false, this color is used as the background
 for the entire widget, in place of <B>background</B> or <B>activeBackground</B>,
 whenever the widget is selected.
@@ -181,12 +188,16 @@ checkbutton.
 <P>
 In addition, checkbuttons can be <I>selected</I>.
 If a checkbutton is selected then the indicator is normally
-drawn with a sunken relief and a special color, and
+drawn with a selected appearance, and
 a STk variable associated with the checkbutton is set to a particular
-value (normally 1).
+value (normally #t).
+Under Unix, the indicator is drawn with a sunken relief and a special
+color.  Under Windows, the indicator is drawn with a check mark inside.
 If the checkbutton is not selected, then the indicator is drawn with a
-raised relief and no special color, and the associated variable is
-set to a different value (typically 0).
+deselected appearance, and the associated variable is
+set to a different value (typically #f).
+Under Unix, the indicator is drawn with a raised relief and no special
+color.  Under Windows, the indicator is drawn without a check mark inside.
 By default, the name of the variable associated with a checkbutton is the
 same as the <I>name</I> used to create the checkbutton.
 The variable name, and the ``on'' and ``off'' values stored in it,
@@ -264,15 +275,20 @@ Tk automatically creates class bindings for checkbuttons that give them
 the following default behavior:
 <OL>
 <LI>
-A checkbutton activates whenever the mouse passes over it and deactivates
-whenever the mouse leaves the checkbutton.
+On Unix systems, a checkbutton activates whenever the mouse passes
+over it and deactivates whenever the mouse leaves the checkbutton.  On
+Windows systems, when mouse button 1 is pressed over a
+checkbutton, the button activates whenever the mouse pointer is inside
+the button, and deactivates whenever the mouse pointer leaves the
+button.
 <LI>
-When mouse button 1 is pressed over a checkbutton it is invoked (its
+When mouse button 1 is pressed over a checkbutton, it is invoked (its
 selection state toggles and the procedure associated with the button is
 invoked, if there is one).
 <LI>
 When a checkbutton has the input focus, the space key causes the checkbutton
-to be invoked.
+to be invoked.  Under Windows, there are additional key bindings; plus
+(+) and equal (=) select the button, and minus (-) deselects the button.
 </OL>
 <P>
 If the checkbutton's state is <B>disabled</B> then none of the above
@@ -283,6 +299,6 @@ individual widgets or by redefining the class bindings.
 
 <H3><A NAME="M49">SEE ALSO</A></H3>
 <B><A HREF="./button.n.html">button</A></B>, <B><A HREF="./radiobutton.n.html">radiobutton</A></B>
-<P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif"><P>
 <A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookBlue.gif"> Back to the <B>STk</B> main page</A>
 </BODY></HTML>

@@ -2,7 +2,7 @@
 ;;;;
 ;;;; s t k l o s - d e m o . s t k 	  --  A demo which use some STklos classes
 ;;;;
-;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -14,7 +14,7 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 24-Aug-1993 19:55
-;;;; Last file update: 21-Jul-1996 11:32
+;;;; Last file update:  3-Mar-1998 17:18
 
 (require "Tk-classes")
 
@@ -30,10 +30,11 @@
 (define f (make <Frame>))
 (define l (make <Label>  :parent f :text "A simple demo written in STklos"))
 (define c (make <Canvas> :parent f :relief "groove" :height 400 :width 700))
-(define m (make <Label>  :parent f :font "fixed"
+(define m (make <Label>  :parent f :font "fixed" :justify 'left
 			 :foreground "red"
-		         :text "Left button to move squares. Right button to move circles"))
-(define q (make <Button> :text "Quit" :command '(exit)))
+		         :text "Left button to move squares. 
+Right button to move circles"))
+(define q (make <Button> :text "Quit" :command (lambda () (exit 0))))
 
 (pack l c m q :in f :expand #t :fill 'both)
 (pack f)

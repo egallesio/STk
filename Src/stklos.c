@@ -2,7 +2,7 @@
  *
  *  s t k l o s . c			-- STklos support
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -16,39 +16,63 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
+ * $Id: stklos.c 1.12 Sun, 22 Mar 1998 20:42:56 +0100 eg $
  *
  *            Author: Erick Gallesio [eg@unice.fr]
  *    Creation date:  9-Feb-1994 15:56
- * Last file update: 24-Jul-1996 17:03 
+ * Last file update: 22-Mar-1998 19:25 
  */
 
 #ifdef USE_STKLOS
 
 #include "stk.h"
 #include "stklos.h"
+#include "extend.h"
+#include "module.h"
 
-#define CLASSP(x)	    (INSTANCEP(x) && SUBCLASSP(CLASS_OF(x), Class))
-#define GENERICP(x)  	    (INSTANCEP(x) && SUBCLASSP(CLASS_OF(x), Generic))
-#define METHODP(x)  	    (INSTANCEP(x) && SUBCLASSP(CLASS_OF(x), Method))
+#define CLASSP(x)	    	(INSTANCEP(x) && SUBCLASSP(CLASS_OF(x), Class))
+#define GENERICP(x)  	    	(INSTANCEP(x) && SUBCLASSP(CLASS_OF(x), Generic))
+#define METHODP(x)  	    	(INSTANCEP(x) && SUBCLASSP(CLASS_OF(x), Method))
 
-#define NCLASSP(x)	    (!CLASSP(x))
-#define NGENERICP(x)	    (!GENERICP(x))
-#define NMETHODP(x)  	    (!METHODP(x))
+#define NCLASSP(x)	    	(!CLASSP(x))
+#define NGENERICP(x)	    	(!GENERICP(x))
+#define NMETHODP(x)  	    	(!METHODP(x))
 
-#define SPEC_OF(x)	    THE_SLOT_OF(x, S_specializers)
+#define SPEC_OF(x)	    	THE_SLOT_OF(x, S_specializers)
 
 
-static char k_initform[]     = ":initform";     /* In a var so it can be */
-static char k_init_keyword[] = ":init-keyword"; /* patched by STk_makekey */
+#define DEFVAR(v,val)		{STk_define_public_var(STklos,(v),(val)); \
+				 STk_export_symbol(v, STklos);}
+#define GETVAR(v)		(*(STk_varlookup((v), MOD_ENV(STklos),FALSE)))
 
-static SCM Top, Object, Class, Generic, Method, Procedure_class, Entity_class;
+#define CALL_GF1(name,a)	(Apply(GETVAR(Intern(name)), LIST1(a)))
+#define CALL_GF2(name,a,b)	(Apply(GETVAR(Intern(name)), LIST2(a, b)))
+#define CALL_GF3(name,a,b,c)	(Apply(GETVAR(Intern(name)), LIST3(a, b, c)))
+#define CALL_GF4(name,a,b,c,d)	(Apply(GETVAR(Intern(name)), LIST4(a, b, c, d)))
+
+#define CLASS_REDEF(c) THE_SLOT_OF(c, S_redefined)
+#define TEST_CHANGE_CLASS(obj, classe) 						\
+	{ 									\
+	  classe = CLASS_OF(obj);						\
+          if (CLASS_REDEF(classe) != Ntruth) 					\
+	    CALL_GF3("change-object-class", obj, classe, CLASS_REDEF(classe));	\
+	}
+
+#define NXT_MTHD_METHODS	CAR
+#define NXT_MTHD_ARGS		CDR
+
+static char initialized	     = 0;
+
+static SCM STklos;
+static SCM Top, Object, Class, Generic, Method, Simple_method, Accessor, 
+  	   Procedure_class, Entity_class;
 static SCM Boolean, Char, Pair, Procedure, String, Symbol, Vector, Number, 
-	   List, Null, Real, Integer, Keyword, Unknown;
+	   Liste, Null, Real, Integer, Keyword, Unknown;
 #ifdef USE_TK
 static SCM Widget;
 #endif
 
-static void slot_set_if_unbound(SCM obj, SCM slot_name, SCM value);
+static void set_slot_value_if_unbound(SCM classe, SCM obj, SCM slot_name, SCM form);
 
 /*****************************************************************************/
 
@@ -58,6 +82,7 @@ static SCM make_instance(SCM classe, long  size, int type)
   register long i;
 
   NEWCELL(z, STk_tc_instance);
+
   INST(z) 	     = must_malloc(sizeof(Instance) + (size-1)*sizeof(SCM));
 
   CLASS_OF(z)        = classe;
@@ -72,9 +97,20 @@ static SCM make_instance(SCM classe, long  size, int type)
   return z;
 }
 
+void STk_free_instance(SCM o)
+{
+  free(INST(o));
+}
+  
+SCM STk_STklos_value(SCM symbol)
+{
+  return GETVAR(symbol);
+}
+
+
 /******************************************************************************
  *
- * compute-cpl
+ * Compute-cpl
  *
  *   This version doesn't handle multiple-inheritance. It serves only for
  * booting classes and will be overaloaded in Scheme
@@ -116,7 +152,7 @@ static SCM build_slots_list(SCM dslots, SCM cpl)
   register SCM res = dslots;
 
   for (cpl = CDR(cpl); NNULLP(cpl); cpl = CDR(cpl))
-    res = STk_append(LIST2(THE_SLOT_OF(CAR(cpl), S_direct_slots), res), 2);
+    res = STk_append2(THE_SLOT_OF(CAR(cpl), S_direct_slots), res);
 
   /* res contains a list of slots. Remove slots which appears more than once */
   return remove_duplicate_slots(Reverse(res), NIL, NIL);
@@ -125,7 +161,7 @@ static SCM build_slots_list(SCM dslots, SCM cpl)
 
 static PRIMITIVE compute_slots(SCM classe)
 {
-  if (NCLASSP(classe)) Err("compute-class: bad class", classe);
+  if (NCLASSP(classe)) Err("%compute-slots: bad class", classe);
   return build_slots_list(THE_SLOT_OF(classe, S_direct_slots),
 			  THE_SLOT_OF(classe, S_cpl));
 }
@@ -145,36 +181,11 @@ static SCM compute_getters_n_setters(SCM slots)
   long i   = 0;
 
   for (  ; NNULLP(slots); slots = CDR(slots)) 
-    res = Cons(Cons(CAR(slots),STk_makeinteger(i++)), res);
-
+    res = Cons(Cons(CAR(slots),
+		    Cons(Ntruth, 
+			 STk_makeinteger(i++))),
+	       res);
   return res;
-}
-
-/******************************************************************************
- *
- * compute-initializers
- *
- ******************************************************************************/
-
-static SCM build_initializers(SCM slots)
-{
-  SCM initform, tmp, curr_slot, res = NIL;
-
-  for ( ; NNULLP(slots); slots = CDR(slots)) {
-    tmp       = NIL;
-    curr_slot = CAR(slots);
-
-    if (CONSP(curr_slot)) {	
-      /* slot is a pair. See if an :initform is provided */
-      if (STk_llength(curr_slot) > 1) {
-	initform = STk_get_keyword(STk_makekey(k_initform),CDR(curr_slot),NULL);
-	if (initform)
-	  tmp = STk_eval(LIST3(Sym_lambda, NIL, initform), NIL);
-      }
-    }
-    res = Cons(tmp, res);
-  }
-  return Reverse(res);
 }
 
 /******************************************************************************
@@ -185,29 +196,31 @@ static SCM build_initializers(SCM slots)
 
 static PRIMITIVE initialize_object(SCM obj, SCM initargs)
 {
-  SCM tmp, initializers, slots;
+  static char k_init_keyword[] = ":init-keyword";
+  SCM tmp, get_n_set, slots;
+  SCM init_keyword = STk_makekey(k_init_keyword);
+  SCM classe       = CLASS_OF(obj);
 
-  if (NINSTANCEP(obj))
-    Err("%initialize-object: bad instance", obj);
-  if (NCONSP(initargs) && NNULLP(initargs)) 
-    Err("%initialize-object: bad init list", initargs);
+  ENTER_PRIMITIVE("%initialize-object");
+
+  if (NINSTANCEP(obj)) 			    Serror("bad object", obj);
+  if (NCONSP(initargs) && NNULLP(initargs)) Serror("bad init list", initargs);
   
-  initializers = THE_SLOT_OF(CLASS_OF(obj), S_initializers);
-  slots        = THE_SLOT_OF(CLASS_OF(obj), S_slots);
+  get_n_set = THE_SLOT_OF(classe, S_getters_n_setters);
+  slots     = THE_SLOT_OF(classe, S_slots);
   
   /* See for each slot how it must be initialized */
-  for ( ; NNULLP(initializers); initializers=CDR(initializers), slots=CDR(slots)) {
+  for ( ; NNULLP(slots); get_n_set=CDR(get_n_set), slots=CDR(slots)) {
     SCM slot_name  = CAR(slots);
     SCM slot_value = NULL;
     
     if (CONSP(slot_name)) {
       /* This slot admits (perhaps) to be initialized at creation time */
-      tmp 	= STk_get_keyword(STk_makekey(k_init_keyword),CDR(slot_name), NULL);
+      tmp 	= STk_get_keyword(init_keyword,CDR(slot_name), NULL);
       slot_name = CAR(slot_name);
       if (tmp) {
 	/* an initarg was provided for this slot */
-	if (NKEYWORDP(tmp))
-	  Err("%initialize-object: initarg must be a keyword. It was", tmp);
+	if (NKEYWORDP(tmp)) Serror("initarg must be a keyword. It was", tmp);
 	slot_value = STk_get_keyword(tmp, initargs, NULL);
       }
     }
@@ -215,10 +228,12 @@ static PRIMITIVE initialize_object(SCM obj, SCM initargs)
     if (slot_value)
       /* set slot to provided value */
       STk_slot_set(obj, slot_name, slot_value);
-    else 
+    else {
       /* set slot to its :initform if it exists */
-      if (NNULLP(CAR(initializers)))
-	slot_set_if_unbound(obj, slot_name, Apply(CAR(initializers), NIL));
+      tmp = CAR(CDR(CAR(get_n_set)));
+      if (tmp != Ntruth)
+	set_slot_value_if_unbound(classe, obj, slot_name, tmp);
+    }
   }
   
   return obj;
@@ -241,15 +256,27 @@ SCM STk_basic_make_class(SCM classe, SCM name, SCM dsupers, SCM dslots)
   THE_SLOT_OF(z, S_name)	      = name;
   THE_SLOT_OF(z, S_direct_supers)     = dsupers;
   THE_SLOT_OF(z, S_direct_slots)      = dslots;
+  THE_SLOT_OF(z, S_direct_subclasses) = NIL;
+  THE_SLOT_OF(z, S_direct_methods)    = NIL;
   THE_SLOT_OF(z, S_cpl)		      = cpl;
   THE_SLOT_OF(z, S_slots)	      = slots;
   THE_SLOT_OF(z, S_nfields)	      = STk_makeinteger(STk_llength(slots));
   THE_SLOT_OF(z, S_getters_n_setters) = g_n_s;
-  THE_SLOT_OF(z, S_initializers)      = build_initializers(slots);
+  THE_SLOT_OF(z, S_redefined) 	      = Ntruth;
+  THE_SLOT_OF(z, S_environment)	      = MOD_ENV(STklos);
 
   /* Don't forget to set the accessors list of the object */
   ACCESSORS_OF(z) = THE_SLOT_OF(classe, S_getters_n_setters);
   
+  /* Add this class in the direct-subclasses slot of dsupers */
+  {
+    SCM tmp;
+    for (tmp = dsupers; NNULLP(tmp); tmp = CDR(tmp)) {
+      THE_SLOT_OF(CAR(tmp), S_direct_subclasses) = 
+			         Cons(z, 
+				      THE_SLOT_OF(CAR(tmp), S_direct_subclasses));
+    }
+  }
   return z;
 }
 
@@ -257,14 +284,21 @@ SCM STk_basic_make_class(SCM classe, SCM name, SCM dsupers, SCM dslots)
 
 static void create_Top_Object_Class(void)
 {
-  SCM tmp, slots_of_class = LIST8(Intern("name"), 
-				  Intern("direct-supers"),
-				  Intern("direct-slots"),
-				  Intern("cpl"),
-				  Intern("slots"),
-				  Intern("nfields"),
-				  Intern("initializers"),
-				  Intern("getters-n-setters"));
+  SCM tmp, slots_of_class = Cons(Intern("name"),
+			    Cons(Intern("direct-supers"),
+			    Cons(Intern("direct-slots"),
+			    Cons(Intern("direct-subclasses"),
+			    Cons(Intern("direct-methods"),
+			    Cons(Intern("cpl"),
+			    Cons(Intern("slots"),
+			    Cons(Intern("nfields"),
+			    Cons(Intern("getters-n-setters"),
+			    Cons(Intern("redefined"),
+			    Cons(Intern("environment"),
+				 NIL)))))))))));
+
+  /* protect Top, Object and Class against garbage collection */
+  STk_gc_protect(&Top); STk_gc_protect(&Object); STk_gc_protect(&Class);
 
   /**** <Class> ****/
   tmp 	= Intern("<class>");
@@ -273,37 +307,37 @@ static void create_Top_Object_Class(void)
   CLASS_OF(Class)     = Class;
   ACCESSORS_OF(Class) = compute_getters_n_setters(slots_of_class);
 
-  THE_SLOT_OF(Class, S_name) 		  = tmp;
-  THE_SLOT_OF(Class, S_direct_supers)	  = NIL; /* will be changed */
-  THE_SLOT_OF(Class, S_direct_slots)	  = slots_of_class;
-  THE_SLOT_OF(Class, S_cpl)		  = NIL;  /* will be changed */
-  THE_SLOT_OF(Class, S_slots)		  = slots_of_class;
-  THE_SLOT_OF(Class, S_nfields)		  = STk_makeinteger(NUMBER_OF_CLASS_SLOTS);
-  THE_SLOT_OF(Class, S_initializers)      = build_initializers(slots_of_class);
-  THE_SLOT_OF(Class, S_getters_n_setters) = ACCESSORS_OF(Class);
+  THE_SLOT_OF(Class, S_name) 		 = tmp;
+  THE_SLOT_OF(Class, S_direct_supers)	 = NIL;  /* will be changed */
+  THE_SLOT_OF(Class, S_direct_slots)	 = slots_of_class;
+  THE_SLOT_OF(Class, S_direct_subclasses)= NIL;
+  THE_SLOT_OF(Class, S_direct_methods)	 = NIL;  
+  THE_SLOT_OF(Class, S_cpl)		 = NIL;  /* will be changed */
+  THE_SLOT_OF(Class, S_slots)		 = slots_of_class;
+  THE_SLOT_OF(Class, S_nfields)		 = STk_makeinteger(NUMBER_OF_CLASS_SLOTS);
+  THE_SLOT_OF(Class, S_getters_n_setters)= ACCESSORS_OF(Class);
+  THE_SLOT_OF(Class, S_redefined) 	 = Ntruth;
+  THE_SLOT_OF(Class, S_environment) 	 = MOD_ENV(STklos);
 
-  VCELL(tmp) = Class;
+  DEFVAR(tmp, Class);
 
   /**** <Top> ****/
   tmp = Intern("<top>");
   Top = STk_basic_make_class(Class, tmp, NIL, NIL);
 
-  VCELL(tmp) = Top;
+  DEFVAR(tmp, Top);
   
   /**** <Object> ****/
   tmp	 = Intern("<object>");
   Object = STk_basic_make_class(Class, tmp, LIST1(Top), NIL);
 
-  VCELL(tmp) = Object;
+  DEFVAR(tmp, Object);
 
-  /* <top> <object> and <class> were partly uninitialized. Correct them here */
-  THE_SLOT_OF(Class, S_direct_supers)   = LIST1(Object);
-  THE_SLOT_OF(Class, S_cpl)		= LIST3(Class, Object, Top);
+  /* <top> <object> and <class> were partially initialized. Correct them here */
+  THE_SLOT_OF(Object, S_direct_subclasses) = LIST1(Class);
 
-  /* protect Top, Object and Class  against garbage collection */
-  STk_gc_protect(&Top);
-  STk_gc_protect(&Object);
-  STk_gc_protect(&Class);
+  THE_SLOT_OF(Class, S_direct_supers)      = LIST1(Object);
+  THE_SLOT_OF(Class, S_cpl)		   = LIST3(Class, Object, Top);
 }
 
 /******************************************************************************/
@@ -313,10 +347,14 @@ static PRIMITIVE instancep(SCM obj)
   return INSTANCEP(obj)? Truth: Ntruth;
 }
 
-PRIMITIVE STk_class_of(SCM obj)
+PRIMITIVE class_of(SCM obj)
 {
-  if (INSTANCEP(obj)) return CLASS_OF(obj);
-
+  if (INSTANCEP(obj)) { 	
+    SCM classe;
+    
+    TEST_CHANGE_CLASS(obj, classe);
+    return CLASS_OF(obj);
+  }
   switch (TYPE(obj)) {
     case tc_boolean:	return Boolean;
     case tc_char:	return Char;
@@ -332,138 +370,319 @@ PRIMITIVE STk_class_of(SCM obj)
 #ifdef USE_TK
     case tc_tkcommand:	return Widget;
 #endif
-    default: 		return (STk_procedurep(obj) == Truth)? Procedure: Unknown;
+    default: 		if (EXTENDEDP(obj))
+      			  return STk_extended_class_of(obj);
+    		        else 
+			  return (STk_procedurep(obj) == Truth)? Procedure: Unknown;
   }
 }
+
+/******************************************************************************
+ * 
+ * Meta object accessors
+ *
+ ******************************************************************************/
 static PRIMITIVE class_name(SCM obj)
 {
-  if (NINSTANCEP(obj)) Err("class-name: bad class", obj);
+  if (NCLASSP(obj)) Err("class-name: bad class", obj);
   return STk_slot_ref(obj, Intern("name"));
 }
 static PRIMITIVE class_direct_supers(SCM obj)
 {
-  if (NINSTANCEP(obj)) Err("class-direct-supers: bad class", obj);
+  if (NCLASSP(obj)) Err("class-direct-supers: bad class", obj);
   return STk_slot_ref(obj, Intern("direct-supers"));
 }
 static PRIMITIVE class_direct_slots(SCM obj)
 {
-  if (NINSTANCEP(obj)) Err("class-direct-slots: bad class", obj);
+  if (NCLASSP(obj)) Err("class-direct-slots: bad class", obj);
   return STk_slot_ref(obj, Intern("direct-slots"));
+}
+static PRIMITIVE class_direct_subs(SCM obj)
+{
+  if (NCLASSP(obj)) Err("class-direct-subclasses: bad class", obj);
+  return STk_slot_ref(obj, Intern("direct-subclasses"));
+}
+static PRIMITIVE class_direct_methods(SCM obj)
+{
+  if (NCLASSP(obj)) Err("class-direct-methods: bad class", obj);
+  return STk_slot_ref(obj, Intern("direct-methods"));
 }
 static PRIMITIVE class_cpl(SCM obj)
 {
-  if (NINSTANCEP(obj)) Err("class-precedence-list: bad class", obj);
+  if (NCLASSP(obj)) Err("class-precedence-list: bad class", obj);
   return STk_slot_ref(obj, Intern("cpl"));
 }
 static PRIMITIVE class_slots(SCM obj)
 {
-  if (NINSTANCEP(obj)) Err("class-slots: bad class", obj);
+  if (NCLASSP(obj)) Err("class-slots: bad class", obj);
   return STk_slot_ref(obj, Intern("slots"));
 }
-
-static PRIMITIVE slot_existsp(SCM obj, SCM slot_name)
+static PRIMITIVE class_environment(SCM obj)
 {
-  if (NSYMBOLP(slot_name)) Err("slot-exists?: bad slot name", slot_name);
-  if (NINSTANCEP(obj))     Err("slot-exists?: bad object", obj);
-  return STk_assq(slot_name, ACCESSORS_OF(obj)) == Ntruth ? Ntruth : Truth;
+  if (NCLASSP(obj)) Err("class-environment: bad class", obj);
+  return STk_slot_ref(obj, Intern("environment"));
 }
 
+
+static PRIMITIVE gf_name(SCM obj)
+{
+  if (NGENERICP(obj)) Err("generic-function-name: bad function", obj);
+  return STk_slot_ref(obj, Intern("name"));
+}
+static PRIMITIVE gf_methods(SCM obj)
+{
+  if (NGENERICP(obj)) Err("generic-function-methods: bad function", obj);
+  return STk_slot_ref(obj, Intern("methods"));
+}
+
+
+static PRIMITIVE method_gf(SCM obj)
+{
+  if (NMETHODP(obj)) Err("method-generic-function: bad method", obj);
+  return STk_slot_ref(obj, Intern("generic-function"));
+}
+static PRIMITIVE method_specializers(SCM obj)
+{
+  if (NMETHODP(obj)) Err("method-specializers: bad method", obj);
+  return STk_slot_ref(obj, Intern("specializers"));
+}
+static PRIMITIVE method_procedure(SCM obj)
+{
+  if (NMETHODP(obj)) Err("method-procedure: bad method", obj);
+  return STk_slot_ref(obj, Intern("procedure"));
+}
 
 /******************************************************************************
  *
- * slot-ref, slot-set! and slot-bound?
+ * S l o t   a c c e s s
  *
  ******************************************************************************/
 
-PRIMITIVE STk_slot_ref(SCM obj, SCM slot_name)
+static PRIMITIVE fast_slot_ref(SCM obj, SCM index)
 {
-  register SCM entry;
+  register long i = STk_integer_value(index);
+
+  ENTER_PRIMITIVE("%fast-slot-ref");
+
+  if (NINSTANCEP(obj))    		  Serror("bad object", obj);
+  if (i < 0 || i >= NUMBER_OF_SLOTS(obj)) Serror("bad index", index);
+
+  return THE_SLOT_OF(obj, i);
+}
+
+static PRIMITIVE fast_slot_set(SCM obj, SCM index, SCM value)
+{
+  register long i = STk_integer_value(index);
+
+  ENTER_PRIMITIVE("%fast-slot-set!");
+  if (NINSTANCEP(obj))    		  Serror("bad object", obj);
+  if (i < 0 || i >= NUMBER_OF_SLOTS(obj)) Serror("bad index", index);
+
+  THE_SLOT_OF(obj, i) = value;
+  return UNDEFINED;
+}
+
+/** Utilities **/
+
+static SCM get_slot_value(SCM classe, SCM obj, SCM slot_name)
+{
+  register SCM l;
+
+  for (l=ACCESSORS_OF(obj); NNULLP(l); l=CDR(l)) {
+    if (EQ(CAR(CAR(l)), slot_name)) {
+      l = CDR(CDR(CAR(l)));
+      /* Two cases here:
+       *	- l is an integer (the offset of this slot in the slots vector)
+       *	- otherwise (car l) is the getter function to apply
+       */
+      if (INTEGERP(l))
+	return THE_SLOT_OF(obj, INTEGER(l));
+      else {	/* We must evaluate (apply (car l) (list obj)) 
+		 * where (car l) is known to be a closure of arity 1  */
+	register SCM code, env;
+
+	code = CAR(l);
+	env  = add_frame(CLOSPARAMS(code), LIST1(obj), CLOSENV(code));
+	/* Evaluate the closure body */
+	for(code=CLOSBODY(code); NNULLP(code); code=CDR(code))
+	  l = EVALCAR(code);
+	return l;
+      }
+    }
+  }
+  return CALL_GF3("slot-missing", classe, obj, slot_name);
+}
+
+static SCM set_slot_value(SCM classe, SCM obj, SCM slot_name, SCM value)
+{
+  register SCM l;
+
+  for (l=ACCESSORS_OF(obj); NNULLP(l); l=CDR(l)) {
+    if (EQ(CAR(CAR(l)), slot_name)) {
+      l = CDR(CDR(CAR(l)));
+      /* Two cases here:
+       *	- l is an integer (the offset of this slot in the slots vector)
+       *	- otherwise (cadr l) is the setter function to apply
+       */
+      if (INTEGERP(l))
+	THE_SLOT_OF(obj, INTEGER(l)) = value;
+      else {  /* We must evaluate (apply (cadr l) (list obj value))
+	       * where (cadr l) is known to be a closure of arity 2  */
+	register SCM code, env;
+
+	code = CAR(CDR(l));
+	env  = add_frame(CLOSPARAMS(code), LIST2(obj, value), CLOSENV(code));
+	/* Evaluate the closure body */
+	for(code=CLOSBODY(code); NNULLP(code); code=CDR(code))
+	  EVALCAR(code);
+      }
+      return UNDEFINED;
+    }
+  }
+  return CALL_GF4("slot-missing", classe, obj, slot_name, value);
+}
+
+static void set_slot_value_if_unbound(SCM classe, SCM obj, SCM slot_name, SCM form)
+{
+  SCM old_val = get_slot_value(classe, obj, slot_name);
+  
+  if (old_val == UNBOUND)
+    set_slot_value(classe, obj, slot_name, Apply(form, NIL));
+}
+
+
+static SCM test_slot_existence(SCM classe, SCM obj, SCM slot_name)
+{
+  register SCM l;
+
+  for (l=ACCESSORS_OF(obj); NNULLP(l); l=CDR(l))
+    if (EQ(CAR(CAR(l)), slot_name)) return Truth;
+
+  return Ntruth;
+}
+
+		/* ======================================== */
+
+static PRIMITIVE slot_ref_using_class(SCM classe, SCM obj, SCM slot_name)
+{
   SCM res;
 
-  if (NINSTANCEP(obj)) Err("slot-ref: bad instance", obj);
+  ENTER_PRIMITIVE("slot-ref-using-class");
+
+  if (NCLASSP(classe)) Serror("bad class",  classe);
+  if (NINSTANCEP(obj)) Serror("bad object", obj);
+
+  res = get_slot_value(classe, obj, slot_name);
+  if (res == UNBOUND) 
+    return CALL_GF3("slot-unbound", classe, obj, slot_name);
+  return res;
+}
+ 
+static PRIMITIVE slot_set_using_class(SCM l, int len)
+{
+  ENTER_PRIMITIVE("slot-set-using-class!");
+
+  if (len != 4)  Serror("bad number of parameters", NIL);
+  {
+    SCM classe = CAR(l);
+    SCM obj    = CAR(CDR(l));
+    if (NCLASSP(classe)) Serror("bad class",  classe);
+    if (NINSTANCEP(obj)) Serror("bad object", obj);
+    return set_slot_value(classe, obj, CAR(CDR(CDR(l))), CAR(CDR(CDR(CDR(l)))));
+  }
+}
+
+static PRIMITIVE slot_boundp_using_class(SCM classe, SCM obj, SCM slot_name)
+{
+  ENTER_PRIMITIVE("slot-bound-using-class?");
+
+  if (NCLASSP(classe)) Serror("bad class",  classe);
+  if (NINSTANCEP(obj)) Serror("bad object", obj);
+
+  return (get_slot_value(classe, obj, slot_name) == UNBOUND) ? Ntruth : Truth;
+}
+
+static PRIMITIVE slot_exists_using_class(SCM classe, SCM obj, SCM slot_name)
+{
+  ENTER_PRIMITIVE("slot-exists-using-class?");
   
-  entry = STk_assq(slot_name, ACCESSORS_OF(obj));
-  if (entry == Ntruth) 
-    Err("slot-ref: no slot with name", slot_name);
+  if (NCLASSP(classe))     Serror("bad class",    classe);
+  if (NSYMBOLP(slot_name)) Serror("bad slot name",slot_name);
+  if (NINSTANCEP(obj))     Serror("bad object",   obj);
+  return test_slot_existence(classe, obj, slot_name);
+}
 
-  /* Two cases here:
-   *	- if (cdr entry) is an integer (the offset of this slot in the slots vector
-   *	- otherwise (cadr entry) is the reader function to apply
-   */
-  res = INTEGERP(CDR(entry)) ? THE_SLOT_OF(obj, INTEGER(CDR(entry)))
-    			     : Apply(STk_cadr(entry), LIST1(obj));
-  if (res == UNBOUND) Err("slot-ref: slot unbound", slot_name);
 
+		/* ======================================== */
+
+PRIMITIVE STk_slot_ref(SCM obj, SCM slot_name)
+{
+  SCM res, classe;
+
+  if (NINSTANCEP(obj)) Err("slot-ref: bad object", obj);
+  TEST_CHANGE_CLASS(obj, classe);
+
+  res = get_slot_value(classe, obj, slot_name);
+  if (res == UNBOUND)
+    return CALL_GF3("slot-unbound", classe, obj, slot_name);
   return res;
 }
 
 PRIMITIVE STk_slot_set(SCM obj, SCM slot_name, SCM value)
 {
-  register SCM entry;
+  SCM classe;
 
-  if (NINSTANCEP(obj)) Err("slot-set!: bad instance", obj);
-  
-  entry = STk_assq(slot_name, ACCESSORS_OF(obj));
-  if (entry == Ntruth) 
-    Err("slot-set!: no slot with name", slot_name);
+  if (NINSTANCEP(obj)) Err("slot-set!: bad object", obj);
+  TEST_CHANGE_CLASS(obj, classe);
 
-  /* Two cases here:
-   *	- if (cdr entry) is an integer (the offset of this slot in the slots vector)
-   *	- otherwise (caddr entry) is the writer function to apply
-   */
-  if (INTEGERP(CDR(entry)))
-    THE_SLOT_OF(obj, INTEGER(CDR(entry))) = value;
-  else
-    Apply(STk_caddr(entry), LIST2(obj, value));
-
-  return UNDEFINED;
+  return set_slot_value(classe, obj, slot_name, value);
 }
 
 static PRIMITIVE slot_boundp(SCM obj, SCM slot_name)
 {
-  register SCM entry;
-  SCM res;
+  SCM classe;
 
-  if (NINSTANCEP(obj)) Err("slot-bound?: bad instance", obj);
-  
-  entry = STk_assq(slot_name, ACCESSORS_OF(obj));
-  if (entry == Ntruth) 
-    Err("slot-bound?: no slot with name", slot_name);
+  if (NINSTANCEP(obj)) Err("slot-bound?: bad object", obj);
+  TEST_CHANGE_CLASS(obj, classe);
 
-  res = INTEGERP(CDR(entry)) ? THE_SLOT_OF(obj, INTEGER(CDR(entry)))
-    			     : Apply(STk_cadr(entry), LIST1(obj));
-
-  return (res == UNBOUND) ? Ntruth : Truth;
+  return (get_slot_value(classe, obj, slot_name) == UNBOUND) ? Ntruth : Truth;
 }
 
-static void slot_set_if_unbound(SCM obj, SCM slot_name, SCM value)
+static PRIMITIVE slot_existsp(SCM obj, SCM slot_name)
 {
-  register SCM entry;
+  SCM classe;
 
-  if ((entry = STk_assq(slot_name, ACCESSORS_OF(obj))) == Ntruth) return;
+  ENTER_PRIMITIVE("slot-exists?");
 
-  if (INTEGERP(CDR(entry))) {
-    if (THE_SLOT_OF(obj, INTEGER(CDR(entry))) == UNBOUND)
-      THE_SLOT_OF(obj, INTEGER(CDR(entry))) = value;
-  }
-  else {
-    if (Apply(STk_cadr(entry), LIST1(obj)) == UNBOUND)
-      Apply(STk_caddr(entry), LIST2(obj, value));
-  }
+  if (NSYMBOLP(slot_name)) Serror("bad slot name", slot_name);
+  if (NINSTANCEP(obj))     Serror("bad object",    obj);
+  TEST_CHANGE_CLASS(obj, classe);
+
+  return test_slot_existence(classe, obj, slot_name);
 }
+
 
 /******************************************************************************
  *
  * %allocate-instance (the low level instance allocation primitive)
  *
  ******************************************************************************/
- 
+
 PRIMITIVE STk_allocate_instance(SCM classe)
 {
+  int type;
+
   if (NCLASSP(classe)) Err("%allocate-instance: bad class", classe);
+ 
+  if (EQ(classe, Generic)) type= TYPE_GENERIC;
+  else
+    if (EQ(classe, Accessor)) type = TYPE_ACCESSOR;
+    else
+      if (EQ(classe, Simple_method)) type = TYPE_SIMPLE_METHOD;
+      else type = TYPE_INSTANCE;
   return make_instance(classe, 
 		       STk_integer_value(THE_SLOT_OF(classe, S_nfields)),
-		       EQ(classe, Generic) ? TYPE_GENERIC : TYPE_INSTANCE);
+		       type);
 }
 
 /******************************************************************************
@@ -473,17 +692,18 @@ PRIMITIVE STk_allocate_instance(SCM classe)
  ******************************************************************************/
 static PRIMITIVE modify_instance(SCM old, SCM new)
 {
-  Instance *old_inst;
+  struct obj tmp;
 
   if (NINSTANCEP(old) || NINSTANCEP(new)) 
-	Err("%modify-instance: both parameters must be instances", NIL);
+    Err("%modify-instance: both parameters must be instances", NIL);
 
-  /* Exchange the data contained in old and new */
-  old_inst  = INST(old);
-  INST(old) = INST(new);
-  INST(new) = old_inst;
-    
-  return old;
+  /* Exchange the data contained in old and new. We exchange rather than 
+   * scratch the old value with new to be correct with GC
+   */
+  tmp = *old;
+  *old = *new;
+  *new = tmp;
+  return UNDEFINED;
 }
 
 static PRIMITIVE stklos_version(void)
@@ -493,11 +713,11 @@ static PRIMITIVE stklos_version(void)
 
 /******************************************************************************
  *
- *  GGGGG                FFFFF          
+ *   GGGG                FFFFF          
  *  G                    F    
  *  G  GG                FFF    
  *  G   G                F      
- *  GGGGG E N E R I C    F    U N C T I O N S
+ *   GGG  E N E R I C    F    U N C T I O N S
  *
  * This implementation provides
  *	- generic functions (with class specializers)
@@ -507,58 +727,68 @@ static PRIMITIVE stklos_version(void)
  *
  ******************************************************************************/
 
-SCM STk_make_next_method(SCM methods, SCM args)
+SCM STk_make_next_method(SCM methods, SCM args, SCM gf)
 {
-  register SCM z;
-  
+  register SCM z, l;
+
+  /* if gf is NIL, args already contains the GF in front of args.
+   * This saves the cost of a a cons. This situation is very frequent since
+   * most of the time next-method is called without parameter and we just have 
+   * to propagate the previous args.
+   */
+  l = (NULLP(gf))? args : Cons(gf, args);
+
   NEWCELL(z, tc_next_method);
   CAR(z) = methods;
-  CDR(z) = args;
+  CDR(z) = l;
+ 
   return z;
 }
 
 SCM STk_apply_next_method(SCM next, SCM provided_args)
 {
-  SCM methods = CAR(next);
-  SCM args    = NULLP(provided_args)? CDR(next) : provided_args;
-
-  if (NULLP(methods)) {
-    /* not very useful, but we cannot do bette for now*/
-    STk_err("no next-method  available", next); 
-#ifdef NYI
-    /* Ideal code */
-    SCM gf = ????? /* Hard to find the gf at minimal cost. Need more work */
-    return Apply(VCELL(Intern("no-next-method")), LIST2(gf, args));
-#endif
+  SCM methods = NXT_MTHD_METHODS(next);
+  SCM args, tmp;
+  
+  if (NULLP(provided_args)) {
+    tmp   = NXT_MTHD_ARGS(next);
+    args  = CDR(tmp);
   }
-  {
+  else {
+    tmp  = Cons(CAR(NXT_MTHD_ARGS(next)), provided_args);
+    args = provided_args;
+  }
+  
+  if (NULLP(methods)) {
+    SCM gf = CAR(NXT_MTHD_ARGS(next));
+    
+    return CALL_GF2("no-next-method", gf, args);    
+  }
+  else {
     SCM m        = CAR(methods);
-    SCM new_next = STk_make_next_method(CDR(methods), args);
-
+    SCM new_next = STk_make_next_method(CDR(methods),tmp, NIL);
+    
     /* m is the function to call with args. */
     return Apply(THE_SLOT_OF(m, S_procedure), Cons(new_next, args));
   }
 }
 
-#ifdef NYI
-
-This comment must be updated 
-
 /******************************************************************************
  * 
  * Protocol for calling a generic fumction
+ * This protocol is roughly equivalent to (parameter are a little bit different 
+ * for efficiency reasons):
  *
  * 	+ apply-generic (gf args)
- *		+ compute-applicable-methods (gf args)
- *		+ apply-methods (methods args)
- *			+ apply-method (method args next-methods)
+ *		+ compute-applicable-methods (gf args ...)
+ *			+ sort-applicable-methods (methods args)
+ *		+ apply-methods (gf methods args)
  *				
- * apply-method calls make-next-method to build the "continuation" of a a method
- * Calling a next-method will call apply-next-method which in turn will call 
- * apply-method again to call effectively the following method.
+ * apply-methods calls make-next-method to build the "continuation" of a a 
+ * method.  Applying a next-method will call apply-next-method which in
+ * turn will call  apply again to call effectively the following method.
  *
  ******************************************************************************/
-#endif
 
 static int applicablep(SCM actual, SCM formal)
 {
@@ -687,7 +917,7 @@ SCM STk_compute_applicable_methods(SCM gf, SCM args, int len, int find_method)
     types = p = buffer;
   
   for (  ; NNULLP(args); args = CDR(args)) 
-    *p++ = STk_class_of(CAR(args));
+    *p++ = class_of(CAR(args));
  
   /* Build a list of all applicable methods */
   for (l = THE_SLOT_OF(gf, S_methods); NNULLP(l); l = CDR(l)) {
@@ -704,7 +934,7 @@ SCM STk_compute_applicable_methods(SCM gf, SCM args, int len, int find_method)
 
   if (count == 0) {
     if (find_method) return Ntruth;
-    Apply(VCELL(Intern("no-applicable-method")), LIST2(gf, save));
+    CALL_GF2("no-applicable-method", gf, save);
     /* if we are here, it's because no-applicable-method hasn't signaled an error */
     return NIL;
   }
@@ -712,16 +942,10 @@ SCM STk_compute_applicable_methods(SCM gf, SCM args, int len, int find_method)
     			sort_applicable_methods(applicable, count, types);
 }
 
-
-
-static SCM apply_method(SCM m, SCM args, SCM next_methods)
+static SCM apply_methods(SCM gf, SCM methods, SCM args)
 {
-  return Apply(THE_SLOT_OF(m, S_procedure),
-	       Cons(STk_make_next_method(next_methods, args), args));
-}
-
-SCM STk_apply_methods(SCM methods, SCM args)
-{
+  SCM m, next;
+  
   if (NULLP(methods)) {
     /* 
      * methods can be NIL if we have a no-applicable-method handler which 
@@ -730,64 +954,29 @@ SCM STk_apply_methods(SCM methods, SCM args)
      */
     return UNDEFINED;
   }
+  
+  m    = CAR(methods);
+  next = FASTMETHODP(m) ? UNBOUND : STk_make_next_method(CDR(methods), args, gf);
 
-  return apply_method(CAR(methods), args, CDR(methods));
+  /* Next-method is set to UNBOUND for simple_method and accessors */
+  return Apply(THE_SLOT_OF(m, S_procedure), Cons(next, args));
 }
 
 SCM STk_apply_generic(SCM gf, SCM args)
 {
-  if (NGENERICP(gf)) Err("apply: bad generic function", gf);
-  if (NULLP(THE_SLOT_OF(gf, S_methods))) 
-    Err("apply: no method for generic", gf);
+  if (NGENERICP(gf)) 			 Err("apply: bad generic function", gf);
+  if (NULLP(THE_SLOT_OF(gf, S_methods))) CALL_GF2("no-method", gf, args);
 
-  return STk_apply_methods(
-           STk_compute_applicable_methods(gf, args, STk_llength(args), FALSE),
-	   args);
+  return 
+    apply_methods(gf,
+		  STk_compute_applicable_methods(gf,args,STk_llength(args),FALSE),
+		  args);
 }
-
 
 SCM STk_apply_user_generic(SCM gf, SCM args)
 {
-  if (NGENERICP(gf)) STk_err("apply: bad generic function", gf);
-  return Apply(VCELL(Intern("apply-generic")), LIST2(gf, args));
-}
-
-
-/******************************************************************************
-  *
-  * add-method
-  *
-  *******************************************************************************/
-
-static SCM compute_new_list_of_methods(SCM gf, SCM new)
-{
-  SCM l1, l2, l;
-  SCM new_spec = SPEC_OF(new);
-  SCM methods  = THE_SLOT_OF(gf, S_methods);
-
-  for (l = methods; NNULLP(l); l = CDR(l)) {
-    for (l1=new_spec, l2=SPEC_OF(CAR(l));    ; l1=CDR(l1), l2=CDR(l2)) {
-      if (NULLP(l1) && NULLP(l2)) {
-	/* The spec. list of new method already exists in the gf mehods list */	
-	CAR(l) = new;
-	return methods;
-      }
-      if (NULLP(l1) || NULLP(l2) || NEQ(CAR(l1), CAR(l2))) break;
-    }
-  }
-
-  /* If we are here, we have not encountered a method with same specializers */
-  return Cons(new, methods);
-}
-
-
-static PRIMITIVE add_method(SCM gf, SCM method)
-{
-  if (NGENERICP(gf))    Err("add-method: bad generic function", gf); 
-  if (NMETHODP(method)) Err("add-method: bad method", method);
-  
-  THE_SLOT_OF(gf, S_methods) = compute_new_list_of_methods(gf, method); 
-  return method;
+  if (NGENERICP(gf)) Err("apply: bad generic function", gf);
+  return CALL_GF2("apply-generic", gf, args);
 }
 
 /******************************************************************************
@@ -828,7 +1017,7 @@ static PRIMITIVE lmake(SCM args, int len)
     z = make_instance(classe, 
 		      STk_llength(THE_SLOT_OF(classe, S_slots)), TYPE_INSTANCE);
 
-    if (classe == Method) {
+    if (classe == Method || classe == Simple_method || classe == Accessor) {
       THE_SLOT_OF(z, S_generic_function) =  
 			STk_get_keyword(STk_makekey(k_gf), args, Ntruth);
       THE_SLOT_OF(z, S_specializers) =  
@@ -852,33 +1041,34 @@ static PRIMITIVE lmake(SCM args, int len)
 static PRIMITIVE find_method(SCM l, int len)
 {
   SCM gf;
-  
-  if (len == 0) Err("find-method: no parameter list", NIL);
+
+  ENTER_PRIMITIVE("find-method");
+
+  if (len == 0) Serror("no parameter list", NIL);
 
   gf = CAR(l); l = CDR(l);
-  if (NGENERICP(gf)) Err("find-method: bad generic function", gf);
-  if (NULLP(THE_SLOT_OF(gf, S_methods))) 
-    Err("find-method: no methods for generic", gf);
+  if (NGENERICP(gf)) 			 Serror("bad generic function",   gf);
+  if (NULLP(THE_SLOT_OF(gf, S_methods))) Serror("no methods for generic", gf);
 
   return STk_compute_applicable_methods(gf, l, len-1, TRUE);
 }
 
 static PRIMITIVE user_more_specificp(SCM m1, SCM m2, SCM targs)
 {
-  char *msg1 = "%method-more-specific?: bad method";
-  char *msg2 = "%method-more-specific?: bad argument";
   SCM l, v;
   int i, len;
 
-  if (NMETHODP(m1)) 	      STk_err(msg1, m1);
-  if (NMETHODP(m2)) 	      STk_err(msg1, m2);
-  if ((len=STk_llength(targs)) < 0) STk_err(msg2, targs);
+  ENTER_PRIMITIVE("%method-more-specific?");
+
+  if (NMETHODP(m1)) 	            Serror("bad method",   m1);
+  if (NMETHODP(m2)) 	            Serror("bad method",   m2);
+  if ((len=STk_llength(targs)) < 0) Serror("bad argument", targs);
 
   /* Verify that all the arguments of targs are classes and place them in a vector*/
-  v = STk_makevect(len, NULL);
+  v = STk_makevect(len, NIL);
 
   for (i=0, l=targs; NNULLP(l); i++, l=CDR(l)) {
-    if (NCLASSP(CAR(l))) STk_err(msg2, targs);
+    if (NCLASSP(CAR(l))) Serror("bad argument", targs);
     VECT(v)[i] = CAR(l);
   }
   return more_specificp(m1, m2, VECT(v)) ? Truth: Ntruth;
@@ -892,13 +1082,19 @@ static PRIMITIVE user_more_specificp(SCM m1, SCM m2, SCM targs)
  *
  ******************************************************************************/
 
+static void select_STklos_module(void)
+{
+  STk_selected_module = STklos = STk_make_module(Intern("stklos"));;
+}
+
+
 static void make_stdcls(SCM *var, char *name, SCM meta, SCM super, SCM slots)
 {
    SCM tmp = Intern(name);
    
    *var = STk_basic_make_class(meta, tmp, LIST1(super), slots);
    STk_gc_protect(var);
-   VCELL(tmp) = *var;
+   DEFVAR(tmp, *var);
 }
 
 static void make_standard_classes(void)
@@ -906,21 +1102,23 @@ static void make_standard_classes(void)
   SCM tmp1 = LIST3(Intern("generic-function"), 
 		   Intern("specializers"), 
 		   Intern("procedure"));
-  SCM tmp2 = LIST2(Intern("name"), 
+  SCM tmp2 = LIST2(Intern("name"),
 		   Intern("methods"));
 
   /* Generic functions classes */
   make_stdcls(&Procedure_class, "<procedure-class>", Class, Class, 	     NIL);
   make_stdcls(&Entity_class,    "<entity-class>",    Class, Procedure_class, NIL);
   make_stdcls(&Method,		"<method>",	     Class, Object,	     tmp1);
+  make_stdcls(&Simple_method,	"<simple-method>",   Class, Method,	     NIL);
+  make_stdcls(&Accessor,	"<accessor-method>", Class, Simple_method,   NIL);
   make_stdcls(&Generic,		"<generic>",	     Entity_class, Object,   tmp2);
 
   /* Primitive types classes */
   make_stdcls(&Boolean, 	"<boolean>",	Class, 		 Top, 	    NIL);
   make_stdcls(&Char,		"<char>",	Class, 		 Top,	    NIL);
-  make_stdcls(&List,		"<list>",	Class, 		 Top,	    NIL);
-  make_stdcls(&Pair,		"<pair>",	Class, 		 List,	    NIL);
-  make_stdcls(&Null,		"<null>", 	Class, 		 List,	    NIL);
+  make_stdcls(&Liste,		"<list>",	Class, 		 Top,	    NIL);
+  make_stdcls(&Pair,		"<pair>",	Class, 		 Liste,	    NIL);
+  make_stdcls(&Null,		"<null>", 	Class, 		 Liste,	    NIL);
   make_stdcls(&String,		"<string>",	Class, 		 Top,	    NIL);
   make_stdcls(&Symbol,		"<symbol>",	Class, 		 Top,	    NIL);
   make_stdcls(&Vector,		"<vector>",	Class, 		 Top,	    NIL);
@@ -935,48 +1133,126 @@ static void make_standard_classes(void)
 #endif
 }  
 
+/**
+ *
+ * Definition of Extended type classes
+ *
+ **/
+
+SCM STk_make_extended_class(char *name)
+{
+  /* 
+   * This function is called when a new extended type is defined and returns 
+   * a new class for it. Furthermore, it defines a global variable for this class.
+   * If STklos is not initialized, it returns NIL. 
+   * Extended types defined before initialization of STklos will be done
+   * when STklos is inited by "define_extended_type_classes"
+   */
+  if (initialized) {
+    SCM tmp1, tmp2;
+    char buffer[200];
+
+    sprintf(buffer, "<%s>", name);
+    tmp1 	= Intern(buffer);
+    tmp2 	= STk_basic_make_class(Class, tmp1, LIST1(Top), NIL);
+    DEFVAR(tmp1, tmp2);
+    return tmp2;
+  }
+  return NIL;
+}
+
+static void define_extended_type_classes(void)
+{
+  /* 
+   * This function is called when STklos is initialized. It performs
+   * the definition of classes for extended types defined before STklos
+   * loading
+   */
+  int i;
+
+  initialized = TRUE;
+  for (i = tc_start_extd; ; i++) {
+    char *name = STk_get_extended_name(i);
+    
+    if (!name) return;
+    STk_register_extended_class(STk_make_extended_class(name), i);
+  }
+}
+
+static void add_primitive(char *name, int type, void *fct_ptr)
+{
+  STk_add_new_primitive(name, type, fct_ptr);
+  STk_export_symbol(Intern(name), STklos);
+}
+
+
+/*===========================================================================*/
+
 PRIMITIVE STk_init_STklos(void)
 {
+  SCM curmod = STk_selected_module;
+
   STk_disallow_sigint();
 
-  Top = Object = Class = Generic = Method = NIL;
+  Top = Object = Class = Generic = Method = Simple_method = Accessor = NIL;
+
+  select_STklos_module();
   create_Top_Object_Class();
   make_standard_classes();
 
-  /* Define new primitives */
-  STk_add_new_primitive("stklos-version",	 tc_subr_0, stklos_version);
-  STk_add_new_primitive("instance?", 	         tc_subr_1, instancep);
-  STk_add_new_primitive("slot-ref",		 tc_subr_2, STk_slot_ref);
-  STk_add_new_primitive("slot-set!",	         tc_subr_3, STk_slot_set);
-  STk_add_new_primitive("slot-bound?",	         tc_subr_2, slot_boundp);
+  /* Define new primitives and export them */
+  add_primitive("stklos-version",	    tc_subr_0, stklos_version);
+  add_primitive("instance?", 	            tc_subr_1, instancep);
+  add_primitive("slot-ref-using-class",	    tc_subr_3, slot_ref_using_class);
+  add_primitive("slot-set-using-class!",    tc_lsubr,  slot_set_using_class);
+  add_primitive("slot-bound-using-class?",  tc_subr_3, slot_boundp_using_class);
+  add_primitive("slot-exists-using-class?", tc_subr_3, slot_exists_using_class);
+  add_primitive("slot-ref",		    tc_subr_2, STk_slot_ref);
+  add_primitive("slot-set!",	            tc_subr_3, STk_slot_set);
+  add_primitive("slot-bound?",	            tc_subr_2, slot_boundp);
 
-  STk_add_new_primitive("class-of",		 tc_subr_1, STk_class_of); 
-  STk_add_new_primitive("class-name",	         tc_subr_1, class_name);
-  STk_add_new_primitive("class-direct-supers",   tc_subr_1, class_direct_supers);
-  STk_add_new_primitive("class-direct-slots",    tc_subr_1, class_direct_slots);
-  STk_add_new_primitive("class-precedence-list", tc_subr_1, class_cpl);
-  STk_add_new_primitive("class-slots",	         tc_subr_1, class_slots);
-  STk_add_new_primitive("slot-exists?",	         tc_subr_2, slot_existsp);
+  add_primitive("class-of",		    tc_subr_1, class_of); 
+  add_primitive("class-name",	            tc_subr_1, class_name);
+  add_primitive("class-direct-supers",      tc_subr_1, class_direct_supers);
+  add_primitive("class-direct-subclasses",  tc_subr_1, class_direct_subs);
+  add_primitive("class-direct-methods",	    tc_subr_1, class_direct_methods);
+  add_primitive("class-direct-slots",       tc_subr_1, class_direct_slots);
+  add_primitive("class-precedence-list",    tc_subr_1, class_cpl);
+  add_primitive("class-slots",	            tc_subr_1, class_slots);
+  add_primitive("class-environment",	    tc_subr_1, class_environment);
+  add_primitive("generic-function-name",    tc_subr_1, gf_name);
+  add_primitive("generic-function-methods", tc_subr_1, gf_methods);
+  add_primitive("method-generic-function",  tc_subr_1, method_gf);
+  add_primitive("method-specializers",	    tc_subr_1, method_specializers);
+  add_primitive("method-procedure",	    tc_subr_1, method_procedure);
+  add_primitive("slot-exists?",	            tc_subr_2, slot_existsp);
 
-  STk_add_new_primitive("%allocate-instance",    tc_subr_1, STk_allocate_instance);
-  STk_add_new_primitive("%initialize-object",    tc_subr_2, initialize_object);
-  STk_add_new_primitive("%compute-slots",	 tc_subr_1, compute_slots);
-  STk_add_new_primitive("%compute-initializers", tc_subr_1, build_initializers);
-  STk_add_new_primitive("%modify-instance",	 tc_subr_2, modify_instance);
-  
+  add_primitive("make",	  		    tc_lsubr,  lmake);
+  add_primitive("find-method",		    tc_lsubr,  find_method);
 
-  STk_add_new_primitive("add-method", 		  tc_subr_2, add_method);
-  STk_add_new_primitive("make",	  		  tc_lsubr,  lmake);
-  STk_add_new_primitive("find-method",		  tc_lsubr,  find_method);
+  /* Unexported primitives */
+  STk_add_new_primitive("%allocate-instance",     tc_subr_1, STk_allocate_instance);
+  STk_add_new_primitive("%initialize-object",     tc_subr_2, initialize_object);
+  STk_add_new_primitive("%compute-slots",         tc_subr_1, compute_slots);
+  STk_add_new_primitive("%modify-instance",       tc_subr_2, modify_instance);
   STk_add_new_primitive("%method-more-specific?", tc_subr_3, user_more_specificp);
+  STk_add_new_primitive("%fast-slot-ref",         tc_subr_2, fast_slot_ref);
+  STk_add_new_primitive("%fast-slot-set!",        tc_subr_3, fast_slot_set);
+
+  /* Define classes for already defined extended type */
+  define_extended_type_classes();
 
   STk_allow_sigint();
-  
+
+  /* Reset the default module we have to the one we have when starting inits */
+  STk_selected_module = curmod;
+
   return UNDEFINED;
 }
+
 #else 
   /* Don't produce an empty object file since some compiler (loader?) don't 
-   * manage them corrctly 
+   * manage them correctly 
    */
   static char not_used = '?';
 #endif

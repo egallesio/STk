@@ -6,7 +6,7 @@
  *				   Dummy functions are defined here to make the 
  *				   loader happy
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1997 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -23,7 +23,7 @@
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date:  1-Feb-1995 22:43
- * Last file update: 21-Sep-1996 22:38
+ * Last file update:  4-Aug-1997 16:51
  *
  ******************************************************************************/
 
@@ -47,18 +47,12 @@ char *Tcl_SetVar2(interp, name1, name2, val, flags)
   Error("Tcl_SetVar2");
 }
 
-Tcl_File Tcl_GetFile(ClientData fileData, int type)
-{
-  Error("Tcl_GetFile");
-  return (Tcl_File) TCL_ERROR;
-}
-
-void Tcl_DeleteFileHandler(Tcl_File file)
+void Tcl_DeleteFileHandler(int fd)
 {
   Error("Tcl_DeleteFileHandler");
 }
 
-void Tcl_CreateFileHandler(Tcl_File file, int mask, Tcl_FileProc *proc,
+void Tcl_CreateFileHandler(int fd, int mask, Tcl_FileProc *proc,
 			    ClientData clientData)
 {
   Error("Tcl_CreateFileHandler");

@@ -3,7 +3,7 @@
 %
 %           Author: Erick Gallesio [eg@unice.fr]
 %    Creation date: ??-Nov-1993 ??:??
-% Last file update: 24-Jul-1996 13:38
+% Last file update: 16-Dec-1997 19:09
 %
 
 \section*{Introduction}
@@ -26,7 +26,6 @@ details such as server connections and event queues. This is a real
 problem, since programmers using this kind of languages are generally not
 inclined to system programming, and few of them will bridge the gap between
 the different abstraction levels.
-
 
 ~~~~Tk\index{Tk toolkit}\index{toolkit} is a powerful graphical tool\-kit
 promising to fill that gap. It was developed at the University of Berkeley
@@ -52,17 +51,24 @@ some situations.
 
 \subsection{Comments}
 
-As in the {\rrrr}, a semicolon (;) indicates the start of a comment.
-In {\stk}, comments can also be introduced by \sharpsign$!$.  This
-extension is particularly useful for building {\stk} scripts. On most
-Unix implementations, if the first line of a script looks like this:
-\begin{scheme}
-\sharpsign$!$/usr/local/bin/stk -file
-\end{scheme}
-then the script can be started directly as if it were a binary. {\stk}
-is loaded behind the scenes and reads and executes the script as a
-Scheme program. Of course this assumes that {\stk} is located in {\tt
-  /usr/local/bin}.
+There are three types of comments in {\stk}:
+\begin{enumerate}
+\item a semicolon (;) indicates the start of a comment. 
+This kind of comment extends to the end of the line (as described in \rrrr).
+\item multi-lines comment use the classical lisp conventions: a comment 
+  begins with \verb+#|+ and ends with \verb+|#+.
+\item  comments can also be introduced by \sharpsign$!$.  This
+  extension is particularly useful for building {\stk} scripts. On most
+  Unix implementations, if the first line of a script looks like this:
+  \begin{scheme}
+    \sharpsign$!$/usr/local/bin/stk -file
+  \end{scheme}
+  then the script can be started directly as if it were a binary. {\stk}
+  is loaded behind the scenes and reads and executes the script as a
+  Scheme program. Of course this assumes that {\stk} is located in {\tt
+    /usr/local/bin}.
+\end{enumerate}
+
 
 \subsection{Other notations}
 
@@ -82,7 +88,7 @@ Scheme program. Of course this assumes that {\stk} is located in {\tt
 \item[\tt\sharpsign.<expr>] is read as the evaluation of the Scheme
   expression {\tt <expr>}. The evaluation is done during the
   \ide{read} process, when the \var{\sharpsign.} is encountered.
-  Evalustaion is done in the global-environment.
+  Evaluation is done in the global environment.
   \begin{scheme}
     (define foo 1)
     \sharpsign.foo                                 \lev 1
@@ -359,6 +365,26 @@ keywords into account. On keywords, \ide{eq?} behaves like \ide{eqv?}.
 \proto{assoc}{ obj alist}{procedure}}
 \saut
 \doc
+\end{entry}
+
+\begin{entry}{%
+\proto{remq}{ obj list}{procedure}
+\proto{remv}{ obj list}{procedure}
+\proto{remove}{ obj list}{procedure}}
+\saut
+Each function return a copy of \var{list} where all the occurences of \var{obj}
+have been deleted. The predicate used to test the presence of \var{obj} in 
+\var{list} is respectively \ide{eq}, \ide{eqv} and \ide{equal}. 
+
+\begin{note}
+  It is not an error if \var{obj} does not appear in \var{list}.
+\end{note}
+\begin{scheme}
+(remq 1 '(1 2 3)) \ev (2 3)
+(remq "foo" '("foo" "bar")) \ev ("foo" "bar")
+(remove "foo" '("foo" "bar")) 
+                \ev ("bar")
+\end{scheme}
 \end{entry}
 
 \begin{entry}{%
@@ -777,6 +803,20 @@ Returns the index of where \vari{string} is a substring of
 \begin{scheme}
 (string-index "ca" "abracadabra") \lev 4
 (string-index "ba" "abracadabra") \lev \schfalse
+\end{scheme}
+\end{entry}
+
+\begin{entry}{%
+\proto{split-string}{ string}{procedure}
+\proto{split-string}{ string delimiters}{procedure}}
+\saut
+This function parses \vari{string} and returns a list of tokens ended by 
+a character of the \vari{delimiters} string. If \vari{delimiters} is omitted, 
+it defaults to a string containing a space, a tabulation and a newline 
+characters. 
+\begin{scheme}
+(split-string "/usr/local/bin" "/") \ev ("usr" "local" "bin")
+(split-string "once   upon a time") \ev ("once" "upon" "a" "time")
 \end{scheme}
 \end{entry}
 
@@ -1234,25 +1274,35 @@ undefined. Otherwise, it returns the handler currently associated to
 
 
 \begin{entry}{%
-\proto{load}{ filename}{procedure}}
+\proto{load}{ filename}{procedure}
+\proto{load}{ filename environment}{procedure}}
 \saut
-\doc
 
+The first form is identical to \rrrr{}. The second one loads the
+content of \var{filename} in the given \var{environment}. So, the first
+form  is equivalent to 
+\begin{scheme}
+(load filename (global-environment))
+\end{scheme}
 \begin{note}
   The \var{load} primitive has been extended to allow loading of
-  object files, though this is not implemented on all systems
-  \footnote{Current version (\stkversion) allows image dumping
-            only on some platforms:SunOs~4.1.x, SunOs~5.3, NetBSD~1.0, 
-            HPUX, Irix 5.3}. See~\cite{STkExtension} for more details.
+  object files, though this is not implemented on all systems.
+  This extension uses dynamic loading on systems which support it
+  \footnote{Current version (\stkversion) allows dynamic loading
+            only on some platforms:  SunOs~4.1.x, SunOs~5.x, NetBSD~1.0, 
+            Linux~2.0, HPUX, Irix 5.3}. See~\cite{STkExtension} for more details.
 \end{note}
 \end{entry}
 
 \begin{entry}{%
-\proto{try-load}{ filename}{procedure}}
+\proto{try-load}{ filename}{procedure}
+\proto{try-load}{ filename environment}{procedure}}
 \saut
 Tries to load the file named \var{filename}. If \var{filename} exists and is
 readable, it is loaded, and \ide{try-load} returns {\schtrue}. 
 Otherwise, the result of the call is {\schfalse}.
+The second form of \var{try-load} tries to load the content of \var{filename} 
+in the given \var{environment}. 
 \end{entry}
 
 \begin{entry}{%

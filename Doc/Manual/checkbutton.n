@@ -8,7 +8,7 @@
 '\" @(#) checkbutton.n 1.36 95/08/12 17:35:04
 '\" 
 .so STk-man.macros
-.TH checkbutton n 3.1 STk "Tk Built-In Commands"
+.TH checkbutton n 4.0 STk "Tk Built-In Commands"
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
@@ -29,6 +29,11 @@ Specifies a STk procedure to associate with the button.  This procedure
 is typically invoked when mouse button 1 is released over the button
 window.  The button's global variable (\fB:variable\fR option) will
 be updated before the procedure is invoked.
+.VS
+.OP :environment environment Environment environment
+Specifies the environment in which the \fB:textvariable\fR must be taken. 
+By default, the value of this option is the STk global environment.
+.VE
 .OP :height height Height height
 Specifies a desired height for the button.
 If an image or bitmap is being displayed in the button then the value is in
@@ -49,7 +54,9 @@ Specifies value to store in the button's associated variable whenever
 this button is selected.  Defaults to \fB#t\fR.
 .OP :selectcolor selectColor Background select-color
 Specifies a background color to use when the button is selected.
-If \fBindicatorOn\fR is true then the color applicies to the indicator.
+If \fBindicatorOn\fR is true then the color applies to the indicator.
+Under Windows, this color is used as the background for the indicator
+regardless of the select state.
 If \fBindicatorOn\fR is false, this color is used as the background
 for the entire widget, in place of \fBbackground\fR or \fBactiveBackground\fR,
 whenever the widget is selected.
@@ -133,12 +140,18 @@ checkbutton.
 .PP
 In addition, checkbuttons can be \fIselected\fR.
 If a checkbutton is selected then the indicator is normally
-drawn with a sunken relief and a special color, and
+.VS
+drawn with a selected appearance, and
 a STk variable associated with the checkbutton is set to a particular
-value (normally 1).
+value (normally #t).
+Under Unix, the indicator is drawn with a sunken relief and a special
+color.  Under Windows, the indicator is drawn with a check mark inside.
 If the checkbutton is not selected, then the indicator is drawn with a
-raised relief and no special color, and the associated variable is
-set to a different value (typically 0).
+deselected appearance, and the associated variable is
+set to a different value (typically #f).
+Under Unix, the indicator is drawn with a raised relief and no special
+color.  Under Windows, the indicator is drawn without a check mark inside.
+.VE
 By default, the name of the variable associated with a checkbutton is the
 same as the \fIname\fR used to create the checkbutton.
 The variable name, and the ``on'' and ``off'' values stored in it,
@@ -215,16 +228,25 @@ modifying its associated variable to reflect the new state.
 .PP
 Tk automatically creates class bindings for checkbuttons that give them
 the following default behavior:
+.VS
 .IP [1]
-A checkbutton activates whenever the mouse passes over it and deactivates
-whenever the mouse leaves the checkbutton.
+On Unix systems, a checkbutton activates whenever the mouse passes
+over it and deactivates whenever the mouse leaves the checkbutton.  On
+Windows systems, when mouse button 1 is pressed over a
+checkbutton, the button activates whenever the mouse pointer is inside
+the button, and deactivates whenever the mouse pointer leaves the
+button.
+.VE
 .IP [2]
-When mouse button 1 is pressed over a checkbutton it is invoked (its
+When mouse button 1 is pressed over a checkbutton, it is invoked (its
 selection state toggles and the procedure associated with the button is
 invoked, if there is one).
+.VS
 .IP [3]
 When a checkbutton has the input focus, the space key causes the checkbutton
-to be invoked.
+to be invoked.  Under Windows, there are additional key bindings; plus
+(+) and equal (=) select the button, and minus (-) deselects the button.
+.VE
 .PP
 If the checkbutton's state is \fBdisabled\fR then none of the above
 actions occur:  the checkbutton is completely non-responsive.

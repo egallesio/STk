@@ -1,7 +1,7 @@
 ;;;;
 ;;;; T k - m e t a . s t k 		--  Metaclasses definitions
 ;;;;
-;;;; Copyright (C) 1993,1994,1995 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -11,13 +11,11 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
+;;;; $Id: Tk-meta.stklos 1.8 Fri, 10 Apr 1998 09:13:18 +0200 eg $
+;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 24-Feb-1994 15:08
-;;;; Last file update: 23-Aug-1995 11:59
-;;;;
-;;;;
-;;;; The <With-Tk-virtual-slots-metaclass> original idea and implementation 
-;;;; are due to Robert DeLine <deline@amarillo.pa.dec.com>.
+;;;; Last file update:  6-Apr-1998 10:03
 ;;;;
 ;;;;
 ;;;; Compatibility:
@@ -35,6 +33,26 @@
 
 (require "stklos")
 
+;;;;
+;;;; Stuff for declaring the new module STklos+Tk and import it in STk
+;;;; Note that the module Tk, is also defined here. This is useless, except 
+;;;; when making  images (i.e. probably the -no-window option has been used,
+;;;; avoiding the Tk initialization, and hence the Tk module definition)
+
+(define-module Tk)				; See comment above
+(define-module STklos+Tk  (import STklos Tk))	; Define module STklos+Tk
+(with-module STk	  (import STklos+Tk))	; Import STklos+Tk in STk
+(select-module STklos+Tk)			; Rest of this file belongs 
+						; to STklos+Tk module
+
+;;;;
+;;;; Metaclases exported by this file 
+;;;;
+(export 
+    <With-Tk-virtual-slots-metaclass> <Tk-metaclass> <Tk-item-metaclass>
+    <Tk-tag-metaclass> <Tk-text-window-metaclass> <Tk-composite-metaclass>
+    <Tk-composite-item-metaclass>)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;
 ;;;; <With-Tk-virtual-slots-metaclass> class
@@ -49,57 +67,30 @@
 ;; or
 ;;     (xxxx 'configure 'text value)	for writing
 ;; where xxxx is an internal name generated during instance creation).
-(define-class <With-Tk-virtual-slots-metaclass> (<class>)
-  (tk-valid-options))
+;;
+;; Furthermore, Tk widgets define a lot of accessors and exporting
+;; them individually can be boring. Consequently, when such a class is
+;; initiaized, we export it and all its direct accessor methods
 
+
+(define-class <With-Tk-virtual-slots-metaclass> (<class>)
+  ())
 
 (define-method initialize ((class <With-Tk-virtual-slots-metaclass>) initargs)
   (next-method)
-  ;; Build a A-list of allowed keywords. The A-list key is a scheme init
-  ;; keyword and the data is the tk option name for this keyword.
-  ;; Those keywords will be passed to the Tk-command at build time
-  (let ((slots   (slot-ref class 'slots))
-	(res     '())
-	(tk-virtual? (lambda(s) 
-		       (memv (get-slot-allocation s) '(:tk-virtual :pseudo)))))
-
-    (for-each (lambda (s)
-		(when (tk-virtual? s) 
-		      (let* ((key     (make-keyword (car s)))
-			     (tk-name (get-keyword :tk-name (cdr s) (car s))))
-			(set! res (cons (vector key (make-keyword tk-name) (car s))
-					res)))))
-	      slots)
-    
-    ;; Store all this list in the new allocated class
-    (slot-set! class 'tk-valid-options res)))
-
-
-(define-method make-instance ((class <With-Tk-virtual-slots-metaclass>) initargs)
-  (letrec ((instance   (allocate-instance class initargs))
-	   (valids     (slot-ref class 'tk-valid-options))
-	   (find       (lambda (key l)
-			 (cond
-			  ((null? l) #f)
-			  ((eq? key (vector-ref (car l) 0)) (car l))
-			  (else     (find key (cdr l))))))
-	   (tk-options ())
-	   (other-args ()))
-
-    ;; Filter initargs to pass only valid options to TK
-    (do ((args initargs (cddr args)))
-	((null? args))
-      (let ((opt (find (car args) valids)))
-	(if opt
-	    (set! tk-options (list* (vector-ref opt 1)(cadr args) tk-options))
-	    (set! other-args (list* (car args) (cadr args) other-args)))))
-
-    ;; Now initialize the instance with the two lists of args.
-    (initialize instance (append other-args (list :tk-options tk-options)))
-    instance))
+  (let ((module (%get-module (class-environment class))))
+    ;; export the class
+    (export-symbol (class-name class) module)
+    ;; export its accessors
+    (for-each (lambda (method)
+		(if (is-a? method <accessor-method>)
+		    (export-symbol (generic-function-name
+				    (method-generic-function method))
+				   module)))
+	      (class-direct-methods class))))
 
 (define-method compute-get-n-set ((class <With-Tk-virtual-slots-metaclass>) slot)
-  (if (memv (get-slot-allocation slot) '(:tk-virtual :pseudo))
+  (if (memv (slot-definition-allocation slot) '(:tk-virtual :pseudo))
       [let ((tk-name (make-keyword (get-keyword :tk-name (cdr slot) (car slot)))))
 	(compute-tk-virtual-get-n-set class tk-name)]
       [next-method]))
@@ -154,24 +145,26 @@
      ((slot-ref o 'Id) 'tag 'configure (slot-ref o 'Tid) tk-name v))))
 
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;
-;;;; <Tk-text-window-metaclass> metaclass
+;;;; <Tk-text-inset-metaclass> metaclass
 ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-class <Tk-text-window-metaclass> (<With-Tk-virtual-slots-metaclass>)
+(define-class <Tk-text-inset-metaclass> (<With-Tk-virtual-slots-metaclass>)
   ())
 
-(define-method compute-tk-virtual-get-n-set ((class <Tk-text-window-metaclass>) 
+(define-method compute-tk-virtual-get-n-set ((class <Tk-text-inset-metaclass>) 
 					     tk-name)
   (list
    (lambda (o)
-     ((slot-ref o 'Id) 'window 'cget (slot-ref o 'index) tk-name))
+     (if (slot-bound? o 'Iid)
+	 ((slot-ref o 'Id) (slot-ref o 'kind) 'cget (slot-ref o 'Iid) tk-name)
+	 (make-unbound)))
    (lambda (o v)
-     ((slot-ref o 'Id) 'window 'configure (slot-ref o 'index) tk-name v))))
-
+     (if (slot-bound? o 'Iid)
+	 ((slot-ref o 'Id) (slot-ref o 'kind) 'configure (slot-ref o 'Iid) 
+			   tk-name v)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;
@@ -190,7 +183,6 @@
 
 (define-class <Tk-composite-item-metaclass> (<Tk-item-metaclass> 
 					     <Composite-metaclass>)
-  ()
-)
+  ())
 
 (provide "Tk-meta")

@@ -1,7 +1,7 @@
 ;;;;
 ;;;; S c r o l l b o x . s t k 	  --  Scroll Listbox composite widget
 ;;;;
-;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -11,50 +11,53 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
+;;;; $Id: Scrollbox.stklos 1.4 Wed, 04 Feb 1998 11:34:59 +0100 eg $
+;;;;
 ;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;    Creation date: 22-Mar-1994 13:05
-;;;; Last file update: 13-Aug-1996 23:23
+;;;; Last file update:  4-Feb-1998 10:58
 
-(require "Frame")
-(require "Listbox")
-(require "Scrollbar")
+(require "Basics")
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(select-module STklos+Tk)
+
+;=============================================================================
+;
+; 		     < S c r o l l - l i s t b o x >
+;
+;=============================================================================
+
 ;;;;
-;;;; <Scroll-listbox> class definition
+;;;; Resources
 ;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;;;;
+;;;; Class definition
+;;;;
 
 (define-class <Scroll-listbox> (<Tk-composite-widget> <Listbox>)
-  ((listbox 	  :accessor     listbox-of)
+  ((class 	  :init-keyword :class
+		  :init-form	"ScrollListbox")
+   (listbox 	  :accessor     listbox-of)
    (h-scrollbar	  :accessor     h-scrollbar-of)
    (v-scrollbar	  :accessor     v-scrollbar-of)
    (h-scroll-side :accessor     h-scroll-side
 		  :allocation   :virtual
 		  :init-keyword :h-scroll-side
-		  :slot-ref     (lambda (o)
-				  (let ((hs (slot-ref o 'h-scrollbar)))
-				    (and (winfo 'ismapped hs)
-					 (get-keyword :side (pack 'info hs)))))
+		  :slot-ref     (lambda (o) 
+				  (STk:h-scroll-side (slot-ref o 'h-scrollbar)))
 		  :slot-set!    (lambda (o v)
-				  (let ((hs (slot-ref o 'h-scrollbar)))
-				    (if v
-					(pack hs :fill "x" :side v 
-					         :before (slot-ref o 'listbox))
-					(pack 'forget hs)))))
+				  (STk:h-scroll-side-set! 
+				      (slot-ref o 'h-scrollbar) v)))
    (v-scroll-side :accessor     v-scroll-side
 		  :allocation   :virtual
 		  :init-keyword :v-scroll-side
 		  :slot-ref     (lambda (o)
-				  (let ((vs (slot-ref o 'v-scrollbar)))
-				    (and (winfo 'ismapped vs)
-					 (get-keyword :side (pack 'info vs)))))
+				  (STk:v-scroll-side (slot-ref o 'v-scrollbar)))
 		  :slot-set!    (lambda (o v)
-				  (let ((vs (slot-ref o 'v-scrollbar)))
-				    (if v 
-					(pack vs :fill "y" :side v 
-					         :before (slot-ref o 'listbox))
-					(pack 'forget vs)))))
+				  (STk:v-scroll-side-set! 
+				      (slot-ref o 'v-scrollbar) v)))
    ;; Non allocated slots
    (background   :accessor     background
 		 :init-keyword :background
@@ -84,10 +87,12 @@
     (slot-set! self 'h-scrollbar  hs)
     (slot-set! self 'v-scrollbar  vs)
 
-    ;; Pack internal widgets (Warning: Order is important !!!!)
-    (pack vs :fill "y" :side "right")
-    (pack l  :expand #t :fill "both" :side 'bottom :after vs)
-
+    ;; Place internal widgets
+    (grid hs :row 0 :column 1 :sticky "we")     (grid 'remove hs)
+    (grid l  :row 1 :column 1 :sticky "nswe")
+    (grid vs :row 1 :column 2 :sticky "ns")
+    (grid 'rowconf    parent 1 :weight 1)
+    (grid 'columnconf parent 1 :weight 1)
     ;; Attach command to scrollbar and listbox
     (slot-set! l 'x-scroll-command (lambda l (apply (slot-ref hs 'Id) 'set l)))
     (slot-set! l 'y-scroll-command (lambda l (apply (slot-ref vs 'Id) 'set l)))
@@ -97,3 +102,15 @@
 ))
 
 (provide "Scrollbox")
+
+#|
+   Example:
+
+	(define l1 (make <Scroll-listbox> :h-scroll-side "bottom" 
+			 :relief "ridge" :border-width 2
+		         :value '(1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17)))
+	(define l2 (make <Scroll-listbox> :v-scroll-side #f :h-scroll-side "top"
+			 :relief "ridge" :border-width 2
+                         :value '("A long long phrase which can be scrolled ...")))
+	(pack l1 l2 :side 'left :expand #t :fill 'both)
+|#

@@ -10,7 +10,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkEvent.c 1.16 96/03/29 17:56:54
+ * SCCS: @(#) tkEvent.c 1.20 96/09/20 09:33:38
  */
 
 #include "tkPort.h"
@@ -88,7 +88,7 @@ typedef struct TkWindowEvent {
  * Array of event masks corresponding to each X event:
  */
 
-static unsigned long eventMasks[] = {
+static unsigned long eventMasks[TK_LASTEVENT] = {
     0,
     0,
     KeyPressMask,			/* KeyPress */
@@ -127,6 +127,7 @@ static unsigned long eventMasks[] = {
     ColormapChangeMask,			/* ColormapNotify */
     0,					/* ClientMessage */
     0,					/* Mapping Notify */
+    VirtualEventMask,			/* VirtualEvents */
     ActivateMask,			/* ActivateNotify */
     ActivateMask			/* DeactivateNotify */
 };
@@ -505,6 +506,20 @@ Tk_HandleEvent(eventPtr)
 	return;
     }
 
+    /*
+     * Once a window has started getting deleted, don't process any more
+     * events for it except for the DestroyNotify event.  This check is
+     * needed because a DestroyNotify handler could re-invoke the event
+     * loop, causing other pending events to be handled for the window
+     * (the window doesn't get totally expunged from our tables until
+     * after the DestroyNotify event has been completely handled).
+     */
+
+    if ((winPtr->flags & TK_ALREADY_DEAD)
+	    && (eventPtr->type != DestroyNotify)) {
+	return;
+    }
+
     if (winPtr->mainPtr != NULL) {
 
         /*
@@ -531,34 +546,16 @@ Tk_HandleEvent(eventPtr)
     
 	/*
 	 * Redirect KeyPress and KeyRelease events to the focus window,
-	 * or ignore them entirely if there is no focus window.  Map the
-	 * x and y coordinates to make sense in the context of the focus
-	 * window, if possible (make both -1 if the map-from and map-to
-	 * windows don't share the same screen).
+	 * or ignore them entirely if there is no focus window.
 	 */
     
 	if (mask & (KeyPressMask|KeyReleaseMask)) {
-	    TkWindow *focusPtr;
-	    int winX, winY, focusX, focusY;
-    
 	    winPtr->dispPtr->lastEventTime = eventPtr->xkey.time;
-	    focusPtr = TkGetFocus(winPtr);
-	    if (focusPtr == NULL) {
+	    winPtr = TkFocusKeyEvent(winPtr, eventPtr);
+	    if (winPtr == NULL) {
                 Tcl_Release((ClientData) interp);
 		return;
 	    }
-	    if ((focusPtr->display != winPtr->display)
-		    || (focusPtr->screenNum != winPtr->screenNum)) {
-		eventPtr->xkey.x = -1;
-		eventPtr->xkey.y = -1;
-	    } else {
-		Tk_GetRootCoords((Tk_Window) winPtr, &winX, &winY);
-		Tk_GetRootCoords((Tk_Window) focusPtr, &focusX, &focusY);
-		eventPtr->xkey.x -= focusX - winX;
-		eventPtr->xkey.y -= focusY - winY;
-	    }
-	    eventPtr->xkey.window = focusPtr->window;
-	    winPtr = focusPtr;
 	}
     
 	/*
@@ -911,20 +908,19 @@ Tk_QueueWindowEvent(eventPtr, position)
  */
 
 void
-TkQueueEventForAllChildren(tkwin, eventPtr)
-    Tk_Window tkwin;	    /* Window to which event is sent. */
+TkQueueEventForAllChildren(winPtr, eventPtr)
+    TkWindow *winPtr;	    /* Window to which event is sent. */
     XEvent *eventPtr;	    /* The event to be sent. */
 {
-    TkWindow *winPtr, *childPtr;
+    TkWindow *childPtr;
 
-    winPtr = (TkWindow *) tkwin;
     eventPtr->xany.window = winPtr->window;
     Tk_QueueWindowEvent(eventPtr, TCL_QUEUE_TAIL);
     
     childPtr = winPtr->childList;
     while (childPtr != NULL) {
 	if (!Tk_IsTopLevel(childPtr)) {
-	    TkQueueEventForAllChildren((Tk_Window) childPtr, eventPtr);
+	    TkQueueEventForAllChildren(childPtr, eventPtr);
 	}
 	childPtr = childPtr->nextPtr;
     }

@@ -1,7 +1,7 @@
 ;;;;
 ;;;; Listboxes bindings and procs
 ;;;;
-;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1997 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -17,10 +17,11 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 17-May-1993 12:35
-;;;; Last file update:  2-Sep-1996 10:48
+;;;; Last file update: 27-Aug-1997 19:07
 ;;;;
 
-(let ()
+(select-module Tk)
+
 ;;
 ;; Global variables used in this file
 ;; 
@@ -112,9 +113,9 @@
   (|W| 'selection 'set 'end))
 
 (define-binding "Listbox" "<Shift-Control-End>" (|W|)
-  (Tk:listbox-data-extend |W| 'end))
+  (Tk:listbox-data-extend |W| (|W| 'index 'end)))
 
-(define-binding "Listbox" "<F16>" (|W|)
+(define-binding "Listbox" "<<Copy>>" (|W|)
   (when (equal? (selection 'own :displayof |W|) |W|)
     (clipboard 'clear :displayof |W|)
     (clipboard 'append :displayof |W| (selection 'get :displayof |W|))))
@@ -224,9 +225,11 @@
 ;;		one under the pointer).  Must be in numerical form.
 
 (define (Tk:listbox-begin-extend w el)
-  (when (and (equal? (tk-get w :selectmode) "extended")
-	     (w 'selection 'includes 'anchor))
-	(Tk:listbox-motion w el)))
+  (when (equal? (tk-get w :selectmode) "extended")
+    (if (w 'selection 'includes 'anchor)
+	(Tk:listbox-motion w el)
+	;; No selection yet; simulate the begin-select operation
+	Tk:listbox-begin-select w el)))
 
 
 ;; Tk:listbox-begin-toggle --
@@ -372,5 +375,3 @@
 	  (w 'selection 'clear 0 'end)
 	  (w 'selection 'set 'active))
 	(w 'selection 'set 0 'end))))
-
-)

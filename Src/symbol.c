@@ -2,7 +2,7 @@
  *
  * s y m b o l . c			-- Symbols management
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1997 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -19,7 +19,7 @@
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 20-Nov-1993 12:12
- * Last file update:  3-Jun-1996 21:35
+ * Last file update: 20-Aug-1997 15:52
  */
 
 #include "stk.h"
@@ -85,6 +85,18 @@ SCM STk_global_env2list(void)
   return res;
 }
 
+SCM STk_global_symbols(void)
+{
+  register SCM symbol, res = NIL;
+  Tcl_HashEntry *ent;
+  Tcl_HashSearch tmp;
+
+  for (ent=Tcl_FirstHashEntry(&obarray, &tmp); ent;  ent=Tcl_NextHashEntry(&tmp)) {
+    symbol = (SCM)Tcl_GetHashValue(ent);
+    if (VCELL(symbol) != UNBOUND) res = Cons(symbol, res);
+  }
+  return res;
+}
 
 PRIMITIVE STk_symbolp(SCM x)
 {

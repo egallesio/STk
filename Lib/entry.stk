@@ -1,7 +1,7 @@
 ;;;;
 ;;;; Entries bindings and procs
 ;;;;
-;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1997 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -17,16 +17,16 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 17-May-1993 12:35
-;;;; Last file update:  2-Jul-1996 13:00
+;;;; Last file update: 27-Aug-1997 15:23
 ;;;;
+
+(select-module Tk)
 
 ;; ----------------------------------------------------------------------
 ;; Class bindings for entry widgets.
 ;; ----------------------------------------------------------------------
-
-
-;;-------------------------------------------------------------------------
-;; Elements of tkPriv that are used in this file:
+;;
+;; Elements used in this file:
 ;;
 ;; after-id -		If non-null, it means that auto-scanning is underway
 ;;			and it gives the "after" id for the next auto-scan
@@ -40,7 +40,7 @@
 ;; x, y -		Last known mouse coordinates for scanning
 ;;			and auto-scanning.
 ;;-------------------------------------------------------------------------
-(let()
+
 
 ;;
 ;; Utilities
@@ -75,35 +75,7 @@
 	 ((sep (string-ref str i)) 	(if (= index i) i (+ i 1)))
 	 (ELSE 				(loop (- i 1)))))))
 
-;; Tk:entry-clipboard-keysyms
-;; This procedure is invoked to identify the keys that correspond to
-;; the "copy", "cut", and "paste" functions for the clipboard.
-;;
-;; Arguments:
-;; copy -	Name of the key (keysym name plus modifiers, if any,
-;;		such as "Meta-y") used for the copy operation.
-;; cut -		Name of the key used for the cut operation.
-;; paste -	Name of the key used for the paste operation.
-
-(define (Tk:entry-clipboard-keysyms copy cut paste)
-  (define-binding "Entry" copy (|W|)
-    (when (equal? [selection 'own :displayof |W|] (widget->string |W|))
-       (clipboard 'clear :displayof |W|)
-       (catch 
-	  (clipboard 'append :displayof |W| (selection 'get :displayof |W|)))))
-
-  (define-binding "Entry" cut (|W|)
-    (when (equal? [selection 'own :displayof |W|] (widget->string |W|))
-       (clipboard 'clear :displayof |W|)
-       (catch
-	  (clipboard 'append :displayof |W| (selection 'get :displayof |W|))
-	  (|W| 'delete 'sel.first 'sel.last))))
-
-  (define-binding "Entry" paste (|W|)
-    (catch
-       (|W| 'insert 'insert (selection 'get :displayof |W| 
-				            :selection "CLIPBOARD"))))
-)
+;=============================================================================
 
 ;; Tk:entry-button-1 --
 ;; This procedure is invoked to handle button-1 presses in "Entry"
@@ -328,19 +300,40 @@
   (if (string=? (tk-get w :state) "normal")
       (focus w)))
 
-;;-------------------------------------------------------------------------
-;; The code below creates the default class bindings for entries.
-;;-------------------------------------------------------------------------
-
-;; Standard Motif bindings:
-
-
 
 ;;-------------------------------------------------------------------------
 ;; The code below creates the default class bindings for entries.
 ;;-------------------------------------------------------------------------
 
-;; Standard Motif bindings:
+(define-binding "Entry" "<<Cut>>" (|W|)
+  (clipboard 'clear :displayof |W|)
+  (catch 
+     (clipboard 'append :displayof |W| 
+		(substring (|W| 'get)
+			   (|W| 'index 'sel.first)
+			   (|W| 'index 'sel.last)))
+     (|W| 'delete 'sel.first 'sel.last)))
+
+(define-binding "Entry" "<<Copy>>" (|W|)
+  (clipboard 'clear :displayof |W|)
+  (catch 
+     (clipboard 'append :displayof |W| 
+		(substring (|W| 'get)
+			   (|W| 'index 'sel.first)
+			   (|W| 'index 'sel.last)))))
+
+
+(define-binding "Entry" "<<Paste>>" (|W|)
+  (catch
+     (when (eqv? (os-kind) 'Unix)
+        (catch (|W| 'delete 'sel.first 'sel.last)))
+     (|W| 'insert 'insert (selection 'get :displayof |W| 
+				     	  :selection "CLIPBOARD"))
+     (Tk:entry-see-insert |W|)))
+  
+(define-binding "Entry" "<<Clear>>" (|W|)
+  (|W| 'delete 'sel.first 'sel.last))
+
 
 (define-binding "Entry" "<1>" (|W| x)
   (Tk:entry-button-1 |W| x)
@@ -459,8 +452,6 @@
 (define-binding "Entry" "<Control-backslash>" (|W|)
   (|W| 'selection 'clear))
 
-(Tk:entry-clipboard-keysyms "<F16>" "<F20>" "<F18>")
-
 (define-binding "Entry" "<KeyPress>" (|W| |A|)
   (Tk:entry-Insert |W| |A|))
 
@@ -524,8 +515,9 @@
   (|W| 'delete (Tk:beginning-of-word (|W| 'get) (- (|W| 'index 'insert) 1))
        'insert))
 
-(Tk:entry-clipboard-keysyms "<Meta-w>" "<Control-w>" "<Control-y>")
-
+(define-binding "Entry" "<Meta-Delete>" (|W|)
+  (|W| 'delete (Tk:beginning-of-word (|W| 'get) (- (|W| 'index 'insert) 1))
+       'insert))
 
 ;; A few additional bindings of my own.
 
@@ -542,4 +534,3 @@
 (define-binding "Entry" "<ButtonRelease-2>" (|W| x)
   (when (or *tk-strict-Motif* (not tk::mouse-moved))
     (Tk:entry-paste |W| x)))
-)

@@ -1,7 +1,7 @@
 ;;;;
 ;;;; T e x t . s t k      --  Text class definition
 ;;;;
-;;;; Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -11,13 +11,30 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
+;;;; $Id: Text.stklos 1.4 Tue, 24 Feb 1998 12:23:02 +0100 eg $
+;;;;
 ;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;    Creation date: 22-Aug-1993 10:55
-;;;; Last file update: 13-Sep-1996 22:10
+;;;; Last file update: 24-Feb-1998 12:15
 
+(require "hash")
 (require "Basics")
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(select-module STklos+Tk)
+
+(export ;; Text methods
+ 	bounding-box compare-index text-delete text-line-info text-get 
+	text-index text-insert text-search text-see text-tags text-marks
+	text-x-view text-y-view get-line text-save text-read 
+	;; Text tag methods
+	Tid->instance tag-add bind tag-lower tag-raise tag-next-range
+	tag-ranges tag-remove
+	;; Text mark class and methods
+	<Text-mark> mark-set mark-unset
+	;; Text window methods
+	embedded-text-windows)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;
 ;;;; <Text> class definition
 ;;;;
@@ -76,7 +93,7 @@
 				     ((slot-ref o 'Id) 'delete "1.0" "end")
 				     ((slot-ref o 'Id) 'insert "1.0" v)))
    ;; The hash-table of associated tags
-   (tags	     :initform	   (make-hash-table))))
+   (tags	     :init-form	   (make-hash-table))))
 
 (define-method tk-constructor ((self <Text>))
   Tk:text)
@@ -302,8 +319,7 @@
       (slot-set! self 'Tid    Tid)
 
       ;; Create the tag (configuring it suffice to create it)
-      (apply (slot-ref parent 'Id) 'tag 'configure Tid 
-	     			   (get-keyword :tk-options initargs '()))
+      ((slot-ref parent 'Id) 'tag 'configure Tid)
 
       ;; Add this tag to the hash-table
       (hash-table-put! (slot-ref parent 'tags) Tid self)
@@ -401,7 +417,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-class <Text-mark> (<Tk-object>)
-  ((Mid     :getter  Mid)
+  ((Mid     :getter       Mid)
    (gravity :accessor 	  gravity
 	    :init-keyword :gravity
 	    :allocation   :virtual
@@ -435,7 +451,6 @@
 
       ;; Add this mark to the hash-table
       (hash-table-put! (slot-ref parent 'tags) Mid self)
-     
       ;; Create the mark 
       (parent-Id 'mark 'set Mid index)))
   (next-method))
@@ -462,18 +477,17 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;
-;;;; <Text-window> class definition
+;;;; <Tk-Text-inset> class definition
 ;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-class <Text-window> (<Tk-object>)
-  ((index	:accessor	index)
-    (align	:init-keyword 	:align
+(define-class <Tk-Text-inset> (<Tk-object>)
+  ((Iid		:accessor	Iid)
+   (kind	:allocation 	:class	  ;; can be window or image depending of 
+		:init-form	'window)  ;; the inset
+   (align	:init-keyword 	:align
 		:accessor     	align
 		:allocation   	:tk-virtual)
-   (create	:init-keyword	:create
-		:accessor	create
-		:allocation	:tk-virtual)
    (pad-x	:init-keyword	:pad-x
 		:accessor	pad-x
 		:tk-name	padx
@@ -481,48 +495,96 @@
    (pad-y	:init-keyword	:pad-y
 		:accessor	pad-y
 		:tk-name	pady
+		:allocation	:tk-virtual))
+  :metaclass <Tk-text-inset-metaclass>)
+
+(define-method initialize ((self <Tk-text-inset>) initargs)
+  (let ((parent (get-keyword :parent initargs #f))
+	(index  (get-keyword :index  initargs #f)))
+
+    (let ((parent-Id (slot-ref parent 'Id)))
+      (slot-set! self 'Id     parent-Id)
+      (slot-set! self 'Eid    parent-Id)
+      (slot-set! self 'parent parent)
+      
+      (next-method))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Text-window> class definition
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class <Text-window> (<Tk-Text-inset>)
+  ((create	:init-keyword	:create
+		:accessor	create
 		:allocation	:tk-virtual)
    (stretch	:init-keyword	:stretch
 		:accessor	stretch
 		:allocation	:tk-virtual)
    (window	:init-keyword	:window
 		:accessor	window
-		:allocation	:tk-virtual))
-   :metaclass <Tk-text-window-metaclass>)
+		:allocation	:virtual
+		:slot-ref	(lambda(o)
+				  (slot-ref o 'Iid))
+		:slot-set!      (lambda (o v)
+				  (let ((Iid (slot-ref o 'IId))
+					(txt (slot-ref o 'Id)))
+				    (txt 'window 'configure Iid :window v)
+				    (slot-set! o 'IId v))))))
 
 (define-method initialize ((self <Text-window>) initargs)
   (let ((parent (get-keyword :parent initargs #f))
-	(window (get-keyword :window (get-keyword :tk-options initargs '()) #f))
+	(window (get-keyword :window initargs #f))
 	(index  (get-keyword :index  initargs #f)))
-
-    ;; Verify that parent exists and that it is a <Text>
-    (unless  (or parent window)
-       (error "**** You must specify the text which contain this window"))
-    (if window
-	(unless (is-a? (slot-ref window 'parent) <Text>)
-	   (error "**** Parent of widget '~S' is not a text" window))
-	(unless (is-a? parent <Text>)
-	   (error "**** Specified text ~A is not valid" parent)))
+    (unless window
+      (error "**** A window must be supplied when the inset is created"))
+    (unless parent
+      (set! parent (parent window)))
+    (unless (is-a? parent <Text>)
+      (error "**** Specified text ~A is not valid" parent))
     (unless index
-       (error "**** No index specified for this window"))
+      (error "**** No index specified for this inset"))
 
-    (let* ((parent    (if window (slot-ref window 'parent) parent))
-	   (parent-Id (slot-ref parent 'Id)))
-      (slot-set! self 'Id     parent-Id)
-      (slot-set! self 'Eid    parent-Id)
-      (slot-set! self 'parent parent)
-      (slot-set! self 'index  index)
+    ((Id parent) 'window 'create index :window window) ; create inset
+    (slot-set! self 'IId window)		       ; key to access the inset
+    (next-method)))
 
-      ;; Create the tag (configuring it suffice to create it)
-      (apply parent-Id 'window 'create index 
-	               (get-keyword :tk-options initargs '()))
-
-      ;; Add the window to the hash-table
-      (hash-table-put! (slot-ref parent 'tags) (gensym) self)
-      (next-method))))
 
 (define-method embedded-text-windows ((self <Text>))
   ((slot-ref self 'Id) 'window 'names))
 
-(require "STF")
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; <Text-image> class definition
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define-class <Text-Image> (<Tk-Text-inset>)
+  ((kind	:allocation 	:class
+		:init-form	'image)
+   (image	:init-keyword	:image
+		:accessor	image-of
+		:allocation	:tk-virtual)))
+
+(define-method initialize ((self <Text-Image>) initargs)
+  (let ((parent (get-keyword :parent initargs #f))
+	(image  (get-keyword :image  initargs #f))
+	(index  (get-keyword :index  initargs #f)))
+    (unless window
+      (error "**** A window must be supplied when the inset is created"))
+    (unless (is-a? parent <Text>)
+      (error "**** Specified text ~A is not valid" parent))
+    (unless index
+      (error "**** No index specified for this inset"))
+
+    (let ((IId (gensym "inset_img")))
+      (DEBUG "IMAGE = ~S" image)
+      ((Id parent) 'image 'create index :image image :name IId) ; create inset
+      (slot-set! self 'IId IId))
+    (next-method)))
+  
+;=============================================================================
+
+(load "STF")
 (provide "Text")

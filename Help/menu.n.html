@@ -1,4 +1,5 @@
 <HTML><HEAD><TITLE>Tk Built-In Commands - menu manual page</TITLE></HEAD>
+<BR>
 <BODY bgcolor = #c3c3ff>
 <H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageBlue.gif"> menu</H2>
 <I>Create and manipulate menu widgets</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
@@ -20,9 +21,11 @@
 <DT><I>Class</I>:           <B>Command</B>
 <DT><I>Option keyword</I>:  <B><A NAME="M16">:postcommand</A></B>
 <DT><I>STklos slot name</I>: <B>post-command</B>
-<DD>If this option is specified then it provides a STk procedure to execute
-each time the menu is posted.  The procedure is invoked by the <B>post</B>
-widget procedure before posting the menu.
+<DD>If this option is specified then it provides a STk procedure to
+execute each time the menu is posted.  The procedure is invoked by the
+<B>post</B> widget procedure before posting the menu. Note that
+Windows, all commands in a menu systems are executed before any are
+posted. This is due to the limitations in the platform menu manager.
 <P>
 <P>
 <DT><I>Name</I>:            <B>selectColor</B>
@@ -56,20 +59,29 @@ be called with two parameters:  the name of the menu window and
 the name of the name of the torn off menu window.
 <P>
 <P>
-<DT><I>Name</I>:            <B>transient</B>
-<DT><I>Class</I>:           <B>Transient</B>
-<DT><I>Option keyword</I>:  <B><A NAME="M20">:transient</A></B>
-<DT><I>STklos slot name</I>: <B>transcient</B>
-<DD>This option must have a boolean value.  True means that the menu
-is used on a transient basis, e.g. as a pop-up, pull-down, or
-cascaded menu.  False means that the menu will be displayed
-on the screen continuously, for example as a torn-off menu.
-If the option is true, no window manager border
-will be displayed around the menu and redisplay will be optimized
-using X's ``save under'' facility.
+<DT><I>Name</I>:            <B>title</B>
+<DT><I>Class</I>:           <B>Title</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M20">:title</A></B>
+<DT><I>STklos slot name</I>: <B>title</B>
+<DD>The string will be used to title the window created when this menu is
+torn off. If the title is the empty string, then the window will have
+the title of the menubutton or the text of the cascade item from which
+this menu was invoked.
+<P>
+<P>
+<DT><I>Name</I>:            <B>type</B>
+<DT><I>Class</I>:           <B>Type</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M21">:type</A></B>
+<DT><I>STklos slot name</I>: <B>type</B>
+<DD>This option can be one of <B>menubar</B>, <B>tearoff</B>, or
+<B>normal</B>, and is set when the menu is created. While the string
+returned by the configuration database will change if this option is
+changed, this does not affect the menu widget's behavior. This is used
+by the cloning mechanism and is not normally set outside of the Tk
+library.
 <P>
 </DL>
-<H3><A NAME="M21">INTRODUCTION</A></H3>
+<H3><A NAME="M22">INTRODUCTION</A></H3>
 The <B>menu</B> procedure creates a new top-level window (given
 by the <I>widget-name</I> argument) and makes it into a menu widget.
 Additional
@@ -82,7 +94,7 @@ there must not exist a window named <I>widget-name</I>, but
 <I>widget-name</I>'s parent must exist.
 <P>
 A menu is a widget that displays a collection of one-line entries arranged
-in a column.  There exist several different types of entries,
+in one or more columns.  There exist several different types of entries,
 each with different properties.  Entries of different types may be
 combined in a single menu.  Menu entries are not the same as
 entry widgets.  In fact, menu entries are not even distinct widgets;
@@ -115,19 +127,24 @@ The default menu bindings will not allow
 a disabled entry to be activated or invoked.
 Disabled entries may be re-enabled, at which point it becomes
 possible to activate and invoke them again.
+<P>
+Whenever a menu's active entry is changed, a <B>&lt;&lt;MenuSelect&gt;&gt;</B> virtual
+event is send to the menu. The active item can then be queried from
+the menu, and an action can be taken, such as setting
+context-sensitive help text for the entry.
 
-<H3><A NAME="M22">PROCEDURE ENTRIES</A></H3>
+<H3><A NAME="M23">PROCEDURE ENTRIES</A></H3>
 The most common kind of menu entry is a procedure entry, which
 behaves much like a button widget.  When a procedure entry is
 invoked, a STk procedure is executed.  The STk
 procedure is specified with the <B>:command</B> option.
 
-<H3><A NAME="M23">SEPARATOR ENTRIES</A></H3>
+<H3><A NAME="M24">SEPARATOR ENTRIES</A></H3>
 A separator is an entry that is displayed as a horizontal dividing
 line.  A separator may not be activated or invoked, and it has
 no behavior other than its display appearance.
 
-<H3><A NAME="M24">CHECKBUTTON ENTRIES</A></H3>
+<H3><A NAME="M25">CHECKBUTTON ENTRIES</A></H3>
 A checkbutton menu entry behaves much like a checkbutton widget.
 When it is invoked it toggles back and forth between the selected
 and deselected states.  When the entry is selected, a particular
@@ -144,7 +161,7 @@ entry, then its value is evaluated as a STk procedure each time the entry
 is invoked;  this happens after toggling the entry's
 selected state.
 
-<H3><A NAME="M25">RADIOBUTTON ENTRIES</A></H3>
+<H3><A NAME="M26">RADIOBUTTON ENTRIES</A></H3>
 A radiobutton menu entry behaves much like a radiobutton widget.
 Radiobutton entries are organized in groups of which only one
 entry may be selected at a time.  Whenever a particular entry
@@ -167,12 +184,12 @@ the menu.  If a <B>:command</B> option is specified for a radiobutton
 entry, then its value is evaluated as a STk procedure each time the entry
 is invoked;  this happens after selecting the entry.
 
-<H3><A NAME="M26">CASCADE ENTRIES</A></H3>
+<H3><A NAME="M27">CASCADE ENTRIES</A></H3>
 A cascade entry is one with an associated menu (determined
 by the <B>:menu</B> option).  Cascade entries allow the construction
 of cascading menus.
 The <B>postcascade</B> widget procedure can be used to post and unpost
-the associated menu just to the right of the cascade entry.
+the associated menu just next to of the cascade entry.
 The associated menu must be a child of the menu containing
 the cascade entry (this is needed in order for menu traversal to
 work correctly).
@@ -183,16 +200,18 @@ STk procedure of the form
 where <I>menu</I> is the path name of the associated menu, and <I>x</I>
 and <I>y</I> are the root-window coordinates of the upper-right
 corner of the cascade entry.
-The lower-level menu is unposted by executing a STk procedure with
+On Unix, the lower-level menu is unposted by executing a STk procedure with
 the form
 <PRE>(<I>menu</I><B> 'unpost</B>)</PRE>
 where <I>menu</I> is the name of the associated menu.
+On other platforms, the platform's native code takes care of unposting the
+menu.
 <P>
 If a <B>:command</B> option is specified for a cascade entry then it is
-evaluated as a STk procedure
-whenever the entry is invoked.
+evaluated as a STk procedure whenever the entry is invoked. This is not
+supported on Windows.
 
-<H3><A NAME="M27">TEAR-OFF ENTRIES</A></H3>
+<H3><A NAME="M28">TEAR-OFF ENTRIES</A></H3>
 A tear-off entry appears at the top of the menu if enabled with the
 <B>tearOff</B> option.  It is not like other menu entries in that
 it cannot be created with the <B>add</B> widget procedure and
@@ -202,7 +221,44 @@ the top of the menu.  Under the default bindings, invoking the
 tear-off entry causes a torn-off copy to be made of the menu and
 all of its submenus.
 
-<H3><A NAME="M28">WIDGET PROCEDURE</A></H3>
+<H3><A NAME="M29">MENUBARS</A></H3>
+Any menu can be set as a menubar for a toplevel window (see
+<B><A HREF="./toplevel.n.html">toplevel</A></B> command for syntax). This
+menu's items will be displayed in a menubar accross the top of the
+window. These menus will behave according to the interface guidelines
+of their platforms. For every menu set as a menubar, a clone menu is
+made. See the <B>CLONES</B> section for more information.
+
+<H3><A NAME="M30">SPECIAL MENUS IN MENUBARS</A></H3>
+Certain menus in a menubar will be treated specially.  On Windows,
+access to the Windows System menu in each window is provided. On X Windows,
+a special right-justified help menu is provided. In all cases, these
+menus must be created with the command name of the menubar menu concatenated
+with the special name. So for a menubar named .menubar, on Windows,
+the special menu would be .menubar.system; on X Windows, the help
+menu would be .menubar.help.
+<P>
+When Tk sees a System menu on Windows, its items are appended to the 
+system menu that the menubar is attached to. This menu has an icon
+representing a spacebar, and can be invoked with the mouse or by typing
+Alt+Spacebar.  Due to limitations in the Windows API, any font changes,
+colors, images, bitmaps, or tearoff images will not appear in the
+system menu.
+<P>
+When Tk see a Help menu on X Windows, the menu is moved to be last in
+the menubar and is right justified.
+
+<H3><A NAME="M31">CLONES</A></H3>
+When a menu is set as a menubar for a toplevel window, or when a menu
+is torn off, a clone of the menu is made. This clone is a menu widget
+in its own right, but it is a child of the original. Changes in the
+configuration of the original are reflected in the
+clone. Additionally, any cascades that are pointed to are also cloned
+so that menu traversal will work right. Clones are destroyed when
+either the tearoff or menubar goes away, or when the original menu is
+destroyed. 
+
+<H3><A NAME="M32">WIDGET PROCEDURE</A></H3>
 The <B>menu</B> procedure creates a new STk procedure whose
 name is <I>widget-name</I>.  This
 procedure may be used to invoke various
@@ -217,38 +273,38 @@ indicators are called <I>index</I>es and may be specified in
 any of the following forms:
 <P>
 <DL>
-<DT><A NAME="M29"><I>number</I></A><DD>
+<DT><A NAME="M33"><I>number</I></A><DD>
 Specifies the entry numerically, where 0 corresponds
 to the top-most entry of the menu, 1 to the entry below it, and
 so on.
 <P>
-<DT><A NAME="M30"><B>active</B></A><DD>
+<DT><A NAME="M34"><B>active</B></A><DD>
 Indicates the entry that is currently active.  If no entry is
 active then this form is equivalent to <B>none</B>.  This form may
 not be abbreviated.
 <P>
-<DT><A NAME="M31"><B>end</B></A><DD>
+<DT><A NAME="M35"><B>end</B></A><DD>
 Indicates the bottommost entry in the menu.  If there are no
 entries in the menu then this form is equivalent to <B>none</B>.
 This form may not be abbreviated.
 <P>
-<DT><A NAME="M32"><B>last</B></A><DD>
+<DT><A NAME="M36"><B>last</B></A><DD>
 Same as <B>end</B>.
 <P>
-<DT><A NAME="M33"><B>none</B></A><DD>
+<DT><A NAME="M37"><B>none</B></A><DD>
 Indicates ``no entry at all'';  this is used most commonly with
 the <B>activate</B> option to deactivate all the entries in the
 menu.  In most cases the specification of <B>none</B> causes
 nothing to happen in the widget procedure.
 This form may not be abbreviated.
 <P>
-<DT><A NAME="M34"><B>@</B><I>number</I></A><DD>
+<DT><A NAME="M38"><B>@</B><I>number</I></A><DD>
 In this form, <I>number</I> is treated as a y-coordinate in the
 menu's window;  the entry closest to that y-coordinate is used.
 For example, ``<B>@0</B>'' indicates the top-most entry in the
 window.
 <P>
-<DT><A NAME="M35"><I>pattern</I></A><DD>
+<DT><A NAME="M39"><I>pattern</I></A><DD>
 If the index doesn't satisfy one of the above forms then this
 form is used.  <I>Pattern</I> is pattern-matched against the label of
 each entry in the menu, in order from the top down, until a
@@ -260,7 +316,7 @@ are used.
 The following widget procedures are possible for menu widgets:
 <P>
 <DL>
-<DT><A NAME="M36">(<I>widget-name '</I><B>activate </B><I>index</I>)</A><DD>
+<DT><A NAME="M40">(<I>widget-name '</I><B>activate </B><I>index</I>)</A><DD>
 Change the state of the entry indicated by <I>index</I> to <B>active</B>
 and redisplay it using its active colors.
 Any previously-active entry is deactivated.  If <I>index</I>
@@ -268,7 +324,7 @@ is specified as <B>none</B>, or if the specified entry is
 disabled, then the menu ends up with no active entry.
 Returns an empty string.
 <P>
-<DT><A NAME="M37">(<I>widget-name </I><B>add </B><I>type </I>?<I>option value option value ...</I>?)</A><DD>
+<DT><A NAME="M41">(<I>widget-name </I><B>add </B><I>type </I>?<I>option value option value ...</I>?)</A><DD>
 Add a new entry to the bottom of the menu.  The new entry's type
 is given by <I>type</I> and must be one of <B>cascade</B>,
 <B>checkbutton</B>, <B>command</B>, <B>radiobutton</B>, or <B>separator</B>,
@@ -277,7 +333,7 @@ are present, they specify any of the following options:
 <P>
 <P>
 <DL>
-<DT><A NAME="M38"><B>:activebackground </B><I>value</I></A><DD>
+<DT><A NAME="M42"><B>:activebackground </B><I>value</I></A><DD>
 Specifies a background color to use for displaying this entry when it
 is active.
 If this option is specified as an empty string (the default), then the
@@ -287,27 +343,27 @@ Motif compliance, then this option is ignored and the <B>:background</B>
 option is used in its place.
 This option is not available for separator or tear-off entries.
 <P>
-<DT><A NAME="M39"><B>:activeforeground </B><I>value</I></A><DD>
+<DT><A NAME="M43"><B>:activeforeground </B><I>value</I></A><DD>
 Specifies a foreground color to use for displaying this entry when it
 is active.
 If this option is specified as an empty string (the default), then the
 <B>activeForeground</B> option for the overall menu is used.
 This option is not available for separator or tear-off entries.
 <P>
-<DT><A NAME="M40"><B>:accelerator </B><I>value</I></A><DD>
+<DT><A NAME="M44"><B>:accelerator </B><I>value</I></A><DD>
 Specifies a string to display at the right side of the menu entry.
 Normally describes an accelerator keystroke sequence that may be
 typed to invoke the same function as the menu entry.  This option
 is not available for separator or tear-off entries.
 <P>
-<DT><A NAME="M41"><B>:background </B><I>value</I></A><DD>
+<DT><A NAME="M45"><B>:background </B><I>value</I></A><DD>
 Specifies a background color to use for displaying this entry when it
 is in the normal state (neither active nor disabled).
 If this option is specified as an empty string (the default), then the
 <B>background</B> option for the overall menu is used.
 This option is not available for separator or tear-off entries.
 <P>
-<DT><A NAME="M42"><B>:bitmap </B><I>value</I></A><DD>
+<DT><A NAME="M46"><B>:bitmap </B><I>value</I></A><DD>
 Specifies a bitmap to display in the menu instead of a textual
 label, in any of the forms accepted by <B>Tk_GetBitmap</B>.
 This option overrides the <B>:label</B> option but may be reset
@@ -316,74 +372,92 @@ If a <B>:image</B> option has been specified, it overrides
 <B>:bitmap</B>.
 This option is not available for separator or tear-off entries.
 <P>
-<DT><A NAME="M43"><B>:command </B><I>value</I></A><DD>
+<DT><A NAME="M47"><B>:columnbreak </B><I>value</I></A><DD>
+When this option is #f, the menu appears below the previous entry. When
+this option is #f, the menu appears at the top of a new column in the
+menu.
+<P>
+<DT><A NAME="M48"><B>:command </B><I>value</I></A><DD>
 Specifies a STk procedure to execute when the menu entry is invoked.
 Not available for separator or tear-off entries.
 <P>
-<DT><A NAME="M44"><B>:font </B><I>value</I></A><DD>
+<DT><A NAME="M49"><B>:environment </B><I>value</I></A><DD>
+Available only for checkbutton and radiobutton entries.
+Specifies the environment in which the checkbutton or radiobutton 
+<B>:variable</B> must be taken. 
+By convention, the value <B>#f</B> denotes the
+STk global environment (the default value of this option is false).
+<P>
+<DT><A NAME="M50"><B>:font </B><I>value</I></A><DD>
 Specifies the font to use when drawing the label or accelerator
 string in this entry.
 If this option is specified as an empty string (the default) then
-the <B>font</B> option for the overall menu is used.
+the <B><A HREF="./font.n.html">font</A></B> option for the overall menu is used.
 This option is not available for separator or tear-off entries.
 <P>
-<DT><A NAME="M45"><B>:foreground </B><I>value</I></A><DD>
+<DT><A NAME="M51"><B>:foreground </B><I>value</I></A><DD>
 Specifies a foreground color to use for displaying this entry when it
 is in the normal state (neither active nor disabled).
 If this option is specified as an empty string (the default), then the
 <B>foreground</B> option for the overall menu is used.
 This option is not available for separator or tear-off entries.
 <P>
-<DT><A NAME="M46"><B>:image </B><I>value</I></A><DD>
+<DT><A NAME="M52"><B>:hidemargin </B><I>value</I></A><DD>
+Specifies whether the standard margins should be drawn for this menu
+entry. This is useful when creating palette with images in them, i.e.,
+color palettes, pattern palettes, etc. #t indicates that the margin for
+the entry is hidden; #f means that the margin is used.
+<P>
+<DT><A NAME="M53"><B>:image </B><I>value</I></A><DD>
 Specifies an image to display in the menu instead of a text string
 or bitmap
 The image must have been created by some previous invocation of
-<B><A HREF=.././image.n.html>image create</A></B>.
+<B><A HREF=../Help/./image.n.html>image create</A></B>.
 This option overrides the <B>:label</B> and <B>:bitmap</B> options
 but may be reset to an empty string to enable a textual or
 bitmap label to be displayed.
 This option is not available for separator or tear-off entries.
 <P>
-<DT><A NAME="M47"><B>:indicatoron </B><I>value</I></A><DD>
+<DT><A NAME="M54"><B>:indicatoron </B><I>value</I></A><DD>
 Available only for checkbutton and radiobutton entries.
 <I>Value</I> is a boolean that determines whether or not the
 indicator should be displayed.
 <P>
-<DT><A NAME="M48"><B>:label </B><I>value</I></A><DD>
+<DT><A NAME="M55"><B>:label </B><I>value</I></A><DD>
 Specifies a string to display as an identifying label in the menu
 entry.  Not available for separator or tear-off entries.
 <P>
-<DT><A NAME="M49"><B>:menu </B><I>value</I></A><DD>
+<DT><A NAME="M56"><B>:menu </B><I>value</I></A><DD>
 Available only for cascade entries.  Specifies the path name of
 the submenu associated with this entry.
 The submenu must be a child of the menu.
 <P>
-<DT><A NAME="M50"><B>:offvalue </B><I>value</I></A><DD>
+<DT><A NAME="M57"><B>:offvalue </B><I>value</I></A><DD>
 Available only for checkbutton entries.  Specifies the value to
 store in the entry's associated variable when the entry is
 deselected.
 <P>
-<DT><A NAME="M51"><B>:onvalue </B><I>value</I></A><DD>
+<DT><A NAME="M58"><B>:onvalue </B><I>value</I></A><DD>
 Available only for checkbutton entries.  Specifies the value to
 store in the entry's associated variable when the entry is selected.
 <P>
-<DT><A NAME="M52"><B>:selectcolor </B><I>value</I></A><DD>
+<DT><A NAME="M59"><B>:selectcolor </B><I>value</I></A><DD>
 Available only for checkbutton and radiobutton entries.
 Specifies the color to display in the indicator when the entry is
 selected.
 If the value is an empty string (the default) then the <B>selectColor</B>
 option for the menu determines the indicator color.
 <P>
-<DT><A NAME="M53"><B>:selectimage </B><I>value</I></A><DD>
+<DT><A NAME="M60"><B>:selectimage </B><I>value</I></A><DD>
 Available only for checkbutton and radiobutton entries.
 Specifies an image to display in the entry (in place of
 the <B>:image</B> option) when it is selected.
 <I>Value</I> is the name of an image, which must have been created
-by some previous invocation of <B><A HREF=.././image.n.html>image create</A></B>.
+by some previous invocation of <B><A HREF=../Help/./image.n.html>image create</A></B>.
 This option is ignored unless the <B>:image</B> option has
 been specified.
 <P>
-<DT><A NAME="M54"><B>:state </B><I>value</I></A><DD>
+<DT><A NAME="M61"><B>:state </B><I>value</I></A><DD>
 Specifies one of three states for the entry:  <B>normal</B>, <B>active</B>,
 or <B>disabled</B>.  In normal state the entry is displayed using the
 <B>foreground</B> option for the menu and the <B>background</B>
@@ -399,7 +473,7 @@ In this state the entry is displayed according to the
 <B>background</B> option from the entry.
 This option is not available for separator entries.
 <P>
-<DT><A NAME="M55"><B>:underline </B><I>value</I></A><DD>
+<DT><A NAME="M62"><B>:underline </B><I>value</I></A><DD>
 Specifies the integer index of a character to underline in the entry.
 This option is also queried by the default bindings and used to
 implement keyboard traversal.
@@ -408,11 +482,13 @@ implement keyboard traversal.
 If a bitmap or image is displayed in the entry then this option is ignored.
 This option is not available for separator or tear-off entries.
 <P>
-<DT><A NAME="M56"><B>:value </B><I>value</I></A><DD>
+<DT><A NAME="M63"><B>:value </B><I>value</I></A><DD>
 Available only for radiobutton entries.  Specifies the value to
 store in the entry's associated variable when the entry is selected.
+If an empty string is specified, then the <B>-label</B> option
+for the entry as the value to store in the variable.
 <P>
-<DT><A NAME="M57"><B>:variable </B><I>value</I></A><DD>
+<DT><A NAME="M64"><B>:variable </B><I>value</I></A><DD>
 Available only for checkbutton and radiobutton entries.  Specifies
 the name of a global value to set when the entry is selected.
 For checkbutton entries the variable is also set when the entry
@@ -424,13 +500,21 @@ causes the currently-selected entry to deselect itself.
 <P>
 The <B>add</B> widget procedure returns an empty list.
 </UL>
-<DT><A NAME="M58">(<I>widget-name '</I><B>cget</B> <I>option</I>)</A><DD>
+<DT><A NAME="M65">(<I>widget-name '</I><B>cget</B> <I>option</I>)</A><DD>
 Returns the current value of the configuration option given
 by <I>option</I>.
 <I>Option</I> may have any of the values accepted by the <B>menu</B>
 procedure.
 <P>
-<DT><A NAME="M59">(<I>widget-name '</I><B>configure</B> ?<I>option</I>? ?<I>value option value ...</I>?)</A><DD>
+<DT><A NAME="M66">(<I>widget-name '</I><B>clone</B> <I>new-widget-name ?cloneType?</I>)</A><DD>
+Makes a clone of the current menu named <I>new-widget-name</I>. This clone
+is a menu in its own right, but any changes to the clone are
+propogated to the original menu and vice versa. <I>cloneType</I> can be
+<B>normal</B>, <B>menubar</B>, or <B>tearoff</B>. Should not normally be
+called outside of the Tk library. See the <B>CLONES</B> section for
+more information.
+<P>
+<DT><A NAME="M67">(<I>widget-name '</I><B>configure</B> ?<I>option</I>? ?<I>value option value ...</I>?)</A><DD>
 Query or modify the configuration options of the widget.
 If no <I>option</I> is specified, returns a list describing all of
 the available options for <I>widget-name</I> (see <B>Tk_ConfigureInfo</B> for
@@ -444,21 +528,21 @@ this case the procedure returns an empty string.
 <I>Option</I> may have any of the values accepted by the <B>menu</B>
 procedure.
 <P>
-<DT><A NAME="M60">(<I>widget-name '</I><B>delete </B><I>index1</I>)</A><DD>
-<DT><A NAME="M61">(<I>widget-name '</I><B>delete </B><I>index1</I> <I>index2</I>)</A><DD>
+<DT><A NAME="M68">(<I>widget-name '</I><B>delete </B><I>index1</I>)</A><DD>
+<DT><A NAME="M69">(<I>widget-name '</I><B>delete </B><I>index1</I> <I>index2</I>)</A><DD>
 Delete all of the menu entries between <I>index1</I> and
 <I>index2</I> inclusive.
 If <I>index2</I> is omitted then it defaults to <I>index1</I>.
 Attempts to delete a tear-off menu entry are ignored (instead, you
 should change the <B>tearOff</B> option to remove the tear-off entry).
 <P>
-<DT><A NAME="M62">(<I>widget-name '</I><B>entrycget</B> <I>index option</I>)</A><DD>
+<DT><A NAME="M70">(<I>widget-name '</I><B>entrycget</B> <I>index option</I>)</A><DD>
 Returns the current value of a configuration option for
 the entry given by <I>index</I>.
 <I>Option</I> may have any of the values accepted by the <B>add</B>
 widget procedure.
 <P>
-<DT><A NAME="M63">(<I>widget-name '</I><B>entryconfigure </B><I>index </I>?<I>options</I>?)</A><DD>
+<DT><A NAME="M71">(<I>widget-name '</I><B>entryconfigure </B><I>index </I>?<I>options</I>?)</A><DD>
 This procedure is similar to the <B>configure</B> procedure, except that
 it applies to the options for an individual entry, whereas <B>configure</B>
 applies to the options for the menu as a whole.
@@ -470,11 +554,11 @@ If no <I>options</I> are specified, returns a list describing
 the current options for entry <I>index</I> (see <B>Tk_ConfigureInfo</B> for
 information on the format of this list).
 <P>
-<DT><A NAME="M64">(<I>widget-name '</I><B>index </B><I>index</I>)</A><DD>
+<DT><A NAME="M72">(<I>widget-name '</I><B>index </B><I>index</I>)</A><DD>
 Returns the numerical index corresponding to <I>index</I>, or
 <B>&quot;none&quot;</B> if <I>index</I> was specified as <B>none</B>.
 <P>
-<DT><A NAME="M65">(<I>widget-name </I><B>insert </B><I>index</I> <I>type </I>?<I>option value option value ...</I>?)</A><DD>
+<DT><A NAME="M73">(<I>widget-name </I><B>insert </B><I>index</I> <I>type </I>?<I>option value option value ...</I>?)</A><DD>
 Same as the <B>add</B> widget procedure except that it inserts the new
 entry just before the entry given by <I>index</I>, instead of appending
 to the end of the menu.  The <I>type</I>, <I>option</I>, and <I>value</I>
@@ -482,7 +566,7 @@ arguments have the same interpretation as for the <B>add</B> widget
 procedure.  It is not possible to insert new menu entries before the
 tear-off entry, if the menu has one.
 <P>
-<DT><A NAME="M66">(<I>widget-name '</I><B>invoke </B><I>index</I>)</A><DD>
+<DT><A NAME="M74">(<I>widget-name '</I><B>invoke </B><I>index</I>)</A><DD>
 Invoke the action of the menu entry.  See the sections on the
 individual entries above for details on what happens.  If the
 menu entry is disabled then nothing happens.  If the
@@ -493,7 +577,7 @@ a menu entry does not automatically unpost the menu;  the default
 bindings normally take care of this before invoking the <B>invoke</B>
 widget procedure.
 <P>
-<DT><A NAME="M67">(<I>widget-name '</I><B>post </B><I>x y</I>)</A><DD>
+<DT><A NAME="M75">(<I>widget-name '</I><B>post </B><I>x y</I>)</A><DD>
 Arrange for the menu to be displayed on the screen at the root-window
 coordinates given by <I>x</I> and <I>y</I>.  These coordinates are
 adjusted if necessary to guarantee that the entire menu is visible on
@@ -503,7 +587,7 @@ before posting the menu.
 If an error returns while executing the procedure, then the error is
 returned without posting the menu.
 <P>
-<DT><A NAME="M68">(<I>widget-name '</I><B>postcascade </B><I>index</I>)</A><DD>
+<DT><A NAME="M76">(<I>widget-name '</I><B>postcascade </B><I>index</I>)</A><DD>
 Posts the submenu associated with the cascade entry given by
 <I>index</I>, and unposts any previously posted submenu.
 If <I>index</I> doesn't correspond to a cascade entry,
@@ -511,31 +595,39 @@ or if <I>widget-name</I> isn't posted,
 the procedure has no effect except to unpost any currently posted
 submenu.
 <P>
-<DT><A NAME="M69">(<I>widget-name '</I><B>type </B><I>index</I>)</A><DD>
+<DT><A NAME="M77">(<I>widget-name '</I><B>type </B><I>index</I>)</A><DD>
 Returns the type of the menu entry given by <I>index</I>.
 This is the <I>type</I> argument passed to the <B>add</B> widget
 procedure when the entry was created, such as <B>&quot;command&quot;</B>
 or <B>&quot;separator&quot;</B>, or <B>&quot;tearoff&quot;</B> for a tear-off entry.
 <P>
-<DT><A NAME="M70">(<I>widget-name '</I><B>unpost</B>)</A><DD>
+<DT><A NAME="M78">(<I>widget-name '</I><B>unpost</B>)</A><DD>
 Unmap the window so that it is no longer displayed.  If a
 lower-level cascaded menu is posted, unpost that menu.  Returns an
-empty string.
+empty list. This subcommand does not work on Windows, as these platform has its
+ own way of unposting menus.
 <P>
-<DT><A NAME="M71">(<I>widget-name '</I><B>yposition </B><I>index</I>)</A><DD>
+<DT><A NAME="M79">(<I>widget-name '</I><B>yposition </B><I>index</I>)</A><DD>
 Returns a decimal string giving the y-coordinate within the menu
 window of the topmost pixel in the entry specified by <I>index</I>.
 
 <P>
 </DL>
-<H3><A NAME="M72">MENU CONFIGURATIONS</A></H3>
+<H3><A NAME="M80">MENU CONFIGURATIONS</A></H3>
 The default bindings support four different ways of using menus:
+<B>Pulldown Menus in Menubar</B>
+This is the most command case. You create a menu widget that will become the
+menu bar. You then add cascade entries to this menu, specifying the
+pull down menus you wish to use in your menu bar. You then create all
+of the pulldowns. Once you have done this, specify the menu using the
+<B>:menu</B> option of the toplevel's widget command. See the
+<B><A HREF="./toplevel.n.html">toplevel</A></B> manual entry for details.
 <P>
 <DL>
-<DT><A NAME="M73"><B>Pulldown Menus</B></A><DD>
-This is the most common case.  You create one menubutton widget for
-each top-level menu, and typically you arrange a series of menubuttons
-in a row in a menubar window.  You also create the top-level menus
+<DT><A NAME="M81"><B>Pulldown Menus in Menu Buttons</B></A><DD>
+This is the compatable way to do menu bars.  You create one menubutton
+widget for each top-level menu, and typically you arrange a series of
+menubuttons in a row in a menubar window.  You also create the top-level menus
 and any cascaded submenus, and tie them together with <B>:menu</B>
 options in menubuttons and cascade menu entries.  The top-level menu must
 be a child of the menubutton, and each submenu must be a child of the
@@ -543,14 +635,14 @@ menu that refers to it.  Once you have done this, the default bindings
 will allow users to traverse and invoke the tree of menus via its
 menubutton;  see the <B><A HREF="./menubutton.n.html">menubutton</A></B> manual entry for details.
 <P>
-<DT><A NAME="M74"><B>Popup Menus</B></A><DD>
+<DT><A NAME="M82"><B>Popup Menus</B></A><DD>
 Popup menus typically post in response to a mouse button press or
 keystroke.  You create the popup menus and any cascaded submenus,
 then you call the <B>Tk:popup</B> (see <B><A HREF="./popup.n.html">popup</A></B>) procedure 
 at the appropriate time
 to post the top-level menu.
 <P>
-<DT><A NAME="M75"><B>Option Menus</B></A><DD>
+<DT><A NAME="M83"><B>Option Menus</B></A><DD>
 An option menu consists of a menubutton with an associated menu
 that allows you to select one of several values.  The current value
 is displayed in the menubutton and is also stored in a global
@@ -558,7 +650,7 @@ variable.  Use the <B>Tk:option-menu</B> (see <B><A HREF="./option-menu.n.html">
  procedure to create option
 menubuttons and their menus.
 <P>
-<DT><A NAME="M76"><B>Torn-off Menus</B></A><DD>
+<DT><A NAME="M84"><B>Torn-off Menus</B></A><DD>
 You create a torn-off menu by invoking the tear-off entry at
 the top of an existing menu.  The default bindings will create a new menu
 that is a copy of the original menu and leave it permanently
@@ -567,7 +659,7 @@ the same as the original menu.
 
 <P>
 </DL>
-<H3><A NAME="M77">DEFAULT BINDINGS</A></H3>
+<H3><A NAME="M85">DEFAULT BINDINGS</A></H3>
 Tk automatically creates class bindings for menus that give them
 the following default behavior:
 <OL>
@@ -625,13 +717,13 @@ they ignore mouse button presses and releases.
 The behavior of menus can be changed by defining new bindings for
 individual widgets or by redefining the class bindings.
 
-<H3><A NAME="M78">BUGS</A></H3>
+<H3><A NAME="M86">BUGS</A></H3>
 At present it isn't possible to use the
 option database to specify values for the options to individual
 entries.
 
-<H3><A NAME="M79">SEE ALSO</A></H3>
+<H3><A NAME="M87">SEE ALSO</A></H3>
 <B>popup option-menu menubutton</B>
-<P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif"><P>
 <A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookBlue.gif"> Back to the <B>STk</B> main page</A>
 </BODY></HTML>

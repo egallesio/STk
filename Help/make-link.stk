@@ -1,0 +1,35 @@
+;;;;
+;;;; This script is executed for linking manual pages which are identical
+;;;; Data are taken in the "links.stk" file
+;;;;
+;;;; Copyright © 1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 30-Oct-1996 11:27
+;;;; Last file update: 30-Oct-1996 12:31
+;;;;
+
+(load "../Doc/Manual/links.stk")
+
+(define (make-link dir source destination)
+  (for-each (lambda (x)
+	      (let ((cmd (format #f "cd ~A; rm -f ~A.n.html; ln ~A.n.html ~A.n.html"
+				 dir x  source x)))
+		(system cmd)))
+	    destination))
+
+(for-each (lambda (l) (make-link (car *argv*) (car l) (cdr l)))
+	  *links*)
+(exit 0)
+
+
+	
+

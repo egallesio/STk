@@ -1,14 +1,14 @@
 '\"
 '\" Copyright (c) 1990-1994 The Regents of the University of California.
-'\" Copyright (c) 1994-1995 Sun Microsystems, Inc.
+'\" Copyright (c) 1994-1997 Sun Microsystems, Inc.
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" @(#) options.n 1.40 95/10/03 08:40:46
+'\" SCCS: @(#) options.n 1.47 97/05/31 17:12:19
 '\" 
 .so STk-man.macros
-.TH options n 3.1 STk "Tk Built-In Commands"
+.TH options n 4.0 STk "Tk Built-In Commands"
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
@@ -50,6 +50,10 @@ will cause some action to occur.
 If strict Motif compliance has been requested by setting the
 \fB*tk-strict-motif*\fR variable, this option will normally be
 ignored;  the normal background color will be used instead.
+.VS
+For some elements on Windows  systems, the active color
+will only be used while mouse button 1 is pressed over the element.
+.VE
 .OP :activeborderwidth activeBorderWidth BorderWidth active-border-width
 Specifies a non-negative value indicating
 the width of the 3-D border drawn around active elements.  See above for
@@ -111,14 +115,6 @@ Specifies the font to use when drawing text inside the widget.
 .OP :foreground foreground Foreground foreground
 Specifies the normal foreground color to use when displaying the widget.
 This option can also be specified as \fB:fg\fR.
-.OP :geometry geometry Geometry geometry
-Specifies the desired geometry for the widget's window, in the
-form \fIwidth\fBx\fIheight\fR, where \fIwidth\fR is the desired
-width of the window and \fIheight\fR is the desired height.  The
-units for \fIwidth\fR and \fIheight\fR depend on the particular
-widget.  For widgets displaying text the units are usually the
-size of the characters in the font being displayed;  for other
-widgets the units are usually pixels.
 .OP :highlightbackground highlightBackground HighlightBackground highlight-background
 Specifies the color to display in the traversal highlight region when
 the widget does not have the input focus.
@@ -212,7 +208,7 @@ options.
 .OP :relief relief Relief relief
 Specifies the 3-D effect desired for the widget.  Acceptable
 values are \fBraised\fR, \fBsunken\fR, \fBflat\fR, \fBridge\fR,
-and \fBgroove\fR.
+\fBsolid\fR, and \fBgroove\fR.
 The value
 indicates how the interior of the widget should appear relative
 to its exterior;  for example, \fBraised\fR means the interior of

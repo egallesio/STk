@@ -1,0 +1,181 @@
+;;;;
+;;;; C o l o r b o x . s t k l o s 			-- A color pcicker
+;;;;
+;;;;  Copyright © 1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;;  Permission to use, copy, and/or distribute this software and its
+;;;;  documentation for any purpose and without fee is hereby granted, provided
+;;;;  that both the above copyright notice and this permission notice appear in
+;;;;  all copies and derived works.  Fees for distribution or use of this
+;;;;  software or derived works may only be charged with express written
+;;;;  permission of the copyright holder.  
+;;;;  This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; $Id: Colorbox.stklos 1.2 Mon, 16 Feb 1998 08:28:39 +0100 eg $
+;;;; 
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date:  2-Jan-1998 14:00
+;;;; Last file update: 12-Feb-1998 15:50
+
+(require "Basics")
+
+(select-module STklos+Tk)
+
+(export colorbox-wait-result)
+
+;=============================================================================
+;
+;				< C o l o r - b o x > 
+;
+;=============================================================================
+
+;;;;
+;;;; Resources
+;;;;
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;
+;;;; Utilities
+;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define colorbox-lock #f)
+
+(define (colorbox-set! box v update-scales?)
+  (let ((entry  (slot-ref box 'entry))
+	(sample (slot-ref box 'sample)))
+    (set! (background sample) v)
+    (if update-scales?
+	;; Convert the value in RGB
+	(let ((colors (winfo 'rgb box v)))
+	  (set! (value (slot-ref box 'R)) (modulo (car colors)   256))
+	  (set! (value (slot-ref box 'G)) (modulo (cadr colors)  256))
+	  (set! (value (slot-ref box 'B)) (modulo (caddr colors) 256))
+	  ;; Update to be sure that the scales have moved (and set the
+	  ;; entry accordingly), and afer that, force the value of the entry.
+	  (update 'idletask)))
+    (set! (value entry) v)))
+	 
+
+(define (colorbox-set-scale-callback box R G B)
+  (let* ((color    (lambda (s)
+		     (let ((n (value s)))
+		       (string-append (if (>= n 16) "" "0") 
+				      (number->string n 16)))))
+	 (callback (lambda l
+		     (colorbox-set! box 
+				   (format #f "#~A~A~A" (color R)(color G)(color B))
+				   #f))))
+
+    (slot-set! R 'command callback)
+    (slot-set! G 'command callback)
+    (slot-set! B 'command callback)))
+
+(define (colorbox-wait-result cb)
+  (let ((cur-grab (grab 'current cb)))
+    (grab 'set cb) 
+    (tkwait 'variable 'colorbox-lock) 
+    (and cur-grab (grab 'set cur-grab))
+    
+    ;; Compute result
+    (case colorbox-lock
+      ((ok)      (let ((res (value cb))) (destroy cb) res))
+      ((cancel)  (destroy cb) #f)
+      ((destroy) #f))))
+
+				  
+(define (colorbox-make-scale name box parent)
+  (let* ((f     (make <Frame> :parent parent))
+	 (title (make <Label> :parent f :anchor 'e :text name :width 5))
+	 (scale (make <Scale> :parent f :from 0 :to 255 :orientation "hor"
+		      	      :scale-length 255)))
+    (pack title :side 'left :anchor 's)
+    (pack scale :side 'right :fill 'x :expand #f)
+    (pack f :expand #f :fill 'x)
+    scale))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(define-class <Color-box> (<Tk-composite-toplevel>)
+  (r g b entry sample
+   (class 	:init-keyword :class
+		:init-form    "ColorBox")
+   (title 	:initform     "Color Selection"
+		:accessor     title 
+		:init-keyword :title
+		:allocation   :propagated
+		:propagate-to (frame))
+   (value 	:accessor     value
+		:init-keyword :value
+		:allocation   :virtual
+		:slot-ref     (lambda (o)  (slot-ref (slot-ref o 'entry) 'value))
+		:slot-set!    (lambda(o v) (colorbox-set! o v #t)))))
+
+
+(define-method initialize-composite-widget ((self <Color-box>) initargs frame)
+  (let* ((top    (make <Frame> :parent frame))
+	 (left   (make <Frame> :parent top))
+	 (right  (make <Frame> :parent top))
+	 (label  (make <Label> :parent right :anchor 'w :text "Color:"))
+	 (entry  (make <Entry> :parent right :title "Color"
+		               :background "white" :relief "sunken"))
+	 (sample (make <Frame> :parent right :relief "solid" :border-width 1))
+	 (bot    (make <Frame> :parent frame :border-width 2 :relief "ridge")))
+
+    (next-method)
+
+    (slot-set! self 'Id     (Id entry))
+    (slot-set! self 'entry  entry)
+    (slot-set! self 'sample sample)
+    (slot-set! self 'R      (colorbox-make-scale "Red"   self left))
+    (slot-set! self 'G      (colorbox-make-scale "Green" self left))
+    (slot-set! self 'B      (colorbox-make-scale "Blue"  self left))
+
+    (colorbox-set-scale-callback self (slot-ref self 'R)
+				      (slot-ref self 'G)
+				      (slot-ref self 'B))
+
+    (bind entry "<Return>" (lambda () (colorbox-set! self (value entry) #t)))
+    (bind self "<Destroy>" (lambda () (set! colorbox-lock 'destroy)))
+
+    ;; Left part of the widget
+    (pack left :side 'left :padx 10 :pady 10 :expand #f :fill 'x :anchor 'n)
+
+    ;; Right part of the widget
+    (pack label  :expand #f :fill 'x :anchor 'w)
+    (pack entry  :expand #f :fill 'x)
+    (pack sample :expand #t :fill 'both :padx 20 :pady 20)
+    (pack right  :expand #t :fill 'both :padx 10 :pady 10)
+    
+    ;; Buttons
+    (pack (make <Button> :text "Ok" :parent bot 
+			 :command (lambda () (set! colorbox-lock 'ok)))
+	  (make <Button> :text "Cancel" :parent bot
+			  :command (lambda () (set! colorbox-lock 'cancel)))
+	  :side 'left :padx 5 :pady 5)
+    
+    ;; Top aand bottom frame
+    (pack top :side 'top :fill "both" :expand #t)
+    (pack bot :side 'top :fill "x" :expand #f)))
+
+
+;=============================================================================
+;
+; Tk:choose-color (for Unix)
+;
+;=============================================================================
+
+(when (eqv? (os-kind) 'Unix)
+
+  (define (Tk:choose-color . args)
+    (let* ((val   (get-keyword :initial-color args "Black"))
+	   (title (get-keyword :title args ""))
+	   (f     (make <Color-box> :value val :title title)))
+      ;; wait a result
+      (colorbox-wait-result f)))
+)
+
+
+(provide "Colorbox")
