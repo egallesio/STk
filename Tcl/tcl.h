@@ -345,7 +345,9 @@ typedef char *(Tcl_VarTraceProc) _ANSI_ARGS_((ClientData clientData,
  */
 
 typedef struct Tcl_ObjType {
-#ifndef STk_CODE
+#ifdef STk_CODE
+  void *dumb;			/* for AIX */
+#else
     char *name;			/* Name of the type, e.g. "int". */
     Tcl_FreeInternalRepProc *freeIntRepProc;
 				/* Called to free any storage for the type's

@@ -15,11 +15,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: slib.c 1.6 Fri, 10 Apr 1998 12:05:25 +0000 eg $
+ * $Id: slib.c 1.8 Tue, 09 Jun 1998 07:40:04 +0000 eg $
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: ??-Oct-1993 ??:?? 
- * Last file update: 10-Apr-1998 10:22
+ * Last file update:  7-Jun-1998 17:34
  *
  */
 
@@ -34,7 +34,7 @@
 
 #ifdef WIN32
 #   include <time.h>
-#   include <dos.h>
+/* #   include <dos.h>		enlévé pour CYGWIN32 */
 #   include <process.h>
 #else
 #   include <stdarg.h>
@@ -215,7 +215,7 @@ PRIMITIVE STk_machine_type(void)
 
 PRIMITIVE STk_library_location(void)
 {
-   return STk_makestring(STk_library_path);
+  return STk_makestring(STk_library_path);
 }
 
 PRIMITIVE STk_random(SCM n)
@@ -484,10 +484,9 @@ void Debug(char *message, SCM obj)
 #ifndef WIN32
 typedef void (*dumb)();
 
-dumb STk_dumb[] = { 
+dumb STk_dumb[] = {
   (dumb) Tcl_TildeSubst,
   (dumb) Tcl_SetVar2,
   (dumb) Tcl_NewListObj
-  
 };
 #endif

@@ -17,11 +17,11 @@
 ;;;; This software is a derivative work of other copyrighted softwares; the
 ;;;; copyright notices of these softwares are placed in the file COPYRIGHTS
 ;;;;
-;;;; $Id: tk-init.stk 1.11 Fri, 10 Apr 1998 07:13:18 +0000 eg $
+;;;; $Id: tk-init.stk 1.13 Thu, 28 May 1998 20:07:43 +0000 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 17-May-1993 12:35
-;;;; Last file update: 28-Mar-1998 16:56
+;;;; Last file update: 28-May-1998 19:16
 ;;;;
 
 (unless (equal? *tk-version* "8.0")
@@ -322,12 +322,12 @@
 (autoload "focus" 	 Tk:focus-next Tk:focus-prev)
 (autoload "listener"  	 listener)
 (autoload "palette"   	 Tk:set-palette! Tk:bisque)
-(autoload "help"      	 help STk:show-help-file)
 (autoload "menu"      	 Tk:option-menu)
 (autoload "inspect-main" inspect view detail)
 (autoload "fileevent" 	 Tk:fileevent fileevent) ; for backward compatibility
 (autoload "sterm" 	 sterm)
-(autoload "www-browser"  WWW:browser)
+(autoload "image"        find-image make-image change-image delete-image)
+
 
 ;=============================================================================
 ;
@@ -337,7 +337,7 @@
 ; working with Tk. It is defined here, even if you don't use STklos
 ; (you really must use it :) so that it can be imported before Tk. So,
 ; if functions are redefined in STklos for Tk they will be seen before
-; the Tk ones. If the STklos is not used (it's a pity!), the module is
+; the Tk ones. If STklos is not used (it's a pity!), the module is
 ; just passed thru since it contains nothing.
 ;
 ;=============================================================================
@@ -352,7 +352,11 @@
   ;; autoload since C error function tests explicitely it is a closure before
   ;; applying its arguments
   (define (report-error . args)
-    (apply STk:report-error args)))
+    (apply STk:report-error args))
+  
+  ;; Global help functions which are defined when Tk is loaded
+  (autoload "help"         help STk:show-help-file)
+  (autoload "www-browser"  WWW:browser))
 
 ;;;;
 ;;;; Retain now that Tk is now fully initialized

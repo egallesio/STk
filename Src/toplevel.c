@@ -16,11 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: toplevel.c 1.5 Mon, 27 Apr 1998 08:44:17 +0000 eg $
+ * $Id: toplevel.c 1.6 Tue, 19 May 1998 10:44:58 +0000 eg $
  *
  *	     Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date:  6-Apr-1994 14:46
- * Last file update: 26-Apr-1998 18:41
+ * Last file update: 14-May-1998 22:19
  */
 
 #include "stk.h"
@@ -29,7 +29,6 @@
 
 /* The cell representing NIL */
 static struct obj VNIL	   = {0, tc_nil};
-
 
 static void print_banner(void)
 {
@@ -113,6 +112,17 @@ static void init_library_path(char *argv0)
   }
 }
 
+static SCM get_last_defined(char *name)
+{
+  return STk_last_defined;
+}
+
+static void set_last_defined(char *name, SCM val)
+{
+  STk_last_defined = val;
+}
+
+
 static void init_interpreter(void)
 {
 #ifdef WIN32
@@ -193,6 +203,11 @@ static void init_interpreter(void)
 
   /* initialize STk_wind_stack and protect it against garbage colection */
   STk_wind_stack = NIL;	 STk_gc_protect(&STk_wind_stack);
+
+  /* Initialize C variables */
+  STk_last_defined = Ntruth;
+  STk_define_C_variable(LAST_DEFINED, get_last_defined, set_last_defined);
+  STk_gc_protect(&STk_last_defined);
 }
 
 static void finish_initialisation(void)

@@ -2,7 +2,7 @@
  *
  * a r g v . c			-- Argc/Argv management
  *
- * Copyright © 1993-1997 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -19,7 +19,7 @@
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 30-Aug-1994 15:38
- * Last file update: 30-Dec-1997 14:34
+ * Last file update:  7-Jun-1998 18:01
  */
 
 #include "stk.h"
@@ -281,7 +281,8 @@ void STk_initialize_scheme_args(char **argv)
 }
 
 #ifdef WIN32
-#include <dos.h>
+
+/* #include <dos.h>   enlevé pour CYGWIN32 */
 
 char **STk_Win32_make_argc_argv(char *lpszCmdLine, int *argc)
 {

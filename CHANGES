@@ -1,3 +1,24 @@
+06/09/98 Release 3.99.2
+-----------------------
+
+This is mainly a bug correcting release
+Otherwise:
+	* Can be compiled on AIX
+
+	* a new script file "stk-genmake" file can be used to build a 
+	Makefile for extensions. It constructs a Makefile which uses 
+	exactly the same options and compiler that was used to
+ 	build the interpreter.
+
+	* New function: write* to write cirular structures (rad has been 
+	updated for reading such structures -- and format for writing them 
+	too)
+
+	* Better HTML support
+
+	* New STklos slot allocation scheme: :EACH-CLASS
+
+
 04/27/98 Release 3.99.1
 -----------------------
 

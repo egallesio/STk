@@ -13,10 +13,12 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 14-Sep-1993 13:30
-;;;; Last file update:  2-Mar-1998 10:43
+;;;; Last file update: 28-May-1998 19:10
 ;;;;
 
 (require "www-browser")
+
+(select-module STk)
 
 (define (STk:show-help-file name)
   ;; Show the file (after having found the Help directory)
@@ -27,7 +29,7 @@
 	       (fd (open-file f "r")))
 	  (catch (close-port fd))
 	  (if fd
-	      (STk:web-browser :url f)
+	      (www:browser :url f)
 	      (loop (cdr l)))))))
 
 (define (help . arg)
@@ -35,5 +37,5 @@
       (STk:show-help-file "STk-hlp.html")
       (STk:show-help-file (format #f "~A.n.html" (car arg))))
   #f)
-  
+
 (provide "help")

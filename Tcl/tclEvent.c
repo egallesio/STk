@@ -145,7 +145,7 @@ Tcl_BackgroundError(interp)
     errPtr->errorMsg = (char *) ckalloc((unsigned) (strlen(errResult) + 1));
     strcpy(errPtr->errorMsg, errResult);
 #ifdef STk_CODE
-    varValue = STk_tcl_getvar("*error-info*", "#f");
+    varValue = (char *) STk_tcl_getvar("*error-info*", "#f");
 #else
     varValue = Tcl_GetVar(interp, "errorInfo", TCL_GLOBAL_ONLY);
 #endif

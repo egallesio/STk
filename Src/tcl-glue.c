@@ -16,11 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: tcl-glue.c 1.5 Wed, 22 Apr 1998 21:52:02 +0000 eg $
+ * $Id: tcl-glue.c 1.6 Tue, 19 May 1998 10:44:58 +0000 eg $
  *
  *            Author: Erick Gallesio [eg@unice.fr]
  *    Creation date:  6-Aug-1997 12:48
- * Last file update: 22-Apr-1998 22:47
+ * Last file update: 19-May-1998 12:16
  *
  */
 
@@ -189,7 +189,7 @@ char *STk_tcl_getvar(char *name, char *env)
     return "";
   }
   else 
-    STk_convert_for_Tcl(V, &dumb);
+    return STk_convert_for_Tcl(V, &dumb);
 }
 
 

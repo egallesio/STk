@@ -16,11 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: error.c 1.4 Fri, 10 Apr 1998 07:13:18 +0000 eg $
+ * $Id: error.c 1.5 Tue, 19 May 1998 10:44:58 +0000 eg $
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 14-Nov-1993 14:58
- * Last file update:  8-Apr-1998 16:57
+ * Last file update: 14-May-1998 23:02
  */
 
 #include "stk.h"
@@ -105,7 +105,7 @@ void STk_err(char *message, SCM x)
   char head[MAX_PATH_LENGTH+50];
   
   STk_reset_eval_hook();
-  
+
   if (!(Error_context & ERR_IGNORED)) {
     if (*message) print_message(message, x);
     STk_reset_eval_stack();

@@ -15,11 +15,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: read.c 1.3 Sun, 01 Feb 1998 22:14:16 +0000 eg $
+ * $Id: read.c 1.4 Thu, 28 May 1998 20:07:43 +0000 eg $
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: ??-Oct-1993 ??:?? 
- * Last file update:  1-Feb-1998 18:27
+ * Last file update: 25-May-1998 20:26
  *
  */
 
@@ -27,7 +27,11 @@
 #include "stk.h"
 #include "module.h"
 
-static SCM lreadr(FILE *f, int case_significant);
+static SCM cycles = NULL;		/* used for reading circular data */
+static char *proc_name = "read";	/* for Serror macro */	
+
+
+static SCM read_rec(FILE *f, int case_significant);
 
 
 static int flush_ws(FILE *f, char *message)
@@ -37,7 +41,7 @@ static int flush_ws(FILE *f, char *message)
   c = Getc(f);
   for ( ; ; ) {
     switch (c) {
-      case EOF:  if (message) Err(message,NIL); else return(c);
+      case EOF:  if (message) Serror(message,NIL); else return(c);
       case ';':  do 
 		   c = Getc(f); 
 		 while (c != '\n' && c != EOF);
@@ -49,7 +53,7 @@ static int flush_ws(FILE *f, char *message)
   }
 }
 
-static SCM lreadlist(FILE *f, char delim, int case_significant)
+static SCM read_list(FILE *f, char delim, int case_significant)
 /* Read a list ended by the `delim' char */
 {
   int c;
@@ -60,19 +64,19 @@ static SCM lreadlist(FILE *f, char delim, int case_significant)
 
   /* Read the car */
   Ungetc(c, f);
-  tmp = lreadr(f, case_significant);
+  tmp = read_rec(f, case_significant);
   
   /* Read the cdr */
   if (EQ(tmp, Sym_dot)) {
-    tmp = lreadr(f, case_significant);
+    tmp = read_rec(f, case_significant);
     c = flush_ws(f, "End of file inside list");
-    if (c != delim) Err("Missing close parenthesis", NIL);
+    if (c != delim) Serror("missing close parenthesis", NIL);
     return(tmp);
   }
-  return(Cons(tmp, lreadlist(f, delim, case_significant)));
+  return(Cons(tmp, read_list(f, delim, case_significant)));
 }
 
-static void lreadword(FILE *f, int c, int case_significant) 
+static void read_word(FILE *f, int c, int case_significant) 
 /* read an item whose 1st char is in c */
 { 
   register int j = 0;
@@ -92,13 +96,13 @@ static void lreadword(FILE *f, int c, int case_significant)
       }
       if (isspace(c)) break;
     }
-    if (j >= TKBUFFERN-1) Err("read: token too large", NIL);
+    if (j >= TKBUFFERN-1) Serror("token too large", NIL);
   }
 
   STk_tkbuffer[j] = '\0';
 }
 
-static void lreadchar(FILE *f, int c)
+static void read_char(FILE *f, int c)
 /* read an char (or a char name) item whose 1st char is in c */
 { 
   register int j = 0;
@@ -111,23 +115,23 @@ static void lreadchar(FILE *f, int c)
       Ungetc(c, f);
       break;
     }
-    if (j >= TKBUFFERN-1) Err("read: token too large", NIL);
+    if (j >= TKBUFFERN-1) Serror("token too large", NIL);
   }
   STk_tkbuffer[j] = '\0';
 }
   
-static SCM lreadtoken(FILE *f, int c, int case_significant) 
+static SCM read_token(FILE *f, int c, int case_significant) 
 {
   SCM z;
 
-  lreadword(f, c, case_significant);
+  read_word(f, c, case_significant);
   z = STk_Cstr2number(STk_tkbuffer, 10L);
 
   if (z == Ntruth)
     /* It is not a number */
     switch (*STk_tkbuffer) {
       case ':': return STk_makekey(STk_tkbuffer);
-      case '#': Err("bad # syntax", STk_makestring(STk_tkbuffer));
+      case '#': Serror("bad # syntax", STk_makestring(STk_tkbuffer));
       default : return Intern(STk_tkbuffer);
     }
   
@@ -135,7 +139,67 @@ static SCM lreadtoken(FILE *f, int c, int case_significant)
   return z;
 }
 
-static SCM lreadstring(FILE *f)
+static SCM read_cycle(FILE *f, int c, int case_significant)
+/* read a #xx# or #xx= cycle item whose 1st char is in c. */
+{ 
+  register int j = 0;
+
+  for( ; ; ) {
+    STk_tkbuffer[j++] = c;
+    c = Getc(f);
+    if (c == EOF || !isdigit(c)) break;
+    if (j >= TKBUFFERN-1) Serror("token too large", NIL);
+  }
+  STk_tkbuffer[j] = '\0';
+
+  switch (c) {
+    case '#': {
+		 SCM tmp, k = STk_makeinteger(atoi(STk_tkbuffer));
+		 
+		 if ((tmp = STk_assv(k, cycles)) != Ntruth) {
+		   return CDR(tmp);
+		 }
+		 else {
+		   char buffer[70];
+		   sprintf(buffer, "key ``#%d='' not defined", atoi(STk_tkbuffer));
+		   Serror(buffer, NIL);
+		 }
+    	      }
+    case '=': {
+      		 SCM val, tmp, k = STk_makeinteger(atoi(STk_tkbuffer));
+		 
+		 if ((tmp = STk_assv(k, cycles)) == Ntruth) {
+		   /* This is a little bit tricky here: We create a fake cell
+		    * that could be referenced by the further read. Once the read 
+		    * is finished, we overwrite the fake cell with the value 
+		    * returned by the read. So, the fake cell becomes the real 
+		    * result (not too clear :-).
+		    * ATTENTION: the value returned the next read can be of 
+		    * any type (e.g. '(1 2 #0="ab" #0#) ). But all our cells 
+		    * have the same size => no problem.
+		    */
+		   tmp      = Cons(UNBOUND, UNBOUND);       /* The fake cell */
+		   cycles   = Cons(Cons(k, tmp), cycles);   /* For next read */
+		   val      = read_rec(f, case_significant);/* Read item */
+		   *tmp     = *val; 			    /* Overwrt fake cell*/
+		   return tmp;
+		 }
+		 else {
+		   char buffer[70];
+		   sprintf(buffer, "key ``#%d='' already defined",
+			   atoi(STk_tkbuffer))
+;
+		   Serror(buffer, NIL);
+		 }
+    	      }
+    default:  Ungetc(c, f); Serror("bad # syntax", STk_makestring(STk_tkbuffer));
+  }
+  
+  return UNBOUND; /* for the compiler */
+}
+  
+
+static SCM read_string(FILE *f)
 {
   int j, k ,c,n,len;
   char *p, *buffer;
@@ -148,7 +212,7 @@ static SCM lreadstring(FILE *f)
   while(((c = Getc(f)) != '"') && (c != EOF)) { 
     if (c == '\\') {
       c = Getc(f);
-      if (c == EOF) Err("Eof after \\", NIL);
+      if (c == EOF) Serror("eof encountered after \\", NIL);
       switch(c) {
         case 'b' : c = '\b'; break;	/* Bs  */
 	case 'e' : c = 0x1b; break;	/* Esc */
@@ -158,7 +222,7 @@ static SCM lreadstring(FILE *f)
         case '\n': STk_line_counter += 1; continue;
 	case '0' : for( k=n=0 ; ; k++ ) {
 		     c = Getc(f);
-		     if (c == EOF) Err("Eof after \\0", NIL);
+		     if (c == EOF) Serror("eof encountered after \\0", NIL);
 	             if (isdigit(c) && (c < '8') && k < 3) /* Max = 3 digits */
 		        n = n * 8 + c - '0';
 		     else {
@@ -180,7 +244,7 @@ static SCM lreadstring(FILE *f)
     j++;
     *p++ = c;
   }
-  if (c == EOF) Err("End of file while reading a string", NIL);
+  if (c == EOF) Serror("end of file while reading a string", NIL);
   *p = '\0';
   
   z = STk_makestrg(j, buffer);
@@ -189,40 +253,40 @@ static SCM lreadstring(FILE *f)
   return z;
 }
 
-static SCM lreadr(FILE *f, int case_significant)
+static SCM read_rec(FILE *f, int case_significant)
 {
   int c;
 
   for ( ; ; ) {
-    c = flush_ws(f, "End of file inside read encountered");
+    c = flush_ws(f, "end of file inside read encountered");
     
     switch (c) {
       case '(':
-        return(lreadlist(f, ')', case_significant));
+        return(read_list(f, ')', case_significant));
       case '[':
-	return(lreadlist(f, ']', case_significant));
+	return(read_list(f, ']', case_significant));
       case ')':
       case ']':
-	fprintf(STk_stderr, "\nUnexpected close parenthesis");
+	fprintf(STk_stderr, "\nread: unexpected close parenthesis");
 	if (STk_current_filename != UNBOUND)	
 	  fprintf(STk_stderr, " at line %d in file %s", 
 		  	      STk_line_counter, CHARS(STk_current_filename));
 	fprintf(STk_stderr, "\n");
 	break;
       case '\'':
-	return LIST2(Sym_quote, lreadr(f, case_significant));
+	return LIST2(Sym_quote, read_rec(f, case_significant));
       case '`':
-	return LIST2(Sym_quasiquote, lreadr(f, case_significant));
+	return LIST2(Sym_quasiquote, read_rec(f, case_significant));
       case '#':
 	switch(c=Getc(f)) {
 	  case 't':
           case 'T':  return Truth;
 	  case 'f':
 	  case 'F':  return Ntruth;
- 	  case '\\': lreadchar(f, Getc(f));
+ 	  case '\\': read_char(f, Getc(f));
 	             return STk_makechar(STk_string2char(STk_tkbuffer));
 	  case '(' : { 
-	    	       SCM l = lreadlist(f, ')', case_significant);
+	    	       SCM l = read_list(f, ')', case_significant);
 		       return STk_vector(l, STk_llength(l));
 	  	     }
 	  case '!' : while ((c=Getc(f)) != '\n')
@@ -240,11 +304,21 @@ static SCM lreadr(FILE *f, int case_significant)
 		     Ungetc(c,f);
 	  	     continue;		     
 	  case 'p':
-	  case 'P': lreadword(f, Getc(f), TRUE);
+	  case 'P': read_word(f, Getc(f), TRUE);
 	    	    return STk_address2object(STk_tkbuffer);
-	  case '.': return STk_eval(lreadr(f, case_significant), 
+	  case '.': return STk_eval(read_rec(f, case_significant), 
 				    MOD_ENV(STk_selected_module));
-	  default:  Ungetc(c, f); return lreadtoken(f, '#', FALSE);
+	  case '0':
+	  case '1':
+	  case '2':
+	  case '3':
+	  case '4':
+	  case '5':
+	  case '6':
+	  case '7':
+	  case '8':
+	  case '9': return read_cycle(f, c, case_significant);
+	  default:  Ungetc(c, f); return read_token(f, '#', FALSE);
 	}
       case ',': {
 	SCM symb;
@@ -256,12 +330,12 @@ static SCM lreadr(FILE *f, int case_significant)
 	  symb = Sym_unquote; 
 	  Ungetc(c, f);
 	}
-	return LIST2(symb, lreadr(f, case_significant));
+	return LIST2(symb, read_rec(f, case_significant));
       }
       case '"':
-	return lreadstring(f);
+	return read_string(f);
       default:
-	return lreadtoken(f, c, case_significant);
+	return read_token(f, c, case_significant);
     }
   }
 }
@@ -269,9 +343,13 @@ static SCM lreadr(FILE *f, int case_significant)
 SCM STk_readf(FILE *f, int case_significant)
 {
   int c;
-  
+  SCM sexpr, key;
+
+  if (cycles == NULL) STk_gc_protect(&cycles);
+  cycles = NIL;
+
   c = flush_ws(f, (char *) NULL);
   if (c == EOF) return(STk_eof_object);
   Ungetc(c, f);
-  return lreadr(f, case_significant);
+  return read_rec(f, case_significant);
 }

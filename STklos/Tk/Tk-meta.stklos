@@ -11,11 +11,11 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
-;;;; $Id: Tk-meta.stklos 1.8 Fri, 10 Apr 1998 07:13:18 +0000 eg $
+;;;; $Id: Tk-meta.stklos 1.9 Sat, 06 Jun 1998 12:19:03 +0000 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 24-Feb-1994 15:08
-;;;; Last file update:  6-Apr-1998 10:03
+;;;; Last file update:  1-Jun-1998 18:22
 ;;;;
 ;;;;
 ;;;; Compatibility:
@@ -46,12 +46,15 @@
 						; to STklos+Tk module
 
 ;;;;
-;;;; Metaclases exported by this file 
+;;;; Exports
 ;;;;
 (export 
+    ;; Metaclases exported by this file 
     <With-Tk-virtual-slots-metaclass> <Tk-metaclass> <Tk-item-metaclass>
     <Tk-tag-metaclass> <Tk-text-window-metaclass> <Tk-composite-metaclass>
-    <Tk-composite-item-metaclass>)
+    <Tk-composite-item-metaclass>
+    ;; generic functions exported by this file
+    compute-tk-virtual-get-n-set)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;

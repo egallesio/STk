@@ -2,7 +2,7 @@
  *
  * h t m l . c			-- Html support for STk
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -17,11 +17,14 @@
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date:  1-Sep-1995 23:10
- * Last file update: 11-Oct-1996 15:54
+ * Last file update: 28-May-1998 21:57
  */
 
 #include <ctype.h>
 #include "stk.h"
+
+#define MAXTOKEN	40
+
 struct char_type {
   char *name;
   unsigned char c;
@@ -77,95 +80,147 @@ static void skip_spaces(FILE *f)
       }
     }
 }
-    
-static PRIMITIVE STk_html_next_token(SCM iport)
+
+/* next_entity: Read an entity such as <A HREF=x.html> */
+static SCM next_entity(FILE *f) 
 {
-  /* Return next HTML token */
-  char ch, *t, token[256];
-  int c;
   Tcl_DString dStr1, dStr2;
+  int c;
+  char ch;
   SCM z;
-  FILE *f;
-
-  if (!INP(iport)) Err("%Html:next-token: bad port", iport);
-
-  f = PORT_FILE(iport);
-
-  if (Eof(f) || ((c = Getc(f)) == EOF)) return STk_eof_object;
 
   Tcl_DStringInit(&dStr1);   Tcl_DStringInit(&dStr2);
   
-  if (c == '<') {
+  skip_spaces(f);
+  while ((c = Getc(f)) != EOF && (c != '>') && (c != ' ') && (c != '\t')) {
+    ch = tolower(c);
+    Tcl_DStringAppend(&dStr1, &ch, 1);
+  } 
+  if (c == ' ' || c == '\t') {
+    /* Read the argument */
     skip_spaces(f);
-    while ((c = Getc(f)) != EOF && (c != '>') && (c != ' ') && (c != '\t')) {
-      ch = tolower(c);
-      Tcl_DStringAppend(&dStr1, &ch, 1);
-    } 
-    if (c == ' ' || c == '\t') {
-      /* Read the argument */
-      skip_spaces(f);
-      while ((c = Getc(f)) != EOF && (c != '>')) {
-	ch = c;
-	Tcl_DStringAppend(&dStr2, &ch, 1);
-      } 
+    while ((c = Getc(f)) != EOF && (c != '>')) {
+      ch = c;
+      Tcl_DStringAppend(&dStr2, &ch, 1);
     }
+  }
     
-    if (Tcl_DStringValue(&dStr1)[0] == '\0') 
-      z = STk_makestring("<>");
-    else 
-      if (Tcl_DStringValue(&dStr1)[0]=='/' && Tcl_DStringValue(&dStr1)[1] == '\0')
-	z = STk_makestring("</>"); 
-      else
-	z = Cons(STk_makestring(Tcl_DStringValue(&dStr1)),
-		 STk_makestring(Tcl_DStringValue(&dStr2)));
-  }
-  else {
-    if (c == '&') {
-      t = token;
-      while ((c = Getc(f)) != EOF && c != ';' && isalpha(c)) *t++ = c;
-      *t = 0;
-      
-      if (c != ';') Ungetc(c, f);
-      
-      /* Search the given token in the translation table */
-      {
-	int i;
-
-	for (i = 0; table[i].c; i++)
-	  if (strcmp(token, table[i].name) == 0) {
-	    Tcl_DStringAppend(&dStr1, &table[i].c, 1);
-	    break;
-	  }
-	if (!table[i].c)  /* Not found */ Tcl_DStringAppend(&dStr1, token, -1);
-      }
-    } 
-    else {
-      do {
-	if (c == '<' || c == '&') {
-	  Ungetc(c, f);
-	  break;
-	}
-	ch = c;
-	Tcl_DStringAppend(&dStr1, &ch, 1);
-      } 
-      while ((c = Getc(f)) != EOF);
-    }
-    z = STk_makestring(Tcl_DStringValue(&dStr1));
-  }
+  if (Tcl_DStringValue(&dStr1)[0] == '\0') 
+    z = STk_makestring("<>");
+  else 
+    if (Tcl_DStringValue(&dStr1)[0]=='/' && Tcl_DStringValue(&dStr1)[1] == '\0')
+      z = STk_makestring("</>"); 
+    else
+      z = Cons(STk_makestring(Tcl_DStringValue(&dStr1)),
+	       STk_makestring(Tcl_DStringValue(&dStr2)));
 
   Tcl_DStringFree(&dStr1); Tcl_DStringFree(&dStr2);
   return z;
 }
 
 
-static PRIMITIVE STk_html_clean_spaces(SCM str, SCM ignore_spaces)
+/* Read an entity such as &amp;  */
+static void next_character(Tcl_DString *dStr, FILE *f)  
+{
+  char *t, ch, token[MAXTOKEN];
+  int c, i;
+  
+  token[0] = '&';
+  if ((c=Getc(f)) == '#') {		/* Read a &#000; entity */
+    token[1] = '#';
+    t = token + 2;
+    
+    while ((c=Getc(f)) != EOF && isdigit(c) && t < &token[MAXTOKEN-1]) {
+      *t++ = c;
+    }
+    *t = '\0';
+    if (c != ';')
+      /* Unget the terminator character for next reading */
+      Ungetc(c, f);
+    ch = (char) atoi(token+2);
+    if (ch > 10) {
+      Tcl_DStringAppend(dStr, &ch, 1);
+      return;
+    }
+  }
+  else {				/* Read a &aaaaa; entity */
+    t = token + 1;
+    while (c != EOF && isalpha(c) && t < &token[MAXTOKEN-1]) {
+      *t++ = c;
+      c = Getc(f);
+    }
+    *t = '\0';
+    if (c != ';') 
+      /* Unget the terminator character for next reading */
+      Ungetc(c, f);
+    
+    /* Search the given token in the translation table */
+    for (i = 0; table[i].c; i++)
+      if (strcmp(token+1, table[i].name) == 0) {
+	Tcl_DStringAppend(dStr, &table[i].c, 1);
+	return;
+      }
+  }
+
+  /* If we are here, we have not found the item in table or the number was 
+   * ill formed => bad syntax. */
+  Tcl_DStringAppend(dStr, token, -1);
+  if (c == ';') Tcl_DStringAppend(dStr, ";", 1); /* as netscape */
+}
+
+
+static PRIMITIVE html_next_token(SCM iport)   /* Return next HTML token */
+{
+  int c;
+  FILE *f;
+
+  ENTER_PRIMITIVE("%html:next-token");
+
+  if (!INP(iport)) Serror("bad port", iport);
+
+  f = PORT_FILE(iport);
+
+  if (Eof(f) || ((c = Getc(f)) == EOF)) return STk_eof_object;
+
+  if (c == '<') 
+    return next_entity(f);
+  else {
+    SCM z;
+    Tcl_DString dStr;
+    char ch;
+
+    Tcl_DStringInit(&dStr);
+    do {
+      if (c == '<') { 
+	Ungetc(c, f); 
+	break; 
+      }
+      else {
+	if (c == '&') 
+	  next_character(&dStr, f);
+	else {
+	  ch = c;
+	  Tcl_DStringAppend(&dStr, &ch, 1);
+	}
+      }
+    }
+    while ((c = Getc(f)) != EOF);
+    z = STk_makestring(Tcl_DStringValue(&dStr));
+    return z;
+  }
+}
+
+
+static PRIMITIVE html_clean_spaces(SCM str, SCM ignore_spaces)
 {
   Tcl_DString dString;
   char c, *s;
   int only_spaces = TRUE;
   SCM z;
-  
-  if (!STRINGP(str)) Err("%html:clean-spaces: bad string", str);
+
+  ENTER_PRIMITIVE("%html:clean-spaces");
+
+  if (!STRINGP(str)) Serror("bad string", str);
 
   Tcl_DStringInit(&dString);
   for (s = CHARS(str); c = *s; s++) {
@@ -190,7 +245,7 @@ static PRIMITIVE STk_html_clean_spaces(SCM str, SCM ignore_spaces)
 
 PRIMITIVE STk_init_html(void)
 {
-  STk_add_new_primitive("%html:clean-spaces",  tc_subr_2,  STk_html_clean_spaces);
-  STk_add_new_primitive("%html:next-token",    tc_subr_1,  STk_html_next_token);
+  STk_add_new_primitive("%html:clean-spaces",  tc_subr_2,  html_clean_spaces);
+  STk_add_new_primitive("%html:next-token",    tc_subr_1,  html_next_token);
   return UNDEFINED;
 }

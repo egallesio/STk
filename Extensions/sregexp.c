@@ -57,10 +57,10 @@ static PRIMITIVE string_to_regexp (SCM obj)
   struct regexp *r;
   SCM z;
 
-  if (NSTRINGP (obj)) err ("not a string", obj);
+  ENTER_PRIMITIVE("string->regexp");
   
-  if ((r=TclRegComp(CHARS (obj))) == NULL)
-    Err("string->regexp: error compiling regexp", obj);
+  if (NSTRINGP (obj)) 			     Serror("not a string", obj);
+    if ((r=TclRegComp(CHARS (obj))) == NULL) Serror("error compiling regexp", obj);
   
   /* Regexp is Ok. Make a new cell and return it */
   NEWCELL(z, tc_regexp);
@@ -72,15 +72,17 @@ static PRIMITIVE string_to_regexp (SCM obj)
  * Try to match string against regular expression.  Returns sub-match
  * object, or #f if no match.
  */
-static PRIMITIVE apply_regexp(SCM regexp, SCM l, SCM env)
+static SCM apply_regexp(SCM regexp, SCM l, SCM env)
 {
   SCM string;
   char *the_chars;
 
-  if (STk_llength (l) != 1) err ("apply: bad number of args", l);
+  ENTER_SCM("apply-regexp");
+
+  if (STk_llength (l) != 1) Serror("bad number of args", l);
   string = CAR (l);
 
-  if (NSTRINGP (string)) err ("regexp: bad string", string);
+  if (NSTRINGP (string)) Serror("bad string", string);
   the_chars = CHARS (string);
   
   if (TclRegExec(REGEXP(regexp), the_chars, the_chars)) {

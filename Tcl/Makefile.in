@@ -8,10 +8,9 @@
 include ../config.make
 
 CFLAGS = $(STKCFLAGS) $(DFLGS) -I. -I../Src @DEFS@
-OBJ    = panic.o tclHash.o tclGet.o regexp.o tclAsync.o tclUtil.o \
-	 tclNotify.o @LIBOBJS@
+OBJ    = panic.o tclHash.o tclGet.o regexp.o tclUtil.o @LIBOBJS@
 EVOBJ  = tclEvent.o tclTimer.o tclUnixNotfy.o tclUnixTime.o  tclUnixEvent.o \
-         tclPreserve.o
+         tclPreserve.o  tclNotify.o tclAsync.o
 
 all: libtcl.a libevtcl.a
 

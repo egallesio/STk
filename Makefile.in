@@ -14,7 +14,7 @@
 #
 #           Author: Erick Gallesio [eg@unice.fr]
 #    Creation date: ??-Sep-1993 ??:??
-# Last file update: 27-Apr-1998 22:33
+# Last file update: 14-May-1998 11:28
 #
 
 
@@ -110,7 +110,7 @@ dvi:
 demos:
 	/bin/sh -c "(cd Demos; ../Src/test-stk -f S-scape README.html)"
 
-install: clean-before
+install: all clean-before
 	(cd Tcl;     	$(MAKE) install)
 	(cd Tk;      	$(MAKE) install)
 	(cd Mp;		$(MAKE) install)
@@ -185,7 +185,7 @@ clean-before:
 	    *) echo "No cleaning!";; \
 	  esac; \
 	fi
- 
+
 install.man:
 	(cd Doc;	$(MAKE) install.man)
 

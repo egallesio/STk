@@ -544,7 +544,7 @@ fi
 
 
 
-VERSION=3.99.1
+VERSION=3.99.2
 echo "VERSION=$VERSION" > VERSION
 
 # I have a lot of problems with cache. So ...
@@ -677,6 +677,26 @@ echo "Assumming OS is $OS"
 ####
 #### X11 stuff
 ####
+echo $ac_n "checking for POSIXized ISC""... $ac_c" 1>&6
+if test -d /etc/conf/kconfig.d &&
+  grep _POSIX_VERSION /usr/include/sys/unistd.h >/dev/null 2>&1
+then
+  echo "$ac_t""yes" 1>&6
+  ISC=yes # If later tests want to check for ISC.
+  cat >> confdefs.h <<\EOF
+#define _POSIX_SOURCE 1
+EOF
+
+  if test "$GCC" = yes; then
+    CC="$CC -posix"
+  else
+    CC="$CC -Xp"
+  fi
+else
+  echo "$ac_t""no" 1>&6
+  ISC=
+fi
+		# to avoid a warning
 echo $ac_n "checking how to run the C preprocessor""... $ac_c" 1>&6
 # On Suns, sometimes $CPP names a directory.
 if test -n "$CPP" && test -d "$CPP"; then
@@ -692,7 +712,7 @@ else
   # On the NeXT, cc -E runs the code through the compiler's parser,
   # not just through cpp.
   cat > conftest.$ac_ext <<EOF
-#line 696 "configure"
+#line 716 "configure"
 #include "confdefs.h"
 #include <assert.h>
 Syntax Error
@@ -706,7 +726,7 @@ else
   rm -rf conftest*
   CPP="${CC-cc} -E -traditional-cpp"
   cat > conftest.$ac_ext <<EOF
-#line 710 "configure"
+#line 730 "configure"
 #include "confdefs.h"
 #include <assert.h>
 Syntax Error
@@ -792,7 +812,7 @@ test -z "$x_direct_test_library" && x_direct_test_library=Xt
 test -z "$x_direct_test_function" && x_direct_test_function=XtMalloc
 test -z "$x_direct_test_include" && x_direct_test_include=X11/Intrinsic.h
 cat > conftest.$ac_ext <<EOF
-#line 796 "configure"
+#line 816 "configure"
 #include "confdefs.h"
 #include <$x_direct_test_include>
 EOF
@@ -855,7 +875,7 @@ rm -f conftest*
 ac_save_LIBS="$LIBS"
 LIBS="-l$x_direct_test_library $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 859 "configure"
+#line 879 "configure"
 #include "confdefs.h"
 
 int main() { return 0; }
@@ -935,26 +955,6 @@ else
   test "x$x_libraries" = xNONE && x_libraries=$ac_x_libraries
   ac_cv_path_x="no_x= ac_x_includes=$x_includes ac_x_libraries=$x_libraries"
   echo "$ac_t""libraries $x_libraries, headers $x_includes" 1>&6
-fi
-
-echo $ac_n "checking for POSIXized ISC""... $ac_c" 1>&6
-if test -d /etc/conf/kconfig.d &&
-  grep _POSIX_VERSION /usr/include/sys/unistd.h >/dev/null 2>&1
-then
-  echo "$ac_t""yes" 1>&6
-  ISC=yes # If later tests want to check for ISC.
-  cat >> confdefs.h <<\EOF
-#define _POSIX_SOURCE 1
-EOF
-
-  if test "$GCC" = yes; then
-    CC="$CC -posix"
-  else
-    CC="$CC -Xp"
-  fi
-else
-  echo "$ac_t""no" 1>&6
-  ISC=
 fi
 
 if test "$no_x" = yes; then 
@@ -1590,7 +1590,7 @@ case $OS in
      # Add the -ldld flag 
      LIB_DLD=-ldld;;
    LINUX_ELF)
-     SH_CCFLAGS=''
+     SH_CCFLAGS='-fpic'
      SH_LDFLAGS='-shared -o'
      SH_LOADER='ld'
      SH_SUFFIX='so' 

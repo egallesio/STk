@@ -135,13 +135,13 @@ can do a minimal test of stk with
 
 	$ (cd Src; /bin/sh test-stk)
 
-This will bring a little squared window on your screen (if your DISPLAY
-variable is correctly set). When this is done, enter the following  line
+When you have the STk prompt (and if your DISPLAY variable is correctly set), 
+just enter the following form:
 
 	(pack (button '.test :text "Hello, world" :command (lambda () (exit 0))))
 
-at the scheme prompt. This will display an Hello world button. Clicking on it 
-will leave the scheme interpreter. A more complete demo can be obtained with:
+This will display an Hello world button. Clicking on it will leave the scheme
+interpreter. A more complete demo can be obtained with:
 	
 	$ make demos
 

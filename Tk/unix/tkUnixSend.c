@@ -602,7 +602,7 @@ ValidateName(dispPtr, name, commWindow, oldOK)
 	    dispPtr->appNameProperty, 0, MAX_PROP_WORDS,
 	    False, XA_STRING, &actualType, &actualFormat,
 	    &length, &bytesAfter, (unsigned char **) &property);
-
+ 
     if ((result == Success) && (actualType == None)) {
 	XWindowAttributes atts;
 
@@ -802,7 +802,11 @@ Tk_SetAppName(tkwin, name)
 	    if (i == 2) {
 		Tcl_DStringInit(&dString);
 		Tcl_DStringAppend(&dString, name, -1);
+#ifdef STk_CODE
+		Tcl_DStringAppend(&dString, "#", 1);
+#else
 		Tcl_DStringAppend(&dString, " #", 2);
+#endif
 		offset = Tcl_DStringLength(&dString);
 		Tcl_DStringSetLength(&dString, offset+10);
 		actualName = Tcl_DStringValue(&dString);

@@ -15,11 +15,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: print.c 1.3 Mon, 09 Mar 1998 08:31:40 +0000 eg $
+ * $Id: print.c 1.4 Sat, 30 May 1998 21:05:42 +0000 eg $
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: ??-Oct-1993 ??:?? 
- * Last file update:  9-Mar-1998 09:26
+ * Last file update: 30-May-1998 17:44
  *
  */
 
@@ -66,13 +66,13 @@ static void printsymbol(char *s, FILE *f, int mode)
 
 
 #ifdef USE_STKLOS
-void internal_display_instance(SCM instance, SCM port)
+static void internal_display_instance(SCM instance, SCM port)
 {
   sprintf(STk_tkbuffer, "#[instance %lx]", (unsigned long) instance);
   Puts(STk_tkbuffer, PORT_FILE(port));
 }
 
-void display_instance(SCM instance, SCM port, int type)
+static void display_instance(SCM instance, SCM port, int type)
 {
   char *fct_name;
   SCM fct;
@@ -85,7 +85,7 @@ void display_instance(SCM instance, SCM port, int type)
   }
 
   fct = STk_STklos_value(Intern(fct_name));
-  if (fct == UNBOUND) 
+  if (fct == UNBOUND)
     internal_display_instance(instance, port);
   else 
     Apply(fct, LIST2(instance, port));
@@ -384,155 +384,142 @@ SCM STk_print(SCM exp, SCM port, int mode)
   return UNDEFINED;
 }
 
-/* Printing of circular structures */
 
-static struct Tcl_HashTable cycle_table;
-static int index_label;
+/*============================================================================= 
+ * 
+ *			Printing of circular structures 
+ *
+ *=============================================================================*/
+
+static SCM cycles      = NULL;
+static int index_label = 0;
+
 static void pass1(SCM exp);		/* pass 1: mark cells */
-static SCM pass2(SCM exp, SCM port);	/* pass 2: print      */
+static void pass2(SCM exp, SCM port);	/* pass 2: print      */
 
-static int get_def_label(SCM exp)
-{
-  Tcl_HashEntry *entry;
-  int new;
-  SCM val;
 
-  entry = Tcl_FindHashEntry(&cycle_table, (char*) exp);
-  if (!entry) panic("Internal error within STk_print_label");
-  val = (SCM) Tcl_GetHashValue(entry);
-  
-  if (INTEGERP(val)) {
-    Tcl_SetHashValue(entry, Cons(val, val));
-    return INTEGER(val);
+static void print_cycle(SCM exp, SCM port)
+{  
+  SCM value, tmp;
+
+  if ((tmp = STk_assv(exp, cycles)) != Ntruth) {
+    if (INTEGERP(value = CDR(tmp))) {
+      char buffer[50];
+      sprintf(buffer, "#%d#", INTEGER(value));
+      Puts(buffer, PORT_FILE(port));
+      return;
+    }
   }
-  return -1;
-}
-
-static int get_use_label(SCM exp)
-{
-  Tcl_HashEntry *entry;
-
-  entry = Tcl_FindHashEntry(&cycle_table, (char*) exp);
-  if (entry) {
-    SCM val = (SCM) Tcl_GetHashValue(entry);
-    
-    if (CONSP(val)) return INTEGER(CAR(val));
-  }
-  return -1;
+  /* This is not a cycle. Do a normal print */
+  pass2(exp, port);
 }
 
 
 static void printlist_star(SCM exp, SCM port)
 {
+  SCM value, tmp;
   FILE *f = PORT_FILE(port);
-  char buffer[50];
-  int label;
 
-  if ((label = get_def_label(exp)) >= 0) {
-    sprintf(buffer, "#%d=", label);
-    Puts(buffer, f);
-  }
+  Putc('(', f);
 
-  Putc('(', f); 
-  
   for ( ; ; ) {
-    if ((label = get_use_label(CAR(exp))) >= 0) {
-      sprintf(buffer, "#%d#", label);
-      Puts(buffer, f);
-    }
-    else pass2(CAR(exp), port);
-    
-    exp = CDR(exp);
+    print_cycle(CAR(exp), port);
 
-    if (NULLP(exp)) break;
-    if  ((label = get_use_label(exp)) >= 0) {
-      sprintf(buffer, " . #%d#", label);
-      Puts(buffer, f);
-      break;
-    }
-    if (NCONSP(exp)) {
-      Puts(" . ", f);
-      pass2(exp, port);
-      break;
+    if (NULLP(exp=CDR(exp))) break;
+
+    if ((tmp = STk_assv(exp, cycles)) != Ntruth) {
+      value = CDR(tmp);
+      if (NCONSP(exp) || value == Truth || INTEGERP(value)) { 
+	/* either  ". X" or ". #0=(...)" or ". #0#" */
+	Puts(" . ", f);
+	print_cycle(exp, port);
+	break;
+      }
     }
     Putc(' ', f);
   }
   Putc(')', f);
 }
 
+
 static void printvector_star(SCM exp, SCM port)
 {
   FILE *f = PORT_FILE(port);
-  char buffer[50];
-  int i, label, len = VECTSIZE(exp);;
-
-  if ((label = get_def_label(exp)) >= 0) {
-    sprintf(buffer, "#%d=", label);
-    Puts(buffer, f);
-  }
-
-  Puts("#(", f);
+  int j, n = exp->storage_as.vector.dim;
   
-  for (i = 0; i < len; i++) {
-    SCM tmp = VECT(exp)[i];
-    if ((label = get_use_label(tmp)) >= 0) {
-      sprintf(buffer, "#%d#", label);
-      Puts(buffer, f);
-    }
-    else pass2(tmp, port);
-    if (i < len-1) Putc(' ', f);
+  Puts("#(", f);
+  for(j=0; j < n; j++) {
+    print_cycle(VECT(exp)[j], port);
+    if ((j + 1) < n) Putc(' ', f);
   }
   Putc(')', f);
 }
 
+
 static void pass1(SCM exp)
 {
-  Tcl_HashEntry *entry;
-  int new;
+  SCM tmp;
 
+Top:
   if (NCONSP(exp) && NVECTORP(exp)) return;
 
-  entry = Tcl_CreateHashEntry(&cycle_table, (char *) exp, &new);
-  if (new) {
-    /* We have never seen this cell */
-    Tcl_SetHashValue(entry, Truth);
-    switch (TYPE(exp)) {
-      case tc_cons:   pass1(CAR(exp)); pass1(CDR(exp)); break;
-      case tc_vector: {
-			int i, len = VECTSIZE(exp);
-			for (i = 0; i < len; i++) pass1(VECT(exp)[i]);
-      		      }
-      		      break;
+  if ((tmp = STk_assv(exp, cycles)) == Ntruth) {
+    /* We have never seen this cell so far */
+    cycles = Cons(Cons(exp, Ntruth), cycles);
+
+    if (CONSP(exp)) {			/* it's a cons */
+      pass1(CAR(exp));
+      exp = CDR(exp); 
+      goto Top;
     }
-  }
+    else { 				/* it's a vector */
+      int i, len = VECTSIZE(exp)-1;
+      for (i = 0; i < len; i++) pass1(VECT(exp)[i]);
+      if (len >= 0) {exp = VECT(exp)[len]; goto Top;}
+    }
+  } 
   else {
-    SCM val = (SCM) Tcl_GetHashValue(entry);
-    if (val == Truth)
-      /* No label has been assigned to this cell. Provide one */
-      Tcl_SetHashValue(entry, (char *) STk_makeinteger(index_label++));
+    /* This item was already seen. Note that this is the second time */
+    CDR(tmp) = Truth;
   }
 }
 
-static SCM pass2(SCM exp, SCM port)
-{
-  FILE *f = PORT_FILE(port);
 
-  switch (TYPE(exp)) {
-    case tc_cons:   printlist_star(exp, port);   break;
-    case tc_vector: printvector_star(exp, port); break;
-    default:  STk_print(exp, port, WRT_MODE);
+static void pass2(SCM exp, SCM port)
+{
+  if (NCONSP(exp) && NVECTORP(exp))
+    STk_print(exp, port, WRT_MODE); 	/* Normal print */
+  else {
+    SCM value, tmp;
+
+    /* Eventually print a definition label */
+    if ((tmp = STk_assv(exp, cycles)) != Ntruth) {
+      if ((value=CDR(tmp)) == Truth) {
+	FILE *f = PORT_FILE(port);
+	char buffer[50];
+	int label;
+
+	/* First use of this label. Assign it a value */
+	sprintf(buffer, "#%d=", index_label);
+	Puts(buffer, f);
+	CDR(tmp) = STk_makeinteger(index_label++);
+      }
+    }
+
+    if (CONSP(exp)) printlist_star(exp, port);
+    else            printvector_star(exp, port);
   }
 }
 
-SCM STk_print_star(SCM exp, SCM port)
+PRIMITIVE STk_print_star(SCM exp, SCM port)
 {
-  if (NCONSP(exp) &&  NVECTORP(exp)) 
-    return STk_print(exp, port, WRT_MODE);
-  
-  Tcl_InitHashTable(&cycle_table, TCL_ONE_WORD_KEYS);
+  if (NCONSP(exp) &&  NVECTORP(exp)) return STk_print(exp, port, WRT_MODE);
+
+  if (cycles == NULL) STk_gc_protect(&cycles);
+  cycles      = NIL;
   index_label = 0;
 
-  pass1(exp);
-  pass2(exp, port);
+  pass1(exp); pass2(exp, port);
+
   return UNDEFINED;
 }

@@ -2,7 +2,7 @@
  *
  * w s t k . c
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -19,15 +19,21 @@
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 12-May-1993 10:34
- * Last file update: 21-Jul-1996 11:50
+ * Last file update:  8-Jun-1998 19:41
  *
  ******************************************************************************/
 #define STK_MAIN
 
-#include <dos.h>
+#ifndef CYGWIN32
+#  include <dos.h>
+#endif
+
 #include <locale.h>
 #include "stk.h"
-#include "tkWinInt.h"
+
+#ifdef USE_TK
+#  include "tkWinInt.h"
+#endif
 
 void WishPanic _ANSI_ARGS_(TCL_VARARGS(char *,format));
 

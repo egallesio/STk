@@ -19,7 +19,7 @@
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 25-Oct-1993 23:39
- * Last file update:  9-Jan-1998 19:03
+ * Last file update: 14-May-1998 22:55
  */
 
 /* Notes:
@@ -327,10 +327,12 @@ PRIMITIVE STk_syntax_define(SCM *pform, SCM env, int len)
 
   if (NULLP(env)) {				/* Global var */
     STk_define_public_var(NIL, var, expr);
+    STk_last_defined = var;   
   }
   else {
     if (MODULEP(CAR(env))) {			/* Public variable */
       STk_define_public_var(CAR(env), var, expr);
+      STk_last_defined = var;
     }
     else {				 	/* Local var */
       tmp = STk_value_in_env(var, env);
@@ -356,7 +358,6 @@ PRIMITIVE STk_syntax_define(SCM *pform, SCM env, int len)
       }
     }
   }
-
   if (TRACED_VARP(var)) STk_change_value(var, env);
   SYNTAX_RETURN(UNDEFINED, Ntruth);
 }

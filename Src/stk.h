@@ -16,11 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- *  $Id: stk.h 1.12 Wed, 22 Apr 1998 21:52:02 +0000 eg $
+ *  $Id: stk.h 1.13 Tue, 19 May 1998 10:44:58 +0000 eg $
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 12-May-1993 10:34
- * Last file update: 22-Apr-1998 11:34
+ * Last file update: 14-May-1998 16:36
  *
  ******************************************************************************/
 
@@ -88,6 +88,7 @@ extern "C" {
 #define LOAD_PATH	"*load-path*"
 #define LOAD_SUFFIXES	"*load-suffixes*"
 #define LOAD_VERBOSE	"*load-verbose*"
+#define LAST_DEFINED    "*last-defined*"
 
 #define REPORT_ERROR	"report-error"
 
@@ -1457,6 +1458,9 @@ Extern char *STk_library_path;
 
 /* Is the interpreter safe. Of course not!!! */
 Extern int STk_is_safe;
+
+/* The last variable defined with a DEFINE */
+Extern SCM STk_last_defined;
 
 #undef  Extern
 #define Truth 	  STk_truth

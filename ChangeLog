@@ -1,3 +1,114 @@
+1998-06-09  Erick Gallesio  <eg@unice.fr>
+
+	* Release 3.99.2
+
+1998-06-03  Erick Gallesio  <eg@unice.fr>
+
+	* Src/port.c (STk_read_line): Iconcorrect behaviour when a file is
+ 	not ended by a newline (thanks to Shiro Kawai
+ 	<shiro@sqush.squareusa.com>)
+	
+1998-06-02  Erick Gallesio  <eg@unice.fr>
+
+	* Tcl/tcl.h: Added a dumb field to the Tcl_Obj type for AIX cc
+	compiler (thanks to Eric Fintzel <tpfintz@fr.ibm.com>)
+
+	* Src/dynload.c : Added fake functions STk_call_external,
+ 	STk_external_existsp and STk_cstring2string for systems without
+ 	dynamic loading. Patch proposed by Eric Fintzel <tpfintz@fr.ibm.com>
+	and Ron Lawrence <lawrence@chrysalis.com>.
+
+	* Extensions/stk-genmake.in: File added. This script file can be
+ 	used to build a Makefile for extensions. It constructs a Makefile
+ 	which uses exactly the same options and compiler that was used to
+ 	build the interpreter.
+
+	* Extensions/%README: Updated.
+
+1998-06-01  Erick Gallesio  <eg@unice.fr>
+
+	* STklos/Tk/Basics.stklos: Added exportations of <Tk-object> and
+ 	tk-constructor.
+
+	* STklos/Tk/Tk-meta.stklos: Added exportation of
+ 	compute-tk-virtual-get-n-set.
+
+1998-05-31  Erick Gallesio  <eg@unice.fr>
+
+	* STklos/stklos.stk (ensure-class): Better error message when a
+ 	slot or a metaclass is duplicated (the duplicate is now clearly shown
+	now).  
+
+	* configure.in: Added the -fpic option for Linux shared libraries.
+  	It seems that problems appear when the object file is bigger than
+ 	64Kb (at least the Tktable is is in this case).
+
+1998-05-30  Erick Gallesio  <eg@unice.fr>
+
+	* Doc/Reference/*.tex : Documentation update
+
+	* Src/port.c (internal_format): Added the ~W format
+
+	* Src/print.c: heavy rewritting. should be a little bit more
+ 	efficient.
+	
+1998-05-28  Erick Gallesio  <eg@unice.fr>
+
+	* Extensions/html.c (html_next_token): Partly rewritten to take
+ 	into account the syntax "&#number;" (signalled by Jacques
+ 	Chazarain).  BTW, the procedure has now the same behaviour as
+ 	Netscape for unfinished entity (e.g. x&zz<...> is seen as a string
+ 	which must not be interpretated).
+	
+
+1998-05-25  Erick Gallesio  <eg@unice.fr>
+
+	* Src/read.c: Now we can read circular data such as the ones
+	built by write*
+
+1998-05-22  Erick Gallesio  <eg@unice.fr>
+
+	* STklos/Tk/Tk-classes.stklos: Added <Tk-composite-toplevel> to
+	Tk-classes.
+
+1998-05-21  Erick Gallesio  <eg@unice.fr>
+
+	* Tk/unix/tkUnixSend.c (Tk_SetAppName): Change the names of
+ 	mutiple applications from "STk #2", "STk #3", ... to "STk#2",
+ 	"STk#3" to avoid problems with the (winfo 'interps) call.
+	This is clearly a hack.
+
+1998-05-19  Erick Gallesio  <eg@unice.fr>
+
+	* Extensions/process.c: Correction of a bug that prevents you from
+ 	getting the exit status of a child process under certain
+ 	circumstances. Patch provided by Grant Edwards
+ 	<grante@reddwarf.frco.com>
+
+	* Src/tcl-glue.c (STk_tcl_getvar): forgot a return in the function 
+	which breaks result at least on Solaris (thanks to Thomas Buerger
+	for the patch).
+
+	* STklos/stklos.stk (compute-get-n-set): Added the :each-subclass
+ 	allocation scheme which correspond to the 3.1.1 :class allocation.
+  	Change was requested by Thomas Buerger
+ 	<buerger@serv1.iaa.tu-clausthal.de>
+
+1998-05-15  Erick Gallesio  <eg@unice.fr>
+
+	* Lib/trace.stk: Bug correction: traces of primitives was incorrect.
+
+1998-05-14  Erick Gallesio  <eg@unice.fr>
+
+	* Lib/init.stk:
+	* Src/toplevel.c: New global variable *last-defined* which is set
+	when a define is done. This allow some traces when evaluating 
+	large pieces of code.
+
+1998-05-11  Erick Gallesio  <eg@unice.fr>
+
+	* Lib/tk-init.stk : functions of image.stk are now autoload
+
 1998-04-30  Erick Gallesio  <eg@unice.fr>
 
 	* STk-3.99.1 Release

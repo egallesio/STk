@@ -12,11 +12,11 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
-;;;; $Id: stklos.stk 1.21 Thu, 30 Apr 1998 14:16:40 +0000 eg $
+;;;; $Id: stklos.stk 1.23 Sun, 31 May 1998 17:22:09 +0000 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 20-Feb-1994 21:09
-;;;; Last file update: 30-Apr-1998 15:47
+;;;; Last file update: 31-May-1998 13:11
 
 (when (provided? "stklos") 
   (error "STklos already initialized."))
@@ -71,6 +71,12 @@
 	((pair? l) (fct (car l)) 
 		   (for-each* fct (cdr l)))
 	(else      (fct l))))
+
+(define (find-duplicate l)	; find a duplicate in a list; #f otherwise
+  (cond 
+    ((null? l)			#f)
+    ((memv (car l) (cdr l))	(car l))
+    (else 			(find-duplicate (cdr l)))))
 
 ;--------------------------------------------------
 (define (set-symbol! symbol value env)
@@ -196,13 +202,13 @@
 		    (map (lambda (x) (%find-class x env)) supers))))
     ;; Verify that all direct slots are different and that we don't inherit
     ;; several time from the same class
-    (let ((s (list->set supers))
-	  (m (list->set (map slot-definition-name slots))))
-      (when  (< (length m) (length slots))
-	(error "define-class: bad list of slots ~S" slots))
-      (when (< (length s) (length supers))
-	(error "define-class: bad list of superclasses ~S" supers)))
-    
+    (let ((tmp1 (find-duplicate supers))
+	  (tmp2 (find-duplicate (map slot-definition-name slots))))
+      (when tmp1
+	(error "define-class: super class ~S is duplicate in class ~S" tmp1 name))
+      (when tmp2
+	(error "define-class: slot ~S is duplicate in class ~S" tmp2 name)))
+
     ;; Everything seems correct, build the class
     (let ((old (%find-class name env #f))
 	  (cls (apply make metaclass :dsupers supers :slots slots 
@@ -676,6 +682,12 @@
 		       (if r
 			   (cddr r)
 			   (Loop (cdr l))))))))
+
+    (:each-subclass ;; slot shared by instances of direct subclass.
+		    ;; (Thomas Buerger, April 1998)
+     		    (let ((shared-cell (make-vector 1)))
+		      (list (lambda (o)   (vector-ref  shared-cell 0))
+			    (lambda (o v) (vector-set! shared-cell 0 v)))))
 
     (:virtual;; No allocation
      	     ;; slot-ref and slot-set! function must be given by the user

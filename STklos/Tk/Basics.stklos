@@ -11,25 +11,27 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
-;;;; $Id: Basics.stklos 1.11 Mon, 27 Apr 1998 13:39:00 +0000 eg $
+;;;; $Id: Basics.stklos 1.12 Sat, 06 Jun 1998 12:19:03 +0000 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 30-Mar-1993 15:39
-;;;; Last file update: 27-Apr-1998 12:30
+;;;; Last file update:  1-Jun-1998 18:21
 
 (require "Tk-meta")
 
 (select-module STklos+Tk)
 
-(export Id->instance 		    ; really necessary?
+(export <Tk-object>		    ; The base class of all STklos widgets
+	<destroyed-object>	    ; Class in which destroyed objects are mapped
+	Id->instance 		    ; really necessary?
 	parent			    ; Parent of a widget
 	Id			    ; Tk Id of a widget
 	Eid			    ; External Id of widget
 	tk-widget? 		    ; a predicate
 	initialize-composite-widget ; must be overloaded for composite widgets
 	get-Tk-default-value	    ; Find the default value of a given Tk option
+	tk-constructor		    ; Returns the Tk-command associated to a class
 	destroy			    ; A redefinition of the Tk destroy
-	<destroyed-object>	    ; Class in which destroyed objects are mapped
 	focus			    ; A redefinition of the Tk focus
 	bind			    ; A redefinition of the Tk bind
 	unpack)			    ; to avoid the (pack 'unpack ...) construction

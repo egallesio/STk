@@ -16,11 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: module.c 1.8 Mon, 20 Apr 1998 20:15:01 +0000 eg $
+ * $Id: module.c 1.9 Sun, 31 May 1998 17:22:09 +0000 eg $
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 13-Mar-1997 20:11
- * Last file update: 20-Apr-1998 19:36
+ * Last file update: 31-May-1998 18:51
  */
 
 #include "stk.h"
@@ -279,6 +279,8 @@ PRIMITIVE STk_define_module(SCM l, SCM env, int len)
   module = find_module(name, FALSE, TRUE);
 
   if (len > 1) module_body(module, CDR(l));
+  STk_last_defined = name
+;
   return UNDEFINED;
 }
 

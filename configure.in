@@ -5,7 +5,7 @@ dnl	to configure the system for the local environment.
 
 AC_INIT(README)
 
-VERSION=3.99.1
+VERSION=3.99.2
 echo "VERSION=$VERSION" > VERSION
 
 # I have a lot of problems with cache. So ...
@@ -111,6 +111,7 @@ echo "Assumming OS is $OS"
 ####
 #### X11 stuff
 ####
+AC_ISC_POSIX		# to avoid a warning
 AC_PATH_X
 AC_PATH_XTRA
 
@@ -436,7 +437,7 @@ case $OS in
      # Add the -ldld flag 
      LIB_DLD=-ldld;;
    LINUX_ELF)
-     SH_CCFLAGS=''
+     SH_CCFLAGS='-fpic'
      SH_LDFLAGS='-shared -o'
      SH_LOADER='ld'
      SH_SUFFIX='so' 

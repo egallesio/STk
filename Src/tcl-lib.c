@@ -20,7 +20,7 @@
  *
  *            Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 19-Feb-1993 22:15
- * Last file update:  1-Feb-1998 17:56
+ * Last file update:  7-Jun-1998 18:13
  *
  */
 
@@ -963,7 +963,7 @@ Tcl_JoinPath(argc, argv, resultPtr)
 		    /*
 		     * Check to see if we need to append a separator.
 		     */
-
+		    int c;
 		    
 		    if (length != oldLength) {
 			c = Tcl_DStringValue(resultPtr)[length-1];

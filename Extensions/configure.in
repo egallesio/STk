@@ -7,4 +7,4 @@ AC_INIT(process.c)
 CC=${CC-gcc}
 AC_HAVE_HEADERS(unistd.h limits.h)
 AC_HAVE_FUNCS(sigaction)
-AC_OUTPUT(Makefile)
+AC_OUTPUT(Makefile stk-genmake)

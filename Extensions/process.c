@@ -89,15 +89,21 @@ static int internal_process_alivep(SCM process)
   else {
     /* Use waitpid to gain the info. */
     res = waitpid(PROCPID(process), &info, WNOHANG);
-    if (res == 0) 
+    if (res == 0)
       /* process is still running */
       return TRUE;
-    else {
-      /* process has terminated and we must save this information */
-      PROCESS(process)->exited      = TRUE;
-      PROCESS(process)->exit_status = info;
-      return FALSE;
-    }
+    else 
+      if (res == PROCPID(process)) {
+	/* process has terminated and we must save this information */
+	PROCESS(process)->exited      = TRUE;
+	PROCESS(process)->exit_status = info;
+	return FALSE;
+      }
+      else {
+	/* might not have found process because we've already waited for it */
+	/* if so, then status has already been updated */
+	return FALSE;
+      }
   }
 }
 
@@ -176,7 +182,7 @@ static void cannot_run(int pipes[3][2], char **argv, char *msg, SCM obj)
     if (pipes[i][1] != -1) close(pipes[i][1]);
   }
   free(argv);
-  Err(msg, obj);
+  STk_procedure_error("run-process", msg, obj);
 }
 
 
@@ -205,15 +211,14 @@ static PRIMITIVE run_process(SCM l, int len)
       int i = -1;
 
       if (NCONSP(CDR(l))) 
-	cannot_run(pipes, argv_start,"run-process: no argument after keyword", tmp);
+	cannot_run(pipes, argv_start,"no argument after keyword", tmp);
       
       l = CDR(l); /* Go to next item */
       
       if (STk_eqv(tmp, STk_makekey(key_hst)) == Truth) {
 	/* :host keyword processing */
 	if (NSTRINGP(CAR(l)))
-	  cannot_run(pipes, argv_start, 
-		     "run-process: string expected. It was", CAR(l));
+	  cannot_run(pipes, argv_start, "string expected. It was", CAR(l));
 	strcpy(host, CHARS(CAR(l))); /* to avoid GC problems */
 	/* Shift argv to point the start of allocated zone. This avoid a copy
 	 * of arguments already processed.
@@ -227,8 +232,7 @@ static PRIMITIVE run_process(SCM l, int len)
 	if (STk_eqv(tmp, STk_makekey(key_wit)) == Truth) {
 	  /* :wait option processing */
 	  if (NBOOLEANP(CAR(l))) 
-	    cannot_run(pipes, argv_start,
-		       "run-process: boolean expected. It was", CAR(l));
+	    cannot_run(pipes, argv_start, "boolean expected. It was", CAR(l));
 	  
 	  waiting = (CAR(l) == Truth);
 	}
@@ -238,7 +242,7 @@ static PRIMITIVE run_process(SCM l, int len)
 	  if (STk_eqv(tmp, STk_makekey(key_out)) == Truth) i = 1; else
 	  if (STk_eqv(tmp, STk_makekey(key_err)) == Truth) i = 2;
 	  
-	  if (i < 0) cannot_run(pipes, argv_start, "run-process: bad keyword", tmp);
+	  if (i < 0) cannot_run(pipes, argv_start, "bad keyword", tmp);
 	  redirection[i] = CAR(l);
 	  
 	  if (STRINGP(redirection[i])) {
@@ -263,7 +267,7 @@ static PRIMITIVE run_process(SCM l, int len)
 		if (stat_i.st_dev==stat_j.st_dev && stat_i.st_ino==stat_j.st_ino) {
 		  /* Same file was cited 2 times */
 		  if (i == 0 || j == 0) {
-		    sprintf(msg, "run-process: read/write on the same file: %s",
+		    sprintf(msg, "read/write on the same file: %s", 
 			         CHARS(redirection[i]));
 		    cannot_run(pipes, argv_start, msg, NIL);
 		  }
@@ -287,7 +291,7 @@ static PRIMITIVE run_process(SCM l, int len)
 	    }
 	    
 	    if(pipes[i][0] < 0) {
-	      sprintf(msg, "run-process: can't redirect standard %s to file %s",
+	      sprintf(msg, "can't redirect standard %s to file %s",
 		      stdStreams[i], CHARS(redirection[i]));
 	      cannot_run(pipes, argv_start, msg, NIL);
 	    }
@@ -296,7 +300,7 @@ static PRIMITIVE run_process(SCM l, int len)
 	    if (KEYWORDP(redirection[i])) {
 	      /* Redirection in a pipe */
 	      if (pipe(pipes[i]) < 0) {
-		sprintf(msg, "run-process: can't create stream for standard %s",
+		sprintf(msg, "can't create stream for standard %s",
 			stdStreams[i]);
 		cannot_run(pipes, argv_start, msg, NIL);
 	      }
@@ -307,13 +311,13 @@ static PRIMITIVE run_process(SCM l, int len)
     else {
       /* Normal arg. Put it in argv */
       if (NSTRINGP(tmp)) 
-	cannot_run(pipes, argv_start, "run-process: bad string", tmp);
+	cannot_run(pipes, argv_start, "bad string", tmp);
       argv[argc++] = CHARS(tmp);
     }
   }
   argv[argc] = NULL;
-  
-  if (argc == 0) cannot_run(pipes, argv_start,"run-process: no command given", NIL);
+
+  if (argc == 0) cannot_run(pipes, argv_start,"no command given", NIL);
 
   /* Build a process object */
   proc = make_process();
@@ -321,7 +325,7 @@ static PRIMITIVE run_process(SCM l, int len)
   
   /* Fork another process */
   switch (pid = fork()) {
-    case -1: cannot_run(pipes,argv,"run-process: can't create child process", NIL);
+    case -1: cannot_run(pipes,argv,"can't create child process", NIL);
     case 0:  /* Child */
       	     for(i = 0; i < 3; i++) {
 	       if (STRINGP(redirection[i])) {
@@ -366,7 +370,7 @@ static PRIMITIVE run_process(SCM l, int len)
 
 		     f = (i == 0)? fdopen(pipes[i][1],"w"):fdopen(pipes[i][0],"r");
 		     if (f == NULL)
-		       cannot_run(pipes, argv, "run-process: cannot fdopen", proc);
+		       cannot_run(pipes, argv, "cannot fdopen", proc);
 
 		     sprintf(msg, "pipe-%s-%d", stdStreams[i], pid);
 
@@ -453,44 +457,57 @@ static PRIMITIVE process_wait(SCM process)
   
   if (PROCESS(process)->exited) return Ntruth;
   else {
-    int ret = waitpid(PROCPID(process), &PROCESS(process)->exit_status, 0);
-
-    PROCESS(process)->exited = TRUE;
-    return (ret == 0) ? Ntruth : Truth;
+    int info, res;
+    
+    res = waitpid(PROCPID(process), &info, 0);
+    
+    if (res == PROCPID(process)) {
+      PROCESS(process)->exit_status = info;
+      PROCESS(process)->exited = TRUE;
+      return Truth;
+    }
+    else
+      return Ntruth;
   }
 }
 
 
 static PRIMITIVE process_xstatus(SCM process)
 {
-  int info, n;
+  int info, n, res;
 
   PURGE_PROCESS_TABLE();
 
   if (NPROCESSP(process)) Err("process-exit-status: bad process", process);
   
-  if (PROCESS(process)->exited) n = PROCESS(process)->exit_status;
+  if (PROCESS(process)->exited)
+    n = WEXITSTATUS(PROCESS(process)->exit_status);
   else {
-    if (waitpid(PROCPID(process), &info, WNOHANG) == 0) {
+    res = waitpid(PROCPID(process), &info, WNOHANG);
+    if (res == 0) {
       /* Process is still running */
       return Ntruth;
     }
-    else {
+    else if (res == PROCPID(process)) {
       /* Process is now terminated */
       PROCESS(process)->exited      = TRUE;
       PROCESS(process)->exit_status = info;
       n = WEXITSTATUS(info);
     }
+    else
+      return Ntruth;
   }
   return STk_makeinteger((long) n);
 }
 
 static PRIMITIVE process_send_signal(SCM process, SCM signal)
 {
+  ENTER_PRIMITIVE("process-send-signal");
+
   PURGE_PROCESS_TABLE();
 
-  if (NPROCESSP(process)) Err("process-send-signal: bad process", process);
-  if (NINTEGERP(signal))  Err("process-send-signal: bad integer", signal);
+  if (NPROCESSP(process)) Serror("bad process", process);
+  if (NINTEGERP(signal))  Serror("bad integer", signal);
 
   kill(PROCPID(process), STk_integer_value(signal));
   return UNDEFINED;

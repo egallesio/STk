@@ -12,7 +12,7 @@
 #
 #           Author: Erick Gallesio [eg@kaolin.unice.fr]
 #    Creation date:  6-Mar-1994 15:49
-# Last file update: 30-Apr-1998 10:57
+# Last file update:  2-Jun-1998 17:44
 
 include ../config.make
 
@@ -32,6 +32,7 @@ CFLAGS= $(SH_CCFLAGS) $(STKCFLAGS) $(DFLGS) -DUSE_TK @DEFS@ \
 
 ##############################################################################
 all: $(EXTRA_OBJ)
+	chmod 0755 stk-genmake
 
 # Following lines are needed for weird make commands. Use Gnu make....
 hash.$(SH_SUFFIX): 	hash.o 
@@ -48,7 +49,10 @@ install:
 	if test "$(EXTRA_OBJ)" != "" ; then $(CP) $(EXTRA_OBJ) $(execdir); fi
 
 install.libs:
-
+	-if [ ! -d $(bindir) ] ; then mkdir -p $(bindir); fi
+	cp stk-genmake $(bindir)
+	chmod 0755 $(bindir)/stk-genmake
 
 clean:
-	@/bin/rm -f *.o *.$(SH_SUFFIX) core *~ Makefile config.status config.log
+	@/bin/rm -f *.o *.$(SH_SUFFIX) core *~ Makefile config.status \
+	config.log stk-genmake

@@ -17,11 +17,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: dynload.c 1.2 Fri, 10 Apr 1998 07:13:18 +0000 eg $
+ * $Id: dynload.c 1.5 Tue, 09 Jun 1998 07:40:04 +0000 eg $
  * 
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 23-Jan-1994 19:09
- * Last file update:  8-Apr-1998 10:53
+ * Last file update:  8-Jun-1998 20:21
  */
 
 /* Support for HPUX is due to Dipankar Gupta <dg@hplb.hpl.hp.com> */
@@ -117,10 +117,9 @@ static void *find_function(char *path, char *fname, int error_if_absent)
   }
   else {
     /* Dynamically load the file and enter its handle in cache */
-     if ((handle = (void *) dlopen(path, DYN_FLAG)) == NULL)
-       Serror("cannot open object file", str);
-     cache_files = Cons(str,
-			Cons(MAKE_STAT_PTR(handle), cache_files));
+    if ((handle=(void *) dlopen(path, DYN_FLAG)) == NULL)
+      Serror("cannot open object file", str);
+    cache_files = Cons(str, Cons(MAKE_STAT_PTR(handle), cache_files));
   }
 
   if ((fct = (void *) dlsym(handle, fname)) == NULL && error_if_absent) {
@@ -285,6 +284,33 @@ void STk_load_object_file(char *path)
 
   load_and_call(path, fct_name);
 }
+
+#if defined(CYGWIN32)		
+
+#define MAKE_STAT_PTR(p) NIL
+#define MAKE_DYN_PTR(p)  NIL
+
+
+static void initialize_dynload(void)
+{
+  /* FIXME: */
+  Err("dynload: cannot initialize dynload.", STk_makestring(dlerror())); /* CYGWIN32 */
+}
+
+
+static void load_and_call(char *path, char *fct_name)
+{
+  /* FIXME */
+  Err("load-and-call: not yet implemented\n", NIL); /* CYGWIN32 */
+}
+
+static void *find_function(char *path, char *fname, int error_if_absent)
+{
+  Err("find-function: not yet implemented\n", NIL); /* CYGWIN32 */
+  return NULL;
+}
+
+#endif
 
 /******************************************************************************
  *									       
@@ -561,8 +587,28 @@ PRIMITIVE STk_cstring2string(SCM pointer)
 
 
 #else /* not DYNLOAD */
+static *msg = "FFI support for this architecture does not exist yet. Sorry!";
+
 void STk_load_object_file(char *path)
 {
   Err("load: Loading of object file is not defined on this architecture", NIL);
+}
+
+PRIMITIVE STk_call_external(SCM l, int len)
+{
+  ENTER_PRIMITIVE("%call-external");
+  Serror(msg, NIL);
+}
+
+PRIMITIVE STk_external_existsp(SCM entry_name, SCM library)
+{
+  ENTER_PRIMITIVE("%external-exists?");
+  Serror(msg, NIL);
+}
+
+PRIMITIVE STk_cstring2string(SCM pointer)
+{
+  ENTER_PRIMITIVE("c-string->string");
+  Serror(msg, NIL);
 }
 #endif

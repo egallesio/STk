@@ -16,11 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: port.c 1.6 Wed, 22 Apr 1998 21:52:02 +0000 eg $
+ * $Id: port.c 1.10 Tue, 09 Jun 1998 07:40:04 +0000 eg $
  *
  *            Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 17-Feb-1993 12:27
- * Last file update: 22-Apr-1998 11:44
+ * Last file update:  8-Jun-1998 19:23
  *
  */
 #ifndef WIN32
@@ -49,7 +49,7 @@
 #include "stk.h"
 #include "module.h"
 
-#ifdef WIN32
+#if defined(WIN32) && !defined(CYGWIN32)
   /* Provide substitute functions dor WIN32 */
   FILE *popen(char *cmd, char *mode) 
   {	
@@ -114,26 +114,17 @@ Out:
 }
 
 
-static SCM verify_port(char *who, SCM port, int mode)
+static SCM verify_port(char *proc_name, SCM port, int mode)
 {
-  char buff[100];
-
   if (port == UNBOUND)     /* test write 'cause of flush */
     port = (mode&F_WRITE) ? STk_curr_oport: STk_curr_iport; 
 
-  if (!(INP(port) || OUTP(port))) {
-    sprintf(buff, "%s: bad port", who);
-    Err(buff, port);
-  }
-  if (PORT_FLAGS(port) & PORT_CLOSED) {
-    sprintf(buff, "%s: port is closed", who);
-    Err(buff, port);
-  }
+  if (!(INP(port) || OUTP(port)))     Serror("bad port", port);
+  if (PORT_FLAGS(port) & PORT_CLOSED) Serror("port is closed", port);
+
   if ((mode & F_READ)  && INP(port))  return port; /* not else. It can be both */
   if ((mode & F_WRITE) && OUTP(port)) return port;
-Error:
-  sprintf(buff, "%s: bad port", who);
-  Err(buff, port);
+  Serror("bad port", port);
 }
 
 static void closeport(SCM port)
@@ -250,6 +241,7 @@ static int do_load(char *full_name, SCM module)
        Top_jmp_buf   	   = prev_jb;
        Error_context 	   = prev_context;
        STk_selected_module = prev_module;
+       STk_last_defined    = Ntruth;
 
        if (k) /*propagate error */ longjmp(*Top_jmp_buf, k);
 
@@ -291,7 +283,7 @@ static int try_loadfile(char *prefix, char *fname, SCM suffixes, SCM module)
   return 0;
 
 TooLong:
-    Err("load: Filename too long", NIL);
+    Err("load: filename too long", NIL);
 }
 
 SCM STk_load_file(char *fname, int err_if_absent, SCM module)
@@ -372,9 +364,11 @@ PRIMITIVE STk_with_input_from_file(SCM string, SCM thunk)
   SCM result, prev_iport = STk_curr_iport;
   int prev_context 	 = Error_context;
   int k;
+  
+  ENTER_PRIMITIVE("with-input-from-file");
 
-  if (NSTRINGP(string))     Err("with-input-from-file: bad string", string);
-  if (!STk_is_thunk(thunk)) Err("with-input-from-file: bad thunk", thunk);
+  if (NSTRINGP(string))     Serror("bad string", string);
+  if (!STk_is_thunk(thunk)) Serror("bad thunk", thunk);
 
   STk_curr_iport = UNBOUND; 	/* will not be changed if opening fails */
 
@@ -400,8 +394,10 @@ PRIMITIVE STk_with_output_to_file(SCM string, SCM thunk)
   int prev_context       = Error_context;
   int k;
 
-  if (NSTRINGP(string))     Err("with-output-to-file: bad string", string);
-  if (!STk_is_thunk(thunk)) Err("with-output-to-file: bad thunk", thunk);
+  ENTER_PRIMITIVE("with-output-to-file");
+
+  if (NSTRINGP(string))     Serror("bad string", string);
+  if (!STk_is_thunk(thunk)) Serror("bad thunk", thunk);
 
   STk_curr_oport = UNBOUND;		/* will not be changed if opening fails */
 
@@ -545,8 +541,10 @@ PRIMITIVE STk_newline(SCM port)
 
 PRIMITIVE STk_write_char(SCM c, SCM port)
 {
-  if (NCHARP(c)) Err("write-char: not a character", c);
-  port = verify_port("write-char", port, F_WRITE);
+  ENTER_PRIMITIVE("write-char");
+
+  if (NCHARP(c)) Serror("not a character", c);
+  port = verify_port(proc_name, port, F_WRITE);
   Putc(CHAR(c), PORT_FILE(port));
   return UNDEFINED;
 }
@@ -576,17 +574,17 @@ static SCM internal_format(SCM l,int len,int error)/* a very simple and poor one
 {
   SCM port, fmt;
   int format_in_string = 0;
-  char *p;
+  char *p, *proc_name = error? "error": "format";
   FILE *f;
-
+  
   if (error) {
-    if (len < 1) Err("error: Bad list of parameters", l);
+    if (len < 1) Serror("bad list of parameters", l);
     format_in_string = 1;
     port = STk_open_output_string();
     len -= 1;
   }
   else {
-    if (len < 2) Err("format: Bad list of parameters", l);
+    if (len < 2) Serror("bad list of parameters", l);
     port = CAR(l); l = CDR(l);
     len -= 2;
   }
@@ -600,24 +598,28 @@ static SCM internal_format(SCM l,int len,int error)/* a very simple and poor one
     }
   }
   
-  verify_port(error? "error": "format", port, F_WRITE);
-  if (NSTRINGP(fmt)) Err("format: bad format string", fmt);
+  verify_port(proc_name, port, F_WRITE);
+  if (NSTRINGP(fmt)) Serror("bad format string", fmt);
 
   f = PORT_FILE(port);
 
   for(p=CHARS(fmt); *p; p++) {
     if (*p == '~') {
       switch(*(++p)) {
-        case 'S':
-        case 's':
         case 'A':
-        case 'a': if (len-- > 0) {
-                    STk_print(CAR(l), 
-			      port, 
-			      (tolower(*p) == 's')? WRT_MODE: DSP_MODE);
-                    l = CDR(l);
-                  }
-                  else Err("format: too much ~ in format string", l); 
+        case 'a': if (len-- <= 0) goto TooMuch;
+	  	  STk_print(CAR(l), port, DSP_MODE);
+                  l = CDR(l);
+		  continue;
+        case 'S':
+        case 's': if (len-- <= 0) goto TooMuch;
+                  STk_print(CAR(l), port, WRT_MODE);
+                  l = CDR(l);
+	          continue;        
+        case 'W':
+        case 'w': if (len-- <= 0) goto TooMuch;
+	  	  STk_print_star(CAR(l), port);
+		  l = CDR(l);
 	          continue;
         case '%': Putc('\n', f);
                   continue;
@@ -630,9 +632,12 @@ static SCM internal_format(SCM l,int len,int error)/* a very simple and poor one
     Putc(*p, f);
   }
 
-  if (NNULLP(l)) Err("format: too few ~ in format string", l);
-
+  if (NNULLP(l)) Serror("too few ~ in format string", l);
   return format_in_string ? STk_get_output_string(port) : UNDEFINED;
+
+TooMuch:
+  Serror("too much ~ in format string", l);
+  return UNDEFINED;
 }
 
 PRIMITIVE STk_format(SCM l, int len)
@@ -667,7 +672,9 @@ PRIMITIVE STk_open_file(SCM filename, SCM mode)
 {
   int type;
   
-  if (NSTRINGP(filename)) Err("open-file: bad file name", filename); 
+  ENTER_PRIMITIVE("open-file");
+
+  if (NSTRINGP(filename)) Serror("bad file name", filename); 
   if (NSTRINGP(mode) || CHARS(mode)[1] != '\0') goto Error;
   
   switch (CHARS(mode)[0]) {
@@ -675,7 +682,7 @@ PRIMITIVE STk_open_file(SCM filename, SCM mode)
     case 'w': type = tc_oport; break;
     case 'r': type = tc_iport; break;
     default:  ;
-Error:	      Err("open-file: bad mode", mode);
+Error:	     Serror("bad mode", mode);
   }
   return(makeport(CHARS(filename), type, CHARS(mode), FALSE));
 }
@@ -698,9 +705,9 @@ PRIMITIVE STk_read_line(SCM port)
   f = PORT_FILE(port);
   for (i = 0; ; i++) {
     switch (c = Getc(f)) {
-      case EOF:  if (i == 0) { free(buff); return STk_eof_object; }
-      case '\r': i--; continue;
+      case EOF:  if (i == 0) { free(buff); return STk_eof_object; }/* NO BREAK */
       case '\n': res = STk_makestrg(i, buff); free(buff); return res;
+      case '\r': i--; continue;
       default:   if (i == size) {
 	           size += size / 2;
 		   buff = must_realloc(buff, size);
@@ -713,12 +720,14 @@ PRIMITIVE STk_read_line(SCM port)
 PRIMITIVE STk_flush(SCM port)
 {
   int code;
+  
+  ENTER_PRIMITIVE("flush");
 
-  port = verify_port("flush", port, F_WRITE|F_READ);
+  port = verify_port(proc_name, port, F_WRITE|F_READ);
 
   if (! SPORTP(port)) {
     if (fflush(PORT_FILE(port)) == EOF)
-      Err("flush: cannot flush buffer", port);
+      Serror("cannot flush buffer", port);
   }
 
   return UNDEFINED;

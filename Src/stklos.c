@@ -16,11 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: stklos.c 1.13 Mon, 20 Apr 1998 20:15:01 +0000 eg $
+ * $Id: stklos.c 1.14 Thu, 21 May 1998 20:00:04 +0000 eg $
  *
  *            Author: Erick Gallesio [eg@unice.fr]
  *    Creation date:  9-Feb-1994 15:56
- * Last file update: 13-Apr-1998 23:13 
+ * Last file update: 19-May-1998 16:24 
  */
 
 #ifdef USE_STKLOS
@@ -596,8 +596,9 @@ static PRIMITIVE slot_boundp_using_class(SCM classe, SCM obj, SCM slot_name)
 {
   ENTER_PRIMITIVE("slot-bound-using-class?");
 
-  if (NCLASSP(classe)) Serror("bad class",  classe);
-  if (NINSTANCEP(obj)) Serror("bad object", obj);
+  if (NCLASSP(classe))     Serror("bad class",  classe);
+  if (NSYMBOLP(slot_name)) Serror("bad slot name",slot_name);
+  if (NINSTANCEP(obj))     Serror("bad object", obj);
 
   return (get_slot_value(classe, obj, slot_name) == UNBOUND) ? Ntruth : Truth;
 }

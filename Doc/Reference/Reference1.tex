@@ -3,7 +3,7 @@
 %
 %           Author: Erick Gallesio [eg@unice.fr]
 %    Creation date: ??-Nov-1993 ??:??
-% Last file update: 18-Apr-1998 14:47
+% Last file update: 30-May-1998 23:04
 %
 
 \section*{Introduction}
@@ -95,6 +95,28 @@ This kind of comment extends to the end of the line (as described in \rrrr).
     '(foo \sharpsign.foo \sharpsign.(+ foo foo))   \lev (foo 1 2)
     (let ((foo 2))
        \sharpsign.foo)                             \lev 1
+  \end{scheme}
+
+\label{circlistnot}
+\item[\tt\sharpsign{\em n}=] is used to represent circular structures
+  \mainindex{circular structures}. The value given of \emph{n}miust be a
+  number. It is used as a label, which can be referenced later by a
+  {\tt \sharpsign{\em n}\sharpsign} syntax (see below). The scope of
+  the label is the expression being read by the outermost \ide{read}.
+  
+\item[\tt\sharpsign{\em n}=] is used to reference a some object
+  labeled by a {\tt \sharpsign{\em n}=} syntax; that is, 
+  {\tt \sharpsign{\em n}\sharpsign} represents a pointer to the object 
+  labeled exactly by {\tt \sharpsign{\em n}=}. For instance, the object
+  created returned by the following expression 
+  \begin{scheme}
+  (let* ((a (list 1 2))
+      (b (append '(x y) a)))
+  (list a b))
+  \end{scheme}
+  caen be represented in this way:
+  \begin{scheme}
+    \verb+(#0=(1 2) (x y . #0#))+
   \end{scheme}
 \end{description}
 
@@ -1167,14 +1189,22 @@ output string \var{port}.
 
 \begin{entry}{%
 \proto{close-input-port}{ port}{procedure}
-\proto{close-output-port}{ port}{procedure}}
+a\proto{close-output-port}{ port}{procedure}}
 \saut
 \doc
 \end{entry}
 
 \begin{entry}{%
 \proto{read}{}{procedure}
-\proto{read}{ port}{procedure}
+\proto{read}{ port}{procedure}}
+\saut
+\mainindex{circular structures}
+The \stk{} procedure is identical to the \rrrr procedure. It has bee
+extended to accept the ``\verb+#x=+'' and ``\verb+#x#+'' notations
+used for circular stuctures (see \ref{circlistnot}).
+\end{entry}
+
+\begin{entry}{%
 \proto{read-char}{}{procedure}
 \proto{read-char}{ port}{procedure}
 \proto{peek-char}{}{procedure}
@@ -1199,7 +1229,40 @@ value returned by \ide{current-input-port}.
 
 \begin{entry}{%
 \proto{write}{ obj}{procedure}
-\proto{write}{ obj port}{procedure}
+\proto{write}{ obj port}{procedure}}
+\saut
+\doc
+\end{entry}
+
+\begin{entry}{%
+\proto{write*}{ obj}{procedure}
+\proto{write*}{ obj port}{procedure}}
+\saut
+\mainindex{circular structures}
+Writes a written representation of \var{obj} to the given port.  The
+main difference with the \ide{write} procedure is that \ide{write*}
+handles data structures with cycles. Circular structure written by 
+this procedure use the ``\verb+#x=+'' and ``\verb+#x#+'' notations 
+(see \ref{circlistnot}).
+
+As \ide{write}, the \var{port} argument can be omitted, defaulting to
+the value returned by \ide{current\--output\--port}, and the value
+returned by \ide{write*} is undefined.
+
+\begin{scheme}
+(let ((l (cons 1 2)))
+  (set-cdr! l l)
+  (write* l))  \ev \textit{writes} \verb+#0=(1 . #0#)+
+
+(let ((l1 '(1 2)) 
+      (l2 '(3 4)) 
+      (l3 '(5 6))) 
+  (append! l1 l2 l3)
+  (list l1 l2 l3)) \ev \textit{writes} \verb+((1 2 . #0=(3 4 . #1=(5 6))) #0# #1#)+
+\end{scheme}
+\end{entry}
+
+\begin{entry}{%
 \proto{display}{ obj}{procedure}
 \proto{display}{ obj port}{procedure}
 \proto{newline}{}{procedure}
@@ -1218,11 +1281,15 @@ Writes the \var{obj}s to the given \var{port}, according to the format
 string \var{string}.  \var{String} is written literally, except for
 the following sequences:
 %
+\mainindex{circular structures}
 \begin{itemize}
-\item \tilda{}a or \tilda{}A is replaced by the printed representation of the
-next \var{obj}.
+\item \tilda{}a or \tilda{}A is replaced by the printed representation
+  of the next \var{obj}.
 \item \tilda{}s or \tilda{}S is replaced by the ``slashified'' printed
-representation of the next \var{obj}.
+  representation of the next \var{obj}.
+\item \tilda{}w or \tilda{}W is replaced by the printed representation
+  of the next \var{obj} (circular structures are correctly handled and
+  printed using \ide{writes*}).
 \item \tilda{}\tilda{} is replaced by a single tilde.
 \item \tilda{}\% is replaced by a newline
 \end{itemize}
