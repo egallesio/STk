@@ -17,7 +17,7 @@
  * 
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 23-Jan-1994 19:09
- * Last file update:  3-Sep-1999 20:19 (eg)
+ * Last file update: 14-Sep-1999 09:28 (eg)
  *
  * Win32 DLL support by Steve Pruitt <steve@pruitt.net>
  *
@@ -79,15 +79,15 @@
 /*----------------------------------------------------------------------------*/
 
 #if (defined(WIN32) && !defined(CYGWIN32) && defined(MSC_VER))
- #include <windows.h>
- #include "stk.h"
- #include "tclInt.h"
- #include "tclPort.h"
+#  include <windows.h>
+#  include "stk.h"
+#  include "tclInt.h"
+#  include "tclPort.h"
 #else
- #include "stk.h"
- #ifdef USE_DYNLOAD
-  #include <libstack.h>
- #endif
+#  include "stk.h"
+#  ifdef USE_DYNLOAD
+#     include <libstack.h>
+#  endif
 #endif
 
 

@@ -95,6 +95,7 @@ rm -f @prefix@/lib/stk/include
 @prefix@/bin/stk
 @prefix@/bin/snow
 
+@prefix@/doc/stk-@VERSION@
 
 
 %files devel

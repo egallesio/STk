@@ -12,7 +12,7 @@
 # This software is provided ``AS IS'' without express or implied
 # warranty.
 #
-# Last file update:  3-Sep-1999 19:20 (eg)
+# Last file update: 13-Sep-1999 18:11 (eg)
 #
 
 include ../config.make
@@ -41,6 +41,13 @@ install:
 	cp Html-Demos/Images/*.gif  $(DEMODIR)/Html-Demos/Images
 	chmod 0644  $(DEMODIR)/Html-Demos/Images/*
 	(cd $(DEMODIR)/Html-Demos; ln -s ../amib.stklos ../stklos-widgets .)
+	-if [ ! -d $(DEMODIR)lib ] ; then mkdir -p $(DEMODIR)/lib; fi
+	$(CP) ../Contrib/STk-wtour/lib/*.xbm $(DEMODIR)/lib
+	chmod 0644 $(DEMODIR)/lib/*
+	-if [ ! -d $(DEMODIR)/lessons ] ; then mkdir -p $(DEMODIR)/lessons; fi
+	$(CP) ../Contrib/STk-wtour/lessons/*.stk $(DEMODIR)/lessons
+	$(CP) ../Contrib/STk-wtour/lessons/index $(DEMODIR)/lessons
+	chmod 0644 $(DEMODIR)/lessons/*
 
 install.libs:
 

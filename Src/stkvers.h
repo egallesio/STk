@@ -1,1 +1,1 @@
-#define STK_VERSION "4.0.0"
+#define STK_VERSION "4.0.1"

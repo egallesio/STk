@@ -16,7 +16,7 @@
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 29-Mar-1994 10:57
- * Last file update:  3-Sep-1999 21:02 (eg)
+ * Last file update: 15-Sep-1999 18:05 (eg)
  */
 #ifndef WIN32
 #  include <unistd.h>
@@ -637,7 +637,8 @@ PRIMITIVE STk_setenv(SCM var, SCM value)
   if (strchr(CHARS(var), '=')) Err("setenv!: variable contains a '='", var);
   if (NSTRINGP(value)) Err("setenv!: value is not a string", value);
 
-  s = malloc(strlen(CHARS(var))+ strlen(CHARS(value)) + 2); /* 2 cause  '=' & \0 */
+  s = STk_must_malloc(strlen(CHARS(var))+ 
+		      strlen(CHARS(value)) + 2); /* 2 cause  '=' & \0 */
   sprintf(s, "%s=%s", CHARS(var), CHARS(value));
   putenv(s);
   return UNDEFINED;

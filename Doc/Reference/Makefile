@@ -1,5 +1,7 @@
 # Makefile for Manual building
 
+include ../../config.make
+
 TEX= manual.tex commands.tex Reference1.tex Reference2.tex \
      Appendix-A.tex Appendix-B.tex Appendix-C.tex Appendix-D.tex
 
@@ -7,6 +9,9 @@ all: 	dvi ps
 
 dvi: 	manual.dvi
 ps: 	manual.ps
+
+install: ps
+	$(CP) manual.ps $(DOC_DIR)
 
 manual.dvi: bibli $(TEX) 
 	echo -n > index.tex

@@ -14,7 +14,7 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 19-Aug-1998 14:02
-;;;; Last file update:  3-Sep-1999 20:13 (eg)
+;;;; Last file update: 15-Sep-1999 23:15 (eg)
 
 (require "Tk-classes")
 
@@ -81,13 +81,13 @@
   (slot-set! self 'open #t)
   (if (eq? (slot-ref self 'icon) *hierarchy-node*)
       (slot-set! self 'icon *hierarchy-open-node*))
-  (update-hierarchy (slot-ref self 'parent)))
+  (maybe-update-hierarchy (slot-ref self 'parent)))
 
 (define-method close-item ((self <Hierarchy-item>))
   (slot-set! self 'open #f)
   (if (eq? (slot-ref self 'icon) *hierarchy-open-node*)
       (slot-set! self 'icon *hierarchy-node*))
-  (update-hierarchy (slot-ref self 'parent)))
+  (maybe-update-hierarchy (slot-ref self 'parent)))
 
 ;=============================================================================
 ;
@@ -96,31 +96,33 @@
 ;=============================================================================
 
 (define-class <Hierarchy-tree> (<Scroll-Canvas>)
-  ((class	   :init-keyword :class :init-form "HierarchyTree")
+  ((%redisplay	   :init-form #f)
+   (class	   :init-keyword :class :init-form "HierarchyTree")
    (root	   :init-form #f)
    (items-type     :init-form <Hierarchy-item> :keyword :items-type)
    (selection      :init-form #f)))
 
 (define-method initialize ((self <Hierarchy-tree>) initargs)
   (next-method)
-  (set! (background (canvas-of self)) "white")   ;; Set the canvas bg to white 
-  (unless (member :h-scroll-side initargs)	 ;; no horiz scrollbar
+  (set! (background (canvas-of self)) "white")     ;; Set the canvas bg to white 
+  (unless (member :h-scroll-side initargs)	   ;; no horiz scrollbar
     (set! (h-scroll-side self) #f))
   ;; Create the root of the hierarchy
-  (slot-set! self 'root (add-item self #f #f #t)) ; self, ancestor, data, node
-  ;; Refresh the widget (not completly satisfactory)
-  (after 'idle (lambda() (update-hierarchy self))))
-  
+  (slot-set! self 'root (add-item self #f #f #t))) ;; self, ancestor, data, node
+ 
 
 ;;;;
 ;;;; add-item		-- add an item in the hierarchy (low level. See
 ;;;;			   add-leave and add-node for higher level functions)
 ;;;;
 (define-method add-item ((self <Hierarchy-tree>) ancestor data node? icon)
-  (let ((ancestor (or ancestor (slot-ref self 'root)))
-	(class    (slot-ref self 'items-type)))
-    (make class :parent self :ancestor ancestor :data data 
-	  	:node? node? :icon icon)))
+  (let* ((ancestor (or ancestor (slot-ref self 'root)))
+	 (class    (slot-ref self 'items-type))
+	 (res 	   (make class :parent self :ancestor ancestor :data data 
+			 :node? node? :icon icon)))
+    (maybe-update-hierarchy self)
+    res))
+  
 
 (define-method add-item ((self <Hierarchy-tree>) ancestor data node?)
   (add-item self ancestor data node? #f))
@@ -140,7 +142,7 @@
 	 (ancestor (slot-ref self 'ancestor))
 	 (children (slot-ref ancestor 'children)))
     (slot-set! ancestor 'children (remove self children))
-    (update-hierarchy parent)))
+    (maybe-update-hierarchy parent)))
 
 ;;;;
 ;;;; Internal use methods 
@@ -153,6 +155,22 @@
   (let ((bg   (if selected? "red" "black"))
 	(item (slot-ref item 'label-id)))
     ((Id self) 'itemconfigure item :fill bg)))
+
+
+;;
+;; maybe-update-hierarchy  -- retain that a hier. must be updated (if necessary)
+;;
+(define (maybe-update-hierarchy h)
+  (unless (slot-ref h '%redisplay)
+    ;; No redisplay resquested yet. Add a request
+    (slot-set! h '%redisplay 
+	       (after 'idle (lambda () 
+			      (update-hierarchy h)
+			      (slot-set! h '%redisplay #f))))))
+
+
+
+
 
 ;;
 ;; update-hierarchy		-- display the current hierarchy

@@ -16,7 +16,7 @@
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 17-Jan-1994 17:49
- * Last file update:  3-Sep-1999 20:20 (eg)
+ * Last file update: 14-Sep-1999 14:15 (eg)
  */
 
 #include <stk.h>
@@ -95,14 +95,17 @@ unsigned long sxhash(SCM obj)
     case tc_integer:	
     case tc_bignum:	return (unsigned long) STk_integer_value_no_overflow(obj);
     case tc_flonum:	return (unsigned long) FLONM(obj);
-    case tc_symbol:	/* For some reasons 
-			 *      return (unsigned long) obj; 
-			 * which is correct, yiels worse results than the 
-			 * following code. Perhaps, we have a better 
-			 *repartion by using hashing on the chars. Weird!
+    case tc_symbol:     if (CELLINFO(obj) & CELL_INFO_UNINTERNED)
+			  /* Interned symbol. Work on the interned one
+			   * to have the same hash value
+			   */
+			  obj = Intern(PNAME(obj));
+			
+    			/* For some reasons, returning just obj as an unsigned 
+			 * long, which is correct, yields worse results than
+			 * the following code.
 			 */
-      return HASH_WORD(0, (unsigned long) obj);
-      			return HashString(PNAME(obj));
+ 			return HASH_WORD(0, (unsigned long) obj);
     case tc_keyword:	return HashString(KEYVAL(obj));
     case tc_string:	return HashString(CHARS(obj));
     case tc_vector:	h = 0;
@@ -116,8 +119,7 @@ unsigned long sxhash(SCM obj)
 			 * object as a key. Note that returning the type 
 			 * works even if we have not COMPACT_SMALL_CST (as far as 
 			 * I know, nobody undefine it). In this case  SMALL_CSTP
-			 * always return FALSE.
-			 */
+			 * always return FALSE.  */
       			 return (SMALL_CSTP(obj)) ? (unsigned long) obj:
 			   			    (unsigned long) TYPE(obj);
   }

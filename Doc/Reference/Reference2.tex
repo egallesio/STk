@@ -3,7 +3,7 @@
 %
 %           Author: Erick Gallesio [eg@unice.fr]
 %    Creation date: ??-Nov-1993 ??:??
-% Last file update: 16-Aug-1999 20:21
+% Last file update: 27-Sep-1999 15:24 (eg)
 %
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -155,6 +155,37 @@ Returns the widget name of \var{widget} as a symbol.
 \end{scheme}
 \end{entry}
 
+\begin{entry}{%
+\proto{tk-get}{ widget opt}{procedure}}
+\saut
+Returns the value of the widget option \var{opt} of \var{widget}. 
+\begin{scheme}
+(begin 
+   (label '.lab :text "Hello" :bd 3) 
+   (cons (tk-get .lab :bd) (tk-get .lab :text)))
+   \lev (3 . "Hello")
+\end{scheme}
+See the online documentation for all the options provided by the Tk widgets.
+(see \ref{help}).
+\end{entry}
+
+\begin{entry}{%
+\proto{tk-set!}{ widget opt value}{procedure}}
+\saut
+Sets the value of the widget option \var{opt} of \var{widget} to the 
+given \var{value}.
+\begin{scheme}
+(begin 
+   (label '.lab :text "Hello") 
+   (tk-set! .lab :text "Hello, world!")
+   (tk-get .lab :text))
+   \lev "Hello, world!"
+\end{scheme}
+See the online documentation for all the options provided by the Tk widgets.
+(see \ref{help}).
+\end{entry}
+
+
 \begin{entry}{
 \proto{set-widget-data!}{ widget expr}{procedure}}
 \saut
@@ -272,6 +303,16 @@ in all the \texttt{export} clauses.
 
 The result of \var{export} is undefined.
 \end{entry}
+
+\begin{entry}{%
+\proto{export-all-symbols}{ } {procedure}}
+\saut
+
+Exports all the symbols defined in the current module.
+
+The result of \var{export-all-symbols} is undefined.
+\end{entry}
+
 
 
 \begin{entry}{%
@@ -1613,6 +1654,13 @@ option uses the external command {\tt rsh}. The shell variable {\tt
 PATH} must be correctly set for accessing it without specifying its
 abolute path.
 
+\item {\tt :fork} must be followed by a boolean value. This value
+  specifies if a \emph{fork} system call must be done before running
+  the process. If the process is run without \emph{fork} the Scheme
+  program is lost. This feature mimics the ``exec'' primitive of the
+  Unix shells. By default, the process a fork is executed before
+  running the process (i.e. {\tt :fork} is \schtrue). This options
+  works on Unix implementations only.
 \end{itemize}
 The following example launches a process which execute the
 Unix command {\tt ls} with the arguments {\tt -l} and {\tt

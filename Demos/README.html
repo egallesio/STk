@@ -1,7 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
 <html>
   <head>
-    <title>Demo directory README (Version 4.0 - August 1999)</title>
+    <title>Demo directory README (Version 4.0)</title>
   </head>
 
   <body bgcolor="#FFFFFF">
@@ -15,10 +15,14 @@
 >
 
 <script language="STk">
+
 (lambda (parent url)
-   (eval '(define (Run x) 
-	    (system (string-append "../Src/test-stk " x "&amp;")))
-	 (global-environment))))
+   (eval '(begin
+            (define *interp*
+                    (if (file-exists? "../Src/test-stk") "../Src/test-stk" "stk"))
+            (define (run x) (system (string-append *interp* " " x " &amp;"))))
+         (global-environment)))
+
 </script>
 
 
@@ -62,10 +66,18 @@
     </ul>
     <h4>Running demonstration programs in the STk web browser</h4>
     <ul>
+        <ul>
+	    <b>Note: </b> In this document the notation 
+	    <font color=red>RUN</font> means that you must type either
+	    <i>../Src/test-stk</i> if you have not completed the
+	    installation of <B>STk</b>, either type <i>stk</i>
+	    (provided that the install location is in your path)
+	</ul>
+	<p>
 	<b>STk</b> provides a simple Web browser which can be used to launch 
 	the demo of this directory. If you are not running it now, you can 
 	type the following command:
-	<pre>          ../Src/test-stk -f S-scape README.html</pre>
+	<pre>          <font color=red>RUN</font> -f S-scape README.html</pre>
 	at the shell prompt.
     </ul>
 
@@ -80,14 +92,14 @@
 	that you can click on.
 	<BR>
 	<u>Run with </u>:
-	<a expr=(run "hello.stk")> ../Src/test-stk -f hello.stk </a>
+	<a expr=(run "hello.stk")> <font color=red>RUN</font> -f hello.stk </a>
       <p><li>
 	<B><A name=browse>browse.stk</a></B>
 	<BR>
 	A simple Unix file browser. The code of this demo is less than a page.
 	<BR>
 	<u>Run with</u>:
-	<A expr=(run "browse.stk")>.../Src/test-stk -f browse.stk </A>
+	<A expr=(run "browse.stk")>.<font color=red>RUN</font> -f browse.stk </A>
     </UL>
 
     <h4>1.2 Basics of STk programming</h4>
@@ -102,7 +114,7 @@
 	<BR>
 	<u>Run with</u>:
 	<A expr=(run "wtour.stk ../Contrib/STk-wtour")>
-		../Src/test-stk -f ./wtour.stk ../Contrib/STk-wtour
+		<font color=red>RUN</font> -f ./wtour.stk ../Contrib/STk-wtour
 	     </A>
 	<BR><u>Comment</u>: This code is a contribution of <B>Suresh Srinivas</B>
 	<tt>&lt;ssriniva@cs.indiana.edu&gt;</tt>
@@ -119,7 +131,7 @@
 	 the socket is closed 
 	<br>
 	<u>Run with</u>:
-	 <A expr=(run "-no -f server.stk")> ../Src/test-stk -no -f server.stk </A>
+	 <A expr=(run "-no -f server.stk")> <font color=red>RUN</font> -no -f server.stk </A>
       <p><li>
 	<b>mc-server.stk</b>
 	<br>
@@ -129,8 +141,8 @@
 	when you want to exit the demo.
 	<br>
 	<u>Run with</u>:
-	<A expr=(system "xterm -e ../Src/test-stk -load mc-server.stk &")>
-	 ../Src/test-stk -load mc-server.stk </A>
+	<A expr=(system (string-append "xterm -e " *interp* " -load mc-server.stk &"))>
+	 <font color=red>RUN</font> -load mc-server.stk </A>
     </ul>
 
 
@@ -142,14 +154,14 @@
 	A Logo turtle package + some demo functions.
 	<br>
 	<u>Run with</u>:
-	 <A expr=(run "turtle.stk")> ../Src/test-stk -f turtle.stk </A>
+	 <A expr=(run "turtle.stk")> <font color=red>RUN</font> -f turtle.stk </A>
       <p><li>
         <b>hanoi.stk</b>
 	<br>
 	Hanoi towers animation.
 	<br>
 	<u>Run with</u>:
-	<A expr=(run "hanoi.stk")> ../Src/test-stk -f hanoi.stk </A>     
+	<A expr=(run "hanoi.stk")> <font color=red>RUN</font> -f hanoi.stk </A>     
        <p><li>
 	<b>queens.stk</b>
 	<br>
@@ -158,7 +170,7 @@
 	puzzle starting with a given board configuration.
 	<br>
 	<u>Run with</u>:
-	<A expr=(run "queens.stk")> ../Src/test-stk -f queens.stk </A>
+	<A expr=(run "queens.stk")> <font color=red>RUN</font> -f queens.stk </A>
 	<br>
 	<u>Comment</u>: This code is a contribution of <b>Grant
 	 Edwards</b> <tt>&lt;grante@rosemount.com)&gt;</tt>
@@ -171,7 +183,7 @@
         faster.  Have fun.
 	<br>
 	<u>Run with</u>:
-	<A expr=(run "stetris.stk")> ../Src/test-stk -f stetris.stk </A>
+	<A expr=(run "stetris.stk")> <font color=red>RUN</font> -f stetris.stk </A>
 	<br>
 	<u>Comment</u>:
 	This code is a contribution of <B>Harvey J. Stein</B>
@@ -184,7 +196,7 @@
 	board of four planes with four rows and four columns each.
 	<br>
 	<u>Run with</u>:
-	<A expr=(run "ttt.stk")> ../Src/test-stk -f ttt.stk </A>
+	<A expr=(run "ttt.stk")> <font color=red>RUN</font> -f ttt.stk </A>
 	<br>
 	<u>Comment</u>:
 	This code is a contribution of <b>Edin "Dino" Hodzic</b>
@@ -200,7 +212,7 @@
 	This is a simple demo showing a repl loop in a console.
 	<br>
 	<u>Run with</u>:
-	<A expr=(run "console-demo.stk")> ../Src/test-stk -f console.stk </A>
+	<A expr=(run "console-demo.stk")> <font color=red>RUN</font> -f console.stk </A>
 	<br>
 	<u>Comment</u>: This demo is useful for Unix users only, since under 
 	   Win32 <B>STk</B> is started with such a console. 
@@ -211,7 +223,7 @@
 	This is a simple color palette written in STk.
 	<br>
 	<u>Run with</u>:
-	<A expr=(run "colormap.stk")> ../Src/test-stk -f colormap.stk </A>
+	<A expr=(run "colormap.stk")> <font color=red>RUN</font> -f colormap.stk </A>
 	<br>
 	<u>Comment</u>: Note that this program is no more really useful since
 	<B>STk</B> offers now the function <tt>Tk:choose-color</tt>
@@ -223,7 +235,7 @@
 	This is a simple program which uses the STk font chooser. 
 	<br>
 	<u>Run with</u>:
-	<A expr=(run "stkfontsel.stk")> ../Src/test-stk -f stkfontsel.stk </A>
+	<A expr=(run "stkfontsel.stk")> <font color=red>RUN</font> -f stkfontsel.stk </A>
 
       <p><li>
         <b>small-ed.stk</b>
@@ -231,7 +243,7 @@
 	A small editor to create enhanced text
 	<br>
 	<u>Run with</u>:
-	<A expr=(run "small-ed.stk")> ../Src/test-stk -f small-ed.stk </A>     
+	<A expr=(run "small-ed.stk")> <font color=red>RUN</font> -f small-ed.stk </A>     
 	<br>
 	<u>Comment</u>: 
 	This editor use a <I>ad-hoc</I> format for saving file and was
@@ -246,9 +258,10 @@
 	variables (named a,b and c) Changing the value of one of
 	these vars (with a <tt><b>set!</b></tt> for instance) will
 	redisplay its new value immediately.
+        <br>
 	<u>Run with</u>:
-	<A expr=(run  "-load showvars.stk")> 
-	../Src/test-stk -load showvars.stk </A> 
+	<A expr=(system (string-append "xterm -e " *interp* " -l showvars.stk &"))>
+	<font color=red>RUN</font> -load showvars.stk </A> 
 	<br>
 
       <p><li>
@@ -257,7 +270,7 @@
 	A simple demo of the inspector on Tk widgets
 	<br>
 	<u>Run with</u>:
-	<A expr=(run "inspector.stk")> ../Src/test-stk -f inspector.stk </A>
+	<A expr=(run "inspector.stk")> <font color=red>RUN</font> -f inspector.stk </A>
 	<br>
 	<u>Comment</u>: 
 	<STRONG> Does not work with this version of <I>STk</I>
@@ -270,7 +283,7 @@
 	A simple terminal emulator (a kind of xterm, but in a text widget).
 	<br>
 	<u>Run with</u>:
-	<A expr=(run "term.stk")> ../Src/test-stk -f term.stk </A>
+	<A expr=(run "term.stk")> <font color=red>RUN</font> -f term.stk </A>
 	<br>
 	<u>Comment</u>: Users of <b>Glibc2 (aka libc6, or RedHat 5.0
 	users)</b>: This program has problems with new release of the
@@ -314,7 +327,7 @@
 	demonstration in <b>STklos</b>
 	<br>
 	<u>Run with</u>:
-	<A expr=(run "hello.stklos")> ../Src/test-stk -f hello.stklos </A>
+	<A expr=(run "hello.stklos")> <font color=red>RUN</font> -f hello.stklos </A>
 
       <p><li>
 	<b>browse.stklos</b>
@@ -323,7 +336,7 @@
 	demonstration in <b>STklos</b>
 	<br>
 	<u>Run with</u>:
-	<A expr=(run "browse.stklos")> ../Src/test-stk -f browse.stklos </A>
+	<A expr=(run "browse.stklos")> <font color=red>RUN</font> -f browse.stklos </A>
 
 
 
@@ -332,7 +345,7 @@
 	A simple demo written in STklos. 
 	<br>
 	<u>Run with</u>:
-	<A expr=(run "stklos-demo.stklos")>../Src/test-stk -f stklos-demo.stklos</a>
+	<A expr=(run "stklos-demo.stklos")><font color=red>RUN</font> -f stklos-demo.stklos</a>
 	<br>
 	<u>Comment</u>: What is interesting in this demo is not what
 	it does, nothing specially fancy, but how it is easy to
@@ -344,7 +357,7 @@
 	<br>
 	<u>Run with</u>:
 	<A expr=(run "stklos-demo2.stklos")>
-	../Src/test-stk -f stklos-demo2.stklos</a>
+	<font color=red>RUN</font> -f stklos-demo2.stklos</a>
 	<br>
 	<u>Comment</u>: Here again, what is interesting in this demo is not what
 	it does, nothing specially fancy, but how it is easy to
@@ -355,7 +368,7 @@
 	<br>
 	<u>Run with</u>:
 	<A expr=(run "classbrowse.stklos")>
-	../Src/test-stk -f classbrowse.stklos</a>
+	<font color=red>RUN</font> -f classbrowse.stklos</a>
 	<br>
 
     </ul>
@@ -374,7 +387,7 @@
 	modified version by clicking the button <tt>"Rerun demo"</tt>
 	<br>
 	<u>Run with</u>:
-	<A expr=(run "widget.stk")> ../Src/test-stk -f widget.stk </A>
+	<A expr=(run "widget.stk")> <font color=red>RUN</font> -f widget.stk </A>
 	<br>
 	<u>Comment</u>: This demo illustrate only the simple widgets
 	(the ones of the Tk library). For a <i>composite widgets</i>
@@ -389,7 +402,7 @@
 	itself a composition of various composite widget classes.
 	<br>
 	<u>Run with</u>:
-	<A expr=(run "filebox.stklos")>	../Src/test-stk -f filebox.stklos </A>
+	<A expr=(run "filebox.stklos")>	<font color=red>RUN</font> -f filebox.stklos </A>
 
       <p><li>
         <b>stklos-widgets.stklos</b>
@@ -399,7 +412,7 @@
 	<br>
 	<u>Run with</u>:
 	<A expr=(run "stklos-widgets.stklos")>
-	 ../Src/test-stk -f stklos-widgets.stklos </A>
+	 <font color=red>RUN</font> -f stklos-widgets.stklos </A>
 	<br>
 	<u>Comment</u>: This code is a contribution of <b>Drew Whitehouse</b>
     	<TT>&lt;Drew.Whitehouse@anu.edu.au&gt</TT>.
@@ -414,7 +427,7 @@
 	This is a simplistic calculator.
 	<br>
 	<u>Run with</u>:
-	<A expr=(run "calc.stklos")>../Src/test-stk -f calc.stklos </A>     
+	<A expr=(run "calc.stklos")><font color=red>RUN</font> -f calc.stklos </A>     
 
       <p><li>
 	<b>tkcolor.stklos</b>
@@ -428,7 +441,7 @@
 	background color.
 	<br>
 	<u>Run with</u>:
-	<A expr=(run "tkcolor.stklos")>../Src/test-stk -f tkcolor.stklos </A> 
+	<A expr=(run "tkcolor.stklos")><font color=red>RUN</font> -f tkcolor.stklos </A> 
 
       <p><li>
         <b>amib.stklos</b>
@@ -436,7 +449,7 @@
 	<B>A</B> <B>M</B>ini <B>I</B>nterface <B>B</B>uilder. 
 	<br>
 	<u>Run with</u>:
-	<A expr=(run "amib.stklos")> ../Src/test-stk -f amib.stklos </A>
+	<A expr=(run "amib.stklos")> <font color=red>RUN</font> -f amib.stklos </A>
 	<br>
 	<u>Comment</u>: The current version of AMIB allow you to:
 	<ul>
@@ -455,7 +468,7 @@
 	The STk web browser. You are probably using it while seeing these lines.
 	<br>
 	<u>Run with</u>:
-	<A expr=(run "S-scape.stklos")>	../Src/test-stk -f S-scape.stklos </A>     
+	<A expr=(run "S-scape.stklos")>	<font color=red>RUN</font> -f S-scape.stklos </A>     
    </ul>
 
 
@@ -463,7 +476,7 @@
     <address><a href="mailto:eg@unice.fr">Erick Gallesio</a></address>
 <!-- Created: Sun Mar  1 15:56:45 CET 1998 -->
 <!-- hhmts start -->
-Last modified: Sat Sep  4 15:02:13 CEST 1999
+Last modified: Mon Sep 13 19:59:47 CEST 1999
 <!-- hhmts end -->
   </body>
 </html>

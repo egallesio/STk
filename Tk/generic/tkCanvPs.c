@@ -649,7 +649,10 @@ TkCanvPostscriptCmd(canvasPtr, interp, argc, argv)
 
     if (psInfo.channelName != NULL) {
         int mode;
-        
+
+#ifdef SCM_CODE
+        mode = 0;
+#endif
         /*
          * Check that the channel is found in this interpreter and that it
          * is open for writing.

@@ -15,7 +15,7 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 20-Feb-1994 21:09
-;;;; Last file update:  3-Sep-1999 20:06 (eg)
+;;;; Last file update: 27-Sep-1999 12:05 (eg)
 
 (when (provided? "stklos") 
   (error "STklos already initialized."))
@@ -103,7 +103,7 @@
 	      (car default)))
       (if (is-a? name <class>) 
 	  name
-	  (error "find-class: bad-class" name))))
+	  (error "find-class: bad-class ~S" name))))
 
 ;=============================================================================
 

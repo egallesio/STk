@@ -3,7 +3,7 @@
 %
 %           Author: Erick Gallesio [eg@unice.fr]
 %    Creation date: 16-Dec-1997 14:00
-% Last file update: 17-May-1999 00:07
+% Last file update: 27-Sep-1999 15:30 (eg)
 %
 
 
@@ -771,6 +771,28 @@ of \var{symbol}. Symbols are searched for in the current environment.
 \end{entry}
 
 \begin{entry}{%
+\proto{apropos}{ symbol}{ procedure}}
+\saut
+\ide{Apropos} returns a list of symbol whose print name contains the characters 
+of \var{symbol}. Symbols are searched for in the current environment. 
+\begin{scheme}
+(apropos 'cadd) \lev (caddar caddr cadddr)
+\end{scheme}
+\end{entry}
+
+\begin{entry}{%
+\proto{help}{}{ procedure}}
+\saut
+\label{help}\schindex{help, getting}
+
+\ide{help} pops a graphical help window giving acces to the online
+documentation.
+\begin{note}
+Tk must be initialized to use \ide{inspect}.
+\end{note}
+\end{entry}
+
+\begin{entry}{%
 \proto{inspect}{ obj}{ procedure}}
 \saut %
 \ide{Inspect} permits to graphically inspect an object. The first call
@@ -787,7 +809,7 @@ Tk must be initialized to use \ide{inspect}.
 
 \begin{figure}
 \centerline{\psfig{figure={Inspector.ps}}}
-\caption{A view of the Inspector}
+\caption{A View of the Inspector}
 \end{figure}
 \end{entry}
 

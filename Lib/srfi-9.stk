@@ -1,0 +1,96 @@
+;;;;
+;;;; srfi-9.stk	-- SRFI-9 (Records)
+;;;; 
+;;;; Copyright © 1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; 
+;;;; Permission to use, copy, modify, distribute,and license this
+;;;; software and its documentation for any purpose is hereby granted,
+;;;; provided that existing copyright notices are retained in all
+;;;; copies and that this notice is included verbatim in any
+;;;; distributions.  No written agreement, license, or royalty fee is
+;;;; required for any of the authorized uses.
+;;;; This software is provided ``AS IS'' without express or implied
+;;;; warranty.
+;;;; 
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 27-Sep-1999 13:06 (eg)
+;;;; Last file update: 27-Sep-1999 14:21 (eg)
+;;;;
+
+(require "stklos")
+(select-module Scheme)
+(import STklos)
+
+;;;
+;;; Class <record> 
+;;;
+;;;	This class is only used for printing records as #[record ...]
+;;;
+
+(define-class <record> () ())
+
+(define-method write-object ((x <record>) port)
+  (format #t "#[record ~A ~A]" (class-name (class-of x)) (address-of x)))
+
+
+;;;
+;;; Implementation of DEFINE-RECORD-TYPE
+;;;
+
+(define-macro (define-record-type type-name constructor predicate . fields)
+
+  (define (%make-record-fields  fields)
+    (map (lambda (x)
+	   (case (length x)
+	     ((2) (list (car x) :getter (cadr x)))
+	     ((3) (list (car x) :getter (cadr x) :setter (caddr x)))
+	     (else (error "define-record-type: bad field specification ~S" x))))
+	 fields))
+  
+  (define (%make-record-constructor constructor class)
+    (if (not (every symbol? constructor))
+	(error "define-record-type: bad constructor ~S" constructor))
+    
+    (let ((name   (car constructor))
+	  (fields (cdr constructor)))
+      `(lambda ,fields
+	 (let ((res (make ,class)))
+	   ,@(map (lambda (x) `(slot-set! res ',x ,x)) fields)
+	 res))))
+
+  ;;;
+  ;;; Body of define-record-type starts here
+  ;;;
+  (let ((symb(gensym "x")))
+    `(begin
+       ;; Define a class for the new record 
+       (define-class ,type-name (<record>)
+	 ,(%make-record-fields fields))
+       ;; Define the accessor function
+      (define ,(car constructor) 
+	,(%make-record-constructor constructor type-name))
+      ;; Define the predicate as a pair of methods
+      (define-method ,predicate ((,symb ,type-name)) #t)
+      (define-method ,predicate (,symb) #f))))
+
+(provide "srfi-9")
+
+#|
+  Example of usage
+
+	(define-record-type my-pair
+	  (kons x y)
+	  my-pair?
+	  (x kar set-kar!)
+	  (y kdr))
+
+	(list 
+	   (my-pair? (kons 1 2))		; => #t
+	   (my-pair? (cons 1 2))		; => #f
+	   (kar (kons 1 2))			; => 1
+	   (kdr (kons 1 2))			; => 2
+	   (let ((k (kons 1 2)))
+	     (set-kar! k 3)
+	     (kar k)))				; => 3
+|#

@@ -1,4 +1,5 @@
-#!/usr/local/bin/stk -f
+#!/bin/sh
+:;exec /usr/local/bin/stk -f "$0" "$@"
 ;;;;
 ;;;; Hanoi - Towers of Hanoi diversion
 ;;;;
@@ -13,7 +14,7 @@
 ;;;; This software is provided ``AS IS'' without express or implied
 ;;;; warranty.
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
-;;;; Last file update:  3-Sep-1999 19:22 (eg)
+;;;; Last file update: 13-Sep-1999 18:00 (eg)
 
 ;;;; This program is a rewriting in STk of a program found on the net. Original
 ;;;; author is Damon A Permezel (probably fubar!dap@natinst.com)

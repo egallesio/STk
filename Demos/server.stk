@@ -1,4 +1,7 @@
-#!/usr/local/bin/stk -f
+#!/bin/sh
+:; exec /usr/local/bin/stk -f "$0" "$@"
+;;;;
+;;;;
 ;;;; s e r v e r  . s t k		-- A simple sever
 ;;;;
 ;;;; Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
@@ -14,7 +17,7 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;    Creation date:  4-Feb-1995 18:17
-;;;; Last file update:  4-Sep-1999 15:32 (eg)
+;;;; Last file update: 12-Sep-1999 23:36 (eg)
 
 (define s (make-server-socket))
 (define p (run-process 			; define a var to avoid GC problems
@@ -24,8 +27,6 @@
 (dynamic-wind 
  ;; Init: Launch an xterm with telnet running on the s listening port and connect
  (lambda ()
-   (run-process "xterm" "-e" "telnet" "localhost" 
-		(number->string (socket-port-number s)))
    (socket-accept-connection s)
    (format (socket-output s) "\nWelcome on the socket REPL.\n\n> ")
    (flush (socket-output s)))

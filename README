@@ -50,7 +50,7 @@ distribution main directory for more informations.
    * New option -console to run STk in a windowed environment 
      (with indentation and fontification).
    * define-syntax
-   * SRFI-{0,2,6,8}
+   * SRFI-{0,2,6,8,9}
    * New License Policy (request for commercial apps no more needed).
    * ...
 

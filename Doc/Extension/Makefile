@@ -1,6 +1,7 @@
 #
 # Makefile for Doc/Extension
 #
+include ../../config.make
 
 SRC = Extending.tex
 
@@ -8,6 +9,10 @@ all: dvi ps
 
 dvi: 	Extending.dvi
 ps:	Extending.ps
+
+
+install: ps
+	$(CP) Extending.ps $(DOC_DIR)
 
 Extending.dvi: $(SRC)
 	echo -n > Extending.ind

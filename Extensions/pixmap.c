@@ -932,6 +932,9 @@ static void ImgXpmGetPixmapFromData(interp, masterPtr, instancePtr)
 			instancePtr->tkwin, Tk_GetUid("black"));
 		}
 	    }
+#if defined(STk_CODE) && defined(WIN32)
+	    	else colors[i].colorPtr = NULL;
+#endif
 	} else {
 	    colors[i].colorPtr = Tk_GetColor(interp,
 		instancePtr->tkwin, Tk_GetUid("black"));

@@ -1,5 +1,5 @@
 #!/bin/sh
-:;exec /usr/local/bin/stk -f 
+:;exec /usr/local/bin/stk -f "$0" "$@"
 ;;
 ;;  STk/Scheme widget tour, Version 0.2
 ;;

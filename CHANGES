@@ -1,6 +1,17 @@
+09/27/99 Release 4.0.1
+----------------------
+Mains changes/modifications since 4.0.0 are:
+
+      * Small bug fixes
+      
+      * Integration of SRFI-9 (records)
+
+      * Accepts mailto: links in the browser
+
+
 09/03/99 Release 4.0.0
 ----------------------
-Mains changes/modifications since 4.0 are:
+Mains changes/modifications since 3.99.4 are:
 
       * Lot of Win32 fixes 
 

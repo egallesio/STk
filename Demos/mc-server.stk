@@ -1,4 +1,5 @@
-#!/usr/local/bin/stk -load
+#!/bin/sh
+:;exec /usr/local/bin/stk -load "$0" "$@"
 ;;;;
 ;;;; m c - s e r v e r  . s t k		-- A simple server which accept
 ;;;;					   multiple client connections
@@ -16,7 +17,7 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;    Creation date: 23-Jul-1996 09:00
-;;;; Last file update:  3-Sep-1999 18:58 (eg)
+;;;; Last file update: 13-Sep-1999 18:01 (eg)
 
 (require "posix")
 (require "socket")

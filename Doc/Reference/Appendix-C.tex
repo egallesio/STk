@@ -3,7 +3,7 @@
 %
 %           Author: Erick Gallesio [eg@unice.fr]
 %    Creation date: 22-May-1994 22:13
-% Last file update:  5-Jun-1999 14:48
+% Last file update: 18-Sep-1999 15:21 (eg)
 %
 
 \section{Introduction}
@@ -113,7 +113,7 @@ For instance,
 \begin{scheme}
 (class-slots A) \lev (a)
 (class-slots E) \lev (a e c)
-(class-slots F) \lev (d a b c f)
+(class-slots F) \lev (b e c d a f)
 \end{scheme}
 
 \begin{note}
@@ -311,10 +311,10 @@ For instance, the following expression
 permits to set the angle of the {\tt c} complex number. This expression
 conducts, in fact, to the evaluation of the following expression
 \begin{scheme}
-((lambda o m)
+((lambda (o a)
     (let ((m (slot-ref o 'm)))
        (slot-set! o 'r (* m (cos a)))
-       (slot-set! o 'i (* m (sin a))))
+       (slot-set! o 'i (* m (sin a)))))
   c 3)
 \end{scheme}
 A more complete example is given below:
@@ -494,7 +494,7 @@ each parameter can use a specializer. In this case, the parameter list is scanne
 from left to right to determine the applicability of a method. Suppose we declare
 now
 \begin{scheme}
-(define-method M ((a <integer>) (b <number>)) 'integer-number)
+(define-method M ((a <integer>) (b <integer>)) 'integer-integer)
 (define-method M ((a <integer>) (b <real>))   'integer-real)
 (define-method M (a (b <number>)) 'top-number)
 \end{scheme}

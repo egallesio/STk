@@ -1,5 +1,6 @@
 ;;;;
-;;;; w w w - b r o w s e r . s t k l o s     -- A simple WEB browser
+;;;; w w w - b r o w s e r . s t k l o s     -- A simple WEB browser 
+;;;;					     -- (and a very simple mail composer)
 ;;;;
 ;;;; Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
@@ -14,13 +15,17 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 21-Oct-1996 14:02
-;;;; Last file update:  3-Sep-1999 19:56 (eg)
+;;;; Last file update: 16-Sep-1999 17:37 (eg)
 ;;;;
 
 (require "Tk-classes")
 (require "www")
 
 (import WWW)
+
+;;;;
+;;;; 				W W W : b r o w s e r
+;;;; 
 
 (define WWW:browser
   (let ((browser #f)		;; Id of browser (#f if no browser exists)
@@ -156,9 +161,51 @@
       (www:view-url (Id browser) url))
     browser))))
 
+(define (www:mailto . to)
+  (let* ((top     (make <Toplevel> :title "STk Mail Composer"))
+	 (to      (make <Labeled-entry> :parent top :title "To:" 
+			:title-width 7 :title-anchor 'e
+			:value (if (null? to) "" (car to))))
+	 (cc  	  (make <Labeled-entry> :parent top :title "Cc:"
+			:title-width 7 :title-anchor 'e))
+	 (subject (make <Labeled-entry>  :parent top :title "Subject:"
+			:title-width 7 :title-anchor 'e))
+	 (txt	  (make <Scroll-text> :parent top))
+	 (f       (make <Frame> :parent top :border-width 2 :relief 'ridge))
+	 (send	  (make <Button> :text "Send" :parent f :border-width 1))
+	 (cancel  (make <Button> :text "Cancel" :parent f :border-width 1)))
+    (pack to cc subject :expand #f :fill 'x :padx 5)
+    (pack txt :expand #t :fill 'both :padx 5 :pady 3)
+    (pack send cancel :side 'left)
+    (pack f :expand #f :fill 'x)
+    
+    ;; Set the background of text to white
+    (set! (background (text-of txt)) "white")
+    
+    ;; Set action of Send and Cancel button
+    (set! (command Cancel) 
+	  (lambda() 
+	    (if (eq? 'yes (Tk:message-box :title "Cancel Message"
+					  :icon 'question :type 'yesno
+					  :message "Close and discard message?"))
+		(destroy top))))
+
+    (set! (command send)   
+	  (lambda ()
+	    (unless (string=? (value to) "")
+	      (let ((cmd (string-append "| /bin/mail "
+					"-s '" (value subject) "' "
+					"-c '" (value cc) "' "
+					(value to))))
+		(with-output-to-file cmd (lambda () (display (value txt))))
+		(Tk:message-box :title "Message Information" 
+				:message "Message sent" :icon 'info)
+		(destroy top)))))))
+
 ;;;
 ;;; Misc.
 ;;; 
 (define STk:web-browser WWW:browser) ; for backward compatibility with 3.x versions
+(set! www:hook-mailto www:mailto)
 
 (provide "www-browser")

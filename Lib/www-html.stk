@@ -19,7 +19,7 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date:  1-Sep-1995 09:52
-;;;; Last file update:  3-Sep-1999 19:57 (eg)
+;;;; Last file update: 16-Sep-1999 17:17 (eg)
 ;;;;
 
 (require "regexp")
@@ -534,15 +534,21 @@
 	  
 (define (html:href txt url href tag)
   (txt 'tag 'configure tag :foreground color-old-link)
-  (unless (char=? (string-ref href 0) #\#)
-    ;; It's a hack: when the href is "#xxxx", the reference is in the current 
-    ;; page (and we don't need to load it). We can't use the encoded url here
-    ;; since the pathnam is et to / by the url package.
-    (www:view-URL txt url))
-  (let ((anchor (url:anchor url)))
-    (when anchor
-      (let ((index (txt 'index (string-append "tag#" anchor ".first"))))
-	(txt 'see index)))))
+  (if (and (eq? (url:service url) 'mailto)  www:hook-mailto)
+      ;; This is a "mailto:" and we know how tohandle it
+      (www:hook-mailto (url:filename url))
+      ;; Othewise this is a document that we need to view
+      (begin
+	(unless (char=? (string-ref href 0) #\#)
+	  ;; It's a hack: when the href is "#xxxx", the reference is in the current 
+	  ;; page (and we don't need to load it). We can't use the encoded url here
+	  ;; since the pathname is set to / by the url package.
+	  (www:view-URL txt url))
+
+	(let ((anchor (url:anchor url)))
+	  (when anchor
+	    (let ((index (txt 'index (string-append "tag#" anchor ".first"))))
+	      (txt 'see index)))))))
 
 ;;;;
 ;;;; HTML:EVAL  a BIG BIG BIG security hole 

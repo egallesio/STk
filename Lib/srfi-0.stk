@@ -16,13 +16,13 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 30-Aug-1999 16:26 (eg)
-;;;; Last file update:  3-Sep-1999 19:54 (eg)
+;;;; Last file update: 27-Sep-1999 14:12 (eg)
 
 
 (require "defsyntax")
 
 (define-syntax cond-expand
-  (syntax-rules ( and or not else srfi-0 srfi-2 srfi-6 srfi-8 )
+  (syntax-rules ( and or not else srfi-0 srfi-2 srfi-6 srfi-8 srfi-9)
        ((cond-expand) (error "Unfulfilled cond-expand"))
        ((cond-expand (else body ...))
 		(begin body ...))
@@ -60,6 +60,10 @@
        
        ;; SRFI 8	-- RECEIVE
        ((cond-expand (srfi-8 body ...) more-clauses ...)
+		(begin body ...))
+
+       ;; SRFI 9	-- RECORDS
+       ((cond-expand (srfi-9 body ...) more-clauses ...)
 		(begin body ...))
        
        ((cond-expand (feature-id body ...) more-clauses ...)

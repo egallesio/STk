@@ -18,7 +18,7 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date:  9-Aug-1993 22:06
-;;;; Last file update:  3-Sep-1999 19:23 (eg)
+;;;; Last file update: 13-Sep-1999 20:01 (eg)
 
 (define (show-vars w . args)
   (catch (destroy w))
@@ -51,5 +51,6 @@
 (define b '(1 2 (a b d) x 1))
 (define c "A string")
 (show-vars '.test 'a 'b 'c)
-(format #t "Try to modify value of displayed variables with set!\n")
+(format #t 
+	"\n***\n*** Try to modify value of displayed variables with set!\n***\n\n")
 

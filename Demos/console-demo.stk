@@ -1,3 +1,5 @@
+#!/bin/sh
+:;exec /usr/local/bin/stk -f "$0" "$*"
 ;;;; console-demo.stk 			-- A simple demo for the console
 ;;;;
 ;;;; Copyright © 1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
@@ -13,7 +15,7 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 22-Aug-1999 21:05
-;;;; Last file update:  3-Sep-1999 18:56 (eg)
+;;;; Last file update: 12-Sep-1999 23:29 (eg)
 
 
 

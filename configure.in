@@ -5,7 +5,7 @@ dnl	to configure the system for the local environment.
 
 AC_INIT(README)
 
-VERSION=4.0.0
+VERSION=4.0.1
 echo "VERSION=$VERSION" 			> VERSION
 echo "/* File generated. DO NOT EDIT */" 	> Src/stkvers.h
 echo "#define STK_VERSION \"$VERSION\"" 	> Src/stkvers.h

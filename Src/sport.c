@@ -16,7 +16,7 @@
  *
  *            Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 17-Feb-1993 12:27
- * Last file update:  3-Sep-1999 20:22 (eg)
+ * Last file update: 14-Sep-1999 09:26 (eg)
  *
  *
  * This is achieved in a (surely very) dependant way. A string port is implemented
@@ -123,8 +123,8 @@ PRIMITIVE STk_get_output_string(SCM port)
   if (PORT_FLAGS(port) & PORT_CLOSED) 
     Err("get-output-string: string port is closed", port);
 
-  return STk_makestrg(((struct str_iob *)PORT_FILE(port))->cnt, 
-		      ((struct str_iob *)PORT_FILE(port))->base);
+  return STk_makestrg(        ((struct str_iob *)PORT_FILE(port))->cnt, 
+		      (char*) ((struct str_iob *)PORT_FILE(port))->base);
 }
 
 PRIMITIVE STk_input_string_portp(SCM port)

@@ -1,3 +1,7 @@
+#!/bin/sh
+:; exec /usr/local/bin/stk -f "$0" "$@"
+;;;;
+;;;;
 ;;;; s t k f o n t s e l . s t k l o s 		-- A demo of the font chooser
 ;;;;
 ;;;; Copyright © 1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
@@ -13,7 +17,7 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 25-Apr-1999 19:35
-;;;; Last file update:  3-Sep-1999 18:59 (eg)
+;;;; Last file update: 12-Sep-1999 23:37 (eg)
 
 (require "font-chooser")
 

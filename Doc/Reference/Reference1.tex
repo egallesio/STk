@@ -3,7 +3,7 @@
 %
 %           Author: Erick Gallesio [eg@unice.fr]
 %    Creation date: ??-Nov-1993 ??:??
-% Last file update: 31-Aug-1999 13:04 (eg)
+% Last file update: 18-Sep-1999 15:08 (eg)
 %
 
 \section*{Introduction}
@@ -104,7 +104,7 @@ This kind of comment extends to the end of the line (as described in \rrrr).
   {\tt \sharpsign{\em n}\sharpsign} syntax (see below). The scope of
   the label is the expression being read by the outermost \ide{read}.
   
-\item[\tt\sharpsign{\em n}=] is used to reference a some object
+\item[\tt\sharpsign{\em n}\sharpsign] is used to reference a some object
   labeled by a {\tt \sharpsign{\em n}=} syntax; that is, 
   {\tt \sharpsign{\em n}\sharpsign} represents a pointer to the object 
   labeled exactly by {\tt \sharpsign{\em n}=}. For instance, the object
@@ -437,7 +437,7 @@ have been deleted. The predicate used to test the presence of \var{obj} in
 Returns the last pair of \var{list}\footnote{\ide{Last-pair} was a standard 
 procedure in {\rthree}.}.
 \begin{scheme}
-(last-pair '(1 2 3))   \lev 3
+(last-pair '(1 2 3))   \lev (3)
 (last-pair '(1 2 . 3)) \lev (2 . 3)
 \end{scheme}
 \end{entry}
@@ -1050,12 +1050,12 @@ the port is given by the user).
     specifying the command to execute prefixed with the string {\tt
       "|~"}. Specification of a pipe port can occur everywhere a file
     name is needed.
-  \item Virtual ports creation needs that the basic I/O functions are
-    at the port creation time. This functions will be used to simulate
-    low level accesses a ``virtual device''. This kind of port is
-    particularly convenient for reading or writing in a graphical window
-    as if it was a file. Once virtual port is created, it can be accessed 
-    as a normal port with the standard Scheme primitives.
+  \item Virtual ports are created by supplying basic I/O functions at
+    port creation time. These functions will be used to simulate low
+    level accesses to a ``virtual device''. This kind of port is
+    particularly convenient for reading or writing in a graphical
+    window as if it was a file. Once a virtual port is created, it can
+    be accessed as a normal port with the standard Scheme primitives.
 \end{itemize}
 
 
@@ -1281,18 +1281,18 @@ output string \var{port}.
 \saut
 
 Returns a virtual port using the \var{getc} procedure to read a
-character from the port, \var{readyp} to know if there is to read from
-the port, \var{eofp} to know if the end of file is reached on the port
-and finally \var{close} to close the port. All theses procedure takes
-one parameter which is the port from which the input is done. 
-\var{Open-input-virtual} accepts also the special value \schfalse{} for 
-the I/O procedures with the following conventions:
+character from the port, \var{readyp} to know if there is any data to
+read from the port, \var{eofp} to know if the end of file is reached
+on the port and finally \var{close} to close the port. All theses
+procedure takes one parameter which is the port from which the input
+is done.  \var{Open-input-virtual} accepts also the special value
+\schfalse{} for the I/O procedures with the following conventions:
 \begin{itemize}
 \item if \var{getc} or \var{eofp} is \schfalse{} any attempt to read
-  the virtual port will an eof object;
+  the virtual port will return an eof object;
 \item if \var{readyp} is \schfalse{}, the file will always be ready
   for reading;
-\item if \var{clos} is \schfalse{}, no action is done when the port is
+\item if \var{close} is \schfalse{}, no action is done when the port is
   closed.
 \end{itemize}
 
@@ -1424,7 +1424,7 @@ returned by \ide{write*} is undefined.
       (l2 '(3 4)) 
       (l3 '(5 6))) 
   (append! l1 l2 l3)
-  (list l1 l2 l3)) \ev \textit{writes} \verb+((1 2 . #0=(3 4 . #1=(5 6))) #0# #1#)+
+  (write* (list l1 l2 l3))) \ev \textit{writes} \verb+((1 2 . #0=(3 4 . #1=(5 6))) #0# #1#)+
 \end{scheme}
 \end{entry}
 
@@ -1602,20 +1602,6 @@ open a pipe port.
 \saut
 Closes \var{port}. If \var{port} denotes a string port, further
 reading or writing on this port is disallowed.
-\end{entry}
-
-\begin{entry}{%
-\proto{copy-port}{ src dst}{procedure}}
-\saut
-Copies the content of the input port \var{src} to the output-port \var{dest}.
-\begin{scheme}
-(define copy-file
-  (lambda (src dst)
-    (with-input-from-file src (lambda ()
-      (with-output-to-file dst (lambda ()
-         (copy-port (current-input-port)
-                    (current-output-port))))))))
-\end{scheme}
 \end{entry}
 
 \begin{entry}{%

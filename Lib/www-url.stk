@@ -6,7 +6,7 @@
 ;;; heading remains.
 
 ;;; slightly modified by Erick Gallesio (changes are noted with [eg])
-;;;      (Last file update: 15-Aug-1999 20:08)
+;;;      (Last file update: 16-Sep-1999 15:24 (eg)
 
 
 ;;; Usage:
@@ -128,7 +128,12 @@
 ;;; protocol, the host name, and the file name.
 
 (define (parse-url url . parent)
-  (proxitize (apply relativize (basic-parse-url url) parent)))
+  (proxitize (apply relativize (basic-parse-url url)
+		    (cond 
+		       ((null? parent) '())
+		       ((through-proxy? (car parent))
+		          (list (basic-parse-url (apply unparse-url parent))))
+		       (else parent)))))
 
 (define (basic-parse-url url)
   (let* ((base (split url-regexp url))

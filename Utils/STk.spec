@@ -1,10 +1,10 @@
 %define		release 1
 Summary: 	Scheme Interpreter with access to the Tk toolkit
 Name:    	STk
-Version: 	4.0.0
+Version: 	4.0.1
 Release: 	%{release}
 Copyright: 	distributable
-Source: 	STk-4.0.0.tar.gz
+Source: 	STk-4.0.1.tar.gz
 Group:		Development/Languages
 Packager:	Erick Gallesio <eg@unice.fr>
 BuildRoot:	/tmp/STk
@@ -12,7 +12,7 @@ BuildRoot:	/tmp/STk
 %package devel
 Summary: 	Header files and libraries for STk
 Group: 		Development/Libraries
-Requires:	STk = 4.0.0
+Requires:	STk = 4.0.1
 
 %description
 STk is a R4RS Scheme interpreter which can access the Tk graphical
@@ -79,24 +79,25 @@ rm -f /usr/local/lib/stk/include
 
 %files
 %doc README INSTALL CHANGES ChangeLog
-/usr/local/lib/stk/4.0.0/Demos
-/usr/local/lib/stk/4.0.0/Help
-/usr/local/lib/stk/4.0.0/Images
-/usr/local/lib/stk/4.0.0/%{machine}/stk
-/usr/local/lib/stk/4.0.0/%{machine}/snow
-/usr/local/lib/stk/4.0.0/%{machine}/*.so
+/usr/local/lib/stk/4.0.1/Demos
+/usr/local/lib/stk/4.0.1/Help
+/usr/local/lib/stk/4.0.1/Images
+/usr/local/lib/stk/4.0.1/%{machine}/stk
+/usr/local/lib/stk/4.0.1/%{machine}/snow
+/usr/local/lib/stk/4.0.1/%{machine}/*.so
 
 
-/usr/local/lib/stk/4.0.0/STk
-/usr/local/lib/stk/4.0.0/include
-/usr/local/lib/stk/4.0.0/man
-/usr/local/bin/stk-4.0.0
-/usr/local/bin/snow-4.0.0
+/usr/local/lib/stk/4.0.1/STk
+/usr/local/lib/stk/4.0.1/include
+/usr/local/lib/stk/4.0.1/man
+/usr/local/bin/stk-4.0.1
+/usr/local/bin/snow-4.0.1
 /usr/local/bin/stk
 /usr/local/bin/snow
 
+/usr/local/doc/stk-4.0.1
 
 
 %files devel
-/usr/local/lib/stk/4.0.0/%{machine}/Config
-/usr/local/lib/stk/4.0.0/%{machine}/Libs
+/usr/local/lib/stk/4.0.1/%{machine}/Config
+/usr/local/lib/stk/4.0.1/%{machine}/Libs

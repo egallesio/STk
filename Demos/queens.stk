@@ -1,6 +1,7 @@
-#!/usr/local/bin/stk -f
+#!/bin/sh
+:;exec /usr/local/bin/stk -f "$0" "$@"
 
-; -* Lisp -*-
+; -* Scheme -*-
 
 ; Yet another "my first STk program" type thing.  This one is the "8
 ; queens" puzzle.  You try to figure out how to place 8 queens on a

@@ -15,7 +15,7 @@
  *
  *            Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: ??-???-1994 ??:??
- * Last file update:  3-Sep-1999 20:22 (eg)
+ * Last file update: 14-Sep-1999 15:24 (eg)
  *
  *
  * The implementation for Win32 is a contribution of people from Grammatech 
@@ -101,6 +101,10 @@ static char key_err[]  = ":error";
 static char key_wit[]  = ":wait";
 static char key_hst[]  = ":host";
 static char key_hide[] = ":hide";
+#ifndef WIN32
+static char key_fork[] = ":fork";
+#endif
+
 
 #if defined(SIGCHLD) && !defined(HPUX)
 #  define USE_SIGCHLD 1 /* What's the problem with HP? */
@@ -635,14 +639,14 @@ static PRIMITIVE run_process(SCM l, int len)
 static PRIMITIVE run_process(SCM l, int len)
 {
   SCM proc, tmp, redirection[3];
-  int pid, i, argc, waiting, hidden;
+  int pid, i, argc, waiting, hidden, do_fork;
   struct process_info *info;
   char host[100], msg[256], **argv, **argv_start;
 
   /* Initializations */
   int pipes[3][2];
 
-  argc = 0; waiting = FALSE; hidden = FALSE;
+  argc = 0; waiting = FALSE; hidden = FALSE; do_fork = TRUE;
   argv_start = (char**)must_malloc((len+3)*sizeof(char *)); /* 3= NULL+rsh+host */
   argv = argv_start + 2;
   
@@ -690,6 +694,13 @@ static PRIMITIVE run_process(SCM l, int len)
 	    cannot_run(pipes, argv_start, "boolean expected. It was", CAR(l));
 	  
 	  hidden = (CAR(l) == Truth);
+	}
+        else if (STk_eqv(tmp, STk_makekey(key_fork)) == Truth) {
+	  /* :fork option processing */
+	  if (NBOOLEANP(CAR(l)))
+	    cannot_run(pipes, argv_start, "boolean expected. It was", CAR(l));
+	  
+	  do_fork = (CAR(l) == Truth);
 	}
 	else {
 	  /* :input, :output, :error option processing */
@@ -777,9 +788,10 @@ static PRIMITIVE run_process(SCM l, int len)
   /* Build a process object */
   proc = make_process();
   info  = PROCESS(proc);
-  
+  pid   = do_fork? fork(): 0;
+
   /* Fork another process */
-  switch (pid = fork()) {
+  switch (pid) {
     case -1: cannot_run(pipes,argv,"can't create child process", NIL);
     case 0:  /* Child */
       	     for(i = 0; i < 3; i++) {

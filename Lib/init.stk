@@ -14,7 +14,7 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;    Creation date: ??-Sep-1993 ??:??
-;;;; Last file update:  3-Sep-1999 19:52 (eg)
+;;;; Last file update: 14-Sep-1999 21:50 (eg)
 ;;;;
 
 ;;;==============================================================================
@@ -217,13 +217,14 @@
       (let ((var   #f) (count #f) (result #f))
 	(case (length binding)
 	  (2  (set! var    (car binding))
-	      (set! count  (cadr binding)))
+	      (set! count  (cadr binding))
+	      (set! result (make-undefined)))
 	  (3  (set! var    (car binding))
 	      (set! count  (cadr binding))
 	      (set! result (caddr binding)))
 	  (else (error "dotimes: bad binding construct: ~S" binding)))
 	`(do ((,var 0 (+ ,var 1)))
-	     ((= ,var ,count) ,result)
+	     ((>= ,var ,count) ,result)
 	   ,@body))
       ;; binding is ill-formed
       (error "dotimes: binding is not a list: ~S" binding)))

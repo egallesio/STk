@@ -14,17 +14,17 @@
 #
 #           Author: Erick Gallesio [eg@unice.fr]
 #    Creation date: 21-Oct-1994 11:25
-# Last file update:  3-Sep-1999 21:22 (eg)
+# Last file update: 12-Sep-1999 20:31 (eg)
 
 include ../config.make
 
 MAN1_DIR=$(mandir)/man1
 MANN_DIR=$(mandir)/mann
-
+DOC_DIR=$(prefix)/doc/stk-$(VERSION)
 
 DIRS=Extension Reference STklos+Tk Manual Isotas96
 
-install: install.man
+install: install.man install.ps
 
 all:	dvi ps
 
@@ -40,6 +40,11 @@ ps:
 
 install.man:
 	(cd Manual; make install.man)
+
+install.ps:
+	-if [ ! -d $(DOC_DIR) ] ; then mkdir -p $(DOC_DIR); fi
+	(cd Extension; make install DOC_DIR=$(DOC_DIR))
+	(cd Reference; make install DOC_DIR=$(DOC_DIR))
 
 clean:
 	for i in $(DIRS) ;do \

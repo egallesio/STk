@@ -3,7 +3,7 @@
 %
 %           Author: Erick Gallesio [eg@unice.fr]
 %    Creation date: ??-Nov-1993 ??:??
-% Last file update: 21-Jan-1996 18:29
+% Last file update: 27-Sep-1999 14:40 (eg)
 %
 
 When {\stk} detects that a \var{tk-command} must be called, parameters are
@@ -109,7 +109,7 @@ arrows for example), the scrollbar is updated by calling it's
 associated closure. Tk library passes position informations to
 scrolling closures. This informations are the parameters of the
 closure.  Hereafter is an example implementing a text widget with a
-scrollbar (see the help pages for details):
+scrollbar (see the help pages for details and \ref{help}):
 \begin{scheme}
 (text '.txt :yscrollcommand  (lambda l (apply .scroll 'set l)))
 (scrollbar '.scroll :command (lambda l (apply .txt 'yview l)))

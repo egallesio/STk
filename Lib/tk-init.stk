@@ -20,7 +20,7 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 17-May-1993 12:35
-;;;; Last file update:  3-Sep-1999 19:55 (eg)
+;;;; Last file update: 16-Sep-1999 16:48 (eg)
 ;;;;
 
 (unless (equal? *tk-version* "8.0")
@@ -385,7 +385,7 @@
   
   ;; Global help functions which are defined when Tk is loaded
   (autoload "help"          help STk:show-help-file)
-  (autoload "www-browser"   WWW:browser)
+  (autoload "www-browser"   WWW:browser WWW:mailto)
   (autoload "class-browser" class-browser))
 
 ;;;;

@@ -15,7 +15,7 @@
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: ??-Oct-1993 ??:?? 
- * Last file update:  3-Sep-1999 20:22 (eg)
+ * Last file update: 14-Sep-1999 09:23 (eg)
  *
  */
 
@@ -68,7 +68,7 @@ static void printstring(SCM s, SCM port, int mode)
   if (mode == DSP_MODE) {
     if (strlen(p) == len)
       /* No null in the string. We can use a Puts, instead of the slow Putc */
-      Puts(p, port);
+      Puts((char *) p, port);
     else
       for (len = STRSIZE(s); len; len--, p++) Putc(*p, port);
   } else {

@@ -1,3 +1,70 @@
+1999-09-27  Erick Gallesio  <eg@unice.fr>
+
+	* Release 4.0.1
+
+	* Doc/Reference/*.tex : Numerous documentation correction provided
+ 	by Ben L. Di Vito <bld@air57.larc.nasa.gov>
+
+	* Lib/srfi-9.stk: New file which implements (guess what?) SRFI-9
+ 	aka records.
+
+	* STklos/stklos.stk : Bug correction in find-class
+
+1999-09-16  Erick Gallesio  <eg@unice.fr>
+
+	* Doc/Reference/Reference2.tex : Added documentation on the
+ 	primitive export-al-symbols which was missing.
+
+	* Lib/www-mailto: 	
+	* Lib/www.stk: New hook "www:hook-mailto" to handle "mailto:"
+ 	requests. Furthermore, unknown protocol are properly handled now.
+
+	* Lib/www-browser.stklos: Added a mail composer !!! It is used 
+	by the HTML browser when a "mailto:" is encountered.
+
+1999-09-15  Erick Gallesio  <eg@unice.fr>
+
+	* STklos/Tk/Composite/Hierarchy.stklos (maybe-update-hierarchy):
+ 	new function which retain that a update of the hierarchy is
+ 	requested. If there is already a request pending nothing is
+ 	done. This solves the problem (and enhance redisplay btw)
+ 	signalled by Harvey Stein <hjstein@bfr.co.il>
+
+	* Lib/www-url.stk : Applied a patch provided by Harvey Stein to 
+	correctly parse URL which use proxies.
+
+	* Src/unix.c (STk_setenv): Use of STk_must_malloc instead of
+ 	malloc.
+
+1999-09-14  Erick Gallesio  <eg@unice.fr>
+
+	* Lib/init.stk (dotimes): Corrected incorrect behavior for
+ 	negative bounds. Bug signalled by "Ben L. Di Vito"
+ 	<bld@air57.larc.nasa.gov>. BTW, if no result is given by the user
+ 	in the dotimes, the result is now undetermined.
+
+	* Extensions/process.c (run_process): Added the option :fork to
+ 	run-process. This allows to simulate the "exec" command of Unix
+ 	shells. Not implemented on Win32
+
+	* Src/: Minor problems for Alpha compilation (thanks to Jeremie
+ 	Petit <Jeremie.Petit@Digital.com>)
+
+1999-09-13  Erick Gallesio  <eg@unice.fr>
+
+	* Demos/README.html: Modified the applet for allowing the
+ 	execution of the examples when STk is installed (bug signalled 
+	by  Harvey Stein <hjstein@bfr.co.il>
+
+1999-09-12  Erick Gallesio  <eg@unice.fr>
+
+	* Demos/server.stk : Bug correction: two xterm were launched and a
+ 	GC caused the death of all the demo.
+
+	* Doc/Makefile: Added the installation of manual in
+ 	$(prefix)/stk-$(version). Manual is also added in RPMS as
+ 	requested by Harvey Stein <hjstein@bfr.co.il>
+
 1999-09-05  Erick Gallesio  <eg@unice.fr>
 
 	* Release 4.0.0
