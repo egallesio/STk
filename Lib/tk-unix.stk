@@ -12,11 +12,11 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
-;;;; $Id: tk-unix.stk 1.2 Thu, 10 Sep 1998 23:44:28 +0200 eg $
+;;;; $Id: tk-unix.stk 1.3 Sun, 01 Nov 1998 10:56:14 +0100 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 10-Sep-1998 23:20
-;;;; Last file update: 10-Sep-1998 23:29
+;;;; Last file update: 26-Oct-1998 16:00
 
 ;;; Functions defined here are only loaded when we are on Unix. 
 ;;; On windows, they are defined in C and implemented using the
@@ -61,7 +61,7 @@
 ; Tk:get-open-file		
 ;
 ;=============================================================================
-(define (Tk:get-file . l)
+(define (Tk:get-open-file . l)
   (require "Tk-classes")
   (apply (with-module STklos+Tk Tk:get-open-file) l))
 

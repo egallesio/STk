@@ -1,0 +1,111 @@
+;;;;
+;;;; b a l l o o n . s t k 					-- balloon help 
+;;;;
+;;;; Copyright © 1998-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; $Id: balloon.stk 1.2 Tue, 02 Feb 1999 09:04:21 +0100 eg $
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 11-Dec-1998 18:00
+;;;; Last file update: 22-Jan-1999 12:00
+
+(select-module Tk)
+(export add-balloon-help activate-balloons deactivate-balloons find-balloon-help)
+
+
+;;;;
+;;;; Resources (FIXME: background does not work. why? Tk bug?)
+;;;;
+
+(option 'add "*HelpBalloon*Label*Background"	"#ffffb0"	"widgetDefault")
+(option 'add "*HelpBalloon*Label*Foreground"	"black"		"widgetDefault")    
+(option 'add "*HelpBalloon*Label*BorderWidth"	1		"widgetDefault")
+(option 'add "*HelpBalloon*Font"		'(Courier -12)	"widgetDefault")
+(option 'add "*HelpBalloon*Relief"		"solid"		"widgetDefault")
+(option 'add "*HelpBalloon*HighlightThickness"	0		"widgetDefault")
+
+
+;;;;
+;;;; Globals 
+;;;;
+(define *balloon-handler* #f)
+(define *balloon-top*     #f)
+(define *balloon-label*   #f)
+
+
+(define (initialize-balloon)
+  (set! *balloon-top*   (toplevel ".__balloon__" :class "HelpBalloon"))
+  (set! *balloon-label* (label (& *balloon-top* ".l") :padx 3 :pady 2))
+  (pack *balloon-label* :expand #f :fill "both")
+  (activate-balloons)
+  ; make widget transient
+  (wm 'withdraw *balloon-top*)
+  (wm 'over     *balloon-top* #t))
+
+(define (activate-balloons)
+  (bind "Balloon" "<Enter>" (lambda (|W|) (display-balloon-help |W|)))
+  (bind "Balloon" "<Leave>" (lambda (|W|) (delete-balloon-help |W|))))
+
+(define (deactivate-balloons)
+  (bind "Balloon" "<Enter>" "")
+  (bind "Balloon" "<Leave>" ""))
+
+(define (add-balloon-help w txt delay bg)
+  (unless *balloon-top* 
+    (initialize-balloon))
+
+  ;; store parameters in widget and make it a "Balloon" widget
+  (set-widget-property! w :balloon-txt   txt)
+  (set-widget-property! w :balloon-delay delay)
+  (set-widget-property! w :balloon-bg    bg)
+  (bindtags w (cons "Balloon" (remove "Balloon" (bindtags w)))))
+
+
+(define (find-balloon-help)
+  (unless *balloon-label* 
+    (initialize-balloon))
+  *balloon-label*)
+
+
+(define (display-balloon-help w)
+  (after 'cancel *balloon-handler*)
+
+  (let ((delay (get-widget-property w :balloon-delay -1))
+	(txt   (get-widget-property w :balloon-txt   ""))
+	(bg    (get-widget-property w :balloon-bg    "")))
+    (when (>= delay 0)
+      (set! *balloon-handler*
+	    (after delay
+		   (lambda ()
+		     (let* ((height (winfo 'height w))
+			    (pos-y  (winfo 'rooty  w)))
+		       (*balloon-label* 'conf :text txt :bg bg)
+		       ;; place the balloon just outside the widget
+		       (wm 'geometry *balloon-top* 
+			   (format #f "+~A+~A" 
+				   (winfo 'pointerx w) (+ pos-y height 2)))
+		       ;; Deiconify
+		       (wm 'deiconify *balloon-top*)
+		       (raise *balloon-top*))))))))
+  
+(define (delete-balloon-help w)
+  (wm 'withdraw *balloon-top*)
+  (after 'cancel  *balloon-handler*))
+
+(provide "balloon")
+
+#|
+  (button '.b1 :text "foo")
+  (button '.b2 :text "bar")
+  (pack .b1 .b2)
+  (add-balloon-help .b1 "On several\nlines\n..." 10 "yellow")
+  (add-balloon-help .b2 "This is help" 1000 "red")
+|#

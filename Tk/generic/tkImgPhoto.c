@@ -1347,14 +1347,20 @@ ImgPhotoConfigureMaster(interp, masterPtr, argc, argv, flags)
             return TCL_ERROR;
         }
         
+#if defined(STk_CODE) && defined(WIN32)
+	chan = Tcl_OpenFileChannel(interp, masterPtr->fileString, "rb", 0);
+#else
 	chan = Tcl_OpenFileChannel(interp, masterPtr->fileString, "r", 0);
+#endif
 	if (chan == NULL) {
 	    return TCL_ERROR;
 	}
+#ifndef STk_CODE
         if (Tcl_SetChannelOption(interp, chan, "-translation", "binary")
 		!= TCL_OK) {
             return TCL_ERROR;
         }
+#endif	
 	if (MatchFileFormat(interp, chan, masterPtr->fileString,
 		masterPtr->format, &imageFormat, &imageWidth,
 		&imageHeight) != TCL_OK) {

@@ -11,15 +11,15 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
-;;;; $Id: Balloon.stklos 1.3 Thu, 10 Sep 1998 23:44:28 +0200 eg $
+;;;; $Id: Balloon.stklos 1.4 Mon, 28 Dec 1998 23:05:11 +0100 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 23-Oct-1996 17:02
-;;;; Last file update: 31-Aug-1998 16:18
+;;;; Last file update: 27-Dec-1998 18:46
 ;;;;
 
+(require "balloon")
 (require "Basics")
-
 (select-module STklos+Tk)
 
 (export add-balloon)
@@ -31,20 +31,10 @@
 ;=============================================================================
 
 ;;;;
-;;;; Resources
-;;;;
-(option 'add "*HelpBalloon*Background"  	"#ffffb0" "widgetDefault")
-(option 'add "*HelpBalloon*Font"        	"fixed"   "widgetDefault")
-(option 'add "*HelpBalloon*Relief"		"flat"    "widgetDefault")
-(option 'add "*HelpBalloon*HighlightThickness"	0 	  "widgetDefault")
-
-;;;;
 ;;;; Class definition
 ;;;;
-(define-class <Help-Balloon> (<Tk-composite-toplevel> <Label>)
+(define-class <Help-Balloon> (<Label>)
   ((label :accessor 	label-of)
-   (class :init-keyword :class
-	  :init-form    "HelpBalloon")
    (delay :initform 	1000 ; ms
 	  :init-keyword :delay 
 	  :accessor	 delay)))
@@ -53,49 +43,15 @@
 ;; Initialize-composite-widget
 ;;
 (define-method initialize-composite-widget ((self <Help-balloon>) initargs parent)
-  (let ((l (make <Label> :parent parent)))
-    (next-method)
-    (make-transient parent)
-    
-    ;; Pack the label in the parent window    
-    (pack (Id l) :expand #t :fill "both")
-    
-    ; Set true slots
-    (slot-set! self 'Id     (slot-ref l 'Id))
-    (slot-set! self 'label  l)))
+  (next-method)
+  (slot-set! self 'Id (slot-ref (find-balloon-help) 'Id)))
 
 ;;
 ;; Add-balloon
 ;;
 (define-method add-balloon ((self <Help-Balloon>) who txt)
-  (define handler #f)
-  
-  (define (display W txt)
-    (after 'cancel handler)
-    (let ((delay (delay self)))
-      (when (>= delay 0)
-	(set! handler
-	      (after delay
-		     (lambda ()
-		       (let ((height (winfo 'height W))
-			     (pos-y  (winfo 'rooty  W))
-			     (top    (frame-of self)))
-			 ;; Change the help text
-			 (set! (text-of self) txt)
-			 ;; place the balloon just outside the widget
-			 (set! (geometry top) (format #f "+~A+~A"
-						      (winfo 'pointerx W) 
-						      (+ pos-y height 2)))
-			 ;; Deiconify
-			 (deiconify top)
-			 (raise top))))))))
-  (define (delete)
-    (withdraw (frame-of self))
-    (after 'cancel  handler))
-    
-  ;; Associate new bindings to a "ballooned" widget
-  (bind who "<Enter>" (lambda () (display who txt)))
-  (bind who "<Leave>" (lambda () (delete))))
+  (add-balloon-help (Id who) txt (delay self) (background self)))
+
 
 (provide "Balloon")
 

@@ -2,7 +2,7 @@
  *
  * v e c t o r . c 			-- vectors management
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -16,9 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
+ * $Id: vector.c 1.3 Mon, 28 Dec 1998 23:05:11 +0100 eg $
+ *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: ???
- * Last file update: 10-Feb-1996 12:46
+ * Last file update: 27-Dec-1998 20:42
  */
 
 #include <string.h>
@@ -30,16 +32,12 @@ SCM STk_makevect(int len, SCM init)
   long j;
   SCM  z;
 
-  STk_disallow_sigint();
   NEWCELL(z, tc_vector);
- 
   z->storage_as.vector.dim  = len;
   z->storage_as.vector.data = (SCM *) must_malloc(len * sizeof(SCM));
 
   if (init)
     for(j=0 ;j<len; j++) z->storage_as.vector.data[j] = init;
-
-  STk_allow_sigint();
   return z;
 }
 

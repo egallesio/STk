@@ -2,7 +2,7 @@
  *
  * u n i x . c					-- Some Unix primitives
  *
- * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -16,15 +16,17 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
+ * $Id: unix.c 1.9 Fri, 22 Jan 1999 14:44:12 +0100 eg $
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 29-Mar-1994 10:57
- * Last file update: 27-Sep-1998 16:28
+ * Last file update: 15-Jan-1999 09:55
  */
 #ifndef WIN32
 #  include <unistd.h>
 #  include <pwd.h>
 #else
+#  include <windows.h>
 #  include <io.h>
 #  define F_OK   00
 #  define X_OK   01
@@ -41,14 +43,17 @@
     */
 #  undef __STDARG_H 
 
-#  ifdef MSC_VER
-#    include <direct.h>
-#    include <windows.h>
-#    define S_ISDIR(mode) ((mode&0xF0000) == 0x40000)
-#    define S_ISREG(mode) ((mode&0xF00000) == 0x100000)
+#  ifdef _MSC_VER
+#  include <direct.h>
+#  include <process.h>
+#  include <sys/stat.h>
+#  define S_ISDIR(mode) ((mode & _S_IFMT) == _S_IFDIR)
+#  define S_ISREG(mode) ((mode & _S_IFMT) == _S_IFREG)
 #  else
-      /* Borland defines the opendir/readdir/closedir functions. Use them. */
-#     include <dirent.h>
+#     ifdef BCC
+        /* Borland defines the opendir/readdir/closedir functions. Use them. */
+#       include <dirent.h>
+#     endif
 #  endif
 #else
 #  include <dirent.h>
@@ -84,12 +89,9 @@ static char *my_getcwd(char *path, int size)
 
 static char *tilde_expand(char *name, char *result)
 {
-  char *dir, *p;
+#ifndef WIN32
+   char *dir, *p;
 
-#ifdef WIN32
-  strcpy(result, name);
-  return name;	
-#else
   if (name[0] != '~') {
     strcpy(result, name);
     return name;
@@ -121,6 +123,9 @@ static char *tilde_expand(char *name, char *result)
     endpwent();
   }
   return result;
+#else
+  strcpy(result, name);
+  return name;
 #endif
 }
 
@@ -130,6 +135,8 @@ static char *tilde_expand(char *name, char *result)
  */
 static void absolute(char *s, char *pathname)	
 {
+// FIXME !!!!!  Quick hack to have a running version asap.
+#ifndef WIN32
   char *p = pathname;
   char *t;
 
@@ -182,6 +189,9 @@ static void absolute(char *s, char *pathname)
   /* Place a \0 at end. If path ends with a "/", delete it */
   if (p == pathname || !ISDIRSEP(*p)) p++;
   *p = '\0';
+#else
+  strcpy(pathname, s);
+#endif
 }
 
 

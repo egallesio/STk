@@ -12,11 +12,11 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
-;;;; $Id: stklos.stk 1.27 Sat, 26 Sep 1998 19:40:12 +0200 eg $
+;;;; $Id: stklos.stk 1.28 Mon, 30 Nov 1998 13:06:22 +0100 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 20-Feb-1994 21:09
-;;;; Last file update: 26-Sep-1998 19:32
+;;;; Last file update: 25-Nov-1998 10:39
 
 (when (provided? "stklos") 
   (error "STklos already initialized."))
@@ -144,7 +144,11 @@
 (define (ensure-metaclass supers env)
   (if (null? supers)
       (%find-class '<class> env)
-      (let* ((all-metas (map (lambda (x) (class-of (%find-class x env))) supers))
+      (let* ((all-metas (map (lambda (x)
+			       (if (is-a? x <class>)
+				   x
+				   (class-of (%find-class x env))))
+			     supers))
 	     (all-cpls  (apply append
 			       (map (lambda (m) (cdr (class-precedence-list m))) 
 				    all-metas)))

@@ -18,7 +18,7 @@
  * Note:
  *    - Implementation use Tcl hash tables to see if a variable is traced.
  *
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -35,7 +35,7 @@
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 24-Feb-1993 13:07
- * Last file update: 21-Jul-1996 21:29
+ * Last file update: 19-Dec-1998 16:24
  *
  */
 
@@ -102,7 +102,7 @@ static void UntraceVar(SCM var, int flags, Tcl_VarTraceProc *proc,
   Tcl_HashEntry *entry;
   register STk_var_trace *p, *prev;
   
-  if (entry = Tcl_FindHashEntry(&VarTable, PNAME(var))) {
+  if ((entry = Tcl_FindHashEntry(&VarTable, PNAME(var)))) {
     /* Variable is traced. Try to find correponding trace function */
     flags &= ~TCL_TRACE_UNSETS; /* Unset has no meaning for us */
 
@@ -151,7 +151,7 @@ static void complete_untrace(char *var)
   Tcl_HashEntry *entry;
   register STk_var_trace *p, *q;
   
-  if (entry = Tcl_FindHashEntry(&VarTable, var)) {
+  if ((entry = Tcl_FindHashEntry(&VarTable, var))) {
     /* Variable is traced. Try to find correponding trace function */
     for (p = (struct STk_VarTrace *) Tcl_GetHashValue(entry); p; p=q) {
       q = p=p->nextPtr;
@@ -174,7 +174,7 @@ void STk_change_value(SCM var, SCM env)
   Tcl_HashEntry *entry;
   register STk_var_trace *data, *p;
 
-  if (entry = Tcl_FindHashEntry(&VarTable, PNAME(var))) {
+  if ((entry = Tcl_FindHashEntry(&VarTable, PNAME(var)))) {
     /* Variable is traced. Call all the associated traces */
     data = (STk_var_trace *) Tcl_GetHashValue(entry);
     

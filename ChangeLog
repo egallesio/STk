@@ -1,3 +1,184 @@
+1999-02-02  Erick Gallesio  <eg@unice.fr>
+
+	* Release 3.99.4: This is the last pre 4.0 version. Code for Win32
+ 	is included. The definitive version will follow shortly if people
+ 	thinks this version is OK (and when documentation will be updated
+ 	:-<)
+
+1999-02-01  Erick Gallesio  <eg@unice.fr>
+
+	* Lib/font-chooser.stklos: New file. 
+
+1999-01-28  Erick Gallesio  <eg@unice.fr>
+
+	* Lib/ftp.stklos: Changed the ftp code which hanged in some
+ 	situations Thanks to David Tillman <dtillman@cannonexpress.com>
+ 	for signalling the bug.
+
+1999-01-27  Erick Gallesio  <eg@unice.fr>
+
+	* configure.in : typos which avoid the compilation of static
+ 	libraries.
+
+1999-01-26  Erick Gallesio  <eg@unice.fr>
+
+	* Lib/console.stk: some console binding have been changed to be less
+	"alien" with Windows.
+
+1999-01-07  Erick Gallesio  <eg@unice.fr>
+
+	* Src/stk.h: Acces to float is now direct (i.e. without pointer).
+  	It was not the case to avoid to make too much big cells due to
+ 	alignments problems. The trick was to put the union before the 
+	tag (suggested by "Jay Krell" <jay.krell@cornell.edu>. Thanks)
+
+1998-12-27  Erick Gallesio  <eg@unice.fr>
+
+	* STklos/Tk/Composite/Balloon.stklos (<Help-Balloon>): class
+ 	redefined to use the STk layer ballons (defined for the console).
+
+	* STklos/Tk/Composite/Schemetext.stklos: Modified to use the new
+ 	font-lock code.
+
+1998-12-26  Erick Gallesio  <eg@unice.fr>
+
+	* Src/signal.c: Finally code for Control-C works (finger crossed),
+ 	for the console and for classical xterms. This was a pain to write
+ 	it correctly.
+
+	* Lib/console.stk: code cleaning and some minor bug corrections.
+
+1998-12-25  Erick Gallesio  <eg@unice.fr>
+
+	* Src/dynload.c (find_function): Better error message when dynamic
+ 	loading fails
+
+1998-12-19  Erick Gallesio  <eg@unice.fr>
+
+	* Src/error.c (print_message): recursive error seems finally correct ;-)
+	This was something that was unsatisfying since v2.0 !!!
+
+	* Src/unix.c: Changes for MS C compiler provided by jay.krell@cornell.edu
+	have been applied.
+
+	* STklos/Tk/Basics.stklos (Id->instance): typo error
+
+1998-12-10  Erick Gallesio  <eg@unice.fr>
+
+	* Src/error.c: error management has ben completely changed. This should 
+	be less fragile now.
+
+1998-12-08  Erick Gallesio  <eg@unice.fr>
+
+	* Lib/tk-init.stk ("edit"): The ed function is now the scheme editor 
+	instead of the old one in file editor.stk
+
+	* Lib/text.stk: Deleted the binding for Control-v on Unix. I don't
+ 	like that but this allow to be more consistent with others
+ 	software which use the windowish Contol-C Control-v Control-X
+ 	bindings.
+
+	* Lib/tk-init.stk:New functions set-widget-property! and
+ 	get-widget-property
+
+1998-12-02  Erick Gallesio  <eg@unice.fr>
+
+	* Lib/tk-init.stk: Typo correction which prevent the loading of
+	Tk:get-save-file on Unix.
+
+	* STklos/Tk/Text.stklos: Correction of a bug in the initialization
+ 	of <Text-window> (generic parent was hidden by a local). Thanks to
+ 	Eric Fintzel <tpfintz@fr.ibm.com> for signaling it.
+
+1998-12-01  Erick Gallesio  <eg@unice.fr>
+
+	* Src/argv.c: New option -console to the interpreter to interact
+ 	through a console rather than a xterm. On Windows, the console
+ 	will be the implicit way to interact with the interpreter
+
+	* Src/console.c:
+	* Lib/console.stk: New files to implement a console for interacting 
+	with STklos.
+	
+	* Lib/font-lock.stk: New file. Font-lock doesn't need to load STklos 
+	now.
+
+1998-11-22  Erick Gallesio  <eg@unice.fr>
+
+	* Src/port.c (STk_copy_port): New primitive: copy-port
+
+	* Src/tcl-lib.c : Some cleaning on Tcl channels.
+
+	* STklos/Tk/Listbox.stklos (y-view): Method lacks a dot before the
+ 	"args" paramter (thanks to Walter C. Pelissero
+ 	<wcp@luppolo.lpds.sublink.org> for signaling it).
+	
+1998-11-21  Erick Gallesio  <eg@unice.fr>
+
+	* configure.in : Applied the patch given by Shiro Kawai 
+	<shiro@squareusa.com> for IRIX 6.2.
+
+	* Src/port.c: Char-ready is now implemented in io.c which is a
+ 	quite natural place ... More code cleaning.
+
+1998-11-19  Erick Gallesio  <eg@unice.fr>
+
+	* Src/sport.c: New primitive with-error-to-string
+
+	* Src/port.c: 
+	  - New primitive with-error-to-file (why was it absent?)
+	  - New primitives with-input-from-port, with-output-to-port, 
+	    with-error-to-port
+	  - Rewriting of large parts of the file using new primitives.
+
+	  Src/io.c: has completely be rewritten. It should be faster now
+ 	  and handle all the kind of port we have: file, strings and
+ 	  virtual
+	
+1998-11-18  Erick Gallesio  <eg@unice.fr>
+
+	* Lib/text.stk: Pasting with mouse is now correct.
+
+1998-11-10  Erick Gallesio  <eg@unice.fr>
+
+	* Src/*.c : * Extensions/*.c: Funtions using files heve all been
+ 	replaced with port. It means that port, string-ports and virtual
+ 	ports are now truly interchangeable. The drawback is that user 
+	code written in C which use files can be BROKEN. 
+
+1998-11-05  Erick Gallesio  <eg@unice.fr>
+
+	* Src/signal.c (STk_send_signal): New primitive.
+
+1998-11-04  Erick Gallesio  <eg@unice.fr>
+
+	* Src/vport.c: New file which implement virtual ports. A virtual 
+	port can be opened for reading or writing. Functions to access 
+	the port are given by the user as Scheme procedures
+
+	* STklos/Tk/Composite/Filebox.stklos : Error messages use a :text 
+ 	option instead of :message => error messages were not correctly
+ 	displayed
+
+1998-10-29  Erick Gallesio  <eg@unice.fr>
+
+	* Src/port.c (STk_read_line): starts now with a static buffer and
+ 	extend it dynamically if needed. Furthermore a potential bug has
+ 	been corrceted.
+
+1998-10-22  Erick Gallesio  <eg@unice.fr>
+
+	* Lib/listbox.stk : 2 typo errors corrected
+
+1998-10-15  Erick Gallesio  <eg@unice.fr>
+
+	* STklos/Tk/Toplevel.stklos: New generic-function: children and
+ 	typo error correction in export list
+
+1998-09-30  Erick Gallesio  <eg@unice.fr>
+
+	* Release 3.99.3
+
 1998-09-27  Erick Gallesio  <eg@unice.fr>
 
 	* Src/toplevel.c (init_interpreter): *stk-library* is now

@@ -4,7 +4,7 @@
 ;;;; a m i b . s t k l o s  --  A mini interface builder. I hope it will serve 
 ;;;;			        as the basis of something more complete...
 ;;;;
-;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -17,7 +17,7 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 22-May-1995 14:56
-;;;; Last file update:  3-Mar-1998 22:50
+;;;; Last file update:  1-Feb-1999 17:56
 
 (require "Tk-classes")
 
@@ -331,7 +331,8 @@
     (let* ((f   (make <Frame> :parent parent :relief "groove" :border-width 2))
 	   (val (get-keyword :side old-packing-options "top"))
 	   (v   (make-var 'side val)))
-      (pack (make <Label> :text "Side: " :parent f :font "fixed") :side "left")
+      (pack (make <Label> :text "Side: " :parent f :font '(Courier -12))
+	    		  :side "left")
       (for-each (lambda (x)
 		  (pack (make <Radio-button> :parent f :text x :variable v
 			      		     :value x :command change-pack-opt)
@@ -358,7 +359,8 @@
     (let* ((f   (make <Frame> :parent parent :relief "groove" :border-width 2))
 	   (val (get-keyword :fill old-packing-options "none"))
 	   (v   (make-var 'fill val)))
-      (pack (make <Label> :text "Fill: " :parent f :font "fixed") :side "left")
+      (pack (make <Label> :text "Fill: " :parent f :font '(Courier -12)) 
+	    		  :side "left")
       (for-each (lambda (x)
 		  (pack (make <Radio-button> :parent f :text x :variable v
 			      :value x :command  change-pack-opt)

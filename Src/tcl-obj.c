@@ -17,9 +17,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
+ * $Id: tcl-obj.c 1.8 Mon, 28 Dec 1998 23:05:11 +0100 eg $
+ *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date:  8-Jul-1997 10:33
- * Last file update: 15-Sep-1998 14:45
+ * Last file update: 27-Dec-1998 20:47
  *
  */
 
@@ -706,9 +708,7 @@ Tcl_GetIndexFromObj(interp, objPtr, tablePtr, msg, flags, indexPtr)
 /*
  * Tcl_EvalObj --
  *
- *	Execute Tcl commands stored in a Tcl object. These commands are
- *	compiled into bytecodes if necessary.
- *
+ *	Execute Tcl commands stored in a Tcl object. 
  */
 
 int
@@ -721,6 +721,9 @@ Tcl_EvalObj(interp, objPtr)
 {
   SCM cmd =  TCLOBJDATA((SCM) objPtr);
 
+  panic("ON est dans TclEvalObj");
+  getchar();
+#ifdef FIXME_FIXME
   if (cmd) {
     SCM expr		 = STk_convert_tcl_list_to_scheme(cmd);
     Jmp_Buf jb, *prev_jb = Top_jmp_buf;
@@ -736,7 +739,7 @@ Tcl_EvalObj(interp, objPtr)
       result        = STk_eval(expr, NIL);
     }
     
-    Top_jmp_buf   = prev_jb;;
+    Top_jmp_buf   = prev_jb;;e
     Error_context = prev_context;
  
     if (k == 0) {
@@ -751,6 +754,7 @@ Tcl_EvalObj(interp, objPtr)
     if (Error_context & ERR_IGNORED) longjmp(Top_jmp_buf->j, k);
     return TCL_ERROR;
   }
+#endif  
   return TCL_OK;
 }
 #endif

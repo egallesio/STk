@@ -1,4 +1,23 @@
-30/09/98 Release 3.99.3
+02/02/99 Release 3.99.4
+-----------------------
+Mains changes/modifications since 3.99.3 are:
+
+	* Works on Windows too (need some more testing, since this is
+	far form perfect)
+
+	* A console mode (which is used by default on Windows, but can
+	  be used with the -console option on Unix)
+
+	* A new editor with Scheme fontification and indentation 
+	
+	* New kind of ports: virtual ports 
+	
+	* All the code dealing with files has been rewritten. 
+	
+	* As usual, some bug corrections
+
+
+09/30/98 Release 3.99.3
 -----------------------
 Mains changes/modifications since 3.99.2 are:
 

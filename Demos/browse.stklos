@@ -7,11 +7,11 @@
 ;;;; directory and allows you to open files or subdirectories by
 ;;;; double-clicking.
 ;;;;
-;;;; $Id: browse.stklos 1.2 Mon, 16 Feb 1998 08:28:39 +0100 eg $
+;;;; $Id: browse.stklos 1.4 Tue, 02 Feb 1999 09:04:21 +0100 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date:  3-Aug-1993 17:33
-;;;; Last file update: 12-Feb-1998 11:28
+;;;; Last file update:  2-Feb-1999 08:45
 
 (require "Tk-classes")
 (require "unix")
@@ -19,7 +19,7 @@
 ;;;;
 ;;;; Interface
 ;;;;
-(define lb (make <Scroll-Listbox> :width 30 :height 20 :font 'fixed))
+(define lb (make <Scroll-Listbox> :width 30 :height 20 :font '(Courier -12)))
 (pack lb :fill "both" :side "top" :expand #t)
 
 (define quit (make <Button> :text "Quit" :command '(exit)))
@@ -33,12 +33,17 @@
   (delete lb 0 'end)
   (apply insert lb 0 (sort (glob "*" ".*") string<?)))
 
+(define (edit-file file)
+  (if (eqv? (os-kind) 'Unix)
+      (system (string-append "xedit " file "&"))
+      (system (string-append "notepad " file))))
+
 (define (browse)
   (catch 
     (let ((file  (string-append (getcwd) "/" (selection 'get))))
       (cond
         ((file-is-directory? file) (fill-listbox lb file))
-	((file-is-readable? file)  (system (string-append "xedit " file "&")))
+	((file-is-readable? file)  (edit-file file))
 	(else			   (error "Bad directory or file ~S" file))))))
 
 

@@ -13,9 +13,11 @@
  * permission of the copyright holder.  
  * This software is provided ``as is'' without express or implied warranty.
  *
+ * $Id: base64.c 1.3 Wed, 18 Nov 1998 16:16:26 +0100 eg $
+ *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 20-Jul-1998 12:19
- * Last file update: 20-Jul-1998 19:40
+ * Last file update: 10-Nov-1998 23:40
  */
 
 #include <stk.h>
@@ -32,10 +34,10 @@ static void initialize_rev_table(void)
   char *p;
   int count = 0;
 
-  for (p = table; *p; p++) rev_table[*p] = count++;
+  for (p = table; *p; p++) rev_table[(int) *p] = count++;
 }
 
-static void encode(FILE *f, FILE *g)
+static void encode(SCM f, SCM g)
 {
   int c, state, count, old;
 
@@ -65,7 +67,7 @@ static void encode(FILE *f, FILE *g)
   }
 }
 
-static void decode(FILE *f, FILE *g)
+static void decode(SCM f, SCM g)
 {
   static int initialized = 0;
   int c, bits, group, j;
@@ -106,7 +108,7 @@ static PRIMITIVE base64_encode(SCM f, SCM g)
   else
     if (!OUTP(g)) Serror("bad output port", g);
   
-  encode(PORT_FILE(f), PORT_FILE(g));
+  encode(f, g);
   return UNDEFINED;
 }
 
@@ -120,7 +122,7 @@ static PRIMITIVE base64_decode(SCM f, SCM g)
   else
     if (!OUTP(g)) Serror("bad output port", g);
   
-  decode(PORT_FILE(f), PORT_FILE(g));
+  decode(f, g);
   return UNDEFINED;
 }
 

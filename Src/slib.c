@@ -1,7 +1,7 @@
 /*
  * s l i b . c				-- Misc functions
  *
- * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -15,11 +15,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: slib.c 1.11 Wed, 16 Sep 1998 14:57:37 +0200 eg $
+ * $Id: slib.c 1.17 Fri, 22 Jan 1999 14:44:12 +0100 eg $
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: ??-Oct-1993 ??:?? 
- * Last file update: 15-Sep-1998 16:13
+ * Last file update: 15-Jan-1999 09:38
  *
  */
 
@@ -34,7 +34,9 @@
 
 #ifdef WIN32
 #   include <time.h>
-/* #   include <dos.h>		enlévé pour CYGWIN32 */
+#   ifndef CYGWIN32
+#      include <dos.h>
+#   endif
 #   include <process.h>
 #else
 #   include <stdarg.h>
@@ -64,8 +66,8 @@ static size_t malloc_count = 0;
 
 static void cannot_allocate()
 {
-  fprintf(STk_stderr, "**** Storage allocation from system failed\n");
-  fprintf(STk_stderr, "**** Evaluation aborted\n");
+  Puts("**** Storage allocation from system failed\n", STk_curr_eport);
+  Puts("**** Evaluation aborted\n", STk_curr_eport);
   
   STk_gc_requested = 1;
 
@@ -128,55 +130,56 @@ void *STk_must_realloc(void *ptr, size_t size)
 
 SCM STk_internal_eval_string(char *s, long context, SCM env)
 {
-  Jmp_Buf jb, *prev_jb = Top_jmp_buf;
-  long prev_context     = Error_context;
   SCM result, port;
-  int k;
-  
-  /* Create a string port to read the command and evaluate it in a new context */
-  port = STk_internal_open_input_string(s);
 
-  /* save normal error jmpbuf  so that eval error don't lead to toplevel */
-  /* If in a "catch", keep the ERR_IGNORED bit set */
-  if ((k = setjmp(jb.j)) == 0) {
-    Top_jmp_buf   = &jb;
-    Error_context = (Error_context & ERR_IGNORED) | context;
-    result = STk_eval(STk_readf(PORT_FILE(port), FALSE), env);
-  }
-  Top_jmp_buf   = prev_jb;;
-  Error_context = prev_context;
- 
-  if (k == 0) return result;
-  /* if we are here, an error has occured during the string reading 
-   * Two cases:
-   *    - we are in a catch. Do a longjump to the catch to signal it a fail
-   *    - otherwise error has already signaled, just return EVAL_ERROR
-   */
-  if (Error_context & ERR_IGNORED) longjmp(Top_jmp_buf->j, k);
-  return EVAL_ERROR;
+  PUSH_ERROR_HANDLER
+    {
+      /* Create a string port to read the sexpr and evaluate it in a new context */
+      STk_err_handler->context |= context;
+      port   = STk_internal_open_input_string(s);
+      result = STk_eval(STk_readf(port, FALSE), env);
+    }
+  WHEN_ERROR
+    {
+      /* Two cases:
+       *    - if we are in a catch, propagate the error to go back in the
+       *      context of the catch
+       *    - otherwise error has already been signaled, do nothing
+       */
+      if ((STk_err_handler->context & ERR_TCL_BACKGROUND) && STk_control_C)
+	result = Ntruth;
+      else {
+	if (STk_err_handler->context & ERR_IGNORED) PROPAGATE_ERROR();
+	result = EVAL_ERROR;
+      }
+    }
+  POP_ERROR_HANDLER;
+  return result;
 }
 
 
 PRIMITIVE STk_catch(SCM expr, SCM env, int unused_len)
 {
-  Jmp_Buf jb, *prev_jb = Top_jmp_buf;
-  long prev_context     = Error_context;
+  SCM result;
   SCM l;
-  int k;
+  
+  PUSH_ERROR_HANDLER
+    {
+      /* Evaluate the list of expressions in a context where errors are ignored */
+      STk_err_handler->context |= ERR_IGNORED;
+      for (l = expr; NNULLP(l); l = CDR(l))
+	STk_eval(CAR(l), env);
+      result = Ntruth;
+    }
+  WHEN_ERROR
+    {
+      result = Truth;
+    }
+  POP_ERROR_HANDLER;
 
-  /* save normal error jmpbuf  so that eval error don't lead to toplevel */
-  if ((k = setjmp(jb.j)) == 0) {
-    Top_jmp_buf   = &jb;
-    Error_context |= ERR_IGNORED;
-    /* Evaluate the list of expressions */
-    for (l = expr; NNULLP(l); l = CDR(l)) 
-      STk_eval(CAR(l), env);
-  }
-  Top_jmp_buf   = prev_jb;
-  Error_context = prev_context; /* Don't use a mask to allow nested call to catch */
-
-  return (k == 0)? Ntruth: Truth;
+  return result;
 }
+
 
 PRIMITIVE STk_quit_interpreter(SCM retcode)
 {
@@ -186,6 +189,8 @@ PRIMITIVE STk_quit_interpreter(SCM retcode)
     if ((ret=STk_integer_value(retcode)) == LONG_MIN)
       Err("quit: bad return code", retcode);
   }
+
+  /* Execute all the terminal thunks of pending dynamic-wind */
   STk_unwind_all();
 
   /* call user finalization code */
@@ -201,6 +206,7 @@ PRIMITIVE STk_quit_interpreter(SCM retcode)
   WSACleanup();  
 #endif
   exit(ret);
+  return UNDEFINED; /* never reached */
 }
 
 PRIMITIVE STk_version(void)
@@ -299,7 +305,8 @@ PRIMITIVE STk_time(SCM expr, SCM env, int len)
   gc_time         = STk_total_gc_time;
   rt 	          = STk_my_time();
   res 	          = EVALCAR(expr);
-  fprintf(STk_stderr, ";;    Time: %.2fms\n;; GC time: %.2fms\n;;   Cells: %ld\n",
+  Fprintf(STk_curr_eport,
+	  ";;    Time: %.2fms\n;; GC time: %.2fms\n;;   Cells: %ld\n",
 	  STk_my_time()-rt, STk_total_gc_time-gc_time, STk_alloc_cells);
   return res;
 }
@@ -426,27 +433,29 @@ void dbgeval(void);
 
 void dbg(SCM obj)
 {
-  fprintf(STk_stderr, " <<#p%lx>> ", (unsigned long) obj);
+  Fprintf(STk_curr_eport, " <<#p%lx>> ", (unsigned long) obj);
   STk_print(obj, STk_curr_eport, WRT_MODE);
-  fprintf(STk_stderr, " \n");
+  Putc('\n', STk_curr_eport);
 }
 
 void dbgeval(void)
 {
   SCM x;
-Top:
-  fprintf(STk_stderr, "Debug STk> "); fflush(STk_stderr);
-  if (EQ(x=STk_readf(STk_stdin, FALSE), STk_eof_object)) return;
-  dbg(STk_eval(x, STk_selected_module));
-  goto Top;
+  
+
+  for ( ; ; ) {
+    Fprintf(STk_curr_eport, "Debug STk> "); Flush(STk_curr_eport);
+    if (EQ(x=STk_readf(STk_stdin, FALSE), STk_eof_object)) return;
+    dbg(STk_eval(x, STk_selected_module));
+  }
 }
 
 void Debug(char *message, SCM obj)
 {
-  fflush(STk_stdout); fflush(STk_stderr);
-  fprintf(STk_stderr, "***%s", message); 
+  Flush(STk_curr_oport); Flush(STk_curr_eport);
+  Puts("****", STk_curr_eport); Puts(message, STk_curr_eport);
   dbg(obj);
-  fflush(STk_stdout); fflush(STk_stderr);
+  Flush(STk_curr_oport); Flush(STk_curr_eport);
 }
 
 #endif

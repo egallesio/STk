@@ -4,7 +4,7 @@
 ;;;;				   A lot of things are missing
 ;;;;				   (See RFC 959)
 ;;;;
-;;;; Copyright © 1996-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1996-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -14,9 +14,11 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
+;;;; $Id: ftp.stklos 1.4 Mon, 01 Feb 1999 15:18:22 +0100 eg $
+;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 10-Jun-1996 12:22
-;;;; Last file update:  9-Apr-1998 10:46
+;;;; Last file update: 28-Jan-1999 23:31
 
 (require "stklos")
 (require "posix")
@@ -76,26 +78,6 @@
 ;;;
 ;;; Utilities
 ;;;
-(define-method  ftp-data ((self <FTP-connection>) cmd)
-  (let* ((s  (make-server-socket 0))
-	 (c  (socket-of self))
-	 (n  (socket-port-number s))
-	 (ip (regexp-replace-all "\\." (socket-local-address c) ",")))
-
-    (if (and (ftp-write-line self (format #f "PORT ~A,~A,~A" ip
-					  (quotient n 256) (remainder n 256)) #f)
-	     (ftp-write-line self cmd #f))
-	;; Transfer seems OK
-	(begin
-	  (socket-accept-connection s)
-	  (let ((in (socket-input s)))
-	    (do ((l (read-line in) (read-line in)))
-		((eof-object? l))
-	      (display l)
-	      (newline)))
-	  (ftp-read-line self #f))
-	;; There something which is not OK (we should be more precise here)
-	#f)))
 
 (define-method ftp-data ((self <FTP-connection>) cmd)
   (let* ((s  (make-server-socket 0))
@@ -148,24 +130,36 @@
   (ftp-write-line s "TYPE A" #f)
   (let* ((cmd  (if (null? args) "LIST" (format #f "NLST ~A" (car args))))
 	 (sock (ftp-data s cmd)))
-    (and sock (ftp-copy s (socket-input sock) (current-output-port) #f))))
+    (and sock 
+	 (ftp-copy s (socket-input sock) (current-output-port) #f)
+	 (socket-shutdown sock)
+	 #t)))
 
 (define (ftp-get s file)
   (ftp-write-line s "TYPE I" #f)
   (let* ((cmd (format #f "RETR ~A" file))
 	 (sock (ftp-data s cmd)))
-    (and sock (ftp-copy s (socket-input sock) (open-output-file file) #f))))
+    (and sock 
+	 (ftp-copy s (socket-input sock) (open-output-file file) #f)
+	 (socket-shutdown sock)
+	 #t)))
 
 (define (ftp-display s file)
   (ftp-write-line s "TYPE A" #f)
   (let* ((cmd (format #f "RETR ~A" file))
 	 (sock (ftp-data s cmd)))
-    (and sock (ftp-copy s (socket-input sock) (current-output-port) #f))))
+    (and sock 
+	 (ftp-copy s (socket-input sock) (current-output-port) #f)
+	 (socket-shutdown sock)
+	 #t)))
 
 (define (ftp-put s file)
   (ftp-write-line s "TYPE I" #f)
   (let* ((cmd (format #f "STOR ~A" file))
 	 (sock (ftp-data s cmd)))
-    (and sock (ftp-copy s (open-input-file file) (socket-output sock) #t))))
+    (and sock 
+	 (ftp-copy s (open-input-file file) (socket-output sock) #t)
+	 (socket-shutdown sock)
+	 #t)))
 
 (provide "ftp")

@@ -1,5 +1,4 @@
 /*
- *
  *  p o r t . c			-- ports implementation
  *
  * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
@@ -16,38 +15,20 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: port.c 1.13 Wed, 16 Sep 1998 14:57:37 +0200 eg $
+ * $Id: port.c 1.23 Fri, 22 Jan 1999 14:44:12 +0100 eg $
  *
  *            Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 17-Feb-1993 12:27
- * Last file update: 15-Sep-1998 14:44
+ * Last file update: 26-Dec-1998 21:36
  *
  */
-#ifndef WIN32
-#  include <sys/ioctl.h>
-#  include <sys/time.h>
-#  include <ctype.h>
-#endif
-
-#ifdef HAVE_SYS_SELECT_H
-#include <sys/select.h>	/* This seems to be useful only for AIX */
-#endif
-
-#ifndef NO_FD_SET
-#   define SELECT_MASK fd_set
-#else
-#   ifndef _AIX
-	typedef long fd_mask;
-#   endif
-#   if defined(_IBMR2)
-#	define SELECT_MASK void
-#   else
-#	define SELECT_MASK int
-#   endif
-#endif
 
 #include "stk.h"
 #include "module.h"
+
+
+#define INITIAL_LINE_SIZE 256		/* Initial size for readline */
+
 
 #if defined(WIN32) && !defined(CYGWIN32)
   /* Provide substitute functions dor WIN32 */
@@ -71,6 +52,7 @@ SCM STk_Cfile2port(char *name, FILE *f, int type, int flags)
   NEWCELL(z, type);
   z->storage_as.port.p   = (struct port_descr *) 
     				must_malloc(sizeof(struct port_descr));
+  PORT_UNGETC(z)	 = EOF;
   PORT_FILE(z)           = f;
   PORT_FLAGS(z)	 	 = flags;
   PORT_REVENT(z)	 = Ntruth;
@@ -83,18 +65,16 @@ SCM STk_Cfile2port(char *name, FILE *f, int type, int flags)
 
 static SCM makeport(char *name, int type, char *mode, int error)
 {
-  SCM z     = Ntruth;
   int flags = 0;
   FILE *f;
   char *full_name;
 
-  STk_disallow_sigint();
   if (strncmp(name, "| ", 2)) {
     full_name = CHARS(STk_internal_expand_file_name(name));
 
     if ((f = fopen(full_name, mode)) == NULL) {
       if (error) Err("could not open file", STk_makestring(name));
-      else goto Out;
+      else return Ntruth;
     }
   }
   else {
@@ -102,15 +82,11 @@ static SCM makeport(char *name, int type, char *mode, int error)
     flags     = PIPE_PORT;
     if ((f = popen(name+1, mode)) == NULL) {
       if (error) Err("could not create pipe", STk_makestring(name));
-      else goto Out;
+      else return Ntruth;
     }    
   }
 
-  z = STk_Cfile2port(full_name, f, type, flags);
-
-Out:
-  STk_allow_sigint();
-  return(z);
+  return STk_Cfile2port(full_name, f, type, flags);
 }
 
 
@@ -128,93 +104,83 @@ static SCM verify_port(char *proc_name, SCM port, int mode)
   return UNDEFINED; /* cannot occur */
 }
 
-static void closeport(SCM port)
+void STk_close_file_port(SCM port)
 {
-  if (PORT_FLAGS(port) & PORT_CLOSED) return;
-
-  STk_disallow_sigint();
+  FILE *f = PORT_FILE(port);
   
-  if (IPORTP(port) || OPORTP(port)) {			    /* Not a string port */
-    FILE *f = PORT_FILE(port);
-#ifdef USE_TK
-    /* For pipe and file ports, delete the fileevent associated to it (if any) */
-    Tcl_DeleteFileHandler(fileno(f));
+#if defined(USE_TK) && !defined(WIN32)
+  /* For pipe and file ports, delete the fileevent associated to it (if any) */
+  Tcl_DeleteFileHandler(fileno(f));
 #endif
-    fflush(f);
-    if (PORT_FLAGS(port) & PIPE_PORT)   		    /* Pipe port */
-      pclose(f);
-    else 						    /* File port */
-      fclose(f);
-  }
-  PORT_FLAGS(port) |= PORT_CLOSED;
-  STk_allow_sigint();
+  if (PORT_FLAGS(port) & PIPE_PORT)   		    /* Pipe port */
+    pclose(f);
+  else 						    /* File port */
+    fclose(f);
 }
+
 
 void STk_freeport(SCM port)
 {
-  STk_disallow_sigint();
-  closeport(port);
+  STk_close(port);
   free(PORT_NAME(port));
   free(port->storage_as.port.p);
-  STk_allow_sigint();
 }
 
 void STk_init_standard_ports(void)
 {
-  STk_curr_iport = STk_Cfile2port("*stdin*",  STk_stdin, tc_iport, 0);  
+  STk_stdin = STk_curr_iport = STk_Cfile2port("*stdin*",  stdin, tc_iport, 0);  
+  STk_gc_protect(&STk_stdin);
   STk_gc_protect(&STk_curr_iport);
   
-  STk_curr_oport = STk_Cfile2port("*stdout*", STk_stdout, tc_oport, 0);
+  STk_stdout = STk_curr_oport = STk_Cfile2port("*stdout*", stdout, tc_oport, 0);
+  STk_gc_protect(&STk_stdout);
   STk_gc_protect(&STk_curr_oport);
 
-  STk_curr_eport = STk_Cfile2port("*stderr*", STk_stderr, tc_oport, 0);
+  STk_stderr = STk_curr_eport = STk_Cfile2port("*stderr*", stderr, tc_oport, 0);
+  STk_gc_protect(&STk_stderr);
   STk_gc_protect(&STk_curr_eport);
 
-  
   NEWCELL(STk_eof_object, tc_eof);
   STk_gc_protect(&STk_eof_object);
 
   STk_line_counter = 1;
-  STk_current_filename = UNBOUND;	/* Ubound <=> stdin */
+  STk_current_filename = UNBOUND;	/* Unbound <=> stdin */
   STk_gc_protect(&STk_current_filename);
 }
 
-/******************************************************************************
+/*=============================================================================*\
+ * 
+ *  				L O A D   stuff
  *
- * L O A D  stuff
- *
- ******************************************************************************/
+\*=============================================================================*/
+
 static int do_load(char *full_name, SCM module)
 {
-  FILE *f;
   int c;
 
   if (!STk_dirp(full_name)) {
-     f = fopen(full_name, "r");
+     FILE *f = fopen(full_name, "r");
      
      if (f == NULL) return 0;
 
      if (STk_lookup_variable(LOAD_VERBOSE, NIL) != Ntruth)
-       fprintf(STk_stderr, ";; Loading file \"%s\"\n", full_name);
+       Fprintf(STk_curr_eport, ";; Loading file \"%s\"\n", full_name);
      
      /* Just read one character. Assume that file is an object if this 
       * character is a control one. Here, I don't try to see if the file magic 
-      * number has a particular value, since I'm not nure that all platforms
+      * number has a particular value, since I'm not sure that all platforms
       * use identical conventions 
       */
-     c = Getc(f); Ungetc(c, f);
-     if (c != EOF &&  ((iscntrl(c)&& c!= '\n') || !isascii(c))) {
-       fclose(f);
+     c = getc(f); fclose(f);
+     if (c != EOF && ((iscntrl(c)&& c!= '\n' && c!= '\t') || !isascii(c))) {
        STk_load_object_file(full_name);
      }
      else {
        /* file seems not to be an object file. Try to load it as a Scheme file */
-       Jmp_Buf jb, *prev_jb = Top_jmp_buf;
-       long prev_context    = Error_context;
        SCM prev_module;
-       SCM previous_file, form;
-       int k, previous_line;
-
+       SCM previous_file, port;
+       int previous_line;
+       
        /* Save info about current line and file */
        previous_file	    = STk_current_filename;
        previous_line	    = STk_line_counter;
@@ -225,33 +191,39 @@ static int do_load(char *full_name, SCM module)
        prev_module	    = STk_selected_module;
        STk_selected_module  = module;
 
-       /* save normal error jmpbuf so that eval error don't lead to toplevel */
-       /* This permits to close the opened file in case of error */
-       /* If in a "catch", keep the ERR_IGNORED bit set */
-       if ((k = setjmp(jb.j)) == 0) {
-	 Top_jmp_buf   = &jb;
+       /* Create port for reading */
+       port = makeport(full_name, tc_iport, "r", TRUE);
 
-	 for( ; ; ) {
-	   form = STk_readf(f, FALSE);
-	   if EQ(form, STk_eof_object) break;
-	   STk_eval(form, MOD_ENV(STk_selected_module));
+       PUSH_ERROR_HANDLER
+	 {
+	   SCM form;
+
+	   STk_err_handler->context |= ERR_IN_LOAD;
+	   
+	   for( ; ; ) {
+	     form = STk_readf(port, FALSE);
+	     if (EQ(form, STk_eof_object)) break;
+	     STk_eval(form, MOD_ENV(STk_selected_module));
+	   }
 	 }
-       }
-       fclose(f);
+       WHEN_ERROR
+	 {
+	   STk_close(port);
+	   STk_selected_module = prev_module;
+	   STk_last_defined    = Ntruth;
+	   if (!STk_control_C) PROPAGATE_ERROR();
+	 }
+       POP_ERROR_HANDLER;
+       
+       STk_close(port);
 
-       Top_jmp_buf   	   = prev_jb;
-       Error_context 	   = prev_context;
-       STk_selected_module = prev_module;
-       STk_last_defined    = Ntruth;
-
-       if (k) /*propagate error */ longjmp(Top_jmp_buf->j, k);
-
-       /* No error: restore info about current line and file */
        STk_current_filename = previous_file;
        STk_line_counter	    = previous_line;
+       STk_selected_module  = prev_module;
+       STk_last_defined     = Ntruth;
      }
      if (STk_lookup_variable(LOAD_VERBOSE, NIL) != Ntruth)
-       fprintf(STk_stderr, ";; File \"%s\" loaded\n", full_name);
+       Fprintf(STk_curr_eport, ";; File \"%s\" loaded\n", full_name);
      return 1;
   }
   /* No file found */
@@ -293,12 +265,14 @@ SCM STk_load_file(char *fname, int err_if_absent, SCM module)
   int len;
   SCM load_path, load_suffixes;
 
+  ENTER_PRIMITIVE("load");
+
   len           = strlen(fname);
   load_path     = STk_lookup_variable(LOAD_PATH,     NIL);
   load_suffixes = STk_lookup_variable(LOAD_SUFFIXES, NIL);
   
-  if (STk_llength(load_path)<0)     Err("load: bad loading path", load_path);
-  if (STk_llength(load_suffixes)<0) Err("load: bad set of suffixes", load_suffixes);
+  if (STk_llength(load_path)<0)     Serror("bad loading path",    load_path);
+  if (STk_llength(load_suffixes)<0) Serror("bad set of suffixes", load_suffixes);
  
 #ifdef WIN32
   if ((len > 0 && (fname[0] == '/' || fname[0] == '\\' || fname[0] == '~')) ||
@@ -322,16 +296,16 @@ SCM STk_load_file(char *fname, int err_if_absent, SCM module)
     /* Use *load-path* for loading file */
     for ( ; NNULLP(load_path); load_path = CDR(load_path)) {
       if (NSTRINGP(CAR(load_path))) 
-	Err("load: bad loading path component", CAR(load_path));
+	Serror("bad loading path component", CAR(load_path));
 
       if (try_loadfile(CHARS(CAR(load_path)), fname, load_suffixes, module))
 	return(err_if_absent? UNDEFINED: Truth);
     }
   }
 
-    /* If we are here, we have been unable to load a file. Report err if needed */
+  /* If we are here, we have been unable to load a file. Report err if needed */
   if (err_if_absent)
-    Err("load: cannot open file", STk_makestring(fname));
+    Serror("cannot open file", STk_makestring(fname));
   return Ntruth; 
 }
 
@@ -360,63 +334,173 @@ PRIMITIVE STk_current_error_port(void)
   return STk_curr_eport;
 }
 
-PRIMITIVE STk_with_input_from_file(SCM string, SCM thunk)
+
+/*============================================================================*\
+ * 			w i t h - i n p u t - f r o m - . . .
+\*============================================================================*/
+
+SCM STk_redirect_input(SCM port, SCM thunk)
 {
-  Jmp_Buf env, *prev_env = Top_jmp_buf;
-  SCM result, prev_iport = STk_curr_iport;
-  int prev_context 	 = Error_context;
-  int k;
+  SCM result     = UNDEFINED; /* to make gcc happy*/
+  SCM prev_iport = STk_curr_iport;
   
-  ENTER_PRIMITIVE("with-input-from-file");
+  PUSH_ERROR_HANDLER
+    {
+      STk_curr_iport = port;
+      result         = Apply(thunk, NIL);
+      STk_curr_iport = prev_iport;
+    }
+  WHEN_ERROR
+    {
+      STk_curr_iport = prev_iport;
+      PROPAGATE_ERROR();
+    }
+  POP_ERROR_HANDLER;
 
-  if (NSTRINGP(string))     Serror("bad string", string);
-  if (!STk_is_thunk(thunk)) Serror("bad thunk", thunk);
-
-  STk_curr_iport = UNBOUND; 	/* will not be changed if opening fails */
-
-  if ((k = setjmp(env.j)) == 0) {
-    Top_jmp_buf     = &env;
-    STk_curr_iport  = makeport(CHARS(string), tc_iport, "r", TRUE);
-    result          = Apply(thunk, NIL);
-  }
-  /* restore normal error jmpbuf  and current input port*/
-  if (STk_curr_iport != UNBOUND) closeport(STk_curr_iport);
-  STk_curr_iport = prev_iport;
-  Top_jmp_buf    = prev_env;
-  Error_context  = prev_context;
-
-  if (k) /*propagate error */ longjmp(Top_jmp_buf->j, k);
   return result;
 }
 
+
+PRIMITIVE STk_with_input_from_file(SCM string, SCM thunk)
+{
+  SCM res, p;
+
+  ENTER_PRIMITIVE("with-input-from-file");
+  
+  if (NSTRINGP(string))     Serror("bad string", string);
+  if (!STk_is_thunk(thunk)) Serror("bad thunk", thunk);
+
+  p   = makeport(CHARS(string), tc_iport, "r", TRUE);
+  res = STk_redirect_input(p , thunk);
+  STk_close(p);
+  
+  return res;
+}
+
+PRIMITIVE STk_with_input_from_port(SCM port, SCM thunk)
+{
+  ENTER_PRIMITIVE("with-input-from-port");
+
+  if (!INP(port))           Serror("bad port",  port);
+  if (!STk_is_thunk(thunk)) Serror("bad thunk", thunk);
+
+  return STk_redirect_input(port, thunk);
+}
+
+
+
+/*============================================================================*\
+ * 			w i t h - o u t p u t - t o - . . .
+\*============================================================================*/
+
+SCM STk_redirect_output(SCM port, SCM thunk)
+{
+  SCM result     = UNDEFINED; /* to make gcc happy*/
+  SCM prev_oport = STk_curr_oport;
+  
+  PUSH_ERROR_HANDLER
+    {
+      STk_curr_oport = port;
+      result         = Apply(thunk, NIL);
+      STk_curr_oport = prev_oport;
+    }
+  WHEN_ERROR
+    {
+      STk_curr_oport = prev_oport;
+      PROPAGATE_ERROR();
+    }
+  POP_ERROR_HANDLER;
+
+  Flush(port);
+  return result;
+}
+
+
 PRIMITIVE STk_with_output_to_file(SCM string, SCM thunk)
 {
-  Jmp_Buf env, *prev_env = Top_jmp_buf;
-  SCM result, prev_oport = STk_curr_oport;
-  int prev_context       = Error_context;
-  int k;
+  SCM res, p;
 
   ENTER_PRIMITIVE("with-output-to-file");
 
   if (NSTRINGP(string))     Serror("bad string", string);
   if (!STk_is_thunk(thunk)) Serror("bad thunk", thunk);
 
-  STk_curr_oport = UNBOUND;		/* will not be changed if opening fails */
+  p   = makeport(CHARS(string), tc_oport, "w", TRUE);
+  res = STk_redirect_output(p, thunk);
+  STk_close(p);
+  
+  return res;
+}
 
-  if ((k = setjmp(env.j)) == 0) {
-    Top_jmp_buf     = &env;
-    STk_curr_oport  = makeport(CHARS(string), tc_oport, "w", TRUE);
-    result          = Apply(thunk, NIL);
-  }
-  /* restore normal error jmpbuf  and current output port*/
-  if (STk_curr_oport != UNBOUND) closeport(STk_curr_oport);
-  STk_curr_oport = prev_oport;
-  Top_jmp_buf    = prev_env;
-  Error_context  = prev_context;
 
-  if (k) /*propagate error */ longjmp(Top_jmp_buf->j, k);
+PRIMITIVE STk_with_output_to_port(SCM port, SCM thunk)
+{
+  ENTER_PRIMITIVE("with-output-to-port");
+
+  if (!OUTP(port))          Serror("bad port",  port);
+  if (!STk_is_thunk(thunk)) Serror("bad thunk", thunk);
+
+  return STk_redirect_output(port, thunk);
+}
+
+/*============================================================================*\
+ * 			w i t h - e r r o r - t o - . . .
+\*============================================================================*/
+
+
+SCM STk_redirect_error(SCM port, SCM thunk)
+{
+  SCM result     = UNDEFINED; /* to make gcc happy*/
+  SCM prev_eport = STk_curr_eport;
+  
+  PUSH_ERROR_HANDLER
+    {
+      STk_curr_eport = port;
+      result         = Apply(thunk, NIL);
+      STk_curr_eport = prev_eport;
+    }
+  WHEN_ERROR
+    {
+      STk_curr_eport = prev_eport;
+      PROPAGATE_ERROR();
+    }
+  POP_ERROR_HANDLER;
+
+  Flush(port);
   return result;
 }
+
+PRIMITIVE STk_with_error_to_file(SCM string, SCM thunk)
+{
+  SCM res, p;
+
+  ENTER_PRIMITIVE("with-error-to-file");
+
+  if (NSTRINGP(string))     Serror("bad string", string);
+  if (!STk_is_thunk(thunk)) Serror("bad thunk", thunk);
+
+  p   = makeport(CHARS(string), tc_oport, "w", TRUE);
+  res = STk_redirect_error(p, thunk);
+  STk_close(p);
+  
+  return res;
+}
+
+
+PRIMITIVE STk_with_error_to_port(SCM port, SCM thunk)
+{
+  ENTER_PRIMITIVE("with-error-to-port");
+
+  if (!OUTP(port))          Serror("bad port",  port);
+  if (!STk_is_thunk(thunk)) Serror("bad thunk", thunk);
+
+  return STk_redirect_error(port, thunk);
+}
+
+
+/*=============================================================================*\
+ *                               Open/Close
+\*=============================================================================*/
 
 
 PRIMITIVE STk_open_input_file(SCM filename)
@@ -434,7 +518,7 @@ PRIMITIVE STk_open_output_file(SCM filename)
 PRIMITIVE STk_close_input_port(SCM port)
 {
   if (!INP(port)) Err("close-input-port: not an input port", port);
-  closeport(port);
+  STk_close(port);
 
   return UNDEFINED;
 }
@@ -442,15 +526,19 @@ PRIMITIVE STk_close_input_port(SCM port)
 PRIMITIVE STk_close_output_port(SCM port)
 {
   if (!OUTP(port)) Err("close-output-port: not an output port", port);
-  closeport(port);
+  STk_close(port);
 
   return UNDEFINED;
 }
 
+/*=============================================================================*\
+ * 				Read
+\*=============================================================================*/
+
 PRIMITIVE STk_read(SCM port)
 {
   port = verify_port("read", port, F_READ);
-  return(STk_readf(PORT_FILE(port), FALSE));
+  return(STk_readf(port, FALSE));
 }
 
 PRIMITIVE STk_read_char(SCM port)
@@ -458,7 +546,7 @@ PRIMITIVE STk_read_char(SCM port)
   int c;
 
   port = verify_port("read-char", port, F_READ);
-  c = Getc(PORT_FILE(port));
+  c = Getc(port);
   return (c == EOF) ? STk_eof_object : STk_makechar((unsigned char) c);
 }
 
@@ -467,8 +555,8 @@ PRIMITIVE STk_peek_char(SCM port)
   int c;
 
   port = verify_port("peek-char", port, F_READ);
-  c = Getc(PORT_FILE(port));
-  Ungetc(c, PORT_FILE(port));
+  c = Getc(port);
+  Ungetc(c, port);
   return (c == EOF) ? STk_eof_object : STk_makechar((unsigned char) c);
 }
 
@@ -477,48 +565,16 @@ PRIMITIVE STk_eof_objectp(SCM obj)
   return (obj == STk_eof_object)? Truth : Ntruth;
 }
 
-#ifdef WIN32
 PRIMITIVE STk_char_readyp(SCM port) 
 {
-  panic("Not yet implemented!");
-}
-#else
-PRIMITIVE STk_char_readyp(SCM port) 
-{ 
   port = verify_port("char-ready?", port, F_READ);
-  if (Eof(PORT_FILE(port))) return Truth;
-  if (ISPORTP(port)) /* !eof -> */  return Truth;
-  else {
-    /* First, see if characters are available in the buffer */
-    if (STk_file_data_available(PORT_FILE(port)))
-      return Truth;
-
-#ifdef HAVE_SELECT
-    {
-      SELECT_MASK readfds;
-      struct timeval timeout;
-      int f = fileno(PORT_FILE(port));
-
-      FD_ZERO(&readfds); 
-      FD_SET(f, &readfds);
-      timeout.tv_sec = timeout.tv_usec = 0;
-      return (select(f+1, &readfds, NULL, NULL, &timeout)) ? Truth : Ntruth;
-    }
-#else
-#  ifdef FIONREAD
-   {
-     int result;
-
-     ioctl(fileno(PORT_FILE(port)), FIONREAD, &result);
-     return result ? Truth : Ntruth;
-   }
-#  else
-   return Truth;
-#  endif
-#endif
-  }
+  return STk_internal_char_readyp(port) ? Truth : Ntruth;
 }
-#endif
+
+
+/*=============================================================================*\
+ * 				Write
+\*=============================================================================*/
 
 PRIMITIVE STk_write(SCM expr, SCM port)
 {
@@ -537,7 +593,7 @@ PRIMITIVE STk_display(SCM expr, SCM port)
 PRIMITIVE STk_newline(SCM port)
 {
   port = verify_port("newline", port, F_WRITE);
-  Putc('\n', PORT_FILE(port));
+  Putc('\n', port);
   return UNDEFINED;
 }
 
@@ -547,9 +603,13 @@ PRIMITIVE STk_write_char(SCM c, SCM port)
 
   if (NCHARP(c)) Serror("not a character", c);
   port = verify_port(proc_name, port, F_WRITE);
-  Putc(CHAR(c), PORT_FILE(port));
+  Putc(CHAR(c), port);
   return UNDEFINED;
 }
+
+/*=============================================================================*\
+ * 				Load
+\*=============================================================================*/
 
 PRIMITIVE STk_load(SCM filename, SCM module)
 {
@@ -566,18 +626,17 @@ PRIMITIVE STk_load(SCM filename, SCM module)
 }
 
 
-/*
+/*===========================================================================*\
+ * 
+ * 			S T k   b o n u s
  *
- * STk bonus
- *
- */
+\*===========================================================================*/
 
 static SCM internal_format(SCM l,int len,int error)/* a very simple and poor one */ 
 {
   SCM port, fmt;
   int format_in_string = 0;
   char *p, *proc_name = error? "error": "format";
-  FILE *f;
   
   if (error) {
     if (len < 1) Serror("bad list of parameters", l);
@@ -603,8 +662,6 @@ static SCM internal_format(SCM l,int len,int error)/* a very simple and poor one
   verify_port(proc_name, port, F_WRITE);
   if (NSTRINGP(fmt)) Serror("bad format string", fmt);
 
-  f = PORT_FILE(port);
-
   for(p=CHARS(fmt); *p; p++) {
     if (*p == '~') {
       switch(*(++p)) {
@@ -623,15 +680,15 @@ static SCM internal_format(SCM l,int len,int error)/* a very simple and poor one
 	  	  STk_print_star(CAR(l), port);
 		  l = CDR(l);
 	          continue;
-        case '%': Putc('\n', f);
+        case '%': Putc('\n', port);
                   continue;
-        case '~': Putc('~', f);
+        case '~': Putc('~', port);
                   continue;
-        default:  Putc('~',  f);
+        default:  Putc('~',  port);
                   /* NO BREAK */
       }
     }
-    Putc(*p, f);
+    Putc(*p, port);
   }
 
   if (NNULLP(l)) Serror("too few ~ in format string", l);
@@ -650,7 +707,7 @@ PRIMITIVE STk_format(SCM l, int len)
 PRIMITIVE STk_error(SCM l, int len)
 {
   /* Set context to ERR_OK but keep the bit indicating if error must be caught */
-  Error_context = ERR_OK | (Error_context & ERR_IGNORED);
+  STk_err_handler->context = ERR_OK | ( STk_err_handler->context & ERR_IGNORED);
 
   Err(CHARS(internal_format(l, len, TRUE)), NIL);
   return UNDEFINED; 	/* for compiler */
@@ -683,56 +740,82 @@ PRIMITIVE STk_open_file(SCM filename, SCM mode)
     case 'a': 
     case 'w': type = tc_oport; break;
     case 'r': type = tc_iport; break;
-    default:  ;
-Error:	     Serror("bad mode", mode);
+    default:  goto Error;
   }
   return(makeport(CHARS(filename), type, CHARS(mode), FALSE));
+Error:	     
+  Serror("bad mode", mode);
+  return UNDEFINED; /* for the compiler */
 }
 
 PRIMITIVE STk_close_port(SCM port)
 {
-  if (INP(port) || OUTP(port)) closeport(port);
+  if (INP(port) || OUTP(port)) STk_close(port);
   else Err("close-port: bad port", port);
   return UNDEFINED;
 }
 
 PRIMITIVE STk_read_line(SCM port)
 {
-  FILE *f;
-  int c, i;
-  size_t size = 128;
-  char *buff = (char *) must_malloc(size);
+  int c;
+  char buffer[INITIAL_LINE_SIZE], *buff;
+  size_t i, size = INITIAL_LINE_SIZE;
   SCM res;
 
   port = verify_port("read-line", port, F_READ);
-  f = PORT_FILE(port);
+  buff = buffer;
+
   for (i = 0; ; i++) {
-    switch (c = Getc(f)) {
-      case EOF:  if (i == 0) { free(buff); return STk_eof_object; }/* NO BREAK */
-      case '\n': res = STk_makestrg(i, buff); free(buff); return res;
+    if (i == size) {
+      /* We must enlarge the buffer */
+      size += size / 2;
+      if (i == INITIAL_LINE_SIZE) {
+	/* This is the first resize. Pass from static to dynamic allocation */
+	buff = must_malloc(size);
+	strncpy(buff, buffer, INITIAL_LINE_SIZE);
+      }
+      else 
+	buff = must_realloc(buff, size);
+    }
+    switch (c = Getc(port)) {
+      case EOF:  if (i == 0) return STk_eof_object;
+		 /* NO BREAK */
+      case '\n': res = STk_makestrg(i, buff); 
+		 if (buff != buffer) free(buff); 
+		 return res;
       case '\r': i--; continue;
-      default:   if (i == size) {
-	           size += size / 2;
-		   buff = must_realloc(buff, size);
-		 }
-	         buff[i] = c;
+      default:   buff[i] = c;
     }
   }
 }
+
+
+PRIMITIVE STk_copy_port(SCM in, SCM out)
+{
+  int c;
+  
+  ENTER_PRIMITIVE("copy-port");
+
+  if (! INP(in))   Serror("bad input port",  in);
+  if (! OUTP(out)) Serror("bad output port", out);
+
+  while ((c = Getc(in)) != EOF)
+    Putc(c, out);
+
+  return UNDEFINED;
+}
+
 
 PRIMITIVE STk_flush(SCM port)
 {
   ENTER_PRIMITIVE("flush");
 
   port = verify_port(proc_name, port, F_WRITE|F_READ);
-
-  if (! SPORTP(port)) {
-    if (fflush(PORT_FILE(port)) == EOF)
-      Serror("cannot flush buffer", port);
-  }
-
+  if (STk_internal_flush(port))
+    Serror("cannot flush buffer", port);
   return UNDEFINED;
 }
+
 
 PRIMITIVE STk_write_star(SCM expr, SCM port)
 {
@@ -740,6 +823,7 @@ PRIMITIVE STk_write_star(SCM expr, SCM port)
   STk_print_star(expr, port);
   return UNDEFINED;
 }
+
 
 /******************************************************************************
  *
@@ -764,6 +848,8 @@ void STk_do_autoload(SCM var, SCM autoload)
 {
   static int recursive_call = 0;
 
+  ENTER_PRIMITIVE("autoload");
+  
   if (dont_do_autoload) return;
 
   if (recursive_call) {
@@ -773,7 +859,7 @@ void STk_do_autoload(SCM var, SCM autoload)
      * another STk_do_autoload
      */
     recursive_call = 0;
-    Err("autoload: symbol was not defined", var);
+    Serror("symbol was not defined", var);
   }
 
   {
@@ -796,7 +882,7 @@ void STk_do_autoload(SCM var, SCM autoload)
     
     /* Verify that file was really loaded  (loaded is true in this case) */
     if (loaded == Ntruth)
-      Err("autoload: file not found for autoload symbol", Cons(var, file));
+      Serror("file not found for autoload symbol", Cons(var, file));
     
     /* File is now loaded. Try to lookup the value of var and see if it
      * provokes another STk_do_autoload call
@@ -850,7 +936,7 @@ PRIMITIVE STk_autoloadp(SCM symbol, SCM module)
   return TYPEP(*value, tc_autoload) ? Truth: Ntruth;
 }
 
-#ifdef USE_TK
+#if defined(USE_TK) && !defined(WIN32)
 /******************************************************************************
  *
  * Port event management
@@ -916,5 +1002,33 @@ PRIMITIVE STk_when_port_readable(SCM port, SCM closure)
 PRIMITIVE STk_when_port_writable(SCM port, SCM closure)
 {
   return when_port_ready(port, closure, "when-port-writable", TCL_WRITABLE);
+}
+
+#endif
+
+#ifdef USE_TK
+/******************************************************************************
+ *
+ * Changing standard ports
+ *
+ ******************************************************************************/
+
+PRIMITIVE STk_change_standard_ports(SCM in, SCM out, SCM err)
+{
+  static int cpt = 0;
+  ENTER_PRIMITIVE("%change-standard-ports");
+
+  if (cpt++)
+    Serror("Cannot redirected standard port anymore", NIL);
+
+  if (!INP(in))   Serror("bad input port",  in);
+  if (!OUTP(out)) Serror("bad output port", out);
+  if (!OUTP(err)) Serror("bad error port",  err);
+
+  STk_curr_iport = in;
+  STk_curr_oport = out;
+  STk_curr_eport = err;
+
+  return UNDEFINED;
 }
 #endif

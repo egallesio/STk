@@ -23,7 +23,7 @@
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date:  1-Feb-1995 22:43
- * Last file update: 10-Sep-1998 14:57
+ * Last file update: 11-Nov-1998 10:53
  *
  ******************************************************************************/
 
@@ -34,9 +34,9 @@
 
 static void Error(char *msg)
 {
-  char buffer[100];
-
-  sprintf(buffer, "Error: call of '%s' in Snow !!!. This should not occur\n", msg);
+  Fprintf(STk_curr_eport,
+	  "Error: call of '%s' in Snow !!!. This should not occur\n",
+	  msg);
 }
 
 char *Tcl_SetVar2(interp, name1, name2, val, flags)

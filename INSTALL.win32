@@ -1,0 +1,59 @@
+		    +-----------------------------+
+		    | STk 3.99 Installation notes |
+		    +-----------------------------+
+
+
+** This is the Windous INSTALL file. For Unix platform, please look at the 
+** INSTALL file
+
+
+INSTALLATION NOTES
+------------------
+
+STk 3.99.4 has been compiled on Win32 using the VC 5.0 compiler. File 
+necessary for compiling it are in the Win32 directory.
+
+Since, I know nearly nothing on this environment, please, tell me how to make 
+the distribution more convenient (I know it is not ;^).
+
+One the package is compiled, you have to install it (you cannot test
+it without installing it). This can be done by using the install.bat
+script in the main directory. Give to this script the directory wher
+you want to install STk. For instance:
+
+	C:>   install C:\STk
+
+will install all the necessary files in the C:\STk directory.
+
+
+STk doesn't use the registry mechanism, so de-installing it just
+consist in deleting the installation directory.
+
+
+
+WIN32 BINARY RELEASE
+--------------------
+
+Win32 binary release are available from http://kaolin.unice.fr/STk.
+
+
+HELP NEEDED
+-----------
+
+As I said before, I'm far from an expert on the Win32 environment. In
+particular, I know absolutely nothing about DLL creation, compiler
+environment or common customs in this environment. Any help on these
+topic (or any topic btw :-) is welcome.
+
+BTW, Some people sent me some stuff about DLL for 3.1.1. I was not able to
+integrate it for 3.99 releases. I can provide this stuff if needed...
+
+
+		Erick Gallesio 
+		Tue Feb 21 1999
+
+
+
+
+
+

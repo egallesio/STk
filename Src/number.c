@@ -17,7 +17,7 @@
  *
  *****
  *
- * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -34,7 +34,7 @@
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 12-May-1993 10:34
- * Last file update: 16-Sep-1998 14:17
+ * Last file update:  7-Jan-1999 09:33
  */
 
 #include "stk.h"
@@ -346,7 +346,6 @@ SCM STk_makenumber(double x)
 
   SCM z;
   NEWCELL(z,tc_flonum); 
-  (*z).storage_as.flonum.data = must_malloc(sizeof(double));
   FLONM(z) = x; 
   return z;
 }

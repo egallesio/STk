@@ -16,10 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
+ * $Id: symbol.c 1.4 Mon, 28 Dec 1998 23:05:11 +0100 eg $
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 20-Nov-1993 12:12
- * Last file update: 14-Sep-1998 13:50
+ * Last file update: 27-Dec-1998 20:54
  */
 
 #include "stk.h"
@@ -53,7 +54,7 @@ SCM STk_intern(char *name)
 {
   Tcl_HashEntry *p;
 
-  if (p = Tcl_FindHashEntry(&obarray, name))
+  if ((p = Tcl_FindHashEntry(&obarray, name)))
     return (SCM) Tcl_GetHashValue(p);
   else {
     SCM sym;

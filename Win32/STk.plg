@@ -1,0 +1,193 @@
+--------------------Configuration: libtk - Win32 Release--------------------
+Begining build with project "D:\Export\STkdos\Win32\libtk\libtk.dsp", at root.
+Active configuration is Win32 (x86) Static Library (based on Win32 (x86) Static Library)
+
+Project's tools are:
+			"32-bit C/C++ Compiler for 80x86" with flags "/nologo /ML /W3 /GX /Z7 /Od /I "..\..\Mp\fgmp-1.0b5" /I "..\..\Src" /I "..\..\Tcl" /I "..\..\Tk\xlib" /I "..\..\Tk\generic" /I "..\..\Tk\win" /I "..\..\Tk\bitmaps" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "STk_CODE" /FR"Release/" /Fo"Release/" /Fd"Release/" /FD /c "
+			"Browser Database Maker" with flags "/nologo /o"Release/libtk.bsc" "
+			"Library Manager" with flags "/nologo /out:"..\Win32libs\libtk.lib" "
+			"Custom Build" with flags ""
+			"<Component 0xa>" with flags ""
+
+Creating temp file "C:\WINDOWS\TEMP\RSPB023.TMP" with contents </nologo /ML /W3 /GX /Z7 /Od /I "..\..\Mp\fgmp-1.0b5" /I "..\..\Src" /I "..\..\Tcl" /I "..\..\Tk\xlib" /I "..\..\Tk\generic" /I "..\..\Tk\win" /I "..\..\Tk\bitmaps" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "STk_CODE" /FR"Release/" /Fo"Release/" /Fd"Release/" /FD /c 
+"D:\Export\STkdos\Tk\win\tkWinDialog.c"
+>
+Creating command line "cl.exe @C:\WINDOWS\TEMP\RSPB023.TMP" 
+Creating temp file "C:\WINDOWS\TEMP\RSPB024.TMP" with contents </nologo /out:"..\Win32libs\libtk.lib" 
+.\Release\stubs.obj
+.\Release\tk3d.obj
+.\Release\tkArgv.obj
+.\Release\tkAtom.obj
+.\Release\tkBind.obj
+.\Release\tkBitmap.obj
+.\Release\tkButton.obj
+.\Release\tkCanvArc.obj
+.\Release\tkCanvas.obj
+.\Release\tkCanvBmap.obj
+.\Release\tkCanvImg.obj
+.\Release\tkCanvLine.obj
+.\Release\tkCanvPoly.obj
+.\Release\tkCanvPs.obj
+.\Release\tkCanvText.obj
+.\Release\tkCanvUtil.obj
+.\Release\tkCanvWind.obj
+.\Release\tkClipboard.obj
+.\Release\tkCmds.obj
+.\Release\tkColor.obj
+.\Release\tkConfig.obj
+.\Release\tkCursor.obj
+.\Release\tkEntry.obj
+.\Release\tkError.obj
+.\Release\tkEvent.obj
+.\Release\tkFileFilter.obj
+.\Release\tkFocus.obj
+.\Release\tkFont.obj
+.\Release\tkFrame.obj
+.\Release\tkGC.obj
+.\Release\tkGeometry.obj
+.\Release\tkGet.obj
+.\Release\tkGrab.obj
+.\Release\tkGrid.obj
+.\Release\tkImage.obj
+.\Release\tkImgBmap.obj
+.\Release\tkImgGIF.obj
+.\Release\tkImgPhoto.obj
+.\Release\tkImgPPM.obj
+.\Release\tkImgUtil.obj
+.\Release\tkListbox.obj
+.\Release\tkMacWinMenu.obj
+.\Release\tkMenu.obj
+.\Release\tkMenubutton.obj
+.\Release\tkMenuDraw.obj
+.\Release\tkMessage.obj
+.\Release\tkOption.obj
+.\Release\tkPack.obj
+.\Release\tkPlace.obj
+.\Release\tkPointer.obj
+.\Release\tkRectOval.obj
+.\Release\tkScale.obj
+.\Release\tkScrollbar.obj
+.\Release\tkSelect.obj
+.\Release\tkSquare.obj
+.\Release\tkText.obj
+.\Release\tkTextBTree.obj
+.\Release\tkTextDisp.obj
+.\Release\tkTextImage.obj
+.\Release\tkTextIndex.obj
+.\Release\tkTextMark.obj
+.\Release\tkTextTag.obj
+.\Release\tkTextWind.obj
+.\Release\tkTrig.obj
+.\Release\tkUnixMenubu.obj
+.\Release\tkUnixScale.obj
+.\Release\tkUtil.obj
+.\Release\tkVisual.obj
+.\Release\tkWin32Dll.obj
+.\Release\tkWin3d.obj
+.\Release\tkWinButton.obj
+.\Release\tkWinClipboard.obj
+.\Release\tkWinColor.obj
+.\Release\tkWinCursor.obj
+.\Release\tkWinDialog.obj
+.\Release\tkWindow.obj
+.\Release\tkWinDraw.obj
+.\Release\tkWinEmbed.obj
+.\Release\tkWinFont.obj
+.\Release\tkWinImage.obj
+.\Release\tkWinInit.obj
+.\Release\tkWinKey.obj
+.\Release\tkWinMenu.obj
+.\Release\tkWinPixmap.obj
+.\Release\tkWinPointer.obj
+.\Release\tkWinRegion.obj
+.\Release\tkWinScrlbr.obj
+.\Release\tkWinSend.obj
+.\Release\tkWinWindow.obj
+.\Release\tkWinWm.obj
+.\Release\tkWinX.obj
+.\Release\xcolors.obj
+.\Release\xdraw.obj
+.\Release\xgc.obj
+.\Release\ximage.obj
+.\Release\xutil.obj>
+Creating command line "link.exe -lib @C:\WINDOWS\TEMP\RSPB024.TMP" 
+Compiling...
+tkWinDialog.c
+Creating library...
+--------------------Configuration: STk - Win32 Release--------------------
+Begining build with project "D:\Export\STkdos\Win32\STk.dsp", at root.
+Active configuration is Win32 (x86) Application (based on Win32 (x86) Application)
+
+Project's tools are:
+			"32-bit C/C++ Compiler for 80x86" with flags "/nologo /ML /W3 /GX /Z7 /Od /I "..\Mp\fgmp-1.0b5" /I "..\Tcl" /I "..\Src" /I "..\Tk\generic" /I "..\Tk\xlib" /I "..\Tk\win" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "USE_TK" /D "STk_CODE" /D "USE_STKLOS" /FR"Release/" /Fo"Release/" /Fd"Release/" /FD /c "
+			"OLE Type Library Maker" with flags "/nologo /D "NDEBUG" /mktyplib203 /o NUL /win32 "
+			"Win32 Resource Compiler" with flags "/l 0x40c /fo"Release/stk.res" /d "NDEBUG" "
+			"Browser Database Maker" with flags "/nologo /o"Release/STk.bsc" "
+			"COFF Linker for 80x86" with flags "kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib libtcl.lib libtk.lib libgmp.lib /nologo /subsystem:windows /incremental:no /pdb:"Release/STk.pdb" /debug /machine:I386 /out:"Release/STk.exe" /libpath:"Win32libs" "
+			"Custom Build" with flags ""
+			"<Component 0xa>" with flags ""
+
+Creating temp file "C:\WINDOWS\TEMP\RSPB115.TMP" with contents <kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib libtcl.lib libtk.lib libgmp.lib /nologo /subsystem:windows /incremental:no /pdb:"Release/STk.pdb" /debug /machine:I386 /out:"Release/STk.exe" /libpath:"Win32libs" 
+.\Release\address.obj
+.\Release\argv.obj
+.\Release\base64.obj
+.\Release\boolean.obj
+.\Release\char.obj
+.\Release\console.obj
+.\Release\cont.obj
+.\Release\dummy.obj
+.\Release\dump.obj
+.\Release\dynload.obj
+.\Release\env.obj
+.\Release\error.obj
+.\Release\eval.obj
+.\Release\extend.obj
+.\Release\gc.obj
+.\Release\hash.obj
+.\Release\html.obj
+.\Release\io.obj
+.\Release\keyword.obj
+.\Release\list.obj
+.\Release\locale.obj
+.\Release\macros.obj
+.\Release\module.obj
+.\Release\number.obj
+.\Release\pixmap.obj
+.\Release\port.obj
+.\Release\primitives.obj
+.\Release\print.obj
+.\Release\proc.obj
+.\Release\promise.obj
+.\Release\read.obj
+.\Release\signal.obj
+.\Release\slib.obj
+.\Release\sport.obj
+.\Release\sregexp.obj
+.\Release\stklos.obj
+.\Release\str.obj
+.\Release\symbol.obj
+.\Release\syntax.obj
+".\Release\tcl-glue.obj"
+".\Release\tcl-lib.obj"
+".\Release\tcl-obj.obj"
+".\Release\tcl-util.obj"
+".\Release\tk-glue.obj"
+".\Release\tk-main.obj"
+".\Release\tk-util.obj"
+.\Release\toplevel.obj
+.\Release\trace.obj
+.\Release\unix.obj
+.\Release\userinit.obj
+.\Release\vector.obj
+.\Release\vport.obj
+.\Release\wstk.obj
+.\Release\stk.res
+.\Win32libs\libgmp.lib
+.\Win32libs\libtcl.lib
+.\Win32libs\libtk.lib>
+Creating command line "link.exe @C:\WINDOWS\TEMP\RSPB115.TMP" 
+Linking...
+
+
+
+STk.exe - 0 error(s), 0 warning(s)

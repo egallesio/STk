@@ -11,8 +11,6 @@
 
 include ../../config.make
 
-VERSION 	=  @TK_VERSION@
-
 
 #----------------------------------------------------------------
 # Things you can change to personalize the Makefile for your own

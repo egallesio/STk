@@ -16,10 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
+ * $Id: keyword.c 1.4 Mon, 28 Dec 1998 23:05:11 +0100 eg $
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 19-Nov-1993 16:12
- * Last file update: 10-Sep-1998 12:16
+ * Last file update: 28-Dec-1998 22:49
  */
 
 #include "stk.h"
@@ -41,7 +42,7 @@ SCM STk_makekey(char *token)
   Tcl_HashEntry *p;
 
   *token = '-';  /* because keywords corresponds to Tk options */
-  if (p = Tcl_FindHashEntry(&k_table, token))
+  if ((p = Tcl_FindHashEntry(&k_table, token)))
     return (SCM) Tcl_GetHashValue(p);
   else {
     SCM keyword;

@@ -17,10 +17,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
+ * $Id: tcl-lib.c 1.9 Mon, 28 Dec 1998 23:05:11 +0100 eg $
  *
  *            Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 19-Feb-1993 22:15
- * Last file update: 25-Sep-1998 20:48
+ * Last file update: 27-Dec-1998 20:46
  *
  */
 
@@ -164,7 +165,7 @@ char *Tcl_GetVar(interp, var, flags)
      char *var;
      int flags;
 {
-  Debug("Usage of Tcl_GetVar for ", STk_makestring(var));
+//FIXME  Debug("Usage of Tcl_GetVar for ", STk_makestring(var));
   return STk_tcl_getvar(var, "#f");
 }
 
@@ -173,7 +174,7 @@ char *Tcl_GetVar2(interp, name1, name2, flags)
      char *name1, *name2;
      int flags;
 {
-  Debug("Usage of Tcl_GetVar2 for ", STk_makestring(name1));
+//FIXME  Debug("Usage of Tcl_GetVar2 for ", STk_makestring(name1));
   return STk_tcl_getvar2(name1, name2, "#f");
 
 }
@@ -183,7 +184,7 @@ char *Tcl_SetVar(interp, var, val, flags)
      char *var, *val;
      int flags;
 {
-  Debug("Usage of Tcl_SetVar for ", STk_makestring(var));
+//FIXME  Debug("Usage of Tcl_SetVar for ", STk_makestring(var));
   return STk_tcl_setvar(var, val, flags, "#f");
 }
 
@@ -192,7 +193,7 @@ char *Tcl_SetVar2(interp, name1, name2, val, flags)
      char *name1, *name2, *val;
      int flags;
 { 
-  Debug("Usage of Tcl_SetVar for ", STk_makestring(name1));
+//FIXME  Debug("Usage of Tcl_SetVar for ", STk_makestring(name1));
   return STk_tcl_setvar2(name1, name2, val, flags, "#f");
 }
 
@@ -243,7 +244,7 @@ int Tcl_DeleteCommand(interp, cmdName)
 {
   int result;
 
-  if (result = STk_internal_Tcl_DeleteCommand(interp, cmdName))
+  if ((result = STk_internal_Tcl_DeleteCommand(interp, cmdName)))
     return result;
   
   /* Undefine "cmdName" by doing a (set! cmdname #<unbound>) */
@@ -809,15 +810,6 @@ int Tcl_Flush(Tcl_Channel chan)
   return fflush((FILE *) chan);
 }
 
-Tcl_Channel Tcl_GetStdChannel(int type) /*  TCL_STDIN, TCL_STDOUT, TCL_STDERR. */
-{
-  switch (type) {
-    case TCL_STDIN:  return (Tcl_Channel) STk_stdin;
-    case TCL_STDOUT: return (Tcl_Channel) STk_stdout;
-    case TCL_STDERR: return (Tcl_Channel) STk_stderr;
-  }
-  return NULL;
-}
 
 int Tcl_Eof(Tcl_Channel chan)		/* Does this channel have EOF? */
 {
@@ -829,239 +821,6 @@ int Tcl_SetChannelOption(Tcl_Interp *interp, Tcl_Channel chan, char *optionName,
 {
   /* Do nothing */
   return TCL_OK;
-}
-
-  
-
-/*
- *----------------------------------------------------------------------
- *
- * Tcl_JoinPath --
- *
- *	Combine a list of paths in a platform specific manner.
- *
- * Results:
- *	Appends the joined path to the end of the specified
- *	returning a pointer to the resulting string.  Note that
- *	the Tcl_DString must already be initialized.
- *
- * Side effects:
- *	Modifies the Tcl_DString.
- *
- *----------------------------------------------------------------------
- */
-
-char *
-Tcl_JoinPath(argc, argv, resultPtr)
-    int argc;
-    char **argv;
-    Tcl_DString *resultPtr;	/* Pointer to previously initialized DString. */
-{
-#ifdef STk_CODE
-    int oldLength, length, i;
-#else
-    int oldLength, length, i, needsSep;
-#endif
-    Tcl_DString buffer;
-    char *p, *dest;
-
-    Tcl_DStringInit(&buffer);
-    oldLength = Tcl_DStringLength(resultPtr);
-
-#ifndef STk_CODE
-    switch (tclPlatform) {
-   	case TCL_PLATFORM_UNIX:
-#endif
-#ifndef WIN32
-	    for (i = 0; i < argc; i++) {
-		p = argv[i];
-		/*
-		 * If the path is absolute, reset the result buffer.
-		 * Consume any duplicate leading slashes or a ./ in
-		 * front of a tilde prefixed path that isn't at the
-		 * beginning of the path.
-		 */
-
-		if (*p == '/') {
-		    Tcl_DStringSetLength(resultPtr, oldLength);
-		    Tcl_DStringAppend(resultPtr, "/", 1);
-		    while (*p == '/') {
-			p++;
-		    }
-		} else if (*p == '~') {
-		    Tcl_DStringSetLength(resultPtr, oldLength);
-		} else if ((Tcl_DStringLength(resultPtr) != oldLength)
-			&& (p[0] == '.') && (p[1] == '/')
-			&& (p[2] == '~')) {
-		    p += 2;
-		}
-
-		if (*p == '\0') {
-		    continue;
-		}
-
-		/*
-		 * Append a separator if needed.
-		 */
-
-		length = Tcl_DStringLength(resultPtr);
-		if ((length != oldLength)
-			&& (Tcl_DStringValue(resultPtr)[length-1] != '/')) {
-		    Tcl_DStringAppend(resultPtr, "/", 1);
-		    length++;
-		}
-
-		/*
-		 * Append the element, eliminating duplicate and trailing
-		 * slashes.
-		 */
-
-		Tcl_DStringSetLength(resultPtr, (int) (length + strlen(p)));
-		dest = Tcl_DStringValue(resultPtr) + length;
-		for (; *p != '\0'; p++) {
-		    if (*p == '/') {
-			while (p[1] == '/') {
-			    p++;
-			}
-			if (p[1] != '\0') {
-			    *dest++ = '/';
-			}
-		    } else {
-			*dest++ = *p;
-		    }
-		}
-		length = dest - Tcl_DStringValue(resultPtr);
-		Tcl_DStringSetLength(resultPtr, length);
-	    }
-#endif
-#ifndef STk_CODE
-	    break;
-	case TCL_PLATFORM_WINDOWS:
-#endif
-#ifdef WIN32
-	    /*
-	     * Iterate over all of the components.  If a component is
-	     * absolute, then reset the result and start building the
-	     * path from the current component on.
-	     */
-
-	    for (i = 0; i < argc; i++) {
-		p = ExtractWinRoot(argv[i], resultPtr, oldLength);
-		length = Tcl_DStringLength(resultPtr);
-		
-		/*
-		 * If the pointer didn't move, then this is a relative path
-		 * or a tilde prefixed path.
-		 */
-
-		if (p == argv[i]) {
-		    /*
-		     * Remove the ./ from tilde prefixed elements unless
-		     * it is the first component.
-		     */
-
-		    if ((length != oldLength)
-			    && (p[0] == '.')
-			    && ((p[1] == '/') || (p[1] == '\\'))
-			    && (p[2] == '~')) {
-			p += 2;
-		    } else if (*p == '~') {
-			Tcl_DStringSetLength(resultPtr, oldLength);
-			length = oldLength;
-		    }
-		}
-
-		if (*p != '\0') {
-		    /*
-		     * Check to see if we need to append a separator.
-		     */
-		    int c;
-		    
-		    if (length != oldLength) {
-			c = Tcl_DStringValue(resultPtr)[length-1];
-			if ((c != '/') && (c != ':')) {
-			    Tcl_DStringAppend(resultPtr, "/", 1);
-			}
-		    }
-
-		    /*
-		     * Append the element, eliminating duplicate and
-		     * trailing slashes.
-		     */
-
-		    length = Tcl_DStringLength(resultPtr);
-		    Tcl_DStringSetLength(resultPtr, (int) (length + strlen(p)));
-		    dest = Tcl_DStringValue(resultPtr) + length;
-		    for (; *p != '\0'; p++) {
-			if ((*p == '/') || (*p == '\\')) {
-			    while ((p[1] == '/') || (p[1] == '\\')) {
-				p++;
-			    }
-			    if (p[1] != '\0') {
-				*dest++ = '/';
-			    }
-			} else {
-			    *dest++ = *p;
-			}
-		    }
-		    length = dest - Tcl_DStringValue(resultPtr);
-		    Tcl_DStringSetLength(resultPtr, length);
-		}
-	    }
-#endif
-#ifndef STk_CODE
-	    break;
-	case TCL_PLATFORM_MAC:
-	    needsSep = 1;
-	    for (i = 0; i < argc; i++) {
-		Tcl_DStringSetLength(&buffer, 0);
-		p = SplitMacPath(argv[i], &buffer);
-		if ((*p != ':') && (*p != '\0')
-			&& (strchr(p, ':') != NULL)) {
-		    Tcl_DStringSetLength(resultPtr, oldLength);
-		    length = strlen(p);
-		    Tcl_DStringAppend(resultPtr, p, length);
-		    needsSep = 0;
-		    p += length+1;
-		}
-
-		/*
-		 * Now append the rest of the path elements, skipping
-		 * : unless it is the first element of the path, and
-		 * watching out for :: et al. so we don't end up with
-		 * too many colons in the result.
-		 */
-
-		for (; *p != '\0'; p += length+1) {
-		    if (p[0] == ':' && p[1] == '\0') {
-			if (Tcl_DStringLength(resultPtr) != oldLength) {
-			    p++;
-			} else {
-			    needsSep = 0;
-			}
-		    } else {
-			c = p[1];
-			if (*p == ':') {
-			    if (!needsSep) {
-				p++;
-			    }
-			} else {
-			    if (needsSep) {
-				Tcl_DStringAppend(resultPtr, ":", 1);
-			    }
-			}
-			needsSep = (c == ':') ? 0 : 1;
-		    }
-		    length = strlen(p);
-		    Tcl_DStringAppend(resultPtr, p, length);
-		}
-	    }
-	    break;
-			       
-    }
-#endif
-    Tcl_DStringFree(&buffer);
-    return Tcl_DStringValue(resultPtr);
 }
 
 

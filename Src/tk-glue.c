@@ -16,11 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
+ * $Id: tk-glue.c 1.9 Mon, 28 Dec 1998 23:05:11 +0100 eg $
  *
  *            Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 19-Feb-1993 22:15
- * Last file update: 14-Sep-1998 14:05
- *
+ * Last file update: 27-Dec-1998 20:47
  *
  */
 
@@ -191,7 +191,7 @@ void STk_add_callback(char *key1, char *key2, char *key3, SCM closure)
 
   if (*key2) {
     /* We have two keys. Use a secondary hash table */
-    if (entry=Tcl_FindHashEntry(&Tk_callbacks, key1))
+    if ((entry=Tcl_FindHashEntry(&Tk_callbacks, key1)))
       /* Key already in hash table */
       secondary_hash_table = (Tcl_HashTable * ) Tcl_GetHashValue(entry);
     else {
@@ -226,7 +226,7 @@ void STk_delete_callback(char *key)
   Tcl_HashEntry *entry;
   Tcl_HashTable *secondary_hash_table;
 
-  if (entry=Tcl_FindHashEntry(&Tk_callbacks, key)) {
+  if ((entry=Tcl_FindHashEntry(&Tk_callbacks, key))) {
     if (*key != '(' && (*key == 'a' && strncmp(key, "after#", 6) != 0)) {
       /* Delete the secondary hash table associated to this entry */
       secondary_hash_table = (Tcl_HashTable * ) Tcl_GetHashValue(entry);

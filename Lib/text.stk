@@ -1,5 +1,5 @@
 ;;;;
-;;;; Texts bindings and procs (bindings a` la emacs)
+;;;; Texts bindings and procs (bindings à la emacs)
 ;;;;
 ;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
@@ -14,11 +14,11 @@
 ;;;; This software is a derivative work of other copyrighted softwares; the
 ;;;; copyright notices of these softwares are placed in the file COPYRIGHTS
 ;;;;
-;;;; $Id: text.stk 1.5 Wed, 30 Sep 1998 14:02:29 +0200 eg $
+;;;; $Id: text.stk 1.7 Fri, 11 Dec 1998 21:01:53 +0100 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 17-May-1993 12:35
-;;;; Last file update: 27-Sep-1998 12:20
+;;;; Last file update:  8-Dec-1998 16:00
 ;;;;
 
 (select-module Tk)
@@ -133,6 +133,19 @@
       (w 'tag 'add "sel" first last)
       (w 'tag 'remove "sel" last "end"))))
 
+;;  Tk:paste-txt --
+;;  This procedure sets the insertion cursor to the mouse position,
+;;  inserts the selection, and sets the focus to the window.
+;; 
+;;  Arguments:
+;;  w -		The text window.
+;;  x, y - 	Position of the mouse.
+
+(define (Tk:paste-txt w x y)
+  (w 'mark 'set 'insert (tk:text-closest-gap w x y))
+  (catch (w 'insert "insert" (selection 'get :displayof w)))
+  (if (equal? (tk-get w :state) "normal")
+      (focus w)))
 
 ;; Tk:text-auto-scan --
 ;; This procedure is invoked when the mouse leaves an "Text" window
@@ -364,13 +377,12 @@
 ;;
 ;; w -		The text window.
 ;; x, y - 	Position of the mouse.
-
-(define (Tk:text-mouse-paste |W| x y)
-  (|W| 'mark 'set 'insert (Tk:text-closest-gap |W| x y))
-  (catch (|W| 'insert 'insert (selection 'get :displayof |W|)))
-  (if (string=? (tk-get |W| :state) "normal")
-      (focus |W|)))
-
+;;(define (Tk:text-mouse-paste |W| x y)
+;;  (|W| 'mark 'set 'insert (Tk:text-closest-gap |W| x y))
+;;  (catch (|W| 'insert 'insert (selection 'get :displayof |W|)))
+;;  (if (string=? (tk-get |W| :state) "normal")
+;;      (focus |W|)))
+;;
 
 ;; Tk:text-copy --
 ;; This procedure copies the selection from a text widget into the clipboard.
@@ -396,6 +408,9 @@
 	  (clipboard 'append :displayof w (selection 'get :displayof w))
 	  (w 'delete 'sel.first 'sel.last))))
 
+
+
+
 ;; Tk:text-paste --
 ;; This procedure pastes the contents of the clipboard to the insertion
 ;; point in a text widget.
@@ -403,9 +418,9 @@
 ;; w -		Name of a text widget.
 
 (define (Tk:text-paste w)
-  (catch 
+  (catch
      (unless (eqv? (os-kind) 'Unix)
-       (w 'delete 'sel.first 'sel.last))
+       (catch (w 'delete 'sel.first 'sel.last)))
      (w 'insert 'insert (selection 'get :displayof w :selection "CLIPBOARD"))))
 
 ;;-------------------------------------------------------------------------
@@ -610,7 +625,7 @@
 
 (define-binding "Text" "<<PasteSelection>>" (|W| x y)
   (if (or (not tk::mouse-moved) *tk-strict-motif*)
-      (Tk:text-mouse-paste |W| x y)))
+      (Tk:paste-txt |W| x y)))
 
 (define-binding "Text" "<Insert>" (|W|)
   (catch 
@@ -665,10 +680,6 @@
 
 (define-binding "Text" "<Control-t>" (|W|)
   (Tk:text-transpose |W|))
-
-(when (eqv? (os-kind) 'Unix)			;; Unix Only
-  (define-binding "Text" "<Control-v>" (|W|)
-    (Tk:text-scroll-pages |W| +1)))
 
 (define-binding "Text" "<Meta-b>" (|W|)
   (Tk:text-set-cursor |W| "insert - 1c wordstart"))

@@ -67,11 +67,11 @@
 #   ifndef USE_PROTOTYPE
 #	define USE_PROTOTYPE 1
 #   endif
-#ifndef CYGWIN32
-#   ifndef USE_TCLALLOC
+#   ifndef STk_CODE
+#     ifndef USE_TCLALLOC
 #	define USE_TCLALLOC 1
+#     endif
 #   endif
-#endif
 #endif /* __WIN32__ */
 
 /*
@@ -189,13 +189,25 @@
 #endif
 
 #ifdef TCL_STORAGE_CLASS
-# undef TCL_STORAGE_CLASS
+#   undef TCL_STORAGE_CLASS
 #endif
 #ifdef BUILD_tcl
-# define TCL_STORAGE_CLASS DLLEXPORT
+#  define TCL_STORAGE_CLASS DLLEXPORT
 #else
-# define TCL_STORAGE_CLASS DLLIMPORT
+#  define TCL_STORAGE_CLASS DLLIMPORT
 #endif
+
+
+/* FIXME: Try to do better than making all static. If someone with 
+ * more knowledge than me on all the DLL stuff can help ...
+ */
+#if defined(WIN32) && defined(STk_CODE)
+#  undef  DLLIMPORT
+#  undef  DLLEXPORT
+#  define DLLIMPORT
+#  define DLLEXPORT
+#endif
+
 
 /*
  * Definitions that allow this header file to be used either with or

@@ -11,11 +11,11 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
-;;;; $Id: Basics.stklos 1.12 Sat, 06 Jun 1998 14:19:03 +0200 eg $
+;;;; $Id: Basics.stklos 1.13 Wed, 23 Dec 1998 23:41:27 +0100 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 30-Mar-1993 15:39
-;;;; Last file update:  1-Jun-1998 18:21
+;;;; Last file update: 19-Dec-1998 19:05
 
 (require "Tk-meta")
 
@@ -102,7 +102,7 @@
     (and (symbol-bound? id env)	(Id->instance (eval id env)))))
 
 (define-method Id->instance ((id <string>))
-  (Id->instance (sring->symbol id)))
+  (Id->instance (string->symbol id)))
 
 (define-method Id ((self <widget>))
   self)

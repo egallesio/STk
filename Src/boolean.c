@@ -2,7 +2,7 @@
  *
  * b o o l e a n . c			-- Booleans and Equivalence predicates
  *
- * Copyright © 1993-1997 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -16,10 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
+ * $Id: boolean.c 1.2 Sat, 26 Dec 1998 21:34:30 +0100 eg $
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 23-Oct-1993 21:37
- * Last file update: 30-May-1997 09:22
+ * Last file update: 26-Dec-1998 19:22
  */
 
 #include "stk.h"

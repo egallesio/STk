@@ -16,11 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: stklos.c 1.15 Thu, 10 Sep 1998 23:44:28 +0200 eg $
+ * $Id: stklos.c 1.17 Mon, 28 Dec 1998 23:05:11 +0100 eg $
  *
  *            Author: Erick Gallesio [eg@unice.fr]
  *    Creation date:  9-Feb-1994 15:56
- * Last file update: 10-Sep-1998 12:27 
+ * Last file update: 20-Dec-1998 10:32 
  */
 
 #ifdef USE_STKLOS
@@ -67,7 +67,7 @@ static SCM STklos;
 static SCM Top, Object, Class, Generic, Method, Simple_method, Accessor, 
   	   Procedure_class, Entity_class;
 static SCM Boolean, Char, Pair, Procedure, String, Symbol, Vector, Number, 
-	   Liste, Null, Real, Integer, Keyword, Unknown;
+	   Liste, Null, Real, Integer, Keyword, UnknownClass;
 #ifdef USE_TK
 static SCM Widget;
 #endif
@@ -373,7 +373,8 @@ static SCM class_of(SCM obj)
     default: 		if (EXTENDEDP(obj))
       			  return STk_extended_class_of(obj);
     		        else 
-			  return (STk_procedurep(obj) == Truth)? Procedure: Unknown;
+			  return (STk_procedurep(obj) == Truth)?
+			    Procedure: UnknownClass;
   }
 }
 
@@ -1127,7 +1128,7 @@ static void make_standard_classes(void)
   make_stdcls(&Real,		"<real>",	Class, 		 Number,    NIL);
   make_stdcls(&Integer,		"<integer>",	Class, 		 Real,	    NIL);
   make_stdcls(&Keyword,		"<keyword>",	Class, 		 Top,	    NIL);
-  make_stdcls(&Unknown,		"<unknown>",	Class, 		 Top,	    NIL);
+  make_stdcls(&UnknownClass,	"<unknown>",	Class, 		 Top,	    NIL);
   make_stdcls(&Procedure,	"<procedure>",	Procedure_class, Top, 	    NIL);
 #ifdef USE_TK
   make_stdcls(&Widget,		"<widget>",	Procedure_class, Procedure, NIL);
@@ -1193,8 +1194,6 @@ PRIMITIVE STk_init_STklos(void)
 {
   SCM curmod = STk_selected_module;
 
-  STk_disallow_sigint();
-
   Top = Object = Class = Generic = Method = Simple_method = Accessor = NIL;
 
   select_STklos_module();
@@ -1242,8 +1241,6 @@ PRIMITIVE STk_init_STklos(void)
 
   /* Define classes for already defined extended type */
   define_extended_type_classes();
-
-  STk_allow_sigint();
 
   /* Reset the default module we have to the one we have when starting inits */
   STk_selected_module = curmod;

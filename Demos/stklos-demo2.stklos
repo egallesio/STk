@@ -2,7 +2,7 @@
 ;;;;
 ;;;; s t k l o s - d e m o 2 . s t k 	  --  A demo which use some STklos classes
 ;;;;
-;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -14,7 +14,7 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 24-Aug-1993 19:55
-;;;; Last file update:  3-Mar-1998 17:21
+;;;; Last file update:  2-Feb-1999 08:45
 
 (require "Tk-classes")
 
@@ -22,7 +22,7 @@
 (define f (make <Frame>))
 (define l (make <Label>  :parent f :text "A simple demo written in STklos"))
 (define c (make <Canvas> :parent f :relief "groove" :height 400 :width 700))
-(define m (make <Label>  :parent f :font "fixed" :justify 'left 
+(define m (make <Label>  :parent f :font '(Courier -12) :justify 'left 
 		         :text "This demo file illustrates the use of bind-for-dragging with various parameters:
    - Left button to drag any kind of object.
    - Left button with Shift key pressed to drag an object and executes user hooks

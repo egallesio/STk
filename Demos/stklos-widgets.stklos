@@ -89,13 +89,17 @@
 	  (f   (make <Frame> :parent top))
 	  (txt (make <Label> :parent top 
 		     :text "Place the mouse on a button\n and wait a while"))
-	  (h   (make <Help-Balloon>)))
+	  (h   (make <Help-Balloon> :background "#ffffb9")))
      (for-each (lambda (x)
 		 (let ((b (make <Button> :parent f :text x :side "left")))
-		   (add-balloon h b (format #f "This is ~S" x))
+		   (add-balloon h b (format #f "This is the help\nof\n~S" x))
 		   (pack b :side "left")))
 	       '("Button1" "Button2" "Button3" "Button4" "Button5" "Button6"))
-     (pack f )
+     (pack (make <Button> :text "Balloons" :parent f :width 10
+		 	  :command activate-balloons))
+     (pack (make <Button> :text "No Balloons" :parent f :width 10
+		 	  :command deactivate-balloons))
+     (pack f)
      (pack txt :expand #t :fill "both")))
 
 ;=============================================================================

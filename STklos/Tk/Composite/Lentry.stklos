@@ -1,7 +1,7 @@
 ;;;;
 ;;;; L e n t r y  . s t k 	  --  Labeled Entry composite widget
 ;;;;
-;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -11,11 +11,11 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
-;;;; $Id: Lentry.stklos 1.4 Wed, 04 Feb 1998 11:34:59 +0100 eg $
+;;;; $Id: Lentry.stklos 1.6 Tue, 02 Feb 1999 09:04:21 +0100 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;    Creation date: 22-Mar-1994 13:05
-;;;; Last file update:  3-Feb-1998 19:15
+;;;; Last file update:  2-Feb-1999 09:00
 
 (require "Basics")
 
@@ -30,9 +30,9 @@
 ;;
 ;; Resources
 ;;
-(option 'add "*LabeledEntry.Entry.Background"  "white"  "widgetDefault")
-(option 'add "*LabeledEntry.Entry.Font"	       "fixed"  "widgetDefault")
-(option 'add "*LabeledEntry.Entry.Relief"      "sunken" "widgetDefault")
+(option 'add "*LabeledEntry.Entry.Background"  "white"       "widgetDefault")
+(option 'add "*LabeledEntry.Entry.Font"	       '(Courier-12) "widgetDefault")
+(option 'add "*LabeledEntry.Entry.Relief"      "sunken"      "widgetDefault")
 
 ;;
 ;; Class definition

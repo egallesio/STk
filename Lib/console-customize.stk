@@ -1,0 +1,174 @@
+;;;; console-customize.stk 		--  console customization stuff
+;;;;
+;;;; Copyright © 1998-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; $Id: console-customize.stk 1.2 Mon, 01 Feb 1999 15:18:22 +0100 eg $
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 19-Dec-1998 16:39
+;;;; Last file update:  1-Feb-1999 14:27
+
+
+(require "console")
+(require "edit")   			; for *editor-font*
+(require "font-chooser")
+
+(select-module Tk)
+
+(define make-font-chooser (with-module STklos+Tk make-font-chooser)) ; kludge
+
+
+(define (make-console-color-button parent name var env)
+  (let* ((col (eval var env))
+	 (f   (frame (& parent (gensym ".f"))))
+	 (n   (label (& f ".n") :text name :justify 'right :width 12 :anchor 'e))
+	 (v   (entry (& f ".v") :bg "white"  :width 30 :fg col))
+	 (c   (button (& f ".c")  :image (make-image "colors.gif")
+		      :command (lambda () 
+				 (let ((c (Tk:choose-color 
+					   :initial-color col
+					   :title (string-append  name " Color"))))
+				   (when c 
+				     (v 'delete 0 'end)
+				     (v 'insert 0 c)
+				     (event 'gen v "<<Choose-Color>>")))))))
+    (pack n v c :side 'left :padx 2)
+    ;; Fill the entry with the name of the current color
+    (v 'insert 0 col)
+    (bind c "<Return>" (lambda () (event 'generate v "<<Choose-Color>>")))
+    (bind v "<<Choose-Color>>" (lambda ()
+				 (let ((value (v 'get)))
+				   (catch 
+				    (tk-set! v :fg value)
+				    (eval `(set! ,var ,value) env)))))
+    f))
+
+(define (make-console-font-button parent name var env)
+  (let* ((font (eval var env))
+	 (f    (frame (& parent (gensym ".f"))))
+	 (n    (label (& f ".n")  :text name :justify 'right :width 12 :anchor 'e))
+	 (v    (entry (& f ".v")  :bg "white"  :width 30))
+	 (new  (lambda ()
+		 (let ((f (make-font-chooser font)))
+		   (when f
+		     (v 'delete 0 'end)
+		     (v 'insert 0 f)
+		     (eval `(set! ,var ',f) env)))))
+	 (c    (button (& f ".c") :image (make-image "font.gif") :command new)))
+    (pack n v c :side 'left :padx 2)
+    (bind v "<Return>" (lambda () (eval `(set! ,var ',(v 'get)) env)))
+    ;; Fill the entry with the name of the current color
+    (v 'insert 0 font)
+    f))
+
+
+(define (console-save-n-apply file)
+  ;; Write variables in the given file
+  (with-output-to-file file
+    (lambda ()
+      (format #t "; This file isautomatically generated\n; ****DO NOT EDIT ***\n")
+      (format #t "(select-module STk)\n")
+      (format #t "(set! *show-splash-screen*    ~A)\n" *show-splash-screen*)
+      (format #t "(set! *print-banner*          ~A)\n" *print-banner*)
+      (format #t "(set! *load-verbose*          ~A)\n" *load-verbose*)
+      (format #t "(set! *fontify-keyword-color* ~S)\n" *fontify-keyword-color*)
+      (format #t "(set! *fontify-class-color*   ~S)\n" *fontify-class-color*)
+      (format #t "(set! *fontify-syntax-color*  ~S)\n" *fontify-syntax-color*)
+      (format #t "(set! *fontify-comment-color* ~S)\n" *fontify-comment-color*)
+      (format #t "(set! *fontify-string-color*  ~S)\n" *fontify-string-color*)
+      (format #t "(set! *console-font*          '~S)\n" *console-font*)
+      ;; Use a define for *editor-font* since the editor is possibly not loaded
+      (format #t "(define *editor-font*         '~S)\n" *editor-font*))))
+
+;=============================================================================
+;
+;  console-customize-save
+;
+;=============================================================================
+(define (console-customize-save)
+  (console-save-n-apply (expand-file-name "~/.stkvars")))
+			       
+
+;=============================================================================
+;
+; console-customize 
+;
+;=============================================================================
+(define (console-customize)
+  (destroy ".__cons_customize")
+  (let* ((top   (toplevel ".__cons_customize"))
+	 (env   (global-environment))
+	 (f1    (frame (& top ".f1") :bd 3 :relief "groove" :bg "white"))
+	 (f2    (frame (& top ".f2") :bd 3 :relief "groove"))
+	 (f3    (frame (& top ".f3") :bd 3 :relief "groove"))
+	 (lab   (label (& f1 ".lab")
+		       :text (string-append 
+			      "This is the customization window for STk.\n\n"
+			      "Change the following values to customize\n"
+			      "the behavior of consoles and editors.")
+		       :bg "white" 
+		       :justify 'left))
+	 (logo   (label (& f1 ".lab2") :bd 0 :relief "flat"
+			:image (make-image "STk-logo.gif")))
+	 (clab   (label (& f2 ".clab") :text "General Options"
+			:fg "IndianRed3"))
+	 (splash (checkbutton (& f2 ".splash") :text "Display the splash screen"
+			      :env env :variable '*show-splash-screen* :anchor 'w))
+	 (cprwt  (checkbutton (& f2 ".cprwt") 
+			      :text "Display the STk version when starting"
+			      :env env :variable '*print-banner* :anchor 'w))
+	 (verb   (checkbutton (& f2 ".verb")
+			      :text "Load verbose"
+			      :env env :variable '*load-verbose* :anchor 'w))
+	 (hlab   (label (& f2 ".hlab") :text "Syntax Hilighting"
+			:fg "IndianRed3"))
+	 (flab   (label (& f2 ".flab") :text "Fonts" :fg "IndianRed3")))
+	 
+    ;; Change window title
+    (wm 'title top "STk Customization Window")
+
+    ;; *** The upper frame ***
+    (pack logo lab :side 'left :fill 'x :pady '3m :padx '3m)
+    (pack f1 :side 'top :fill 'x :padx 5 :pady 5)
+    ;; *** The lower-frame ***
+    ;   G e n e r a l   O p t i o n s
+    (pack clab :side 'top :fill 'x)
+    (pack splash cprwt verb :side 'top :fill 'x  :padx '3m)
+
+    ;  S y n t a x   h i g h l i g h t i n g
+    (pack hlab :side 'top :fill 'x)
+    (pack (make-console-color-button f2 "Comments" '*fontify-comment-color* env)
+	  (make-console-color-button f2 "Keywords" '*fontify-keyword-color* env)
+	  (make-console-color-button f2 "Classes"  '*fontify-class-color*   env)
+	  (make-console-color-button f2 "Strings"  '*fontify-string-color*  env)
+	  (make-console-color-button f2 "Syntax"   '*fontify-syntax-color*  env)
+	  :side 'top :fill 'x :padx '3m)
+    
+    ; F o n t s
+    (pack flab :side 'top :fill 'x)
+    (pack (make-console-font-button f2 "Console" '*console-font* env)
+	  (make-console-font-button f2 "Editor"  '*editor-font*  env)
+	  :side 'top :fill 'x :padx '3m)
+
+    
+    (pack f2 :side 'top :fill 'x :padx 5 :pady 5)
+    
+    ;; *** The buttons ***
+    (let ((b1 (button (& f3 ".save") :text "Save" :bd 2 
+		      :command console-customize-save))
+	  (b2 (button (& f3 ".exit") :text "Exit" :bd 2
+		      :command (lambda () (destroy top)))))
+      (pack b1 b2 :side 'left :padx 3 :pady 3 :fill 'y)
+      (pack f3 :fill 'x :side 'bottom))))
+
+
+(provide "console-customize")
+

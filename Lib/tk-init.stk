@@ -17,11 +17,11 @@
 ;;;; This software is a derivative work of other copyrighted softwares; the
 ;;;; copyright notices of these softwares are placed in the file COPYRIGHTS
 ;;;;
-;;;; $Id: tk-init.stk 1.18 Wed, 30 Sep 1998 14:02:29 +0200 eg $
+;;;; $Id: tk-init.stk 1.20 Fri, 11 Dec 1998 21:01:53 +0100 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 17-May-1993 12:35
-;;;; Last file update: 27-Sep-1998 12:26
+;;;; Last file update: 11-Dec-1998 19:36
 ;;;;
 
 (unless (equal? *tk-version* "8.0")
@@ -58,6 +58,27 @@
   (if (null? body)
       `(bind ,class ,event "")
       `(bind ,class ,event (lambda ,args ,@body))))
+
+;;
+;; Read and write access to the data associated to widget
+;;
+(define (set-widget-property! widget name value)
+  (let ((data (get-widget-data widget)))
+    (if (or (not data) (null? data))
+	(set-widget-data! widget (list name value))
+	(let ((prop (memv name data)))
+	  (if prop 
+	      (set-cdr! prop (cons value (cddr prop)))
+	      (set-widget-data! widget (append (list name value) data)))))))
+
+
+(define (get-widget-property widget name . default)
+  (let ((data (get-widget-data widget)))
+    (if (or (not data) (null? data))
+	(if (null? default)
+	    (error "get-widget-property: No property ~S in ~S" name widget)
+	    (car default))
+	(apply get-keyword name data default))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -320,7 +341,7 @@
 ;;;; Some autoloads
 ;;;; 
 (autoload "dialog"    	 STk:make-dialog STk:center-window)
-(autoload "editor"	 ed)			; Editor must be changed
+(autoload "edit"	 ed)
 (autoload "error" 	 STk:report-error bgerror)
 (autoload "focus" 	 Tk:focus-next Tk:focus-prev)
 (autoload "listener"  	 listener)
@@ -333,7 +354,7 @@
 
 (when (eq? (os-kind) 'Unix)
   (autoload "tk-unix"	 Tk:choose-color Tk:message-box
-	    		 Tk:get-open-file Tk:get-set-file Tk:get-file))
+	    		 Tk:get-open-file Tk:get-save-file Tk:get-file))
 
 ;=============================================================================
 ;

@@ -9,7 +9,7 @@
  * 
  * Win32 support by Caleb Deupree <cdeupree@erinet.com>
  *
- * Last file update: 10-Sep-1998 15:17
+ * Last file update: 20-Dec-1998 10:34
  */
 
 
@@ -81,8 +81,6 @@ static void set_socket_io_ports(int s, SCM sock, char *who)
   FILE *fs, *ft;
   char buffer[200];
 
-  STk_disallow_sigint();
-
 #ifdef WIN32
   {
     int r;
@@ -124,8 +122,6 @@ static void set_socket_io_ports(int s, SCM sock, char *who)
 
   /* Create output port */
   SOCKET(sock)->output = STk_Cfile2port(strdup(fname), ft, tc_oport, 0);
-
-  STk_allow_sigint();
 }
 
 /******************************************************************************
@@ -491,7 +487,7 @@ static void displ_socket(SCM sock, SCM port, int mode)
   sprintf(STk_tkbuffer, "#[socket %s %d]", 
 	  		(s->hostname == Ntruth)?"*none*": CHARS(s->hostname),
 	  		s->portnum);
-  Puts(STk_tkbuffer, PORT_FILE(port));
+  Puts(STk_tkbuffer, port);
 }
 
 static STk_extended_scheme_type socket_type = {

@@ -8,11 +8,11 @@
 ;;;; double-clicking.
 ;;;; This is a new version of the demo which can be run before STk is installed
 ;;;;
-;;;; $Id: browse.stk 1.2 Mon, 16 Feb 1998 08:28:39 +0100 eg $
+;;;; $Id: browse.stk 1.4 Tue, 02 Feb 1999 09:04:21 +0100 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date:  3-Aug-1993 17:33
-;;;; Last file update: 12-Feb-1998 11:28
+;;;; Last file update:  2-Feb-1999 08:45
 
 (require "unix")
 
@@ -21,7 +21,7 @@
 (frame '.f)
 (scrollbar '.f.scroll :command (lambda l (apply .f.list   'yview l)))
 (listbox   '.f.list   :yscroll (lambda l (apply .f.scroll 'set   l))
-	   	      :width 30 :height 20 :font "fixed")
+	   	      :width 30 :height 20 :font '(Courier -12))
 
 (pack .f.scroll .f.list :side "right" :expand #t :fill "both")
 (pack .f :side "top" :fill "both" :expand #t)
@@ -37,12 +37,18 @@
   (.f.list 'delete 0 "end")
   (apply .f.list 'insert 0 (sort (glob "*" ".*") string<?)))
 
+
+(define (edit-file file)
+  (if (eqv? (os-kind) 'Unix)
+      (system (string-append "xedit " file "&"))
+      (system (string-append "notepad " file))))
+
 (define (browse)
   (catch 
     (let ((file (string-append (getcwd) "/" (selection 'get))))
       (cond
         ((file-is-directory? file) (fill-listbox file))
-	((file-is-readable? file)  (system (string-append "xedit " file "&")))
+	((file-is-readable? file)  (edit-file file))
 	(else			   (error "Bad directory or file ~S" file))))))
 
 

@@ -1,7 +1,7 @@
 ;;;;
 ;;;; F i l e b o x . s t k 	  --  File Box composite widget
 ;;;;
-;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -11,11 +11,11 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
-;;;; $Id: Filebox.stklos 1.7 Thu, 10 Sep 1998 23:44:28 +0200 eg $
+;;;; $Id: Filebox.stklos 1.9 Mon, 01 Feb 1999 22:53:28 +0100 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;    Creation date: 22-Mar-1994 13:05
-;;;; Last file update: 10-Sep-1998 16:16
+;;;; Last file update:  1-Feb-1999 18:23
 
 (require "unix")
 (require "Basics")
@@ -264,8 +264,7 @@
     (slot-set! self 'ok-button   (make <Button> :text "Ok"     :parent f))
     (slot-set! self 'canc-button (make <Button> :text "Cancel" :parent f))
     (slot-set! self 'help-button (make <Button> :text "Help"   :parent f))
-    (slot-set! self 'all-button	 (make <Check-button> :text "All" 
-				       :font "fixed" :parent f))
+    (slot-set! self 'all-button	 (make <Check-button> :text "All" :parent f))
 
     ;; Pack everybody
     (pack [left-title-of self] [right-title-of self] :fill "x") ; lists titles
@@ -306,7 +305,7 @@
     (or (and (file-exists? file) 
 	     (not (file-is-directory? file)))
 	(and (Tk:message-box :type 'ok 
-			     :text (format #f "File ~S does not exists" file))
+			     :message (format #f "File ~S does not exists" file))
 	     #f)))
   
   (define (file-write-validate fb file)
@@ -315,11 +314,12 @@
 	    (begin
 	      (Tk:message-box
 	         :type 'ok 
-		 :text (format #f "~S is a directory" file))
+		 :message (format #f "~S is a directory" file))
 	      #f)
 	    (eqv? (Tk:message-box 
 	             :type 'yesno
-		     :text (format #f "File ~S already exists\nOverwrite it?" file))
+		     :message (format #f "File ~S already exists\nOverwrite it?" 
+				      file))
 		  'yes))
 	#t))
 

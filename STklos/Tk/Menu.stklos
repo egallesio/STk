@@ -15,11 +15,11 @@
 ;;;; This software is a derivative work of other copyrighted softwares; the
 ;;;; copyright notices of these softwares are placed in the file COPYRIGHTS
 ;;;;
-;;;; $Id: Menu.stklos 1.2 Sat, 24 Jan 1998 15:12:00 +0100 eg $
+;;;; $Id: Menu.stklos 1.3 Sun, 25 Oct 1998 22:52:31 +0100 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;    Creation date:  3-Mar-1994 21:03
-;;;; Last file update: 24-Jan-1998 13:39
+;;;; Last file update: 24-Oct-1998 12:15
 
 (require "Basics")
 
@@ -100,7 +100,6 @@
 			 :accessor type
 			 :allocation :tk-virtual))
   :metaclass <Tk-metaclass>)
-
 
 (define-method tk-constructor ((self <Menu>))
   Tk:menu)

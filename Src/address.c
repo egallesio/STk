@@ -17,10 +17,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
+ * $Id: address.c 1.4 Sat, 26 Dec 1998 21:34:30 +0100 eg $
  *
  *            Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 16-Mar-1994 10:34
- * Last file update: 10-Sep-1998 12:17
+ * Last file update: 26-Dec-1998 19:38
  *
  *
  */

@@ -55,7 +55,8 @@
   (frame ".nrframe" :bd 2 :relief 'raised)
   (pack [label ".nrframe.label" :text "Number of Rings: " :width 15 :anchor 'e]
 	:side "left")
-  (pack [scale ".nrframe.scale" :orient 'hor :from 1 :to max-rings :font "fixed"
+  (pack [scale ".nrframe.scale" :orient 'hor :from 1 :to max-rings 
+	       			:font '(Courier -12)
 			        :command (lambda (val)
 					   (set! num-rings val))]
 	:side "right" :expand #t :fill "x")
@@ -67,7 +68,8 @@
   (frame ".speed-frame" :bd 2 :relief 'raised)
   (pack [label ".speed-frame.label" :text "Speed: " :width 15 :anchor 'e]
 	:side "left")
-  (pack [scale ".speed-frame.scale" :orient 'hor :from 1 :to 100 :font "fixed"
+  (pack [scale ".speed-frame.scale" :orient 'hor :from 1 :to 100 
+			      :font '(Courier -12)
 	                      :command (lambda (val)
 					 (set! accel val))]
 	:side "right" :expand #t :fill "x")	

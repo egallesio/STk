@@ -16,10 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
+ * $Id: hash.c 1.4 Mon, 28 Dec 1998 23:05:11 +0100 eg $
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 17-Jan-1994 17:49
- * Last file update: 15-Jul-1998 17:34
+ * Last file update: 27-Dec-1998 20:19
  */
 
 #include <stk.h>
@@ -141,7 +142,7 @@ static SCM find_key(SCM obj, SCM alist, SCM comparison)
  */
 static SCM remove_key(SCM obj, SCM alist, SCM comparison)
 {
-  register SCM l, tmp;
+  register SCM l;
 
   for(l=NIL; !NULLP(alist); alist=CDR(alist)) {
     if (STk_apply(comparison, LIST2(obj, CAR(CAR(alist)))) == Ntruth) 
@@ -446,11 +447,12 @@ static PRIMITIVE hash_table_stats(SCM ht)
    */
   if (Tcl_FirstHashEntry(HASH_H(ht), &search)) {
     s = Tcl_HashStats(HASH_H(ht));
-    fprintf(STk_stderr, "%s\n", s);
+    Puts(s,    STk_curr_eport);
+    Putc('\n', STk_curr_eport);
     free(s);
   }
   else 
-    fprintf(STk_stderr, "Empty hash table\n");
+    Puts("Empty hash table\n", STk_curr_eport);
   return UNDEFINED;
 }
 

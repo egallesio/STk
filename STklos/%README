@@ -60,7 +60,7 @@ button 3 can be done with
 
 and changing its value can be done with
 
-      (set! (font b3) "fixed")
+      (set! (font b3) '(Courier))
 
 and associating a callback to button 1 can be done with the following
 expression

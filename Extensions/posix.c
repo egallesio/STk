@@ -16,11 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: posix.c 1.2 Thu, 10 Sep 1998 23:44:28 +0200 eg $ 
+ * $Id: posix.c 1.3 Wed, 18 Nov 1998 16:16:26 +0100 eg $ 
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 14-Mar-1995 20:14
- * Last file update: 10-Sep-1998 15:06
+ * Last file update: 10-Nov-1998 23:35
  *
  * This file contains also contains code additions from Shiro Kawai 
  * <shiro@sqush.squareusa.com>
@@ -221,7 +221,7 @@ static void display_Cpointer_tm(SCM obj, SCM port, int mode)
   sprintf(STk_tkbuffer, "#<C-struct tm %02d/%02d/%02d %02d:%02d:%02d>", 
 	  		p->tm_mon,  p->tm_mday, p->tm_year,
 	  		p->tm_hour, p->tm_min,  p->tm_sec);
-  Puts(STk_tkbuffer, PORT_FILE(port));
+  Puts(STk_tkbuffer, port);
 }
 
 static PRIMITIVE posix_time(void)

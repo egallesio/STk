@@ -14,10 +14,12 @@
  *
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
+ * 
+ * $Id: io.c 1.11 Sat, 26 Dec 1998 21:34:30 +0100 eg $
  *
  *	     Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: ????
- * Last file update: 15-Sep-1998 14:43
+ * Last file update: 26-Dec-1998 21:21
  */
 
 #ifdef WIN32
@@ -26,15 +28,36 @@
 #  include <fcntl.h>
 #  define TCL_EVENT_FLAG TCL_DONT_WAIT /* (FIXME) */
 #else
+#  include <sys/ioctl.h>
+#  include <sys/time.h>
+#  include <ctype.h>
 #  define TCL_EVENT_FLAG 0
+#  ifdef HAVE_SYS_SELECT_H
+#    include <sys/select.h>	/* This seems to be useful only for AIX */
+#  endif
+
+#  ifndef NO_FD_SET
+#    define SELECT_MASK fd_set
+#  else
+#     ifndef _AIX
+	typedef long fd_mask;
+#     endif
+#     if defined(_IBMR2)
+#	  define SELECT_MASK void
+#     else
+#	  define SELECT_MASK int
+#     endif
+#  endif
 #endif
+
 
 #include "stk.h"
 #include "sport.h"
+#include "vport.h"
 
 #define BUFFER_SIZE	512
 #define SYSTEM(instr)	{ instr; }
-#define STRING_PORTP(f) (((struct str_iob *) f)->signature == SPORT_SIGNATURE)
+
 
 #ifdef max
 #   undef max
@@ -60,95 +83,70 @@
 #endif
 
 
-#if defined(WIN32) && !defined(CYGWIN32)
-  FILE *STk_stdin, *STk_stdout, *STk_stderr;
-#endif
-
-static char buffer[BUFFER_SIZE+1];
+static char static_buffer[BUFFER_SIZE+1], *buffer = static_buffer;
 static int bufidx=0;
 static int count=-1;
-static int previous_char;
-static int ungetted = 0;
 static int filled=0;
 
 
-static void badport(int read)
-{
-  Err(read ? "String port is not open for reading"
-           : "String port is not open for writing",
-      NIL);
-}
-
-#ifdef WIN32
-#  ifndef CYGWIN32
-static int nop(Tcl_Event *unused1, int unused2) { return 0;}
-
-static insert_dummy_event(void)
-{
-  struct Tcl_Event *p;
-
-  p = (Tcl_Event *) must_malloc(sizeof(struct Tcl_Event));
-  p->proc =  nop;
-  Tcl_QueueEvent(p, TCL_QUEUE_TAIL);
-}
-
-static DWORD Kbd_Thread(LPDWORD dumb)
-{
-  unsigned long size;
-
-  for ( ; ; ) {
-    ReadFile(GetStdHandle(STD_INPUT_HANDLE), buffer, BUFFER_SIZE, &size, NULL);
-    buffer[size] = '\0';
-    count	 = (int) size;
-    filled       = 1;
-  }
-  /* Never readched */
-  return 0;
-}
-#  endif
-#endif
-
 void STk_StdinProc()
 {
+  buffer = static_buffer;
   for ( ; ; ) {
-    SYSTEM(count = read(fileno(STk_stdin), buffer, BUFFER_SIZE););
+    SYSTEM(count = read(fileno(PORT_FILE(STk_stdin)), buffer, BUFFER_SIZE););
     if (count != -1 || errno != EINTR) break;
   }
   filled = 1;
+  STk_control_C = 0; /* neglect ^C which arose when waiting an input */
 }
 
 
-int STk_file_data_available(FILE *f)
+void STk_fill_stdin_buffer(char *s)
 {
-  if ((f == STk_stdin) && (bufidx < count)) return 1;
-  if (READ_DATA_PENDING(f))		    return 1;
-  return 0;
+  /* This procedure is called by the console to simulate the arrival of
+   * characters on stdin. The string is GC protected			   */
+  count  = strlen(s);
+  buffer = s;
+  filled = 1;
+}
+
+ 
+static int file_data_available(SCM port)
+{
+  return ( (PORT_UNGETC(port) != EOF) 			||
+	   ((port == STk_stdin) && (bufidx < count)) 	||
+	   (READ_DATA_PENDING(PORT_FILE(port)))    	 );
 }
 
 
-int STk_getc(FILE *f)
+/*****************************************************************************/
+
+
+int STk_getc(SCM port)
 {
-  if (f == STk_stdin) {
-    if (ungetted) {
-      ungetted = 0;
-      return previous_char;
-    }
+  int result = PORT_UNGETC(port);
+
+  /* Ungetted character ? */
+  if (result != EOF) {
+    PORT_UNGETC(port) = EOF;
+    return result;
+  }
+
+  /* Stdin */
+  if (port == STk_stdin) {
     if (bufidx < count) return buffer[bufidx++];
     else {
 #ifdef USE_TK
       if (Tk_initialized && STk_interactivep) {
 	filled = 0;
-	while (!filled) {
+	while (!filled && !STk_control_C) {
 	  Tcl_DoOneEvent(TCL_EVENT_FLAG);
 	  if (Tk_GetNumMainWindows() <= 0) return EOF;
 	}
       }
-#  ifndef WIN32
       else
 	STk_StdinProc();
-#  endif
 #else 
-      /* This code is for snow only (Unix and Win32 flavours) */
       STk_StdinProc();
 #endif
       if (count <= 0) return EOF;
@@ -158,142 +156,278 @@ int STk_getc(FILE *f)
       }
     }
   }
-  else
-    if (STRING_PORTP(f)) {
-      register struct str_iob *g = (struct str_iob *)f;
-      if (!(g->flag & READING)) badport(TRUE);
-      return (--(g->cnt)>=0? ((int)*g->ptr++): EOF);
-    }
-    else {
-      int result;
 
-      for ( ; ; ) {
-	SYSTEM(result=getc(f));
-	if (result != EOF || errno != EINTR) break;
-      }
-      return result;
-    }
+  /* Otherwise */
+  switch (TYPE(port)) {
+    case tc_iport : for ( ; ; ) {
+		      SYSTEM(result=getc(PORT_FILE(port)));
+		      if (result != EOF || errno != EINTR) break;
+		    }
+		    return result;
+    case tc_isport: {
+		      register struct str_iob *f;
+
+		      f = (struct str_iob *) PORT_FILE(port);
+		      return (--(f->cnt)>=0? ((int)*f->ptr++): EOF);
+		    }
+    case tc_ivport: {
+		      register struct virtual_iob *f;
+		      SCM res, proc;
+
+		      f = (struct virtual_iob *) PORT_FILE(port);
+		      proc = f->getc;
+		      if (proc == Ntruth) /* No getc function: return EOF */
+			return EOF;
+		      else {
+			res = STk_apply(proc, NIL);
+			return (res == STk_eof_object) ? EOF:  CHAR(res);
+		      }
+		    }
+    default:        Err("INTERNAL ERROR in STk_getc", NIL); 
+      		    return 0;
+  }
 }
 
-int STk_ungetc(int c, FILE *f)
+int STk_ungetc(int c, SCM port)
 {
-  if (f == STk_stdin) {
-    ungetted = 1;
-    previous_char = c;
-  }
-  else
-    if (STRING_PORTP(f)) {
-      register struct str_iob *g = (struct str_iob *)f;
-      if (g->ptr == g->base) Err("INTERNAL ERROR: cannont unget char", NIL);
-      if (!(g->flag & READING)) badport(TRUE);
-      g->ptr--;
-      g->cnt++;
-    }
-    else
-      SYSTEM(ungetc(c, f));
+  int result = PORT_UNGETC(port);
+  
+  if (result != EOF) STk_err("INTERNAL ERROR: cannot unget character", NIL);
+  PORT_UNGETC(port) = c;
   return c;
 }
 
-int STk_putc(int c, FILE *f)
+int STk_putc(int c, SCM port)
 {
-  if (STRING_PORTP(f)) {
-    register struct str_iob *g = (struct str_iob *)f;
-    register unsigned int tmp;
+  ENTER_PRIMITIVE("write-char");
+  switch (TYPE(port)) {
+    case tc_oport :  SYSTEM(c=fputc(c, PORT_FILE(port)));
+      		     /* Signal an error if write fails. We can't do better here */
+      		     if (c == EOF) Serror("write error", NIL);
+		     break;
+    case tc_osport: {
+      		      register struct str_iob *f;
+		      register unsigned int tmp;
     
-    if (!(g->flag & WRITING)) badport(FALSE);
-    if (++g->cnt == g->bufsiz) {
-      tmp	 = g->bufsiz;
-      tmp	+= tmp/2;
-      g->base	 = must_realloc(g->base, tmp);
-      g->ptr	 = g->base + g->bufsiz - 1; /* since base can have been moved */
-      g->bufsiz	 = tmp;
-    }
-    *g->ptr++ = (unsigned char) c;
-  }
-  else {
-    SYSTEM(c=fputc(c, f));
-    /* Signal an error if write fails. We can't be very cute here */
-    if (c == EOF) Err("write-char: write error", NIL);
+		      f =  (struct str_iob *) PORT_FILE(port);
+		      if (++f->cnt == f->bufsiz) {
+			tmp	  = f->bufsiz;
+			tmp	 += tmp/2;
+			f->base	  = must_realloc(f->base, tmp);
+			f->ptr	  = f->base + f->bufsiz - 1; /* base can move */
+			f->bufsiz = tmp;
+		      }
+		      *f->ptr++ = (unsigned char) c;
+		      break;
+		    }
+    case tc_ovport: {
+      		      register struct virtual_iob *f;
+		      SCM res, proc;
+
+		      f    = (struct virtual_iob *) PORT_FILE(port);
+		      proc = f->putc;
+		      if (proc == Ntruth) /* No putc function: return EOF */
+			return EOF;
+		      else {
+			res = STk_apply(proc, LIST1(STk_makechar(c)));
+			if (res == STk_eof_object) Serror("write error", NIL);
+		      }
+    		    }
   }
   return c;
 }
 
-int STk_puts(char *s, FILE *f)
+int STk_puts(char *s, SCM port)
 {
-  if (STRING_PORTP(f)) {
-    while (*s) STk_putc(*s++, f);
-    return 0;
-  }
-  else {
-    int result;
-    SYSTEM(result = fputs(s, f));
-    if (result == EOF) Err("write: write-error", NIL);
-    return result;
+  ENTER_PRIMITIVE("write");
+
+  switch (TYPE(port)) {
+    case tc_oport :  {
+      		       int result;
+
+      		       SYSTEM(result = fputs(s, PORT_FILE(port)));
+		       if (result == EOF) Serror("write-error", NIL);
+		       return result;
+    		     }
+    case tc_osport:  {
+      		       register struct str_iob *f;
+		       register unsigned int tmp;
+    
+		       f =  (struct str_iob *) PORT_FILE(port);
+		       for ( ; *s; s++) {
+			 if (++f->cnt == f->bufsiz) {
+			   tmp	   = f->bufsiz;
+			   tmp	  += tmp/2;
+			   f->base = must_realloc(f->base, tmp);
+			   f->ptr  = f->base + f->bufsiz - 1; /* base can move */
+			   f->bufsiz = tmp;
+			 }
+			 *f->ptr++ = (unsigned char) *s;
+		       }
+		       return 0;
+    		    }
+		       
+    case tc_ovport: {
+      		      register struct virtual_iob *f;
+		      SCM res, proc;
+
+		      f    = (struct virtual_iob *) PORT_FILE(port);
+		      proc = f->puts;
+		      if (proc == Ntruth) /* No putc function: return EOF */
+			return EOF;
+		      else {
+			res = STk_apply(proc, LIST1(STk_makestring(s)));
+			if (res ==STk_eof_object) Serror("write error", NIL);
+		      }
+		    }
+		    /* NO BREAK */
+    default:  	    return 0;
   }
 }
 
-int STk_eof(FILE *f)
+int STk_eof(SCM port)
 {
-  if (STRING_PORTP(f))
-    return (((struct str_iob *)f)->cnt <= 0);
-  else {
-    int result;
-    SYSTEM(result=feof(f));
-    return result;
+  switch (TYPE(port)) {
+    case tc_iport :  {
+      		       int result;
+      		       SYSTEM(result = feof(PORT_FILE(port)));
+		       return result;
+    		     }
+    case tc_isport:  {
+      		       register struct str_iob *f;
+		       f =  (struct str_iob *) PORT_FILE(port);
+		       return f->cnt <= 0;
+    		     }
+		       
+    case tc_ivport: {
+      		      register struct virtual_iob *f;
+		      SCM proc;
+
+		      f    = (struct virtual_iob *) PORT_FILE(port);
+		      proc = f->eofp;
+		      return (proc == Ntruth) ? 1 : (STk_apply(proc, NIL)!=Ntruth);
+		    }
+    default:        return 1; /* always EOF on output files */
   }
 }
 
-
-char * STk_line_bufferize_io(FILE *f)
+int STk_internal_flush(SCM port)
 {
-  char *buff;
+  switch (TYPE(port)) {
+    case tc_oport :  {
+      		       int result;
+      		       SYSTEM(result = fflush(PORT_FILE(port)));
+		       return result;
+    		     }
+    case tc_ovport: {
+      		      register struct virtual_iob *f;
+		      SCM proc;
 
-  if ((buff=malloc(BUFFER_SIZE)) == NULL)
-    panic("Cannot allocate a line buffer for output file");
-  setvbuf(f, buff, _IOLBF, BUFFER_SIZE);
-  return buff;
+		      f    = (struct virtual_iob *) PORT_FILE(port);
+		      proc = f->flush;
+		      return (proc == Ntruth) ? 0 : (STk_apply(proc, NIL)!=Ntruth);
+		    }
+    default:        return 0; /* i.e. always works on other ports */
+  }
 }
 
-
+int STk_internal_char_readyp(SCM port)
+{
+  switch (TYPE(port)) {
+    case tc_iport : {
+      		      if (file_data_available(port)) return 1;
 #ifdef WIN32
-  /* 
-   * Windows apps don't have an associated console. The following code
-   * associate a console to the 3 standard files.  However, for some
-   * reason, even when closing stdin stdout and stderr, I was not able
-   * to remap console files on the first enties. Hence, the file name
-   * change from stdin to STk_stdin ...	 
-   */
-#  include <windows.h>
-#  include <io.h>
-#  include <fcntl.h>
+		      panic("char-ready?: Not yet implemented!");
+#else
+#  ifdef HAVE_SELECT
+		      {
+			SELECT_MASK readfds;
+			struct timeval timeout;
+			int f = fileno(PORT_FILE(port));
 
+			FD_ZERO(&readfds); 
+			FD_SET(f, &readfds);
+			timeout.tv_sec = timeout.tv_usec = 0;
+			return (select(f+1, &readfds, NULL, NULL, &timeout));
+		      }
+#  else
+#    ifdef FIONREAD
+		      {
+			int result;
 
-  void STk_init_io(void)
-  {
-    HANDLE Fin, Fout, Ferr;
-    unsigned long dumb;
-#ifdef X0       /* CYGWIN32 */
-    if (AllocConsole()) {
-      Fin  = GetStdHandle(STD_INPUT_HANDLE);
-      Fout = GetStdHandle(STD_OUTPUT_HANDLE);
-      Ferr = GetStdHandle(STD_ERROR_HANDLE);
-      
-      fclose(stdin); fclose(stdout); fclose (stderr);
-      
-      STk_stdin	 = fdopen(_open_osfhandle((long) Fin,  O_RDONLY), "r");
-      STk_stdout = fdopen(_open_osfhandle((long) Fout, O_APPEND), "w");
-      STk_stderr = fdopen(_open_osfhandle((long) Ferr, O_APPEND), "w");
-      
-      fflush(STk_stdout);
-      SetConsoleTitle("  *** STk console ***  ");
-      
-      /* Create a thread for reading keyboard */
-#ifdef USE_TK
-      CreateThread(NULL, 100, (LPTHREAD_START_ROUTINE) Kbd_Thread, NULL, 0, &dumb);
+			ioctl(fileno(PORT_FILE(port)), FIONREAD, &result);
+			return result;
+		      }
+#    else
+		      return 1;
+#    endif
+#  endif
 #endif
-    }
-    else
-      panic("Cannot create Win32 console");
-#endif
+		    }
+    case tc_isport: return 1;
+    case tc_ivport: {
+      		      register struct virtual_iob *f;
+		      SCM proc;
+
+		      f    = (struct virtual_iob *) PORT_FILE(port);
+		      proc = f->readyp;
+		      return (proc == Ntruth) ? 1 : (STk_apply(proc, NIL)!=Ntruth);
+		    }
+    default:        return 1; /* always EOF on output files */
   }
-#endif
+}
+   
+
+void STk_close(SCM port)
+{
+  if (PORT_FLAGS(port) & PORT_CLOSED) /* already closed */ return;
+
+  STk_internal_flush(port);
+  
+  switch (TYPE(port)) {
+    case tc_iport : 
+    case tc_oport : STk_close_file_port(port); break;
+
+    case tc_ivport:
+    case tc_ovport: {
+      		      register struct virtual_iob *f;
+		      SCM proc;
+
+		      f    = (struct virtual_iob *) PORT_FILE(port);
+		      proc = f->close;
+		      if (proc != Ntruth) STk_apply(proc, NIL);
+    		    }
+  }
+  PORT_FLAGS(port) |= PORT_CLOSED;
+}
+
+
+void STk_fprintf(SCM port, char *format, ...)
+{
+  va_list ap;
+  char buffer[MAX_FPRINTF];
+
+  va_start(ap, format);
+  vsprintf(buffer, format, ap);
+  Puts(buffer, port);
+}
+
+
+char *STk_line_bufferize_io(SCM port)
+{
+  if (IPORTP(port) || OPORTP(port)) {
+    char *buff= STk_must_malloc(BUFFER_SIZE);
+
+    setvbuf(PORT_FILE(port), buff, _IOLBF, BUFFER_SIZE);
+    return buff;
+  }
+  return NULL;
+}
+
+
+void STk_init_io(void)
+{
+  STk_stdin = STk_stdout = STk_stderr = NULL;
+  STk_curr_iport = STk_curr_oport = STk_curr_eport = NULL;
+}
+

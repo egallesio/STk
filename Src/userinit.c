@@ -17,13 +17,15 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
+ * $Id: userinit.c 1.5 Mon, 28 Dec 1998 23:05:11 +0100 eg $
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 23-Jan-1994 19:09
- * Last file update: 19-Sep-1998 13:05
+ * Last file update: 27-Dec-1998 20:41
  */
 
 #include "stk.h"
+
 
 void STk_user_init(void)
 {

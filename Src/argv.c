@@ -2,7 +2,7 @@
  *
  * a r g v . c			-- Argc/Argv management
  *
- * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -16,10 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
+ * $Id: argv.c 1.8 Fri, 22 Jan 1999 14:44:12 +0100 eg $
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 30-Aug-1994 15:38
- * Last file update: 17-Sep-1998 12:58
+ * Last file update: 15-Jan-1999 09:30
  */
 
 #include "stk.h"
@@ -43,6 +44,12 @@ char *STk_arg_visual	  = NULL;
 int   STk_arg_colormap	  = 0;
 int   STk_arg_sync	  = 0;
 int   STk_arg_no_tk	  = 0;
+int   STk_arg_console      
+#  ifdef WIN32
+			  = 1;
+#  else
+			  = 0;
+#  endif
 #endif
 char *STk_arg_file	  = NULL;
 char *STk_arg_load	  = NULL;
@@ -59,6 +66,10 @@ static struct arguments {
 #ifdef USE_TK
   {"-colormap",	   (void *) &STk_arg_colormap,	   0, 
    		   "Use a private colormap"},
+# ifndef WIN32  
+  {"-console",	   (void *) &STk_arg_console,	   0, 
+   		   "Create a Tk console"},
+#endif
   {"-display",	   (void *) &STk_arg_Xdisplay,	   1, 
 		   "Display to use"},
   {"-geometry",	   (void *) &STk_arg_geometry,	   1, 
@@ -89,10 +100,17 @@ static struct arguments {
 static void usage(void)
 {
   struct arguments *p;
-  
-  for (p = Table; *(p->key); p++) 
-    fprintf(STk_stderr, "%s\t%s\n", p->key, p->help);
-  exit(1);
+  char buffer[1000];
+
+  /* This is a little bit complicated because port are not yet initialized */
+  sprintf(buffer, "This is STk version %s\nValid options:\n", STK_VERSION);
+  for (p = Table; *(p->key); p++) {
+    char line[100];
+    
+    sprintf(line, "%s\t%s\n", p->key, p->help);
+    strcat(buffer, line);
+  }
+  panic(buffer);
 }
 
 char **STk_process_argc_argv(int argc, char **argv)
@@ -110,7 +128,11 @@ char **STk_process_argc_argv(int argc, char **argv)
 	*((int *) p->flag) = 0;
 
   /* Set the program name */
+#ifdef WIN32
+  strcpy(STk_Argv0, *argv);   /* argv0 already contain the good value */
+#else
   STk_whence(*argv, STk_Argv0);
+#endif  
 
   /* Option analysis */
   while (--argc) {
@@ -136,12 +158,8 @@ char **STk_process_argc_argv(int argc, char **argv)
 	    
 	    if (*argv)
 	      *((char **) p->flag) = *argv;
-	    else {
-	      fprintf(STk_stderr,
-		      "\"%s\"  option requires an additional argument\n", 
-		      p->key);
-	      exit(1);
-	    }
+	    else 
+	      panic("\"%s\" option requires an additional argument", p->key);
 	  }
 	  else
 	    if (p->flag)
@@ -284,11 +302,13 @@ void STk_initialize_scheme_args(char **argv)
 
 #ifdef WIN32
 
-/* #include <dos.h>   enlevé pour CYGWIN32 */
+#  ifndef CYGWIN32
+#    include <dos.h>
+#  endif
 
 char **STk_Win32_make_argc_argv(char *lpszCmdLine, int *argc)
 {
-  int size, i, code;
+  int size, i;
   char **argv, **argvlist, *p, *tmp, *prog= "STk.exe";
 
   /*

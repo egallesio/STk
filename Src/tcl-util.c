@@ -136,7 +136,7 @@ Tcl_Backslash(src, readPtr)
 	    if (isxdigit(UCHAR(p[1]))) {
 		char *end;
 
-		result = strtoul(p+1, &end, 16);
+		result = (char) strtoul(p+1, &end, 16);
 		count = end - src;
 	    } else {
 		count = 2;

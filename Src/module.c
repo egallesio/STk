@@ -16,11 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: module.c 1.12 Mon, 14 Sep 1998 15:36:17 +0200 eg $
+ * $Id: module.c 1.14 Wed, 23 Dec 1998 23:41:27 +0100 eg $
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 13-Mar-1997 20:11
- * Last file update: 14-Sep-1998 13:53
+ * Last file update: 15-Dec-1998 23:04
  */
 
 #include "stk.h"
@@ -234,31 +234,27 @@ SCM STk_module_env2list(SCM module)
 
 static SCM module_body(SCM module, SCM l)
 {
-  SCM env, res, prev_module;
-  Jmp_Buf jb, *prev_jb;
-  long prev_context;
-  int k;
+  SCM prev_module  = STk_selected_module;
+  SCM env 	   = MOD_ENV(module);
+  volatile SCM res = UNDEFINED;
 
-  prev_jb		= Top_jmp_buf;
-  prev_context		= Error_context;
-  prev_module		= STk_selected_module;
-  Top_jmp_buf 		= &jb;
+  STk_selected_module = module;
 
-  /* Execute body in given environment */
-  if ((k = setjmp(jb.j)) == 0) {
-    STk_selected_module = module;
-    env 		= MOD_ENV(module);
+  PUSH_ERROR_HANDLER
+    {
+      register SCM tmp;
 
-    for (  ; NNULLP(l);  l = CDR(l))
-      res = EVALCAR(l);
-  }
-
-  /* Restore old module and context */
-  Top_jmp_buf   	= prev_jb;
-  Error_context 	= prev_context;
-  STk_selected_module   = prev_module;
-
-  if (k) /* propagate error */ longjmp(Top_jmp_buf->j, k);
+      for (tmp=l; NNULLP(tmp);  tmp = CDR(tmp))
+	res = EVALCAR(tmp);
+    }
+  WHEN_ERROR
+    {
+      STk_selected_module = prev_module;
+      PROPAGATE_ERROR();
+    }
+  POP_ERROR_HANDLER;
+  
+  STk_selected_module = prev_module;
   return res;
 }
 
@@ -514,6 +510,10 @@ PRIMITIVE STk_module_symbols(SCM module)
   }
 }
 
+PRIMITIVE STk_get_selected_module(void)
+{
+  return STk_selected_module;
+}
 
 void STk_initialize_stk_module(void)
 {

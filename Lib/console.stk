@@ -1,0 +1,604 @@
+;;;;
+;;;; console.stk 			-- A simple console written in STk
+;;;;
+;;;; Copyright © 1998-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; $Id: console.stk 1.9 Mon, 01 Feb 1999 15:18:22 +0100 eg $
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 29-Oct-1998 18:51
+;;;; Last file update:  1-Feb-1999 14:18
+
+(require "font-lock")
+(require "butbar")
+(require "edit")
+
+;;;
+;;; Variables which which can be overloaded by the user file ~/.stkvars
+;;;
+(define-module STk
+  (define *show-splash-screen* #t)
+  (define *console-font*       '(courier)))
+
+;;;
+;;; The rest of the file is in the Tk module
+;;;
+
+(select-module Tk)
+(export make-console)
+(autoload "console-customize" console-customize console-customize-save)
+
+
+;=============================================================================
+;
+; Globals
+;
+;=============================================================================
+
+(define *console-version-message* 
+  (string-append "STk version" (version) 
+		 "\n(Tk version is " *tk-patch-level* ")\n\n"
+		 "Copyright © 1993-1999\nErick Gallesio - I3S-CNRS/ESSI\n"
+		 "<eg@unice.fr>"))
+
+;=============================================================================
+;
+; Utilities
+;
+;=============================================================================
+
+(define (bad-port . _)
+  (error "console is not tied to a standard input port"))
+
+
+(define (set-cursor console pos)
+  (let ((pos (if (console 'compare pos "==" "end") "end - 1 chars" pos)))
+    (console 'mark 'set 'insert pos)
+    (console 'tag 'remove 'sel "1.0" "end")
+    (console 'see "insert")))
+
+;;
+;; console-insert --
+;;    Insert a string into a text at the point of the insertion cursor. If
+;;    there is a selection in the text, and it covers the point of the
+;;    insertion cursor, then delete the selection before inserting.
+;;    Insertion is restricted to the prompt area.  
+;;
+(define (console-insert console s)
+  (unless (zero? (string-length s))
+    ; 1. Raise window
+    (raise (winfo 'top console))
+    ; 2. Do text insertion
+    (catch 
+        (when (and (console 'compare "sel.first" "<=" "insert")
+		   (console 'compare "sel.last" ">=" "insert"))
+	  (console 'tag 'remove 'sel "sel.first" "prompt-end")
+	  (console 'delete "sel.first" "sel.last")))
+    (if (console 'compare "insert" "<" "prompt-end")
+	(console 'mark 'set "insert" "end"))
+    (console 'insert "insert" s "input stdin")
+    (console 'see "insert")
+    ; 3. Fontify
+    (idle-fontify console)))
+
+;;
+;; console-output --
+;; 	This routine is called directly by the interpreter to cause a string
+;; 	to be displayed in the console.
+;;
+(define (console-output console string file-type)
+  (console 'insert "output" string file-type)
+  (console 'see "insert"))
+
+
+;;
+;; console-load
+;;
+(define (console-load)
+  (let ((file (Tk:get-open-file :title "Load File")))
+    (and file (load file))))
+
+;;
+;; console-about
+;;
+(define (console-about)
+  (let* ((top (toplevel '.__cons_about__))
+	 (m   (label (& top ".m") :justify "center" :foreground "IndianRed4"
+		     :text *console-version-message*))
+	 (img (make-image "STk-big-logo.gif"))
+	 (lab (label (& top ".l") :image img :relief "groove" :bd 5))
+	 (q   (button (& top ".b") :text "Close" 
+		      :command (lambda () 
+				 (delete-image "STk-big-logo.gif") 
+				 (destroy top)))))
+    (wm 'title top "About STk ...")
+    (grab top)
+    (raise top)
+    (pack lab :padx 20 :pady 20)
+    (pack m :fill "both" :expand #t)
+    (pack q :ipadx 10 :pady 10)))
+
+;;
+;; console-splash-screen
+;;
+(define (console-splash-screen)
+  (let* ((width  400)
+	 (height 300)
+	 (top    (toplevel '.__cons_splash__ :bg "white" :relief "solid" :bd 3
+			   :width width :height height))
+	 (m   	 (label (& top ".m") :justify "center" :fg "IndianRed4" 
+			:bg "white" :text *console-version-message*))
+	 (img    (make-image "STk-big-logo.gif"))
+	 (lab    (label (& top ".l") :image img :bd 0))
+	 (w      (winfo 'screenwidth top))
+	 (h      (winfo 'screenheight top))
+	 (kill   (lambda () 
+		   (catch (delete-image "STk-big-logo.gif"))
+		   (destroy top))))
+    (wm 'over top #t)
+    (wm 'geometry top (format #f "+~A+~A" (/ (- w 400) 2) (/ (- h 300) 2)))
+    (pack 'propagate top #f)
+    (pack lab m)
+    (bind top "<1>" kill) 	;; for the impatients
+    (raise top)
+    (after 2000 kill)))
+
+;;
+;; console-logo
+;;
+(define (console-logo console)
+  (let ((l0 (label (& console ".l0") :image (make-image "LineLeft.gif")     :bd 0))
+	(l1 (label (& console ".l1") :image (make-image "STk-tiny-logo.gif"):bd 0))
+	(l2 (label (& console ".l2") :image (make-image "LineRight.gif")    :bd 0)))
+    (console 'insert 'insert "\n")
+    (console 'window 'create "insert" :window l0 :align "baseline")
+    (console 'insert 'insert " ")
+    (console 'window 'create "insert" :window l1 :align "baseline")
+    (console 'insert 'insert " ")
+    (console 'window 'create "insert" :window l2 :align "baseline")
+    (console 'tag 'add "center" "1.0" "insert")
+    (console 'tag 'configure "center" :justify "center")
+    (console 'insert "insert" "\n\n")))
+
+;;
+;; console-invoke --
+;;
+;; Processes the command line input.  If the command is complete it
+;; is evaluated.  
+;;
+
+(define (console-invoke console module stdin stdout stderr)
+  (let* ((ranges   (console 'tag 'ranges "input"))
+	 (cmd      (apply console 'get ranges))
+	 (mod      (or module (%get-selected-module)))
+	 (env      (module-environment mod))
+	 (stdcons? (eq? stdin (current-input-port))))
+
+    (if (complete-sexpr? cmd)
+	(begin
+	  ;; We have a complete set of expression to evaluate
+	  (console 'mark 'set "output" "end")
+	  (console 'tag "delete" "input")
+	  
+	  (with-input-from-string cmd
+	    (lambda ()
+	      (do ((sexpr (read) (read)))
+		  ((eof-object? sexpr))
+		(add-history! console (substring cmd 0 (- (string-length cmd) 1)))
+		(if stdcons?
+		    ;; We are on the main console. Directly fill the std buffer 
+		    (%fill-stdin cmd)
+		    ;; Not the standard console. Use redirection
+		    (dynamic-wind 
+		       (lambda () #f)
+		       (lambda ()
+			 (with-input-from-port stdin 
+			   (lambda ()
+			     (with-output-to-port stdout
+			       (lambda ()
+				 (with-error-to-port stderr
+				   (lambda ()
+				     (let ((E (eval sexpr env)))
+				       (repl-display-result E)))))))))
+		       (lambda ()
+			 (console-prompt console module stdout stderr)
+			 (console 'yview :pickplace "insert"))))))))
+	;; Not a complete sexpr. Indent text 
+	(font-lock-indent console "input"))))
+
+
+;=============================================================================
+;
+; console-prompt
+;
+;=============================================================================
+(define (console-prompt console module stdout stderr)
+  (let ((temp (console 'index "end -1 char"))
+	(mod  (or module (%get-selected-module))))
+    (with-output-to-port stdout 
+      (lambda()
+	(with-error-to-port stderr
+	   (lambda ()
+	     (repl-display-prompt mod)))))
+    (console 'mark 'set "output" temp)
+    (set-cursor console "end")
+    (console 'mark 'set "prompt-end" "insert")		; FIXME: obligé de mettre 
+    (console 'mark 'gravity "prompt-end" 'left)		; la gravité?
+    (console 'mark 'set "start_fontify" "insert")
+    (console 'mark 'gravity "start_fontify" 'left)))
+    
+
+
+(define console-display-prompt  #f)
+
+(define (make-console-display-prompt console stdout stderr)
+  (set! console-display-prompt
+	(lambda (module)
+	  (console-prompt console  module stdout stderr))))
+
+;=============================================================================
+;
+; History management
+;
+;=============================================================================
+(define (update-history! console h index)
+  (set-widget-data! console (list :hist h :index index)))
+
+(define (get-history console)
+  (let ((data (get-widget-data console)))
+    (if data 
+	; we have already an history for this console
+	(values (get-keyword :hist data) (get-keyword :index data))
+	; make an empty history for this console
+	(values '() 0))))
+
+(define (add-history! console line)
+  (call-with-values (lambda ()      (get-history console))
+		    (lambda (h idx) (update-history! console (cons line h) 0))))
+
+(define(follow-history console oper)
+  (call-with-values 
+      (lambda () (get-history console))
+      (lambda (h idx)
+	(if (null? h)
+	    ""
+	    (let ((r (list-ref h idx)))
+	      (update-history! console h (modulo (oper idx 1) (length h)))
+	      r)))))
+ 
+(define (previous-history console)
+  (follow-history console +))
+
+(define (next-history console)
+  (follow-history console -))
+
+;=============================================================================
+;
+; Init-console-bindings
+;
+;    This is quite unreadable, but who cares?
+;
+;=============================================================================
+
+(define (init-console-bindings console module stdin stdout stderr)
+  ;; Ignore all Alt, Meta, and Control keypresses unless explicitly bound.
+  ;; Otherwise, if a widget binding for one of these is defined, the
+  ;; <KeyPress> class binding will also fire and insert the character,
+  ;; which is wrong.  Ditto for <Escape>.
+  (bind console "<Alt-KeyPress>"     "")
+  (bind console "<Meta-KeyPress>"    "")
+  (bind console "<Control-KeyPress>" "")
+  (bind console "<Escape>"           "")
+  (bind console "<KP_Enter>" 	     "")
+
+  ;; Inserting characters
+  (bind console "<Tab>" (lambda ()
+			  (console-insert console "\t")
+			  (focus console)
+			  'break))
+  
+  (bind console "<Return>" (lambda ()
+			     (console 'mark 'set 'insert "end - 1c")
+			     (console-insert console "\n")
+			     (console-invoke console module stdin stdout stderr)
+			     'break))
+
+  (bind console "<KeyPress>" (lambda (|A|)
+			       (console-insert console |A|)
+			       'break))
+
+  ;; Deleting characters
+  (let ((del (lambda (comparison)
+	       (idle-fontify console)
+	       (if (null? (console 'tag 'nextrange 'sel "1.0" 'end))
+		   (if (console 'compare "insert" comparison "prompt-end") 'break)
+		   (console 'tag 'remove 'sel "sel.first" "prompt-end")))))
+    (bind console "<Delete>"    (lambda () (del "<")))
+    (bind console "<Control-d>" (lambda () (del "<")))
+    (bind console "<BackSpace>" (lambda () (del "<=")))
+    (bind console "<Control-k>" (lambda ()
+				  (idle-fontify console)
+				  (if (console 'compare "insert" "<" "prompt-end")
+				      (console 'mark 'set "insert" "prompt-end"))))
+
+    (bind console "<Meta-d>" (lambda ()
+			       (idle-fontify console)
+			       (if (console 'compare "insert" "<" "prompt-end")
+				   'break)))
+    (bind console "<Meta-BackSpace>" 
+	  (lambda () 
+	    (idle-fontify console)
+	    (if (console 'compare "insert" "<=" "prompt-end") 'break))))
+  
+  ;; Moving around
+  (let ((start (lambda ()
+		 (idle-fontify console)
+		 (let ((pos (if (console 'comp "insert linestart" ">" "prompt-end")
+				"insert linestart"
+				"prompt-end")))
+		 (set-cursor console pos)
+		 'break)))
+	(end    (lambda ()
+		  (idle-fontify console)
+		  (set-cursor console "insert lineend")
+		  'break))
+	(forw   (lambda ()
+		  (if (console 'compare "insert" ">=" "prompt-end")
+		      (set-cursor console "insert+1c"))
+		  'break))
+	(back (lambda ()
+		(if (console 'compare "insert" ">=" "prompt-end")
+		    (set-cursor console "insert-1c"))
+		'break))
+	(nop  (lambda () #f)))
+    (bind console "<Control-a>"     start)
+    (bind console "<Home>"          start)
+    (bind console "<Control-e>"     end)
+    (bind console "<End>"           end)
+    (bind console "<Control-f>"     forw)
+    (bind console "<Right>"         forw)
+    (bind console "<Control-b>"     back)
+    (bind console "<Left>"          back)
+    (bind console "<Control-Left>"  nop)
+    (bind console "<Control-Right>" nop))
+
+  ;; History
+  (let ((prev (lambda ()
+		(when (console 'compare "insert linestart" "<" "prompt-end")
+		  (console 'delete "prompt-end" "end")
+		  (console-insert console (previous-history console))
+		  'break)))
+	(next (lambda ()
+		(when (console 'compare "insert linestart" "<" "prompt-end")
+		  (console 'delete "prompt-end" "end")
+		  (console-insert console (next-history console))
+		  'break))))
+    (bind console "<Control-p>" prev)
+    (bind console "<Up>"	prev)
+    (bind console "<Control-n>" next)
+    (bind console "<Down>"	next))
+  
+  (bind console "<<PasteSelection>>" (lambda ()
+				       (catch 
+					 (console-insert console 
+					      (selection 'get :displayof console)))
+				       (fontify-buffer console "prompt-end")
+				       'break))
+  (bind console "<<Cut>>" (lambda ()
+			    (catch 
+			       (let ((buffer (console 'get "sel.first" "sel.last")))
+				 (clipboard 'clear :displayof console)
+				 (clipboard 'append :displayof console buffer)
+				 (console 'delete "sel.first" "sel.last")))
+			    'break))
+  
+  (bind console "<<Copy>>" (lambda ()
+			     (catch 
+			      (let ((buffer (console 'get "sel.first" "sel.last")))
+				(clipboard 'clear :displayof console)
+				(clipboard 'append :displayof console buffer)))
+			     'break))
+  (bind console "<<Paste>>" (lambda ()
+			      (catch
+			       (let ((clip (selection 'get 
+						      :displayof console 
+						      :selection "CLIPBOARD")))
+				 (console-insert console clip)
+				 (fontify-buffer console "prompt-end")))
+			      'break))
+  (bind console "<Control-c>" (lambda ()
+				(bell)
+				(send-signal |SIGINT|)))
+
+
+  ;; Use fontification for the console (but call it by hand because the console
+  ;; completely manage text insertion)
+  (make-fontifiable console)
+  (bindtags console (remove  "ScmTxt" (bindtags console)))
+)
+
+
+
+
+;=============================================================================
+;
+; init-console
+;
+;=============================================================================
+
+(define (init-console module std-console?)
+  (let* ((top     (toplevel (gensym "._cons_") :class "STk"))
+	 (console (text (& top ".txt") :background "white" :setgrid #t 
+				       :font *console-font*))
+	 (sb	  (scrollbar (& top ".sb") :width 10))
+	 (mb	  (console-make-menubar   top console))
+	 (bb	  (console-make-buttonbar top console))
+	 (stdin   (if std-console? 
+		      (current-input-port)
+		      (open-input-virtual bad-port bad-port bad-port bad-port)))
+	 (stdout  (open-output-virtual 
+		     (lambda (c) (console-output console (string c) "stdout"))
+		     (lambda (s) (console-output console s "stdout")(update 'idle))
+		     #f
+		     #f))
+	 (stderr  (open-output-virtual 
+		     (lambda (c) (console-output console (string c) "stderr"))
+		     (lambda (s) (console-output console s "stderr")(update 'idle))
+		     #f
+		     #f)))
+
+    ;; Associate the scrollbar commands
+    (tk-set! sb :command      (lambda l (apply console 'yview l)))
+    (tk-set! console :yscroll (lambda l (apply sb 'set l)))
+    
+    ;; Pack stuff
+    (pack bb :fill "x")
+
+    (pack console :expand #t :fill "both" :side "left")
+    (pack sb :expand #f :fill "y" :side "left")
+
+    (wm 'title top (if module 
+		       (format #f "Console (~A)" (module-name module))
+		       "STk console"))
+    (if std-console?
+        (wm 'protocol top "WM_DELETE_WINDOW" (lambda () (exit 0))))
+
+    (console 'tag 'configure "stdin"  :foreground "black")
+    (console 'tag 'configure "stdout" :foreground "midnightblue")
+    (console 'tag 'configure "stderr" :foreground "DarkRed")
+
+    (console 'mark 'set "output" (console 'index "end - 1 char"))
+    (set-cursor console "end")
+    (console 'mark 'set "prompt-end" "insert")
+    (console 'mark 'gravity "prompt-end" "left")
+
+    (init-console-bindings console module stdin stdout stderr)
+    (if std-console?
+	(begin
+	  (if *show-splash-screen* (console-splash-screen))
+	  (if *print-banner*       (console-logo console))
+	  (%change-standard-ports stdin stdout stderr)
+	  (make-console-display-prompt console stdout stderr))
+	(console-prompt console module stdout stderr))
+    (focus console)
+    console))
+
+
+(define (console-make-buttonbar parent txt)
+  (let* ((f (frame (& parent ".butbar") :relief "ridge" :bd 1)))
+    (make-button-bar f 
+      (list 5
+	    (list "console.gif"
+		  "Open New Console"
+		  make-console)
+	    (list "edit.gif"
+		  "Open New Editor"
+		  ed)
+	    (list "customize.gif"
+		  "Customize Environment"
+		  (lambda () (console-customize))) ; delayed to avoid autoload
+	    (list "diropen.gif"
+		  "Load File"  
+		  console-load)
+	    20
+	    (list "copy.gif"
+		  "Copy"
+		  (lambda () (event 'gen txt "<<Copy>>")))
+	    (list "clipboard.gif"
+		  "Paste"
+		  (lambda () (event 'gen txt "<<Paste>>")))
+	    (list "cut.gif"
+		  "Cut"
+		  (lambda () (event 'gen txt "<<Cut>>")))
+	    20
+	    (list "qmark.gif"
+		  "Help on Console"
+		  (lambda () (help "console")))))
+    f))
+
+
+
+(define (console-make-menubar top console)
+  (let* ((f    (frame (& top ".f") :relief "ridge" :bd 1))
+	 (b    (make-bordered-frame f))
+	 (file (menubutton (& b ".file") :text "File"))
+	 (edit (menubutton (& b ".edit") :text "Edit"))
+	 (conf (menubutton (& b ".conf") :text "Customize"))
+	 (hlp  (menubutton (& b ".help") :text "Help")))
+    
+    ;; File Menu
+    (let ((m (menu (& file ".m") :tearoff #f)))
+      (m 'add 'command :label "Load ..." :command console-load)
+      (m 'add 'separator)
+      (m 'add 'command :label "New Console" :command make-console)
+      (m 'add 'separator)
+      (m 'add 'command :label "Hide Console" :command (lambda () (wm 'iconify top)))
+      (m 'add 'command :label "Close Console" :command (lambda () (destroy top)))
+      (m 'add 'command :label "Exit STk" :command (lambda () (exit 0)))
+      (tk-set! file :menu m)
+      (pack file :side "left"))
+
+    ;; Edit Menu
+    (let ((m (menu (& edit ".m") :tearoff #f)))
+      (m 'add 'command :label "Cut"   :accel "Ctrl-X" 
+	 	       :command (lambda () (event 'gen console "<<Cut>>")))
+      (m 'add 'command :label "Copy" 
+	 	       :command (lambda () (event 'gen console "<<Copy>>")))
+      (m 'add 'command :label "Paste" :accel "Ctrl-V" 
+	 	       :command (lambda () (event 'gen console "<<Paste>>")))
+      (m 'add 'command :label "Clear" :accel "Del"
+	 	       :command (lambda () (event 'gen console "<<Clear>>")))
+      (m 'add 'separator)
+      (m 'add 'command :label "Flush Console"
+	 		:command (lambda () (console 'delete "1.0" "end")))
+      (tk-set! edit :menu m)
+      (pack edit :side "left"))
+    
+    (let ((m (menu (& conf ".m") :tearoff #f)))
+      (m 'add 'command :label "Customize" 
+	 	       :command (lambda () (console-customize)))
+      (m 'add 'command :label "Save Configuration" 
+	 	       :command (lambda () (console-customize-save)))
+      (tk-set! conf :menu m)
+      (pack conf :side "left"))
+      
+    ;; Help Menu
+    (let ((m (menu (& hlp ".m") :tearoff #f)))
+      (m 'add 'command :label "STk"   :command (lambda ()  ; Indirect to avoid 
+						 (help)))  ; autoloads
+      (m 'add 'command :label "Console" :command (lambda ()
+						   (help "console")))
+      (m 'add 'separator)
+      (m 'add 'command :label "About" :command console-about)
+      (tk-set! hlp :menu m)
+      (pack hlp :side "right"))
+
+    (pack f :fill "x" :side "top")))
+
+;=============================================================================
+;
+; make-console
+;
+;=============================================================================
+
+(define (make-console . args)
+  (let ((module (get-keyword :module args #f)))
+    (when module
+      (if (symbol? module) (set! module (find-module module)))
+      (if (not (module? module))
+	  (error "make-console: bad module ~S" module)))
+    (init-console module #f)))
+	  
+(define (%make-standard-console)
+  (try-load "~/.stkvars")
+  (init-console #f #t))
+
+(provide "console")

@@ -16,11 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: primitives.c 1.13 Sat, 26 Sep 1998 19:19:52 +0200 eg $
+ * $Id: primitives.c 1.21 Fri, 22 Jan 1999 14:44:12 +0100 eg $
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: ??????
- * Last file update: 19-Sep-1998 13:11
+ * Last file update:  1-Dec-1998 15:09
  */
 
 
@@ -340,14 +340,18 @@ static struct Primitive Scheme_primitives[] = {
   {"write-char",	    tc_subr_1_or_2, STk_write_char},
   {"load",		    tc_subr_1_or_2, STk_load},
 
+  {"with-input-from-port",  tc_subr_2,	    STk_with_input_from_port},	/* + */
+  {"with-output-to-port",   tc_subr_2,	    STk_with_output_to_port},	/* + */
+  {"with-error-to-port",    tc_subr_2,	    STk_with_error_to_port},	/* + */
   {"open-file",		    tc_subr_2,	    STk_open_file},		/* + */
   {"close-port",	    tc_subr_1,	    STk_close_port},		/* + */
   {"read-line",		    tc_subr_0_or_1, STk_read_line},		/* + */
+  {"copy-port",		    tc_subr_2, 	    STk_copy_port},		/* + */
   {"flush",		    tc_subr_0_or_1, STk_flush},			/* + */
   {"try-load",		    tc_subr_1_or_2, STk_try_load},		/* + */
   {"autoload",		    tc_fsubr,	    STk_autoload},		/* + */
   {"autoload?",		    tc_subr_1_or_2, STk_autoloadp},		/* + */
-#ifdef USE_TK
+#if defined(USE_TK) && !defined(WIN32)
   {"when-port-readable",    tc_subr_1_or_2, STk_when_port_readable},	/* + */
   {"when-port-writable",    tc_subr_1_or_2, STk_when_port_writable},	/* + */
 #endif
@@ -362,8 +366,14 @@ static struct Primitive Scheme_primitives[] = {
   {"get-output-string",	    tc_subr_1,	    STk_get_output_string},	/* + */
   {"with-input-from-string",tc_subr_2,	    STk_with_input_from_string},/* + */
   {"with-output-to-string", tc_subr_1,	    STk_with_output_to_string}, /* + */
+  {"with-error-to-string",  tc_subr_1,	    STk_with_error_to_string},  /* + */
   {"read-from-string",	    tc_subr_1,	    STk_read_from_string},	/* + */
 
+  {"open-input-virtual",    tc_lsubr,	    STk_open_input_virtual},	/* + */
+  {"open-output-virtual",   tc_lsubr,	    STk_open_output_virtual},	/* + */
+  {"input-virtual-port?",   tc_subr_1,	    STk_input_virtual_portp},	/* + */
+  {"output-virtual-port?",  tc_subr_1,	    STk_output_virtual_portp},	/* + */
+ 
   /**** Section 6.11 ****/
   {"keyword?",		    tc_subr_1,	    STk_keywordp},		/* + */
   {"make-keyword",	    tc_subr_1,	    STk_make_keyword},		/* + */
@@ -423,6 +433,7 @@ static struct Primitive Scheme_primitives[] = {
   {"set-signal-handler!",   tc_subr_2,	    STk_set_signal_handler},	/* + */
   {"add-signal-handler!",   tc_subr_2, 	    STk_add_signal_handler},	/* + */
   {"get-signal-handlers",   tc_subr_0_or_1, STk_get_signal_handlers},	/* + */
+  {"send-signal",	    tc_subr_1,	    STk_send_signal},		/* + */
 
   /**** Section 6.17 ****/
   {"getcwd",		    tc_subr_0,	    STk_getcwd},		/* + */
@@ -475,6 +486,10 @@ static struct Primitive Scheme_primitives[] = {
   {"%get-environment-stack",tc_subr_0,	    STk_get_env_stack},		/* Undoc */
   {"%library-location",	    tc_subr_0,	    STk_library_location},	/* Undoc */
   {"%procedure-arity",	    tc_subr_1,	    STk_procedure_arity},	/* Undoc */
+  {"%get-selected-module",  tc_subr_0,	    STk_get_selected_module},	/* Undoc */
+#ifdef USE_TK
+  {"%change-standard-ports",tc_subr_3,	    STk_change_standard_ports},	/* Undoc */
+#endif
 #ifdef DEBUG_STK
   {"%find-cells",	    tc_subr_1,	    STk_find_cells},     /* for debug */
   {"%get-environment",	    tc_subr_1,	    STk_get_environment},/* for debug */

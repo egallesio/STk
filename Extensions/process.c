@@ -350,7 +350,7 @@ static PRIMITIVE run_process(SCM l, int len)
 	     execvp(*argv, argv);
 	     
 	     /* Cannot exec if we are here */
-	     fprintf(STk_stderr, "**** Cannot  exec %s!\n", *argv);
+	     Fprintf(STk_curr_eport, "**** Cannot  exec %s!\n", *argv);
 	     exit(1);
     default: /* Father */
       	     info->pid = pid;
@@ -374,8 +374,6 @@ static PRIMITIVE run_process(SCM l, int len)
 
 		     sprintf(msg, "pipe-%s-%d", stdStreams[i], pid);
 
-		     STk_disallow_sigint();
-
 		     s = (char *) must_malloc(strlen(msg)+1);
 		     strcpy(s, msg);
 
@@ -383,7 +381,6 @@ static PRIMITIVE run_process(SCM l, int len)
 						      f,
 						      (i==0) ? tc_oport : tc_iport,
 						      0);
-		     STk_allow_sigint();
 		   }
 		 }
 	     }
@@ -566,7 +563,7 @@ static void free_process(SCM process)
 static void process_display(SCM obj, SCM port, int mode)
 {
   sprintf(STk_tkbuffer, "#<process PID=%d>", PROCPID(obj));
-  Puts(STk_tkbuffer, PORT_FILE(port));
+  Puts(STk_tkbuffer, port);
 }
 
 

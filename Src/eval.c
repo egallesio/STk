@@ -16,11 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: eval.c 1.12 Thu, 10 Sep 1998 23:44:28 +0200 eg $
+ * $Id: eval.c 1.16 Sat, 26 Dec 1998 21:46:25 +0100 eg $
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 23-Oct-1993 21:37
- * Last file update: 10-Sep-1998 14:09
+ * Last file update: 26-Dec-1998 21:43
  */
 
 #include "stk.h"
@@ -144,18 +144,19 @@ void STk_show_eval_stack(int depth, int uncode)
   int j;
   struct Stack_info *p;
 
-  fprintf(STk_stderr, "\nCurrent eval stack:\n__________________\n");
+  Fprintf(STk_curr_eport, "\nCurrent eval stack:\n__________________\n");
   for (p=stack, j=0; p && j<=depth ; p=p->previous, j++) {
-    fprintf(STk_stderr, "%3d    ", j);
+    Fprintf(STk_curr_eport, "%3d    ", j);
     /* if !uncode we are in panic mode (i.e. don't allocate during printing) */
     if (uncode)
       STk_print(STk_uncode(p->expr), STk_curr_eport, WRT_MODE);
     else
       STk_print(p->expr, STk_curr_eport, PANIC_MODE);
-    Putc('\n', STk_stderr);
-    if (j == depth && p->previous) fprintf(STk_stderr, "...\n");
+    Putc('\n', STk_curr_eport);
+    if (j == depth && p->previous) Puts("...\n", STk_curr_eport);
   }
 }
+
 
 void STk_reset_eval_stack(void)
 {
@@ -166,26 +167,34 @@ void STk_reset_eval_stack(void)
 PRIMITIVE STk_user_get_eval_stack(void)
 {
   struct Stack_info *p;
-  SCM 		     z = NIL;
-  
-  for (p = stack; p ; p = p->previous) z = Cons(p->expr, z);
-  
-  return STk_reverse(z);
+  SCM 		     z;
+
+  if (stack) {
+    z = NIL;
+    for (p = stack; p ; p = p->previous)
+      z = Cons(p->expr, z);
+    return STk_reverse(z);
+  }
+  return NIL;
 }
 
 PRIMITIVE STk_get_env_stack(void)
 {
   struct Stack_info *p;
-  SCM 		     z = NIL;
-  
-  for (p = stack; p ; p = p->previous)  {
-    /* Avoid to create an environment for each item */
-    SCM tmp = (z!=NIL && STk_equal(CAR(z)->storage_as.env.data,p->env)==Truth) ?
-      		CAR(z): 
-      		STk_makeenv(p->env, 0);
-    z = Cons(tmp, z);
+  SCM 		     z;
+
+  if (stack) {
+    z = NIL;
+    for (p = stack; p ; p = p->previous)  {
+      /* Avoid to create an environment for each item */
+      SCM tmp = (z!=NIL && STk_equal(CAR(z)->storage_as.env.data,p->env)==Truth) ?
+				CAR(z): 
+				STk_makeenv(p->env, 0);
+      z = Cons(tmp, z);
+    }
+    return  STk_reverse(z);
   }
-  return  STk_reverse(z);
+  return NIL;
 }
 
 
@@ -227,7 +236,7 @@ static void set_eval_hook(char *unused, SCM value)
 
     eval_hook_stack->hook  	  = value;
     eval_hook_stack->bypass_check = FALSE;
-    SET_EVAL_FLAG(1);
+    STk_eval_flag = TRUE;
   }
 }
 
@@ -247,7 +256,7 @@ static SCM handle_eval_hook(SCM x, SCM env)
   
   /* If we are here, everything was correct */
   eval_hook_stack = info.previous;
-  SET_EVAL_FLAG(1);
+  STk_eval_flag = 1;
   return res;
 }
 
@@ -278,11 +287,11 @@ PRIMITIVE STk_eval_hook(SCM x, SCM env, SCM hook)
   info.bypass_check = TRUE;
   info.previous     = eval_hook_stack;
   eval_hook_stack   = &info;
-  SET_EVAL_FLAG(1);
+  STk_eval_flag     = 1;
 
   res = STk_eval(x, env->storage_as.env.data);
   eval_hook_stack = info.previous;
-  SET_EVAL_FLAG(1);
+  STk_eval_flag     = 1;
 
   return res;
 }
@@ -307,9 +316,9 @@ Top:
      *		- a ^C ?
      *		- *eval-hook*?
      */
-    
-    if (STk_control_C && !STk_sigint_counter) STk_handle_signal(SIGINT);
-    
+    if (STk_control_C) {
+      STk_handle_sigint_signal();
+    }
     if (eval_hook_stack->hook != Ntruth) {
       if (eval_hook_stack->bypass_check) {
 	eval_hook_stack->bypass_check = FALSE;
@@ -321,8 +330,7 @@ Top:
       else
 	RETURN(handle_eval_hook(x, env));
     }
-    SET_EVAL_FLAG(STk_control_C || 
-		  (eval_hook_stack->hook != Ntruth));
+    STk_eval_flag = STk_control_C || (eval_hook_stack->hook != Ntruth);
   }
 
   switch TYPE(x) {
@@ -493,7 +501,7 @@ Begin:	   case tc_begin:
 	        x = Apply(fct->storage_as.macro.code, x);
 /*FIXME:        x = Apply(fct->storage_as.macro.code, Cons(fct, tmp)); */
 /*		if (fct->storage_as.macro.env != Ntruth) {
-		  printf("EG: ==========>R5 macro\n");
+		  printf("FIXME: ==========>R5 macro\n");
 		  env = fct->storage_as.macro.env;
 		}		  
 */

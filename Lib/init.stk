@@ -1,7 +1,7 @@
 ;;;;
 ;;;; i n i t . s t k			-- The file launched at startup
 ;;;;
-;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -11,11 +11,11 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
-;;;; $Id: init.stk 1.17 Sat, 26 Sep 1998 19:19:52 +0200 eg $
+;;;; $Id: init.stk 1.22 Tue, 02 Feb 1999 15:29:27 +0100 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;    Creation date: ??-Sep-1993 ??:??
-;;;; Last file update: 26-Sep-1998 17:22
+;;;; Last file update:  2-Feb-1999 13:46
 ;;;;
 
 ;;;==============================================================================
@@ -454,9 +454,19 @@
    (else            (apply fn l))))
 
 (define (os-kind)
-  (case (machine-type)
-    (("MS_Win32") 'Windows)	
-    (else	  'Unix)))
+  (if (string=? (machine-type) "Ms-Win32")
+      'Windows
+      'Unix))
+
+;; Tell if the parameter string is a complete (or a set of complete) sexpr
+(define (complete-sexpr? s) 
+  (with-input-from-string s
+    (lambda ()
+      (let Loop ()
+	(let ((sexpr #f))
+	  (if (catch (set! sexpr (read)))
+	      #f
+	      (or (eof-object? sexpr) (Loop))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; 

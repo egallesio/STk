@@ -69,7 +69,8 @@
 			  	     :geometry "+400+400"))
 	       (but (make <Frame> :parent top))
 	       (txt (make <Scheme-text>  :parent top  :wrap "none"
-			  :h-scroll-side "bottom" :width 85 :height 30 :font "fixed"
+			  :h-scroll-side "bottom" :font '(Courier -12)
+			  :width 85 :height 30 
 			  :value (exec (string-append "cat " file)))))
       
 	  (pack txt :side "top"    :expand #t :fill "both")

@@ -1,7 +1,7 @@
 ;;;;
 ;;;; Listboxes bindings and procs
 ;;;;
-;;;; Copyright © 1993-1997 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -17,7 +17,7 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 17-May-1993 12:35
-;;;; Last file update: 27-Aug-1997 19:07
+;;;; Last file update:  8-Dec-1998 13:09
 ;;;;
 
 (select-module Tk)
@@ -139,8 +139,8 @@
   (Tk:listbox-select-all |W|))
 
 (define-binding "Listbox" "<Control-backslash>" (|W|)
-  (unless (equal? (tk-get |W| :selectmode != "browse"))
-     (|W| 'selection 'clear 0 'end)))
+  (unless (equal? (tk-get |W| :selectmode) "browse"))
+     (|W| 'selection 'clear 0 'end))
 
 ;; Additional Tk bindings that aren't part of the Motif look and feel:
 
@@ -334,7 +334,7 @@
 					(w 'see el)
 					(if (w 'selection 'includes 'anchor)
 					    (Tk:listbox-motion w el)))
-       ((string=? mode "multiple")	(w 'activate $el)
+       ((string=? mode "multiple")	(w 'activate el)
 					(w 'see el)))))
 
 ;; Tk:listbox-cancel

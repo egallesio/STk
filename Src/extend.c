@@ -17,10 +17,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
+ * $Id: extend.c 1.6 Mon, 28 Dec 1998 23:05:11 +0100 eg $
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 15-Mar-1995 11:31
- * Last file update: 10-Sep-1998 12:24
+ * Last file update: 28-Dec-1998 22:24
  */
 
 #include "stk.h"
@@ -52,7 +53,7 @@ static void internal_display(SCM obj, SCM port, int mode)
 {
   sprintf(STk_tkbuffer, "#<%s %lx>", (EXT_TYPE_DESCR(obj))->type_name, 
 	  			     (unsigned long) obj);
-  Puts(STk_tkbuffer, PORT_FILE(port));
+  Puts(STk_tkbuffer, port);
 }
 
 static SCM internal_apply(SCM obj, SCM args, SCM env)
@@ -150,7 +151,7 @@ static void Cpointer_default_display(SCM obj, SCM port, int mode)
 {
   sprintf(STk_tkbuffer, "#<C-pointer %d %lx>", EXTID(obj), 
 	  				       (unsigned long) EXTDATA(obj));
-  Puts(STk_tkbuffer, PORT_FILE(port));
+  Puts(STk_tkbuffer, port);
 }
 
 
@@ -184,13 +185,13 @@ SCM STk_apply_getter_C_variable(char *var)
 {
   Tcl_HashEntry *entry;
 
-  if (entry = Tcl_FindHashEntry(&Cvars, var)) {
+  if ((entry = Tcl_FindHashEntry(&Cvars, var))) {
     struct get_n_set_box *p = (struct get_n_set_box *) Tcl_GetHashValue(entry);
     
     return (*(p->getter))(var);
   }
   else {
-    fprintf(STk_stderr, "internal error: %s variable has no getter!!\n", var);
+    Fprintf(STk_curr_eport, "internal error: %s variable has no getter!!\n", var);
     return UNDEFINED;    
   }
 }
@@ -199,13 +200,13 @@ void STk_apply_setter_C_variable(char *var, SCM value)
 {  
   Tcl_HashEntry *entry;
 
-  if (entry = Tcl_FindHashEntry(&Cvars, var)) {
+  if ((entry = Tcl_FindHashEntry(&Cvars, var))) {
     struct get_n_set_box *p = (struct get_n_set_box *) Tcl_GetHashValue(entry);
     
     (*(p->setter))(var, value);
   }
   else
-    fprintf(STk_stderr, "internal error: %s variable has no setter!!\n", var);
+    Fprintf(STk_curr_eport, "internal error: %s variable has no setter!!\n", var);
 }
 
   
@@ -305,7 +306,7 @@ void STk_define_C_variable(char *var, SCM (*getter)(), void (*setter)())
   p->setter = setter;
   entry     = Tcl_CreateHashEntry(&Cvars, var, &new);
   if (!new) {
-    fprintf(STk_stderr, "Attempt to multi-define C variable `%s' !!\n", var);
+    Fprintf(STk_curr_eport, "Attempt to multi-define C variable `%s' !!\n", var);
     return;
   }
   Tcl_SetHashValue(entry, p);

@@ -13,11 +13,11 @@
  * permission of the copyright holder.  
  * This software is provided ``as is'' without express or implied warranty.
  *
- *
+ * $Id: html.c 1.4 Mon, 28 Dec 1998 23:05:11 +0100 eg $
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date:  1-Sep-1995 23:10
- * Last file update: 28-May-1998 21:57
+ * Last file update: 27-Dec-1998 20:20
  */
 
 #include <ctype.h>
@@ -67,7 +67,7 @@ static struct char_type table [] = {
   {"yacute",	'\xfd'}, {"thorn",	'\xfe'}, {"yuml",	'\xff'},
   {"", 0}};
 
-static void skip_spaces(FILE *f)
+static void skip_spaces(SCM f)
 {
     int	c;
 
@@ -82,7 +82,7 @@ static void skip_spaces(FILE *f)
 }
 
 /* next_entity: Read an entity such as <A HREF=x.html> */
-static SCM next_entity(FILE *f) 
+static SCM next_entity(SCM f)
 {
   Tcl_DString dStr1, dStr2;
   int c;
@@ -120,7 +120,7 @@ static SCM next_entity(FILE *f)
 
 
 /* Read an entity such as &amp;  */
-static void next_character(Tcl_DString *dStr, FILE *f)  
+static void next_character(Tcl_DString *dStr, SCM f)  
 {
   char *t, ch, token[MAXTOKEN];
   int c, i;
@@ -169,16 +169,13 @@ static void next_character(Tcl_DString *dStr, FILE *f)
 }
 
 
-static PRIMITIVE html_next_token(SCM iport)   /* Return next HTML token */
+static PRIMITIVE html_next_token(SCM f)   /* Return next HTML token */
 {
   int c;
-  FILE *f;
 
   ENTER_PRIMITIVE("%html:next-token");
 
-  if (!INP(iport)) Serror("bad port", iport);
-
-  f = PORT_FILE(iport);
+  if (!INP(f)) Serror("bad port", f);
 
   if (Eof(f) || ((c = Getc(f)) == EOF)) return STk_eof_object;
 

@@ -15,7 +15,7 @@
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 10-Oct-1995 07:55
- * Last file update: 10-Sep-1998 12:25
+ * Last file update: 26-Dec-1998 21:35
  *
  */
 
@@ -31,8 +31,7 @@
 #  endif
 #endif
 
-int STk_sigint_counter = 0;
-int STk_control_C      = 0;
+int STk_control_C = 0;
 
 static SCM signals[MAX_SIGNAL];
 
@@ -51,31 +50,6 @@ static void execute_signal_handlers(int sig, SCM handlers)
   } 
 }
 
-
-static void handle_sigint_signal(void)
-{
-  SCM l = signals[SIGINT];
-  
-  STk_control_C = 0;
-  if (l == NIL) {
-    /* User has not redefined ^C action */
-#ifdef HAVE_SIGACTION
-    /* Empty the signal mask before calling STk_err, because it will do 
-     * a longjmp and don't let the system (at least Linux) a chance to 
-     * restore the mask 
-     */
-    sigset_t set;
-    
-    sigemptyset(&set);
-    sigaddset(&set, SIGINT);
-    sigprocmask(SIG_UNBLOCK, &set, NULL);
-#endif 
-    fprintf(STk_stderr, "*** Interrupt ***\n"); fflush(stderr);
-    STk_err("", NIL);
-  }
-  else
-    execute_signal_handlers(SIGINT, l);
-}
 
 #ifdef SIGSEGV
 static void handle_sigsegv_signal(void)
@@ -104,6 +78,34 @@ static void handle_sigsegv_signal(void)
 #endif
 
 
+void STk_handle_sigint_signal(void)
+{
+  SCM l = signals[SIGINT];
+  
+  if (l == NIL) {
+    /* User has not redefined ^C action */
+#ifdef HAVE_SIGACTION
+    /* Empty the signal mask before calling a longjmp and don't let the
+     *  system (at least Linux) a chance to restore the mask 
+     */
+    sigset_t set;
+    
+    sigemptyset(&set);
+    sigaddset(&set, SIGINT);
+    sigprocmask(SIG_UNBLOCK, &set, NULL);
+#endif
+    longjmp(STk_err_handler->j, JMP_INTERRUPT);
+  }
+  else
+    execute_signal_handlers(SIGINT, l);
+}
+
+/*===========================================================================*\
+ *
+ *				 STk_handle_signal
+ *
+\*===========================================================================*/
+
 void STk_handle_signal(int sig)
 {
 #ifndef  HAVE_SIGACTION
@@ -112,19 +114,12 @@ void STk_handle_signal(int sig)
 #endif
 
   if (sig == SIGINT) {			/* SIGINT */
-    if (STk_sigint_counter > 0) {
-      /* ^C is disallowed for now. (We are probably in a sequence which
-       * uses malloc). Retain that a Control-C was issued and return
-       */
-      STk_control_C = 1;
-      SET_EVAL_FLAG(1);
-      return;
-    }
-    else handle_sigint_signal();
+    Puts("*** Interrupt ***\n", STk_curr_eport); Flush(STk_curr_eport);
+    STk_control_C = 1; STk_eval_flag = 1;
   }
 #ifdef SIGSEGV
   else if (sig == SIGSEGV) {		/* SIGSEGV */
-     handle_sigsegv_signal();
+    handle_sigsegv_signal();
   }
 #endif
   else
@@ -166,14 +161,14 @@ PRIMITIVE STk_set_signal_handler(SCM sig, SCM proc)
 {
   long s = STk_integer_value(sig);
 
-  if (s == LONG_MIN || s < 0 || s >= MAX_SIGNAL)
-    STk_err("set-signal-handler!: bad signal number", sig);
+  ENTER_PRIMITIVE("set-signal-handler!");
+  
+  if (s == LONG_MIN || s < 0 || s >= MAX_SIGNAL) Serror("bad signal number", sig);
 
   if (BOOLEANP(proc))
     return set_handler(s, proc);
   else {
-    if (STk_procedurep(proc) == Ntruth)
-      STk_err("set-signal-handler!: bad procedure", proc);
+    if (STk_procedurep(proc) == Ntruth) Serror("bad procedure", proc);
     return set_handler(s, LIST1(proc));
   }
 }
@@ -183,11 +178,11 @@ PRIMITIVE STk_add_signal_handler(SCM sig, SCM proc)
 {
   long s = STk_integer_value(sig);
 
-  if (s == LONG_MIN || s < 0 || s >= MAX_SIGNAL)
-    STk_err("add-signal-handler!: bad signal number", sig);
+  ENTER_PRIMITIVE("add-signal-handler!");
 
-  if (STk_procedurep(proc) == Ntruth) 
-    STk_err("add-signal-handler!: bad procedure", proc);
+  if (s == LONG_MIN || s < 0 || s >= MAX_SIGNAL) Serror("bad signal number", sig);
+
+  if (STk_procedurep(proc) == Ntruth) Serror("bad procedure", proc);
 
   if (BOOLEANP(signals[s]))
     /* We add a handler on a defaulted or ignored signal */
@@ -214,6 +209,20 @@ PRIMITIVE STk_get_signal_handlers(SCM sig)
     return signals[s];
   }
 }
+
+
+PRIMITIVE STk_send_signal(SCM sig)
+{
+  long s = STk_integer_value(sig);
+  
+  ENTER_PRIMITIVE("send-signal");
+
+  if (s < 0 || s >= MAX_SIGNAL) Serror("bad signal number", sig);
+  
+  STk_handle_signal(s);
+  return UNDEFINED;
+}
+
 
 void STk_mark_signal_table(void)
 {
@@ -265,7 +274,7 @@ void STk_init_signal(void)
   for (i = 0; i < MAX_SIGNAL; i++) {
     set_handler(i, (
 #ifdef SIGTSTP
-      (i==SIGTSTP) || /* interact. ^Z is set to SIGIGN to allow program supension */
+      (i==SIGTSTP) || /* ^Z is set to SIG_DFLT to allow program supension */
 #endif
 #ifdef SIGABRT
       (i== SIGABRT) || /* Really abort when receiving  ABORT (loops otherwise)*/

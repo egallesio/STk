@@ -1,7 +1,7 @@
 ;;;;
 ;;;; Buttons, Check button and radio buttons bindings and procs
 ;;;;
-;;;; Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -17,7 +17,7 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 17-May-1993 12:35
-;;;; Last file update: 21-Mar-1998 12:45
+;;;; Last file update: 23-Jan-1999 11:48
 ;;;;
 
 (select-module Tk)
@@ -27,9 +27,7 @@
 (unless (or (tk-command? Tk:button) 
 	    (tk-command? Tk:checkbutton) 
 	    (tk-command? Tk:radiobutton))
-
-  (let ()
-
+  
 ;==============================================================================
 ;
 ; UNIX stuff
@@ -176,6 +174,9 @@
   (unless (equal? (tk-get |W| :state) "disabled")
     (|W| (if (null? cmd) 'invoke (car cmd)))))
 
+(define (Tk:R&C-invoke1 |W|)
+  (Tk:R&C-invoke |W|))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -226,16 +227,16 @@
 (bind "Button" "<1>"			Tk:button-down)
 (bind "Button" "<ButtonRelease-1>" 	Tk:button-up)
 (bind "Button" "<space>"		Tk:button-invoke)
+(bind "Button" "<Return>"		Tk:button-invoke)
 
 (bind "Checkbutton" "<FocusIn>"		"")
 (bind "Checkbutton" "<Leave>"		Tk:button-leave)
-(bind "Checkbutton" "<space>"		(lambda (|W|)
-					  (Tk:R&C-invoke |W|)))
+(bind "Checkbutton" "<space>" 		Tk:R&C-invoke1)
+(bind "Checkbutton" "<Return>"		Tk:R&C-invoke1)
 
 (bind "Radiobutton" "<FocusIn>" 	"")
 (bind "Radiobutton" "<Leave>" 		Tk:button-leave)
-(bind "Radiobutton" "<space>" 		(lambda (|W|)
-					  (Tk:R&C-invoke |W|)))
+(bind "Radiobutton" "<space>" 		Tk:R&C-invoke1)
+(bind "Radiobutton" "<Return>" 		Tk:R&C-invoke1)
 
-))
-
+)

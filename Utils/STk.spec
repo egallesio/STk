@@ -1,17 +1,17 @@
 %define		release 1
 Summary: 	Scheme Interpreter with access to the Tk toolkit
 Name:    	STk
-Version: 	3.99.3
+Version: 	3.99.4
 Release: 	%{release}
 Copyright: 	distributable
-Source: 	STk-3.99.3.tar.gz
+Source: 	STk-3.99.4.tar.gz
 Group:		Development/Languages
 Packager:	Erick Gallesio <eg@unice.fr>
 
 %package devel
 Summary: 	Header files and libraries for STkq
 Group: 		Development/Libraries
-Requires:	STk = 3.99.3
+Requires:	STk = 3.99.4
 
 %description
 STk is a R4RS Scheme interpreter which can access the Tk graphical
@@ -22,7 +22,7 @@ STk also provides an efficient object oriented system called STklos.
 STklos is an extensive OO system with multiple inheritance, generic
 functions, multi-methods and a Meta Object Protocol).
 
-This package uses the 8.0 version of the Tk package for the graphical part.
+This package integrates the 8.0.3 version of the Tk toolkit.
 
 
 %description devel
@@ -70,24 +70,24 @@ rm -f /usr/local/lib/stk/include
 
 %files
 %doc README INSTALL CHANGES ChangeLog
-/usr/local/lib/stk/3.99.3/Demos
-/usr/local/lib/stk/3.99.3/Help
-/usr/local/lib/stk/3.99.3/Images
-/usr/local/lib/stk/3.99.3/%{machine}/stk
-/usr/local/lib/stk/3.99.3/%{machine}/snow
-/usr/local/lib/stk/3.99.3/%{machine}/*.so
+/usr/local/lib/stk/3.99.4/Demos
+/usr/local/lib/stk/3.99.4/Help
+/usr/local/lib/stk/3.99.4/Images
+/usr/local/lib/stk/3.99.4/%{machine}/stk
+/usr/local/lib/stk/3.99.4/%{machine}/snow
+/usr/local/lib/stk/3.99.4/%{machine}/*.so
 
 
-/usr/local/lib/stk/3.99.3/STk
-/usr/local/lib/stk/3.99.3/include
-/usr/local/lib/stk/3.99.3/man
-/usr/local/bin/stk-3.99.3
-/usr/local/bin/snow-3.99.3
+/usr/local/lib/stk/3.99.4/STk
+/usr/local/lib/stk/3.99.4/include
+/usr/local/lib/stk/3.99.4/man
+/usr/local/bin/stk-3.99.4
+/usr/local/bin/snow-3.99.4
 /usr/local/bin/stk
 /usr/local/bin/snow
 
 
 
 %files devel
-/usr/local/lib/stk/3.99.3/%{machine}/Config
-/usr/local/lib/stk/3.99.3/%{machine}/Libs
+/usr/local/lib/stk/3.99.4/%{machine}/Config
+/usr/local/lib/stk/3.99.4/%{machine}/Libs

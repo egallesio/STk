@@ -11,119 +11,45 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
-;;;; $Id: Schemetext.stklos 1.1 Sat, 26 Sep 1998 19:19:52 +0200 eg $
+;;;; $Id: Schemetext.stklos 1.2 Mon, 28 Dec 1998 23:05:11 +0100 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 16-Jan-1997 12:10
-;;;; Last file update: 26-Sep-1998 17:00
-
-;; This package is a extra light version of the Emacs font-lock package
-;; (specialized for Scheme)
-;; It is a little bit slow and it is has some "bugs":
-;;    - Multi-lines comments are not correctly handled (because the 
-;;      Tk text widget works line by line
-;;    - Regexps are very simplistic and not correct in all circumstances
-;;    - There is no way to customize the font-lock colors 
-;;
-;; Any help to improve this package will be greatly appreciated 
-
+;;;; Last file update: 27-Dec-1998 12:07
 
 (require "Tk-classes")
+(require "font-lock")
 
 (select-module STklos+Tk)
 
-(export fontify-buffer fontify-line)
+;;;;
+;;;; Resources
+;;;;
 
-;=============================================================================
-; 
-; Global variables
-;
-;=============================================================================
-(define *fontify-count*   0)
-(define *fontify-idle*   #t)
-
-(define *fontify-keyword-regexp* "(^|[ \t]+):[0-9a-zA-Z_-]+")
-(define *fontify-comment-regexp* "(#!|;).*$|#\\|.*\\|#")
-(define *fontify-string-regexp*  "\"[^\"]*\"")
-(define *fontify-class-regexp*   "<[^>]*>")
+(option 'add "*SchemeText*Text*Background"  "white" "widgetDefault")
 
 ;=============================================================================
 ;
 ; 			< S c h e m e - T e x t >
 ;
 ;=============================================================================
+(option 'add "*SchemeText*Text*Background"  "white" "widgetDefault")
 
 (define-class <Scheme-Text> (<Scroll-Text>)
-  ((string-tag  :accessor  string-tag)
-   (keyword-tag :accessor  keyword-tag)
-   (comment-tag :accessor  comment-tag)
-   (class-tag   :accessor  class-tag)))
+  ((class :init-keyword :class
+	  :init-form    "SchemeText")))
 
 (define-method initialize ((self <Scheme-text>) initargs)
   (next-method)
-  ;; Creates tags for strings keywords comments. ORDER IS IMPORTANT!!!
-  (for-each (lambda (slot val)
-	      (slot-set! self slot (make <Text-tag> :parent self :foreground val)))
-	    '(keyword-tag class-tag string-tag comment-tag)
-	    '(purple 	  blue	    IndianRed4 red3))
-  
-  ;; Change text bindings such that entering a new character triggers fontify
-  ;; This is done by changing the "bindtags" of the text 
-  (let* ((txt   (text-of self))
-	 (order (remove "Text" (bindtags txt))))
-    (bindtags txt (list* "Text" order))
-    (bind txt "<Any-KeyPress>"    (lambda () (fontify-line self "insert")))
-    (bind txt "<<Paste>>"         (lambda () (fontify-buffer self)))
-    (bind txt "<ButtonRelease-2>" (lambda () (fontify-buffer self)))
-    (bind txt "<Control-l>"       (lambda () (fontify-buffer self))))
-  (fontify-buffer self))
-
-;=============================================================================
-;
-; <Scheme-text> methods
-;
-;=============================================================================
-
-(define-method fontify-line((t <Scheme-text>) line)
-
-  (define (fontify-regexp regexp tag from to)
-    ;; Search for all instances of a given regexp in a text widget and
-    ;; apply a given tag to each instance found.
-    (tag-remove tag from to)
-    (let Loop ((start from))
-      (let ((cur (text-search t :regexp :count '*fontify-count* 
-			        :env (module-environment (current-module))
-				regexp start to)))
-	(when cur
-	  (let ((last (cons (car cur) (+ (cdr cur) *fontify-count*))))
-	    (tag-add tag cur last)
-	    (loop last))))))
-
-  (let* ((start   (text-index t (format #f "~A linestart" line)))
-	 (end     (text-index t (format #f "~A lineend" line)))
-	 (do-font (lambda (regexp tag)
-		    (fontify-regexp regexp (slot-ref t tag) start end))))
-    
-    (do-font *fontify-keyword-regexp* 'keyword-tag)
-    (do-font *fontify-class-regexp*   'class-tag)
-    (do-font *fontify-string-regexp*  'string-tag)
-    (do-font *fontify-comment-regexp* 'comment-tag)))
-
-(define-method fontify-buffer((t <Scheme-text>))
-  (when *fontify-idle*
-    (set! *fontify-idle* #f)
-    (let Loop ((line 1))
-      (fontify-line t (cons line 0))
-      (after 'idle (lambda ()
-		     (let ((end (car (text-index t "end"))))
-		       (if (< line end)
-			   (Loop (+ line 1)))))))
-    (set! *fontify-idle* #t)))
+  (make-fontifiable (Id self))
+  (fontify-whole-buffer (Id self)))
 
 #|
 Usage:
   (define t (make <Scheme-Text> 
 		  :value "(define A (make <B> :key \"aa\")); comment"))
   (pack t :fill "both" :expand #t)
+
 |#
+
 

@@ -1,7 +1,7 @@
 /*
  * d u m p . c				-- Image creation
  *
- * Copyright © 1993-1997 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -15,9 +15,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
+ * $Id: dump.c 1.2 Fri, 22 Jan 1999 14:44:12 +0100 eg $
+ *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: ??-Jul-1993 ??:??
- * Last file update: 15-Aug-1997 12:45
+ * Last file update: 15-Jan-1999 09:32
  */
 
 #include "stk.h"
@@ -171,5 +173,6 @@ void STk_restore_image(char *s)
 PRIMITIVE STk_dump(SCM s)
 {
   dump_error();
+  return UNDEFINED; /* never reached */
 }
 #endif

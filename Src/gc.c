@@ -3,7 +3,7 @@
  *  g c . c			-- Mark and Sweep Garbage Collector 
  *
  *
- * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -17,10 +17,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
+ * $Id: gc.c 1.14 Fri, 22 Jan 1999 14:44:12 +0100 eg $
  *
  *            Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 17-Feb-1993 12:27
- * Last file update: 15-Sep-1998 14:43
+ * Last file update:  7-Jan-1999 09:30
  *
  */
 
@@ -58,7 +59,7 @@ long    STk_alloc_cells;
 int	STk_gc_requested = 0;
 
 /* internal vars */
-static Jmp_Buf	save_regs_gc_mark;
+static jmp_buf	save_regs_gc_mark;
 static long	gc_cells_collected;
 static long	heap_size      = INITIAL_HEAP_SIZE;
 static int	gc_verbose     = 0;
@@ -109,8 +110,9 @@ static void allocate_new_heap(void)
   STk_freelist = heap_org;
 
   if (gc_verbose)
-    fprintf(STk_stderr, ";; [new heap allocated (%d/%d)]\n", 
-	    		heaps_used, heaps_length);
+    Fprintf(STk_curr_eport,
+	    ";; [new heap allocated (%d/%d)]\n",
+	    heaps_used,heaps_length);
 }
 
 void STk_gc_count_cells(long *allocated, long *used, long* calls)
@@ -194,13 +196,16 @@ Top:
 			  goto Top;
      case tc_isport:	  return;
      case tc_osport:	  return;
+     case tc_ivport:	  
+     case tc_ovport:	  STk_mark_virtual_port(ptr);
+			  return;  
      case tc_boolean:	  return;
      case tc_macro:	  ptr = ptr->storage_as.macro.code; goto Top;
      case tc_localvar:	  ptr = ptr->storage_as.localvar.symbol; goto Top;
      case tc_globalvar:	  ptr = VCELL(ptr); goto Top;
      case tc_modulevar:	  ptr = CAR(ptr); goto Top;
-     case tc_cont:	  ptr = STk_mark_continuation(ptr);
-       			  goto Top;
+     case tc_cont:	  STk_mark_continuation(ptr);
+       			  return;
      case tc_env:
      case tc_address:	  ptr = ptr->storage_as.env.data;
 			  goto Top;
@@ -248,8 +253,8 @@ Top:
      default:		  if (EXTENDEDP(ptr)) {STk_extended_mark(ptr); return;}
    }
    /* if we are here, it's an implementation error. Signal it */
-   fprintf(STk_stderr, "INTERNAL ERROR: trying to mark %lx (type=%d)\n", 
-	               (unsigned long) ptr, TYPE(ptr));
+   Fprintf(STk_curr_eport, "INTERNAL ERROR: trying to mark %lx (type=%d)\n", 
+	   		   (unsigned long) ptr, TYPE(ptr));
 }
 
 static void gc_sweep(void)
@@ -271,7 +276,7 @@ static void gc_sweep(void)
 	switch (TYPE(ptr)) {
           case tc_nil: 	       break;
 	  case tc_cons:	       break;
-	  case tc_flonum:      free(ptr->storage_as.flonum.data);
+	  case tc_flonum:      break;
 	  case tc_integer:     break;
 	  case tc_bignum:      mpz_clear(BIGNUM(ptr)); free(BIGNUM(ptr)); break;
 	  case tc_symbol:      STk_free_symbol(ptr); break;
@@ -298,6 +303,8 @@ static void gc_sweep(void)
 	  case tc_oport:       STk_freeport(ptr); break;
 	  case tc_isport:      
 	  case tc_osport:      STk_free_string_port(ptr); break;
+	  case tc_ivport:      
+	  case tc_ovport:      STk_free_virtual_port(ptr); break;
 	  case tc_boolean:     break;
 	  case tc_macro:       break;
 	  case tc_localvar:    break;
@@ -342,11 +349,10 @@ static void gc_sweep(void)
 	  case tc_unbound:     break;
 	  default:	       if (EXTENDEDP(ptr))
 	    			STk_extended_sweep(ptr);
-	  		       else
-				 fprintf(STk_stderr,
-					 "FATAL ERROR: trying to sweep %lx "
-					 "(type=%d)\n",
-					 (unsigned long) ptr, TYPE(ptr));
+	  		       else 
+				 Fprintf(STk_curr_eport,
+				     "FATAL ERROR: trying to sweep %lx (type=%d)\n",
+				     (unsigned long) ptr, TYPE(ptr));
         }
 	
 	/* Declare this cell free and put it in free list */
@@ -376,8 +382,9 @@ void STk_mark_stack(SCM *start, SCM *end)
   n = end - start;
 
   if (gc_verbose)
-    fprintf(STk_stderr, "[Marking zone <0x%lx->0x%lx> (%ld words)]\n",
+    Fprintf(STk_curr_eport, "[Marking zone <0x%lx->0x%lx> (%ld words)]\n",
 	    (unsigned long) start, (unsigned long) end, (unsigned long) n);
+
   for(j=0; j<n; j++) {
     p = start[j];
     /* if p looks as a SCM pointer mark location */
@@ -421,7 +428,7 @@ static void gc_start(void)
   gc_cells_collected  = 0;
   gc_verbose	      = STk_lookup_variable(GC_VERBOSE, NIL) != Ntruth;
 
-  if (gc_verbose) fprintf(STk_stderr, ";; [starting GC]\n");
+  if (gc_verbose) Puts(";; [starting GC]\n", STk_curr_eport);
 }
 
 static void gc_end(void)
@@ -444,25 +451,25 @@ static void gc_end(void)
   STk_gc_requested = 0;
 
   if (gc_verbose) 
-    fprintf(STk_stderr, ";; [end of GC (cells used: %ld/%ld; time: %.2fms)]\n", 
-	    	        used_cells, total_cells, time_for_this_gc);
+    Fprintf(STk_curr_eport, ";; [end of GC (cells used: %ld/%ld; time: %.2fms)]\n", 
+	    used_cells, total_cells, time_for_this_gc);
 }
 
 static void gc_mark_and_sweep(void)
 {
-  long prev_context = Error_context;
+  long prev_context = STk_err_handler->context;
   SCM stack_end;     /* The topmost variable (at least a SCM) allocated on stack */
 
 
   /**** Disallow interrupts while GC'ing because signal handlers may cons */
   STk_ignore_signals();
-  Error_context = ERR_FATAL;
+  STk_err_handler->context = ERR_FATAL;
   gc_start();
 
   /**** Marking phase */
-  setjmp(save_regs_gc_mark.j);  				    /* registers */
-  STk_mark_stack((SCM *) save_regs_gc_mark.j,
-		 (SCM *) (((char *) save_regs_gc_mark.j)+
+  setjmp(save_regs_gc_mark);	  				    /* registers */
+  STk_mark_stack((SCM *) save_regs_gc_mark,
+		 (SCM *) (((char *) save_regs_gc_mark)+
 			  sizeof(save_regs_gc_mark)));
   STk_mark_stack((SCM *) STk_stack_start_ptr, (SCM *) &stack_end);  /* stack */
   mark_protected();						    /* globals */
@@ -472,7 +479,7 @@ static void gc_mark_and_sweep(void)
 
   /* Re-allow signals */
   gc_end();
-  Error_context = prev_context;
+  STk_err_handler->context = prev_context;
   STk_allow_signals();
 
   /* send the pseudo-signal SIGHADGC to say that we had a finished GC'ing */
@@ -481,7 +488,7 @@ static void gc_mark_and_sweep(void)
 
 void STk_gc_for_newcell(void)
 {
-  if (Error_context != ERR_FATAL) {
+  if (STk_err_handler->context != ERR_FATAL) {
     gc_mark_and_sweep();
     if (NNULLP(STk_freelist)) return;
   }
@@ -545,16 +552,19 @@ PRIMITIVE STk_gc_stats(void)
   }
 
   /* Print statistics */
-  fprintf(STk_stderr, ";; GC statistics\n");
-  fprintf(STk_stderr, ";; -------------\n");
-  fprintf(STk_stderr, ";; cells used %ld/%ld\n", used_cells, heaps_used*heap_size);
-  fprintf(STk_stderr, ";; # of used heaps %d\n", heaps_used);
-  fprintf(STk_stderr, ";; # of GC calls %d (time spent in GC %.2fms)\n", 
-	  	      gc_calls, STk_total_gc_time);
+  Puts(";; GC statistics\n", STk_curr_eport);
+  Puts(";; -------------\n", STk_curr_eport);
+  Fprintf(STk_curr_eport, ";; cells used %ld/%ld\n", used_cells, 
+	  					     heaps_used*heap_size);
+  Fprintf(STk_curr_eport, ";; # of used heaps %d\n", heaps_used); 
+  Fprintf(STk_curr_eport, ";; # of GC calls %d (time spent in GC %.2fms)\n", 
+	  gc_calls, STk_total_gc_time);
 
   for (i=0; i <= tc_stop_extd; i++)
-    if (freq[i]) fprintf(STk_stderr, "(%d %d) ", i,  freq[i]);
-  fprintf(STk_stderr, "\n;;\n");
+    if (freq[i]) Fprintf(STk_curr_eport, "(%d %d) ", i,  freq[i]);
+
+  Puts("\n;;\n", STk_curr_eport);
+  Flush(STk_curr_eport);
  
   return UNDEFINED;
 }

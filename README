@@ -15,11 +15,9 @@ functions, multi-methods and a Meta Object Protocol).
 
 This release runs on majors Unix versions (Linux, Solaris, OSF, ...)
 
-The previous version was also running on Microsoft Win32 (port of
-current version is planned but has not be done yet).
+This version also runs on Win32. Consider this port as beta.
 
-Version 3.99 uses the Tk 8.0.3 package for the graphical widgets
-(Tk8.0.3 is the latest stable release of Tk).
+Version 3.99 uses the Tk 8.0.3 package for the graphical widgets.
 
 
 DIFFERENCE PREVIOUS RELEASE
@@ -48,10 +46,13 @@ distribution main directory for more informations.
      web (i.e. you can grab distant texts or images). The
      Web browser admit now applets written in Scheme.
    * Numerous bug corrections
+   * Runs on Win32 platforms
+   * New option -console to run STk in a windowed environment 
+     (with indentation and fontification).
    * ...
 
 
-SCHEME WITHOUT TK
+SCHEME WITHOUT TK (for Unix Only)
 -----------------
 
 Standard make build a light version of STk which does not provide support for
@@ -121,7 +122,8 @@ For now, STk is known to run on the following machine/systems
 
 
 Version 3.1.1 is also known to run on Windows 95 (and probably Windows NT).
-The version 3.99 has not been ported yet on this environment. Sorry for that.
+The version 3.99.4 has also been ported on this environment. Consider this port 
+as beta. 
 
 
 If you install it on another architecture/system, please let me now the

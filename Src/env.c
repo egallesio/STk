@@ -16,11 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: env.c 1.6 Wed, 30 Sep 1998 14:02:29 +0200 eg $
+ * $Id: env.c 1.7 Wed, 18 Nov 1998 16:16:26 +0100 eg $
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 23-Oct-1993 21:37
- * Last file update: 29-Sep-1998 10:31
+ * Last file update: 16-Nov-1998 11:16
  */
 
 #include "stk.h"
@@ -134,7 +134,7 @@ static SCM *module_lookup(SCM module, SCM var, SCM context, int err_if_unbound)
       m = Cons(module, MOD_IMPORTED(module));
     else {
       /* Search variable in the current module */
-      if (entry = Tcl_FindHashEntry(MOD_TABLE(module), (char*) var)) {
+      if ((entry = Tcl_FindHashEntry(MOD_TABLE(module), (char*) var))) {
 	avalue = (SCM*) &Tcl_GetHashValue(entry);
 	if (*avalue != UNBOUND) {
 	  makemodulevar(context, var, module, (SCM) entry);
@@ -152,7 +152,7 @@ static SCM *module_lookup(SCM module, SCM var, SCM context, int err_if_unbound)
    */
   for (  ; NNULLP(m); m = CDR(m)) {
     module = CAR(m);
-    if (entry = Tcl_FindHashEntry(FIND_TABLE(module), (char*) var)) {
+    if ((entry = Tcl_FindHashEntry(FIND_TABLE(module), (char*) var))) {
       if (MOD_EXPORTALL(module) || STk_memq(var, MOD_EXPORTS(module)) != Ntruth) {
 	avalue = (SCM*) &Tcl_GetHashValue(entry);
 	if (*avalue != UNBOUND) {

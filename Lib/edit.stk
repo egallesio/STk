@@ -1,0 +1,275 @@
+;;;; edit.stk -- A small editor for STk
+;;;;
+;;;; Copyright © 1998-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; $Id: edit.stk 1.5 Tue, 02 Feb 1999 09:04:21 +0100 eg $
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date:  8-Dec-1998 08:47
+;;;; Last file update:  2-Feb-1999 08:46
+
+
+(require "font-lock")
+(require "butbar")
+
+;;;
+;;; Variables which which can be overloaded by the user file ~/.stkvars
+;;;
+(define-module STk
+  (define *editor-font*       '(Courier -12)))
+
+;;;
+;;; The rest of the file is in the Tk module
+;;;
+(select-module Tk)
+
+;=============================================================================
+;
+; I/O functions
+;
+;=============================================================================
+(define (new-file txt . file)
+  (let ((file (if (null? file)
+		  (Tk:get-open-file :title "Open File ...")
+		  (car file))))
+    (when file
+      (let ((port (open-file file "r")))
+	(unless port (error "Cannot open file ~S for reading" file))
+	(txt 'delete "1.0" "end")
+	(do ((l (read-line port) (read-line port)))
+	    ((eof-object? l))
+	  (txt 'insert "insert" l "" "\n" ""))
+	(fontify-whole-buffer txt)
+	;; retain this name as the default save name for this file
+	(set-widget-property! txt :default-file file)))))
+
+(define (save-file-as txt)
+  (let* ((default (get-widget-property txt :default-file #f))
+	 (dd	  (if default (dirname  default) (getcwd)))
+	 (df	  (if default (basename default) ""))
+	 (file    (Tk:get-save-file :title "Save File ..." 
+				    :initial-file df :initial-dir dd)))
+    (when file (save-file txt file))))
+
+
+(define (save-file txt . file)
+  (let ((file (if (null? file) 
+		  (get-widget-property txt :default-file #f)
+		  (car file))))
+    (if file 
+      (let ((port (open-file file "w")))
+	(unless port (error "Cannot open file ~S for writing" file))
+	(display (txt 'get "1.0" "end") port)
+	(close-port port)
+	;; retain this name as the default save name for this file
+	(set-widget-property! txt :default-file file))
+      ;; no file provided and no default value. Do the same thing as a "Save as ..."
+      (save-file-as txt))))
+
+;=============================================================================
+;
+; Evaluation functions
+;
+;	Only works if we have a standard console 
+;
+;=============================================================================
+
+(define (fill-standard-input s)
+  (if (complete-sexpr? s)
+      (%fill-stdin s)
+      (begin
+	(bell)
+	(error "Selected region is not a complete (or complete set of) sexpr"))))
+
+(define (evaluate-buffer txt)
+  (unless (catch %fill-stdin) 
+    ;; We have a console
+    (fill-standard-input (txt 'get "1.0" "end"))))
+
+(define (evaluate-region txt)
+  (unless (catch %fill-stdin) 
+    ;; We have a console
+    (let ((s #f))
+      (catch (set! s (txt 'get "sel.first" "sel.last")))
+      (and s (fill-standard-input s)))))
+
+(define (evaluate-previous-sexpr txt)
+  (catch (let ((prev (find-previous-sexpr txt)))
+	   (and prev (%fill-stdin prev)))))
+
+;=============================================================================
+;
+; Editor -- menubar
+;
+;=============================================================================
+
+(define (make-menubar parent txt)
+  (let* ((f    (frame (& parent ".menu") :relief "ridge" :bd 1))
+	 (b    (make-bordered-frame f))
+	 (file (menubutton (& b  ".file") :text "File"))
+	 (edit (menubutton (& b  ".edit") :text "Edit"))
+	 (evil (menubutton (& b  ".eval") :text "Evaluate"))
+	 (hlp  (menubutton (& b  ".help") :text "Help")))
+
+    ;; File
+    (let ((m (menu (& file ".m") :tearoff #f)))
+      (tk-set! file :menu m)
+      (m 'add 'command :label "Open ..."   :command (lambda () (new-file txt)))
+      (m 'add 'command :label "New Editor" :command make-editor-window)
+      (m 'add 'separator)
+      (m 'add 'command :label "Save" 	    :command (lambda () (save-file txt)))
+      (m 'add 'command :label "Save as ..." :command (lambda () (save-file-as txt)))
+      (m 'add 'separator)
+      (m 'add 'command :label "Close" 	    :command (lambda () (destroy parent)))
+      (m 'add 'command :label "Exit STk"    :command (lambda () (exit 0))))
+    
+    ;; Edit
+    (let ((m (menu (& edit ".m") :tearoff #f)))
+      (tk-set! edit :menu m)
+      (m 'add 'command :label "Cut"   :accel "Ctrl-X" 
+	 	       :command (lambda () (event 'gen txt "<<Cut>>")))
+      (m 'add 'command :label "Copy"  :accel "Ctrl-C" 
+	 	       :command (lambda () (event 'gen txt "<<Copy>>")))
+      (m 'add 'command :label "Paste" :accel "Ctrl-V" 
+	 	       :command (lambda () (event 'gen txt "<<Paste>>")))
+      (m 'add 'command :label "Clear" :accel "Del"
+	 	       :command (lambda () (event 'gen txt "<<Clear>>"))))
+
+    ;; Evaluate
+    (let ((m (menu (& evil ".m") :tearoff #f)))
+      (tk-set! evil :menu m)
+      (m 'add 'command :label "Buffer" 
+	 	       :command (lambda () (evaluate-buffer txt)))
+      (m 'add 'command :label "Selection"
+	 	       :command (lambda () (evaluate-region txt)))
+      (m 'add 'command :label "Previous Sexpr"  :accel "KP-Enter" 
+	 	       :command (lambda () (evaluate-previous-sexpr txt))))
+
+    ;; Help
+    (let ((m (menu (& hlp ".m") :tearoff #f)))
+      (tk-set! hlp :menu m)
+      (m 'add 'command :label "STk" :command (lambda ()  ; Indirect to avoid 
+					       (help)))  ; autoloads
+      (m 'add 'command :label "Editor" :command (lambda () (help "editor"))))
+
+
+    (pack file edit evil :side "left")
+    (pack hlp :side "right")
+    f))
+
+;=============================================================================
+;
+; Editor -- button bar
+;
+;=============================================================================
+
+(define (make-buttonbar parent txt)
+  (let* ((f (frame (& parent ".butbar") :relief "ridge" :bd 1)))
+    (make-button-bar f 
+      (list 5
+	    (list "edit.gif"
+		  "New Editor"
+		  make-editor-window)
+	    (list "diropen.gif"
+		  "Open File"
+		  (lambda () (new-file txt)))
+	    (list "floppy.gif"
+		  "Save File"
+		  (lambda () (save-file txt)))
+	    20
+	    (list "copy.gif"
+		  "Copy"
+		  (lambda () (event 'gen txt "<<Copy>>")))
+	    (list "clipboard.gif"
+		  "Paste"
+		  (lambda () (event 'gen txt "<<Paste>>")))
+	    (list "cut.gif"
+		  "Cut"
+		  (lambda () (event 'gen txt "<<Cut>>")))
+	    20
+	    (list "evalbuf.gif"
+		  "Eval buffer"
+		  (lambda () (evaluate-buffer txt)))
+	    (list "evalreg.gif"
+		  "Eval region"
+		  (lambda () (evaluate-region txt)))
+	    20
+	    (list "qmark.gif"
+		  "Help on Editor"
+		  (lambda () (help "editor")))))
+    f))
+
+;=============================================================================
+;
+; Editor -- bottom bar
+;
+;=============================================================================
+
+(define (make-bottombar parent txt)
+  (let* ((f    (frame (& parent ".botbar") :bd 1 :relief "ridge"))
+	 (l1   (label (& f ".l1") :width 10 :font '(Courier -12) :anchor 'w))
+	 (l2   (label (& f ".l2") :width 10 :font '(Courier -12) :anchor 'w))
+	 (updt (lambda ()
+		 (let ((pos (txt 'index "insert")))
+		   (tk-set! l1 :text (format #f " Line: ~A" (car pos)))
+		   (tk-set! l2 :text (format #f " Col: ~A" (cdr pos)))))))
+    (set-widget-property! txt :idle-hook updt)
+    (updt)		; to set the first value
+    (pack l2 l1 :side "right")
+    f))
+
+;=============================================================================
+;
+; Editor -- special bindings for Scheme text
+;
+;=============================================================================
+
+(define (add-scheme-editor-binding txt)
+  (bind txt "<KP_Enter>" (lambda () 
+			   (evaluate-previous-sexpr txt)
+			   (event 'generate txt "<Return>")))
+  (bind txt "<Return>"   (lambda ()
+			   (after 'idle (lambda () (font-lock-indent txt ""))))))
+
+(define (make-editor-window)
+  (let* ((top       (toplevel (gensym "._ed__") :class "STkEdit"))
+	 (f         (frame (& top ".f")))
+	 (txt	    (text (& f ".txt") :background "ivory2" :font *editor-font*))
+	 (sb        (scrollbar (& f ".scroll" :width 10)))
+	 (menubar   (make-menubar top   txt))
+	 (buttonbar (make-buttonbar top txt))
+	 (botbar    (make-bottombar top txt)))
+
+    ;; Set title and the mode of the text-widget to scheme
+    (wm 'title top "STk editor")
+    (make-fontifiable txt)
+    (add-scheme-editor-binding txt)
+
+    ;; Associate the scrollbar commands
+    (tk-set! sb  :command  (lambda l (apply txt 'yview l)))
+    (tk-set! txt :yscroll (lambda l (apply sb 'set l)))
+    
+    ;; Pack stuff
+    (pack txt :expand #t :fill "both" :side "left")
+    (pack sb :expand #f :fill "y" :side "left")
+    
+    (pack menubar buttonbar :fill "x")
+    (pack f :expand #t :fill "both")
+    (pack botbar :fill "x")
+    txt))
+
+(define (ed . file)
+  (let ((txt (make-editor-window)))
+    (unless (null? file)
+      (new-file txt (car file))))
+  (make-undefined))
+
+(provide "edit")

@@ -16,11 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: str.c 1.3 Sat, 26 Sep 1998 19:19:52 +0200 eg $
+ * $Id: str.c 1.4 Wed, 23 Dec 1998 23:41:27 +0100 eg $
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: ??????
- * Last file update: 19-Sep-1998 12:40
+ * Last file update: 20-Dec-1998 10:33
  */
 
 #include <ctype.h>
@@ -68,16 +68,12 @@ SCM STk_makestrg(int len, char *init)
 {
   register SCM  z;
 
-  STk_disallow_sigint();
   NEWCELL(z, tc_string);
-
   z->storage_as.string.dim  = len;
   z->storage_as.string.data = (char *) must_malloc((unsigned int) len+1); 
   z->storage_as.string.data[len] = 0;
 
   if (init) memcpy(z->storage_as.string.data, init, (unsigned int) len);
-  STk_allow_sigint();
-
   return z;
 }
 

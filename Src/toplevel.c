@@ -2,7 +2,7 @@
  *
  * t o p l e v e l . c				-- The REP loop
  *
- * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -16,27 +16,30 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: toplevel.c 1.11 Wed, 30 Sep 1998 14:02:29 +0200 eg $
+ * $Id: toplevel.c 1.16 Fri, 22 Jan 1999 14:44:12 +0100 eg $
  *
  *	     Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date:  6-Apr-1994 14:46
- * Last file update: 27-Sep-1998 16:48
+ * Last file update: 15-Jan-1999 09:51
  */
 
 #include "stk.h"
 #include "gc.h"
 #include "module.h"
 
-/* The cell representing NIL */
-static struct obj VNIL	   = {0, tc_nil};
+
+struct error_handler *STk_err_handler;    /* Current error handler pointer */ 
+
+
+static struct obj VNIL	   = {0, tc_nil}; /* The cell representing NIL */
 
 static void print_banner(void)
 {
   if (STk_lookup_variable(PRINT_BANNER, NIL) != Ntruth){
-    fprintf(STk_stderr, "Welcome to the STk interpreter version %s [%s]\n", 
+    Fprintf(STk_curr_eport, "Welcome to the STk interpreter version %s [%s]\n", 
 	    STK_VERSION, MACHINE);
-    fprintf(STk_stderr, "Copyright © 1993-1998 Erick Gallesio - ");
-    fprintf(STk_stderr, "I3S - CNRS / ESSI <eg@unice.fr>\n");
+    Fprintf(STk_curr_eport, "Copyright © 1993-1999 Erick Gallesio - ");
+    Fprintf(STk_curr_eport, "I3S - CNRS / ESSI <eg@unice.fr>\n");
   }
 }
 
@@ -45,10 +48,12 @@ static void weird_dirs(char *argv0)
   panic("Could not find the directory where STk was installed.\nPerhaps some directories don't exist, or current executable (\"%s\") is in a strange place.\nYou should consider to set the \"STK_LIBRARY\" shell variable.", argv0);
 }
 
+#ifdef USE_TK
 static void no_display(char *argv0)
 {
   panic("DISPLAY variable is not set. Tk cannot be initialized. Please use command line option ``-no-tk'' when executing \"%s\"", argv0);
 }
+#endif
 
 static void load_init_file(void)
 {
@@ -86,7 +91,7 @@ static void init_library_path(char *argv0)
 
   STk_library_path = "";
 
-  if (s = getenv("STK_LIBRARY")) {
+  if ((s = getenv("STK_LIBRARY"))) {
     /* Initialize STk_library_path with the content of STK_LIBRARY 
      * shell variable.
      * Make a copy of environment variable (copy is necessary for
@@ -129,13 +134,14 @@ static void set_last_defined(char *name, SCM val)
 
 
 /* 
- * A Panic procedure.
+ * Panic procedure.
  */
 
-static void panic_proc(char *format, ...)
+static void panic_proc(char *format, ...) 
 {
   va_list ap;
   char buf[1024];
+  char *fmt= "\n**** Fatal error in STk:\n**** %s\n**** ABORT.\n";
 
   va_start(ap, format);
   vsprintf(buf, format, ap);
@@ -145,8 +151,10 @@ static void panic_proc(char *format, ...)
   MessageBox(NULL, buf, "Fatal error in STk", 
 	     MB_ICONSTOP | MB_OK | MB_TASKMODAL | MB_SETFOREGROUND);
 #else
-  fprintf(STk_stderr, "\n**** Fatal error in STk:\n**** %s\n**** ABORT.\n", buf);
-  fflush(STk_stderr);
+  if (STk_curr_eport == NULL)
+    fprintf(stderr, fmt, buf);		/* IO are not yet fully initialized */
+  else
+    Fprintf(STk_curr_eport, fmt, buf);
 #endif
   exit(1);
 }
@@ -155,15 +163,6 @@ static void panic_proc(char *format, ...)
 
 static void init_interpreter(void)
 {
-
-  /* Set the panic porcedure */
-  Tcl_SetPanicProc(panic_proc);
-
-#ifdef WIN32
-  /* First initialize the IO system, to have a console on Windows */
-  STk_init_io();
-#endif
-
   /* Remember if we are running the stk or snow interpreter */
 #ifdef USE_TK
   STk_snow_is_running = FALSE;
@@ -172,11 +171,10 @@ static void init_interpreter(void)
 #endif
 
   /* Global variables to initialize */
-  NIL		   = &VNIL;
   STk_tkbuffer	   = (char *) must_malloc(TKBUFFERN+1);
-  STk_interactivep = STk_arg_interactive ||isatty(fileno(STk_stdin));
   STk_is_safe	   = 0;
-
+  NIL		   = &VNIL;
+  
   /* Initialize GC */
   STk_init_gc();
 
@@ -213,6 +211,9 @@ static void init_interpreter(void)
   STk_define_variable(GC_VERBOSE,    Ntruth, NIL);
   STk_define_variable(REPORT_ERROR,  NIL,    NIL);
 
+  /* Initialize standard ports */
+  STk_init_standard_ports();
+
   /* Initialize module system */
   STk_init_modules();
 
@@ -222,17 +223,11 @@ static void init_interpreter(void)
   /* Initialize *eval-hook* */
   STk_init_eval_hook();
 
-  /* Initialize standard ports */
-  STk_init_standard_ports();
-
   /* Initialize Scheme primitives */
   STk_init_primitives();
 
   /* Initialize signal table */
   STk_init_signal();
-
-  /* initialize STk_wind_stack and protect it against garbage colection */
-  STk_wind_stack = NIL;	 STk_gc_protect(&STk_wind_stack);
 
   /* Define some global variables */
   STk_define_variable(LOAD_SUFFIXES, NIL,			       NIL);
@@ -267,29 +262,40 @@ static void finish_initialisation(void)
 #endif
     exit(0);
   }
-
+  else 
+    STk_interactivep = STk_arg_interactive 			|| 
+#ifdef USE_TK
+      		       STk_arg_console 				||
+#endif
+      		       isatty(fileno(PORT_FILE(STk_stdin)));
+      
   /* 
-   * See if we've used the '-interactive' option; if so, 
-   *		- unbufferize stdout and  stderr so that the interpreter can
-   *		  be used with Emacs and 
-   *		- print the STk banner
-   *		- set the input handler
+   * See if we are interactive:
+   *   1/ Create a console if needed;
+   *   2/ Unbufferize stdout and  stderr so that the interpreter can  be
+   *	  used with Emacs and 
+   *   3/ print the STk banner
+   *   4/ set the input handler if we are on Unix
    */
   if (STk_interactivep) {
     static char *out, *err;
 
+#ifdef USE_TK
+    if (STk_arg_console) STk_init_console();
+#endif
     out = STk_line_bufferize_io(STk_stdout);
     err = STk_line_bufferize_io(STk_stderr);
     print_banner();
 #if (defined(USE_TK) && !defined(WIN32))
-    /* Set up a handler for characters coming from stdin */
-    Tcl_CreateFileHandler(fileno(STk_stdin),
-			  TCL_READABLE,
-			  (Tk_FileProc *) STk_StdinProc, 
-			  (ClientData) NULL);
+    if (!STk_arg_console) 
+      /* Set up a handler for characters coming from stdin */
+      Tcl_CreateFileHandler(fileno(PORT_FILE(STk_stdin)),
+			    TCL_READABLE,
+			    (Tk_FileProc *) STk_StdinProc, 
+			    (ClientData) NULL);
 #endif
   }
-  fflush(stdout);
+  Flush(STk_curr_oport);
 
   /* 
    * Manage -load option 
@@ -310,13 +316,16 @@ static void repl_loop(void)
     SCM env = MOD_ENV(STk_selected_module);
 
     if (STk_interactivep) {
+#ifdef USE_TK
+      if (STk_arg_console) STk_console_prompt(env); else
+#endif
       if (STk_internal_eval_string("(catch (repl-display-prompt (current-module)))",
 				   0, env) == Truth)
-	fprintf(STk_stderr, "STk> ");
-      
-      fflush(STk_stderr); 
-      fflush(STk_stdout);	/* This is for Ilisp users */
+	Fprintf(STk_curr_eport, "STk> ");
+      Flush(STk_curr_oport); 
+      Flush(STk_curr_eport);	/* This is for Ilisp users */
     }
+
     if (EQ(x=STk_readf(STk_stdin, FALSE), STk_eof_object)) return;
 
     x = STk_eval(x, env);
@@ -327,7 +336,7 @@ static void repl_loop(void)
        * the saved continuation.
        */
       STk_dumped_core = 0;
-      longjmp(Top_jmp_buf->j, JMP_RESTORE);
+      longjmp(STk_err_handler->j, JMP_RESTORE);
     }
     else {
       if (STk_interactivep) {
@@ -335,7 +344,7 @@ static void repl_loop(void)
 	 if (STk_internal_eval_string("(catch (repl-display-result *repl-result*))",
 				      0, env) == Truth) {
 	   STk_print(x, STk_curr_oport, WRT_MODE);
-	   Putc('\n', STk_stdout);
+	   Putc('\n', STk_curr_oport);
 	 }
       }
     }
@@ -346,7 +355,18 @@ static void repl_driver(int argc, char **argv)
 {
   static int k;
   static char **new_argv;
-  
+  struct error_handler err_handler;
+
+  /* Inititialize the error handler. */
+  STk_err_handler     	      = &err_handler;
+  err_handler.prev    	      = NULL;
+  err_handler.context 	      = ERR_FATAL;
+  err_handler.dynamic_handler = &VNIL;	/* since NIL is not yet initialized */
+ 
+  /* Initialize IO and set the panic procedure */
+  STk_init_io();
+  Tcl_SetPanicProc(panic_proc);
+
   new_argv = STk_process_argc_argv(argc, argv);
 
   if (STk_arg_image) {
@@ -358,12 +378,10 @@ static void repl_driver(int argc, char **argv)
     STk_reset_eval_stack();
   }
 
-  /* Point where we come back on errors, image restoration, ... */
-  k = setjmp(Top_jmp_buf->j);
-  
-  Error_context	     = ERR_OK;	
-  STk_sigint_counter = 0;
-  STk_control_C	     = 0;
+  /* We come back here on errors, image restauration, ... */
+  k = setjmp(err_handler.j); 
+
+  err_handler.context = ERR_OK;	
 
   switch (k) {
     case 0:		init_interpreter();
@@ -411,10 +429,15 @@ static void repl_driver(int argc, char **argv)
 			break;
     case JMP_THROW:
     case JMP_ERROR:	break;
+    case JMP_INTERRUPT: STk_control_C = 0;
+			STk_err_handler = &err_handler;
+			STk_reset_eval_stack();
+			break;
   }
 
   repl_loop();
-  if (STk_interactivep) fprintf(STk_stderr, "Bye.\n");
+
+  if (STk_interactivep) Fprintf(STk_curr_eport, "Bye.\n");
   STk_quit_interpreter(UNBOUND);
 }
 

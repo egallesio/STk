@@ -3,7 +3,7 @@
  * d y n l o a d . c			-- All the stuff dealing with 
  *					   dynamic loading
  *
- * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -17,11 +17,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: dynload.c 1.6 Thu, 10 Sep 1998 23:44:28 +0200 eg $
+ * $Id: dynload.c 1.10 Mon, 01 Feb 1999 15:18:22 +0100 eg $
  * 
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 23-Jan-1994 19:09
- * Last file update: 10-Sep-1998 12:19
+ * Last file update: 22-Jan-1999 16:34
  */
 
 /* Support for HPUX is due to Dipankar Gupta <dg@hplb.hpl.hp.com> */
@@ -77,10 +77,9 @@
 /*----------------------------------------------------------------------------*/
 
 #include "stk.h"
-#include <libstack.h>
-
 
 #ifdef USE_DYNLOAD
+#include <libstack.h>
 
 static SCM cache_files = NULL;
 
@@ -118,10 +117,10 @@ static void *find_function(char *path, char *fname, int error_if_absent)
   else {
     /* Dynamically load the file and enter its handle in cache */
     if ((handle=(void *) dlopen(path, DYN_FLAG)) == NULL)
-      Serror("cannot open object file", str);
+      fprintf(stderr, "find_function: cannot open object file : %s", dlerror());
     cache_files = Cons(str, Cons(MAKE_STAT_PTR(handle), cache_files));
   }
-
+  
   if ((fct = (void *) dlsym(handle, fname)) == NULL && error_if_absent) {
     char msg[MAX_PATH_LENGTH];
     
@@ -221,12 +220,12 @@ static void load_and_call(char *path, char *fct_name)
 	char **unresolved;
 	extern int dld_undefined_sym_count; 
 	int i;	  
-	fprintf(STk_stderr, "dld: function %s not executable!\n", fct_name);
-	fprintf(STk_stderr, "Unresolved symbols are:\n");
+	Fprintf(STk_curr_eport, "dld: function %s not executable!\n", fct_name);
+	Fprintf(STk_curr_eport, "Unresolved symbols are:\n");
 	
 	unresolved= dld_list_undefined_sym();
 	for (i = 0; i < dld_undefined_sym_count; i++)
-	  fprintf(STk_stderr, "\t%s\n",unresolved[i]);
+	  Fprintf(STk_curr_eport, "\t%s\n",unresolved[i]);
 	free(unresolved);
 	Err("dld: link aborted", NIL);
       }

@@ -6,8 +6,10 @@
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 13-May-1993 10:59
- * Last file update: 15-Sep-1998 14:45
+ * Last file update: 27-Dec-1998 20:48
  *
+ *
+ * $Id: tk-main.c 1.7 Mon, 28 Dec 1998 23:05:11 +0100 eg $
  *
  * Code used here was originally copyrigthed as shown below:
  *      Copyright 1990-1992 Regents of the University of California.
@@ -144,7 +146,7 @@ void Tk_main(int synchronize, char *name, char *fileName, char *Xdisplay,
   if (geometry != NULL) {
     if (TCL_OK != Tcl_VarEval(STk_main_interp, "(wm 'geometry \".\" '", 
 			      geometry, ")", NULL))
-      fprintf(STk_stderr, "**** Warning: %s\n", STk_main_interp->result);
+      Fprintf(STk_curr_eport, "**** Warning: %s\n", STk_main_interp->result);
   }
   code = TkpInit(STk_main_interp);
   

@@ -16,11 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: cont.c 1.3 Sun, 19 Jul 1998 11:14:37 +0200 eg $
+ * $Id: cont.c 1.4 Wed, 23 Dec 1998 23:41:27 +0100 eg $
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date:  8-Nov-1993 11:34
- * Last file update: 19-Jul-1998 11:05
+ * Last file update: 20-Dec-1998 21:25
  */
 
 #include "stk.h"
@@ -34,29 +34,27 @@
 
 struct cont {
   jmp_buf env;
-  SCM wind_stack;
+  struct error_handler *eh;
   SCM *start;
   unsigned length;
   SCM stack[1];
 };
 
 #define C_ENV(x) 	(((struct cont *)((x)->storage_as.cont.data))->env)
+#define C_HANDLER(x)    (((struct cont *)((x)->storage_as.cont.data))->eh)
 #define C_START(x)	(((struct cont *)((x)->storage_as.cont.data))->start)
 #define C_LEN(x)	(((struct cont *)((x)->storage_as.cont.data))->length)
 #define C_STACK(x)	(((struct cont *)((x)->storage_as.cont.data))->stack)
-#define C_WIND_STACK(x)	(((struct cont *)((x)->storage_as.cont.data))->wind_stack)
 
 static SCM values(SCM l, int len);
-
-static SCM call_cc_escaped_value;
+static void reenter_cont(struct error_handler *eh);
 
 /* Don't allocate these vars on stack */
+static SCM call_cc_escaped_value;
 static SCM *from, *to;
 static long length;
 static int  i;
 
-
-static void unwind(SCM stop, int n);
 
 static int get_stack_length(void)
 {
@@ -84,18 +82,17 @@ static SCM prepare_call_cc(SCM proc)
   z->storage_as.cont.data = must_malloc(sizeof(struct cont) + length * sizeof(SCM));
 
   C_START(z) 	  = from;
+  C_HANDLER(z)	  = STk_err_handler;
   C_LEN(z)   	  = length;
-  C_WIND_STACK(z) = STk_wind_stack;
   FLUSH_REGISTERS_WINDOW();
   for (i=length, to = C_STACK(z); i--; ) *to++ = *from++;
 
   return z;
 }
 
-SCM STk_mark_continuation(SCM cont)
+void STk_mark_continuation(SCM cont)
 {
   STk_mark_stack((SCM *)C_STACK(cont), (SCM *)(C_STACK(cont)+C_LEN(cont)-1));
-  return C_WIND_STACK(cont);
 }
 
 SCM STk_do_call_cc(SCM *x)
@@ -130,14 +127,13 @@ void STk_throw(SCM fct, SCM vals)
     if (&u.stack_end < C_START(fct)+ C_LEN(fct)) STk_throw(fct, vals);
   }
 
-  /* Take care of active dynamic-winds */
-  tmp = C_WIND_STACK(fct);
-  unwind(tmp, STk_llength(STk_wind_stack) - STk_llength(tmp));
-
   /* Save val in a global and reset stack as it was before calling call/cc */
   call_cc_escaped_value = values(vals, STk_llength(vals)); tmp = fct;
   FLUSH_REGISTERS_WINDOW();
   for(to=C_START(fct), from=C_STACK(fct), i=C_LEN(fct); i--; ) *to++ = *from++;
+
+  /* Everything is restored. Execute the thunk1 of dynamic-wind we enter in back */
+  reenter_cont(C_HANDLER(fct));
 
   /* And Go! */
   longjmp(C_ENV(tmp), JMP_THROW);
@@ -154,51 +150,70 @@ PRIMITIVE STk_continuationp(SCM obj)
  *
  ******************************************************************************/
 
-void STk_unwind_all(void)
-{
-  SCM p;
 
-  for (p = STk_wind_stack; NNULLP(p); p = CDR(p)) {
-    STk_wind_stack = CDR(p);
-    Apply(CAR(CDR(CAR(p))), NIL);
+static void reenter_cont(struct error_handler *eh)
+{
+  struct error_handler *p, *before;
+  SCM thunks = NIL;
+  
+  before 	  = STk_err_handler;
+  STk_err_handler = eh;
+  
+  /* Scan the stack and collect all the thunk1(s) we'll have to call. Since we
+   * have the thunks in reverse order push them in a list
+   */
+  for (p = STk_err_handler; p && p != before; p = p->prev) {
+    if (NNULLP(p->dynamic_handler))
+      thunks = Cons(CAR(p->dynamic_handler), thunks);
   }
+  /* Execute all the handler now */
+  for ( ; NNULLP(thunks); thunks = CDR(thunks))
+    STk_apply(CAR(thunks), NIL);
 }
 
-static void unwind(SCM stop, int n)
+
+void STk_unwind_all(void)   /* called when we exit the interpreter */
 {
-  if (STk_wind_stack != stop) {
-    if (n < 0) {
-      unwind(CDR(stop),n+1);
-      Apply(CAR(CAR(stop)),NIL);
-      STk_wind_stack = stop;
-    }
-    else {
-      SCM old_wind_stack = STk_wind_stack;
-      
-      STk_wind_stack = CDR(STk_wind_stack);
-      Apply(CAR(CDR(CAR(old_wind_stack))), NIL);
-      unwind(stop, n-1);
-    }
+  struct error_handler *p;
+  SCM thunks = NIL;
+  
+  /* Scan the stack and collect all the thunk3(s) we'll have to call. Since we
+   * have the thunks in reverse order push them in a list
+   */
+  for (p = STk_err_handler; p ; p = p->prev) {
+    if (NNULLP(p->dynamic_handler))
+      thunks = Cons(CDR(p->dynamic_handler), thunks);
   }
+  /* Execute all the handler now */
+  for ( ; NNULLP(thunks); thunks = CDR(thunks))
+    STk_apply(CAR(thunks), NIL);
 }
+
 
 static void test_procedure(SCM thunk)
 {
   if (!STk_is_thunk(thunk)) Err("dynamic-wind: bad procedure", thunk);
 }
 
+
 PRIMITIVE STk_dynamic_wind(SCM thunk1, SCM thunk2, SCM thunk3)
 {
   SCM result;
 
-  test_procedure(thunk1);
-  test_procedure(thunk2);
-  test_procedure(thunk3);
+  test_procedure(thunk1); test_procedure(thunk2); test_procedure(thunk3);
 
   Apply(thunk1, NIL);
-  STk_wind_stack = Cons(LIST2(thunk1, thunk3), STk_wind_stack);
-  result = Apply(thunk2, NIL);
-  STk_wind_stack = CDR(STk_wind_stack);
+  PUSH_ERROR_HANDLER
+    {
+      STk_err_handler->dynamic_handler = Cons(thunk1, thunk3);
+      result = Apply(thunk2, NIL);
+    }
+  WHEN_ERROR
+    {
+      Apply(thunk3, NIL);
+      PROPAGATE_ERROR();
+    }
+  POP_ERROR_HANDLER;
   Apply(thunk3, NIL);
   return result;
 }

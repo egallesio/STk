@@ -1,0 +1,301 @@
+;;;; f o n t - l o c k . s t k 		-- A simple syntax high-lighter
+;;;;
+;;;; Copyright © 1998-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; 
+;;;; Permission to use, copy, and/or distribute this software and its
+;;;; documentation for any purpose and without fee is hereby granted, provided
+;;;; that both the above copyright notice and this permission notice appear in
+;;;; all copies and derived works.  Fees for distribution or use of this
+;;;; software or derived works may only be charged with express written
+;;;; permission of the copyright holder.  
+;;;; This software is provided ``as is'' without express or implied warranty.
+;;;;
+;;;; $Id: font-lock.stk 1.6 Mon, 01 Feb 1999 15:18:22 +0100 eg $
+;;;;
+;;;;           Author: Erick Gallesio [eg@unice.fr]
+;;;;    Creation date: 29-Oct-1998 18:51
+;;;; Last file update:  1-Feb-1999 15:08
+
+;; This package is a extra light version of the Emacs font-lock package
+;; (specialized for Scheme)
+;; It is a little bit slow and it is has some "bugs":
+;;    - Multi-lines comments are not correctly handled (because the 
+;;      Tk text widget works line by line
+;;    - Regexps are very simplistic and not correct in all circumstances
+;;    - There is no way to customize the font-lock colors 
+;;
+;; Any help to improve this package will be greatly appreciated 
+
+
+;;;
+;;; Variables which which can be overloaded by the user file ~/.stkvars
+;;;
+(define-module STk
+  (define *fontify-keyword-color*  "Green4")
+  (define *fontify-class-color*    "Blue")
+  (define *fontify-syntax-color*   "Purple3")
+  (define *fontify-comment-color*  "Red")
+  (define *fontify-string-color*   "IndianRed"))
+
+;;;
+;;; The rest of the file is in the Tk module
+;;;
+
+(select-module Tk)
+
+;=============================================================================
+; 
+; Global variables
+;
+;=============================================================================
+(define *fontify-count*   0)
+(define *fontify-idle*   #t)
+
+
+;;; Regexps for various think that we want "font-lockify". This is a list whose 
+;;; first element is the regexp and the second element is an offset
+(define *fontify-keyword-regexp* (list "(^|[ \t]+):[0-9a-zA-Z_-]+" 0))
+(define *fontify-comment-regexp* (list "(#!|;).*$|#\\|.*\\|#" 0))
+(define *fontify-string-regexp*  (list "\"([^\\\"]|\\\\.)*\"" 0))
+(define *fontify-class-regexp*   (list "<[^>]*>" 0))
+(define *fontify-syntax-regexp*	 (list "\\((lambda|if|else|define(-macro|-generic|-method|-class)*|begin|case|cond|while|do|when|unless|set!|let(\\*|rec)*) "
+				       1))
+
+(define *fontify-syntax* '(lambda if else define define-macro define-generic 
+			  define-class begin case cond while do when 
+			  unless set let let* letrec))
+
+
+;=============================================================================
+;
+; make-fontifiable
+;	Transforms a text widget in a widget able to do Scheme fontification
+;
+;=============================================================================
+(define (make-fontifiable txt)
+  ;; Creates tags for strings keywords comments. ORDER IS IMPORTANT!!!
+  (for-each (lambda (x)
+	      (let ((name (car x)) 
+		    (fg   (cadr x)))
+		(txt 'tag 'configure name :foreground fg)))
+	    (list 
+	       (list "keyword_tag" *fontify-keyword-color*)
+	       (list "class_tag"   *fontify-class-color*)
+	       (list "syntax_tag"  *fontify-syntax-color*)
+	       (list "comment_tag" *fontify-comment-color*)
+	       (list "string_tag"  *fontify-string-color*)))
+
+  ;; Define a mark which states where is the beginning of the region to font-lock
+  (txt 'mark 'set "start_fontify" "insert")
+  (txt 'mark 'gravity "start_fontify" 'left)
+
+  ;; Change text bindings such that entering a new character triggers fontify
+  ;; This is done by changing the "bindtags" of the text 
+  (let* ((order     (bindtags txt))
+	 (text      (member "Text" order))
+	 (when-move (gensym "when-move")))
+		      
+    (when text
+      (set-cdr! text (cons "ScmTxt" (cdr text)))
+      (bindtags txt (cons when-move order)))
+    (bind when-move "<Tab>" 		(lambda (|W|) (reindent-line |W|) 'break))  
+    (bind when-move "<Any-KeyPress>"    (lambda (|W|) (idle-fontify |W|)))
+    (bind when-move "<Any-ButtonPress>" (lambda (|W|) (idle-fontify |W|))))
+  
+  (bind "ScmTxt" "<Any-KeyPress>" (lambda (|W|)
+				    (flash-delete-tags |W|)
+				    (fontify-line |W| "insert")))
+  (for-each (lambda (x)
+	      (bind "ScmTxt" x (lambda(|W|)
+				 (fontify-buffer |W| "start_fontify"))))
+	    '("<<Paste>>" "<ButtonRelease-2>" "<Control-l>"))
+  (bind "ScmTxt" ")"     (lambda (|W|) (flash-paren |W| "(" ")")))
+  (bind "ScmTxt" "]"     (lambda (|W|) (flash-paren |W| "[" "]")))
+
+)
+
+;=============================================================================
+;
+; Fontify functions
+;
+;=============================================================================
+(define (fontify-line t pos)
+  
+  (define (fontify-regexp regexp offset tag from to)
+    ;; Search for all instances of a given regexp in a text widget and
+    ;; apply a given tag to each instance found.
+    (t 'tag 'remove tag from to)
+    (let Loop ((start from))
+      (let ((cur (t 'search :regexp :count '*fontify-count*
+;;;;FIXME:		    	    :env (module-environment (current-module))
+			    regexp start to)))
+	(when cur
+	  (let ((cur  (cons (car cur) (+ (cdr cur) offset)))
+		(last (cons (car cur) (-  (+ (cdr cur) *fontify-count*) offset))))
+	    (t 'tag 'add tag cur last)
+	    (loop last))))))
+
+  (let* ((start   (t 'index (format #f "~A linestart" pos)))
+	 (end     (t 'index (format #f "~A lineend" pos)))
+	 (do-font (lambda (rgxp tag)
+		    (fontify-regexp (car rgxp) (cadr rgxp) tag start end))))
+
+    ;; Eventually correct the start position
+    (if (t 'compare start "<" "start_fontify") (set! start "start_fontify"))
+
+    (do-font *fontify-keyword-regexp* "keyword_tag")
+    (do-font *fontify-class-regexp*   "class_tag")
+    (do-font *fontify-syntax-regexp*  "syntax_tag")
+    (do-font *fontify-string-regexp*  "string_tag")
+    (do-font *fontify-comment-regexp* "comment_tag")))
+
+(define (fontify-buffer t from-line)
+  (when *fontify-idle*
+    (set! *fontify-idle* #f)
+    (let ((start (car (t 'index from-line)))
+	  (end   (car (t 'index "end"))))
+      (let Loop ((line start))
+	(fontify-line t (cons line 0))
+	(after 'idle (lambda () (if (< line end) (Loop (+ line 1)))))))
+    (set! *fontify-idle* #t)))
+
+
+(define (fontify-whole-buffer t)
+  (fontify-buffer t "1.0"))
+
+
+;=============================================================================
+;
+; Flashing parenthesis
+;
+;=============================================================================
+
+(define (flash-delete-tags txt)
+  (txt 'tag 'delete "fontify_flash")
+  (txt 'tag 'delete "fontify_bad_flash"))
+
+(define (flash-paren txt open close)
+  ;; Erase the current flashing parent and create a new tag for this one
+  (flash-delete-tags txt)
+  (txt 'tag 'conf "fontify_flash" :background "green")
+
+  ;; Search the opening parenthesis
+  (let Loop ((depth 0) (count -2))
+    (let* ((pos  (txt 'index (format #f "insert ~Ac" count)))
+	   (char (txt 'get pos)))
+      (cond 
+        ((txt 'compare pos "<=" "start_fontify")
+	            (if (and (string=? char open) (zero? depth))
+			(txt 'tag 'add "fontify_flash" pos)
+			(begin
+			  ;; create a tag to signal the bad match
+			  (txt 'tag 'conf "fontify_bad_flash" :background "red")
+			  (txt 'tag 'add "fontify_bad_flash" "insert-1c"))))
+       ((string=? char close) (Loop (- depth 1) (- count 1)))
+       ((string=? char open)  (if (zero? depth)
+				  (txt 'tag 'add "fontify_flash" pos)
+				  (Loop (+ depth 1) (- count 1))))
+       (else		      (Loop depth (- count 1)))))))
+
+(define (idle-fontify txt)
+  (after 'idle 
+	 (lambda ()
+	   ; fontify current line 
+	   (fontify-line txt "insert")
+	   ; see if we have an opening parenthesis to flash
+	   (flash-delete-tags txt)
+	   (let ((cur (txt 'get "insert-1c")))
+	     (cond
+	      ((string=? cur ")") (flash-paren txt "(" ")"))
+	      ((string=? cur "]") (flash-paren txt "[" "]"))))
+	   ; if the text has a idle-hook associated execute it
+	   (let ((hook (get-widget-property txt :idle-hook #f)))
+	     (if hook (hook))))))
+
+;=============================================================================
+;
+; font-lock-indent
+;	
+;	This is not really fontification. Anyway this so close ...
+;=============================================================================
+
+(define (how-much-spaces line)	; find the amount of spaces needed for next line
+  (let ((len (string-length line))
+	(spc 0))
+ 
+    ;; Find the number of leading spaces
+    (let Loop ((i 0))
+      (if (and (< i len) (memv (string-ref line i) '(#\space #\tab)))
+	  (Loop (+ i 1))
+	  (set! spc i)))
+
+    ;; Find te position of last open parenthesis (which is not closed)
+    (let Loop ((i spc) (stack '()))
+      (if (< i len)
+	  (case (string-ref line i)
+	    ((#\( #\[) (Loop (+ i 1) (cons i stack)))
+	    ((#\) #\]) (Loop (+ i 1) (if (null? stack) stack (cdr stack))))
+	    (else      (Loop (+ i 1) stack)))
+	  ;; string exhausted 
+	  (unless (null? stack)
+	    (let* ((pos  (+ (car stack) 1))
+		   (s    (substring line pos len))
+		   (first #f))
+	      ;; See if the first word the substring is a symbol
+	      (catch (set! first (read-from-string s)))
+	      (if (symbol? first)
+		  ; car of the list is a symbol
+		  (if (memv first *fontify-syntax*)
+		      ;; We have syntax. Do a small indent
+		      (set! spc (+ pos 2))
+		      ;; Not syntax. Find the first non space after it
+		      (let Loop 
+			  ((i (+ pos (string-length (symbol->string first)))))
+			(if (and (< i len) 
+				 (memv (string-ref line i) '(#\space #\tab)))
+			    (Loop (+ i 1))
+			    (set! spc i))))
+		  ;; Not a symbol. Indent just after the parenthesis
+		  (set! spc pos))))))
+  spc))
+
+
+(define (font-lock-indent txt tag) ;; tag is the tag associated to inserted spaces
+  (let* ((pos (if (txt 'compare "insert linestart -1l" "<" "start_fontify linest")
+		  "start_fontify linestart"
+		  "insert linestart -1 l"))
+	 (line (txt 'get pos "insert-1l lineend"))
+	 (spc  (how-much-spaces line)))
+    (txt 'insert "insert" (make-string spc #\space) tag)))
+
+
+(define (find-previous-sexpr txt)
+  (let ((pos (txt 'tag 'ranges "fontify_flash")))
+    (if (= (length pos) 2)
+	(txt 'get (car pos) "insert")
+	#f)))
+
+(define (reindent-line txt)
+
+  (define (trim l)
+    (let Loop ((pos 0)
+	       (max (string-length l)))
+      (if (or (>= pos max) 
+	      (not (memv (string-ref l pos) '(#\space #\tab))))
+	  (substring l pos max)
+	  (Loop (+ pos 1) max))))
+
+  (let* ((line  (txt 'get "insert linestart" "insert lineend"))
+	 (tline (trim line)))
+    (txt 'delete "insert linestart" "insert lineend")
+    (font-lock-indent txt "")
+    (txt 'insert "insert" tline)))
+
+(provide "font-lock")
+;======================================================================
+
+#|
+(pack (text '.t) :expand #t :fill "both")
+
+(make-fontifiable .t)
+|#

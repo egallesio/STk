@@ -11,18 +11,19 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
-;;;; $Id: Toplevel.stklos 1.8 Sun, 30 Aug 1998 11:09:20 +0200 eg $
+;;;; $Id: Toplevel.stklos 1.9 Sun, 25 Oct 1998 22:52:31 +0100 eg $
 ;;;;
 ;;;;	       Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;	Creation date:	5-Mar-1994 17:19
-;;;; Last file update: 29-Aug-1998 18:38
+;;;; Last file update: 15-Oct-1998 21:43
 
 (require "Basics")
 
 (select-module STklos+Tk)
 
-(export *top-root* deiconify iconify toplevel-frame toplevel-state withdraw
-	make-tanscient place-toplevel)
+(export *top-root* children
+	deiconify iconify toplevel-frame toplevel-state withdraw
+	make-transient place-toplevel)
 
 ;=============================================================================
 ;
@@ -65,6 +66,13 @@
 (define-method special-Tk-slots ((self <Frame>))
   (list :class :colormap :container :visual))
 
+
+
+(define-method children ((self <Frame>))
+  (let ((l    (winfo 'children (slot-ref self 'Id)))
+	(trad (lambda (x) (let ((x (Id->instance x))) (if x (list x) '())))))
+    (apply append (map trad l))))
+    
 ;=============================================================================
 ;
 ;				 <Toplevel>
@@ -209,7 +217,6 @@
 (define-method make-transient ((self <Toplevel>))
   (withdraw self)
   (slot-set! self 'override #t))
-
 
 ;=============================================================================
 ;

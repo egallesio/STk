@@ -12,11 +12,11 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
-;;;; $Id: Button.stklos 1.4 Mon, 27 Apr 1998 15:39:00 +0200 eg $
+;;;; $Id: Button.stklos 1.5 Sun, 25 Oct 1998 22:52:31 +0100 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;    Creation date: 30-Mar-1993 15:39
-;;;; Last file update: 27-Apr-1998 11:20
+;;;; Last file update: 22-Oct-1998 22:53
 
 
 (require "Basics")
@@ -46,6 +46,15 @@
 (define-class <Tk-simple-button> (<Label> <Tk-reactive>)
   ())
 
+;;;
+;;; Tk-simple-Buttons methods
+;;;
+(define-method flash ((self <Tk-simple-button>))
+  ((slot-ref self 'Id) 'flash))
+
+(define-method invoke ((self <Tk-simple-button>))
+  ((slot-ref self 'Id) 'invoke))
+
 ;=============================================================================
 ;
 ;				    <Button>
@@ -59,15 +68,6 @@
 (define-method tk-constructor ((self <Button>))
   Tk:button)
 
-
-;;;
-;;; Buttons methods
-;;;
-(define-method flash ((self <Button>))
-  ((slot-ref self 'Id) 'flash))
-
-(define-method invoke ((self <Button>))
-  ((slot-ref self 'Id) 'invoke))
 
 ;=============================================================================
 ;

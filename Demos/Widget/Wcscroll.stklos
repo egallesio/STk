@@ -51,7 +51,7 @@
 		:coords (read-from-string (format #f "(~Ac ~Ac ~Ac ~Ac)"
 						  x y (+ x 2) (+ y 2))))
 	  (make <Text-item> :parent c :text (cons i j) :anchor 'center 
-		:font "fixed"
+		:font '(Courier -12)
 		:tags "text" :coords (read-from-string 
 				          (format #f "(~Ac ~Ac)"
 						  (+ x 1) (+ y 1))))

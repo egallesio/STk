@@ -2,7 +2,7 @@
  *
  * s t k . h
  *
- * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -16,16 +16,23 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- *  $Id: stk.h 1.19 Wed, 30 Sep 1998 14:02:29 +0200 eg $
+ *  $Id: stk.h 1.29 Tue, 02 Feb 1999 15:29:27 +0100 eg $
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 12-May-1993 10:34
- * Last file update: 27-Sep-1998 16:45
+ * Last file update:  2-Feb-1999 13:44
  *
  ******************************************************************************/
 
 #ifndef _STK_H
 #define _STK_H
+
+#ifdef WIN32
+#  define MACHINE "Ms-Win32"
+#  define STK_DEBUG			// FIXME
+#  define STK_VERSION "3.99.4"		// FIXME
+#  include <windows.h>			/* for the panic procedure */
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,7 +54,22 @@ extern "C" {
 #  include <unistd.h>
 #endif
 #include <stdlib.h>
-#include "gmp.h"
+#include <gmp.h>
+  
+
+#ifdef WIN32			// FIXME
+#  define USE_HASH
+//#define USE_SOCKET
+#  define USE_REGEXP
+//#define USE_PROCESS
+//#define USE_POSIX
+#  define USE_HTML
+#  define USE_PIXMAP
+//#define USE_JPEG
+#  define USE_BASE64
+#  define USE_LOCALE
+#endif
+
 
 /*
  * Headers <tcl*.h> are always included (even if not USE_TK) for the hash table
@@ -72,9 +94,13 @@ extern "C" {
 #define MAX_CHAR_CODE		255		/* Max code for a char */
 
 #ifdef USE_TK
-#  define INITIAL_HEAP_SIZE 	25000		/* size of heap (in cells) */
+#  ifdef WIN32
+#    define INITIAL_HEAP_SIZE 	40000		/* size of heap Win32 (in cells) */
+#  else
+#    define INITIAL_HEAP_SIZE 	25000		/* size of heap X11 (in cells) */
+#  endif
 #else
-#  define INITIAL_HEAP_SIZE 	10000		/* size of heap (in cells) */
+#  define INITIAL_HEAP_SIZE 	10000		/* size of heap snow (in cells) */
 #endif
 
 #ifdef _POSIX_PATH_MAX
@@ -115,12 +141,9 @@ extern "C" {
 #endif
 
 
-struct obj {
-  unsigned char type;
-  unsigned char gc_mark;
-  short         cell_info;
+struct obj {		/* most alignment constraining type first */
   union {struct {struct obj * car; struct obj * cdr;} 		cons;
-	 struct {double *data;}					flonum;
+	 struct {double data;}					flonum;
 	 struct {char *pname; struct obj * vcell;} 		symbol;
 	 struct {char *name; struct obj * (*f)(void);} 		subr0;
 	 struct {char *name; struct obj * (*f)(void *,...);} 	subr;
@@ -128,7 +151,7 @@ struct obj {
 	 struct {struct obj *code; struct obj* env;}		macro;
 	 struct {long dim; char *data;} 			string;
 	 struct {long dim; struct obj **data;} 			vector;
-	 struct {struct port_descr *p;}				port;
+	 struct {struct port_descr *p; int ungetted_char;}	port;
 	 struct {char *data;} 					keyword;
 	 struct {MP_INT *data;}					bignum;
 	 struct {short level, position; struct obj *symbol;}	localvar;
@@ -146,6 +169,11 @@ struct obj {
 	 struct {struct Tk_command *data; struct obj *l_data;}	tk;
 #endif
        } storage_as;
+
+  unsigned char type;
+  unsigned char gc_mark;
+  short         cell_info;
+
 };
 
 typedef struct obj* SCM;
@@ -181,19 +209,22 @@ typedef struct obj* PRIMITIVE;
 #define tc_oport	26
 #define tc_isport	27
 #define tc_osport	28
-#define tc_boolean	29
-#define tc_macro	30
-#define tc_localvar	31
-#define tc_globalvar	32
-#define tc_modulevar	33
-#define tc_cont		34
-#define tc_env		35
-#define tc_address	36
-#define tc_autoload	37
-#define tc_Cpointer	38
-#define tc_module	39
-#define tc_frame	40
-#define tc_values	41
+#define tc_ivport	29
+#define tc_ovport	30
+#define tc_boolean	31
+#define tc_macro	32
+#define tc_localvar	33
+#define tc_globalvar	34
+#define tc_modulevar	35
+#define tc_cont		36
+#define tc_env		37
+#define tc_address	38
+#define tc_autoload	39
+#define tc_Cpointer	40
+#define tc_module	41
+#define tc_frame	42
+#define tc_values	43
+
 
 #ifdef USE_STKLOS
 #  define tc_instance	 45
@@ -234,7 +265,7 @@ typedef struct obj* PRIMITIVE;
 #define VCELL(x) 	((*x).storage_as.symbol.vcell)
 #define SUBR0(x) 	(*((*x).storage_as.subr0.f))
 #define SUBRF(x) 	(*((*x).storage_as.subr.f))
-#define FLONM(x) 	(*((*x).storage_as.flonum.data))
+#define FLONM(x) 	((*x).storage_as.flonum.data)
 #define CHARS(x)	((*x).storage_as.string.data)
 #define STRSIZE(x)	((*x).storage_as.string.dim)
 #define VECT(x)		((*x).storage_as.vector.data)
@@ -291,7 +322,9 @@ typedef struct obj* PRIMITIVE;
 #define IPORTP(x)	 TYPEP(x,tc_iport)
 #define OPORTP(x)	 TYPEP(x,tc_oport)
 #define ISPORTP(x)	 TYPEP(x,tc_isport)
-#define OSPORTP(x)	 TYPEP(x,tc_osport)
+#define OSPORTP(x)	 TYPEP(x,tc_ovport)
+#define IVPORTP(x)	 TYPEP(x,tc_ivport)
+#define OVPORTP(x)	 TYPEP(x,tc_osport)
 #define SPORTP(x)        (ISPORTP(x)||OSPORTP(x))
 #define INTEGERP(x)	 TYPEP(x,tc_integer)
 #define BIGNUMP(x)	 TYPEP(x,tc_bignum)
@@ -400,6 +433,7 @@ extern char *STk_arg_visual;
 extern int   STk_arg_colormap;
 extern int   STk_arg_sync;
 extern int   STk_arg_no_tk;
+extern int   STk_arg_console;
 #endif
 extern char *STk_arg_file;
 extern char *STk_arg_load;
@@ -465,11 +499,23 @@ PRIMITIVE STk_char_lower(SCM c);
 /*
   ------------------------------------------------------------------------------
   ----
+  ----  C O N S O L E . C
+  ----
+  ------------------------------------------------------------------------------
+*/
+void STk_console_prompt(SCM env);
+void STk_init_console(void);
+
+
+
+/*
+  ------------------------------------------------------------------------------
+  ----
   ----  C O N T . C
   ----
   ------------------------------------------------------------------------------
 */
-SCM 	  STk_mark_continuation(SCM cont);
+void 	  STk_mark_continuation(SCM cont);
 void 	  STk_throw(SCM fct, SCM val);
 SCM 	  STk_do_call_cc(SCM *x);
 PRIMITIVE STk_continuationp(SCM obj);
@@ -533,30 +579,62 @@ PRIMITIVE STk_get_environment(SCM env);
 
 #define EVAL_ERROR		((SCM) 1)
 
-#define ERR_FATAL		000
-#define ERR_OK			001
-#define ERR_READ_FROM_STRING	002
-#define ERR_IGNORED		004
-#define ERR_TCL_BACKGROUND	010
+#define ERR_FATAL		0x01
+#define ERR_OK			0x02
+#define ERR_READ_FROM_STRING	0x04
+#define ERR_IGNORED		0x08
+#define ERR_TCL_BACKGROUND	0x10
+#define ERR_IN_REPORT_ERROR	0x20
+#define ERR_IN_LOAD		0x40
+
 
 #define JMP_INIT		0
 #define JMP_ERROR		1
 #define JMP_THROW		2
 #define JMP_RESTORE		3
+#define JMP_INTERRUPT		4
 
-typedef struct {
+
+struct error_handler {
   jmp_buf j;
-} Jmp_Buf;
+  struct error_handler *prev;
+  int context;
+  SCM dynamic_handler;
+};
 
-extern Jmp_Buf *STk_top_jmp_buf; /* Jump buffer denoting toplevel context */
-extern long STk_error_context;
+
+#define PUSH_ERROR_HANDLER   					\
+{								\
+  struct error_handler _local_handler;				\
+  int _k;							\
+								\
+  _local_handler.prev    	 = STk_err_handler;		\
+  _local_handler.context 	 = STk_err_handler->context;	\
+  _local_handler.dynamic_handler = NIL;				\
+  STk_err_handler = &_local_handler;				\
+  _k = setjmp(_local_handler.j);				\
+  if (_k == 0) 							\
+  /* no closing brace. It will be in POP_ERROR_HANDLER */		
+
+
+#define WHEN_ERROR  		else
+#define PROPAGATE_ERROR() {					\
+  STk_err_handler = _local_handler.prev;			\
+  longjmp(STk_err_handler->j, _k);				\
+}
+		       
+#define POP_ERROR_HANDLER					\
+  STk_err_handler = _local_handler.prev;			\
+  /* close the brace opened by PUSH_ERROR_HANDLER */		\
+}
+
+
+extern struct error_handler *STk_err_handler;
 
 void STk_err(char *message, SCM x);
 void STk_procedure_error(char *procedure, char *message, SCM x);
 
 #define Err 			STk_err
-#define Top_jmp_buf		STk_top_jmp_buf
-#define Error_context		STk_error_context
 #define Serror(msg, who)	STk_procedure_error(proc_name, msg, who)
 
 
@@ -597,7 +675,6 @@ PRIMITIVE STk_eval_string(SCM str, SCM env);
 #define Apply		  STk_apply
 #define EVAL(x)	  	  (STk_eval((x), env))
 #define EVALCAR(x)	  (SYMBOLP(CAR(x)) ? *STk_varlookup((x),env,1):EVAL(CAR(x)))
-#define SET_EVAL_FLAG(v)  {STk_eval_flag = (v);}
 
 #define add_frame(formals, actuals, env) Cons(STk_makeframe((formals), (actuals)),\
 					      (env))
@@ -689,33 +766,29 @@ PRIMITIVE STk_expand_heap(SCM arg);			/* + */
   ------------------------------------------------------------------------------
 */
 
-#ifdef WIN32
-   extern FILE *STk_stdin, *STk_stdout, *STk_stderr;
-#else
-#  define STk_stdin  stdin
-#  define STk_stdout stdout
-#  define STk_stderr stderr
-#endif
+#define MAX_FPRINTF 1000       /* Max # of char produced by 1 call to STk_fprintf */
 
 void   STk_StdinProc(void);
-int    STk_file_data_available(FILE *f);
-int    STk_getc(FILE *f);
-int    STk_ungetc(int c, FILE *f);
-int    STk_putc(int c, FILE *f);
-int    STk_puts(char *s, FILE *f);
-int    STk_eof(FILE *f);
-char * STk_line_bufferize_io(FILE *f);
-
-#ifdef WIN32
+void   STk_fill_stdin_buffer(char *s);
+int    STk_getc(SCM port);
+int    STk_ungetc(int c, SCM port);
+int    STk_putc(int c, SCM port);
+int    STk_puts(char *s, SCM port);
+int    STk_eof(SCM port);
+int    STk_internal_flush(SCM port);
+int    STk_internal_char_readyp(SCM port);
+void   STk_close(SCM port);
+void   STk_fprintf(SCM port, char *format, ...);
+char * STk_line_bufferize_io(SCM port);
 void   STk_init_io(void);
-#endif
 
 #define Getc(f)         (STk_getc(f))
 #define Ungetc(c, f)    (STk_ungetc((c), (f)))
 #define Putc(c, f)      (STk_putc((c),   (f)))
 #define Puts(s, f)      (STk_puts((s),   (f)))
 #define Eof(f)		(STk_eof(f))
-
+#define Flush(f)        (STk_internal_flush(f))
+#define Fprintf		STk_fprintf
 
 /*
   ------------------------------------------------------------------------------
@@ -871,6 +944,7 @@ PRIMITIVE STk_module_imports(SCM module);
 PRIMITIVE STk_module_exports(SCM module);
 PRIMITIVE STk_module_env(SCM module);
 PRIMITIVE STk_module_symbols(SCM module);
+PRIMITIVE STk_get_selected_module(void);
 
 
 /*
@@ -976,6 +1050,7 @@ struct port_descr {		/* Slot order is important (see sport_descr) */
 };
 
 #define PORT_FILE(x)	((x)->storage_as.port.p->file)
+#define PORT_UNGETC(x)  ((x)->storage_as.port.ungetted_char)
 #define PORT_NAME(x)	((x)->storage_as.port.p->filename)
 #define PORT_FLAGS(x)	((x)->storage_as.port.p->flags)
 #define PORT_REVENT(x)	((x)->storage_as.port.p->read_event)
@@ -984,19 +1059,22 @@ struct port_descr {		/* Slot order is important (see sport_descr) */
 #define PORT_CLOSED 	01
 #define PIPE_PORT	02
 
-#define OUTP(p) 	(OPORTP(p) || OSPORTP(p))
-#define INP(p)  	(IPORTP(p) || ISPORTP(p))
+#define OUTP(p) 	(OPORTP(p) || OSPORTP(p) || OVPORTP(p))
+#define INP(p)  	(IPORTP(p) || ISPORTP(p) || IVPORTP(p))
 #define F_READ  	01
 #define F_WRITE 	02
 
 /* external vars */
 extern SCM STk_curr_iport, STk_curr_oport, STk_curr_eport, STk_eof_object;
 
-
+void 	  STk_close_file_port(SCM port);
 void 	  STk_freeport(SCM port);
 void 	  STk_init_standard_ports(void);
 SCM 	  STk_load_file(char *fname, int err_if_absent, SCM module);
 SCM 	  STk_Cfile2port(char *name, FILE *f, int type, int flags);
+SCM 	  STk_redirect_input(SCM port, SCM thunk);
+SCM 	  STk_redirect_output(SCM port, SCM thunk);
+SCM 	  STk_redirect_error(SCM port, SCM thunk);
 
 PRIMITIVE STk_input_portp(SCM port);
 PRIMITIVE STk_output_portp(SCM port);
@@ -1022,12 +1100,17 @@ PRIMITIVE STk_load(SCM filename, SCM module);
 
 
 /* Non standard functions */
+PRIMITIVE STk_with_error_to_file(SCM string, SCM thunk);
+PRIMITIVE STk_with_input_from_port(SCM port, SCM thunk);
+PRIMITIVE STk_with_output_to_port(SCM port, SCM thunk);
+PRIMITIVE STk_with_error_to_port(SCM port, SCM thunk);
 PRIMITIVE STk_format(SCM l, int len);
 PRIMITIVE STk_error(SCM l, int len);
 PRIMITIVE STk_try_load(SCM filename, SCM module);
 PRIMITIVE STk_open_file(SCM filename, SCM mode);
 PRIMITIVE STk_close_port(SCM port);
 PRIMITIVE STk_read_line(SCM port);
+PRIMITIVE STk_copy_port(SCM in, SCM out);
 PRIMITIVE STk_flush(SCM porSTk_t);
 PRIMITIVE STk_write_star(SCM expr, SCM port);
 
@@ -1039,6 +1122,8 @@ PRIMITIVE STk_autoloadp(SCM symbol, SCM module);
 PRIMITIVE STk_when_port_readable(SCM port, SCM closure);
 PRIMITIVE STk_when_port_writable(SCM port, SCM closure);
 
+PRIMITIVE STk_change_standard_ports(SCM in, SCM out, SCM err);	/* Undoc */
+	
 /*
   ------------------------------------------------------------------------------
   ----
@@ -1100,7 +1185,7 @@ PRIMITIVE STk_promisep(SCM promise);
   ----
   ------------------------------------------------------------------------------
 */
-SCM STk_readf(FILE *f, int case_significant);
+SCM STk_readf(SCM port, int case_significant);
 
 
 /*
@@ -1114,13 +1199,14 @@ SCM STk_readf(FILE *f, int case_significant);
 #define SIGHADGC		MAX_SYSTEM_SIG	    /* End of a GC run */
 #define MAX_SIGNAL		(MAX_SYSTEM_SIG+1)  
 
-extern int STk_sigint_counter;
 extern int STk_control_C;
 
 void      STk_handle_signal(int sig);
+void 	  STk_handle_sigint_signal(void);
 PRIMITIVE STk_add_signal_handler(SCM sig, SCM proc);
 PRIMITIVE STk_set_signal_handler(SCM sig, SCM proc);
 PRIMITIVE STk_get_signal_handlers(SCM sig);
+PRIMITIVE STk_send_signal(SCM sig);
 
 void 	  STk_init_signal(void);
 void 	  STk_mark_signal_table(void);
@@ -1128,10 +1214,6 @@ void 	  STk_mark_signal_table(void);
 void STk_ignore_signals(void);	/* Block all signals */
 void STk_allow_signals(void);  /* Restore signals as  before block_signals */
 void STk_signal_GC(void);
-
-
-#define STk_disallow_sigint() {STk_sigint_counter += 1;}
-#define STk_allow_sigint()    {STk_sigint_counter -= 1;}
 
 
 /*
@@ -1195,6 +1277,7 @@ PRIMITIVE STk_input_string_portp(SCM port);
 PRIMITIVE STk_output_string_portp(SCM port);
 PRIMITIVE STk_with_input_from_string(SCM string, SCM thunk);
 PRIMITIVE STk_with_output_to_string(SCM thunk);
+PRIMITIVE STk_with_error_to_string(SCM thunk);
 PRIMITIVE STk_read_from_string(SCM str);
 
 /*
@@ -1350,7 +1433,8 @@ void 	  STk_init_tracevar      (void);
 #else
 #  define ISDIRSEP(ch) 	 ((ch)=='\\' || (ch)=='/')
 #  define ISABSOLUTE(cp) (ISDIRSEP(*cp) || \
-			 (isalpha(*cp)&&*((cp)+1)==':')&&ISDIRSEP(*((cp)+1)))
+			 ((strlen(cp)>=3) && isalpha(*cp) &&(cp[1]==':') && \
+			 ISDIRSEP(cp[2])))
 #  define DIRSEP 	 '\\'
 #  define SDIRSEP  	 "\\"
 #  define PATHSEP	 ';'
@@ -1422,6 +1506,27 @@ PRIMITIVE STk_sort(SCM obj, SCM test);
 /*
   ------------------------------------------------------------------------------
   ----
+  ---- V P O R T . C
+  ----
+  ------------------------------------------------------------------------------
+*/
+
+struct vport_descr {		/* Slot order is important (see port_descr) */
+  FILE *file;			/* structure is (for now) identical to str ports */
+  int  flags;
+};
+
+
+void      STk_mark_virtual_port(SCM port);
+void      STk_free_virtual_port(SCM port);
+PRIMITIVE STk_open_input_virtual(SCM l, int len);
+PRIMITIVE STk_open_output_virtual(SCM l, int len);
+PRIMITIVE STk_input_virtual_portp(SCM port);
+PRIMITIVE STk_output_virtual_portp(SCM port);
+
+/*
+  ------------------------------------------------------------------------------
+  ----
   ---- U S E R I N I T . C
   ----
   ------------------------------------------------------------------------------
@@ -1442,6 +1547,7 @@ void STk_user_cleanup(void);
 #else
 #   define Extern extern
 #endif
+
 
 /* Remember if we are running the stk or snow interpreter */
 Extern int STk_snow_is_running;
@@ -1468,9 +1574,6 @@ Extern SCM STk_sym_lambda, STk_sym_quote,STk_sym_dot, STk_sym_imply,
 			  STk_sym_debug, STk_sym_else, STk_sym_quasiquote, 
            STk_sym_unquote, STk_sym_unquote_splicing, STk_sym_break;
 
-/* Dynamic-wind */
-Extern SCM STk_wind_stack;
-
 /* Global environment */
 Extern SCM STk_globenv;
 
@@ -1482,6 +1585,9 @@ Extern int STk_is_safe;
 
 /* The last variable defined with a DEFINE */
 Extern SCM STk_last_defined;
+
+/* Standard input/output/error ports */
+Extern SCM STk_stdin, STk_stdout, STk_stderr;
 
 #undef  Extern
 #define Truth 	  STk_truth

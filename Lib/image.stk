@@ -1,7 +1,7 @@
 ;;;;
 ;;;; i m a g e . s t k			--  Images functions for STk
 ;;;;
-;;;; Copyright © 1996-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1996-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -13,7 +13,7 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 15-Oct-1996 14:25
-;;;; Last file update: 28-Feb-1998 18:20
+;;;; Last file update: 22-Jan-1999 12:10
 
 (require "hash")
 

@@ -5,7 +5,7 @@ dnl	to configure the system for the local environment.
 
 AC_INIT(README)
 
-VERSION=3.99.3
+VERSION=3.99.4
 echo "VERSION=$VERSION" > VERSION
 
 # I have a lot of problems with cache. So ...
@@ -110,6 +110,7 @@ case $MACHINE in
   NetBSD-1*) OS=NETBSD1;;
   FreeBSD*)  OS=FREEBSD;;
   IRIX-5*)   OS=IRIX5;;
+  IRIX*-6*)  OS=IRIX5;;
   CYGWIN32*) OS=WIN32; FLAVOR=win; DFLGS="$DFLGS -DCYGWIN32";;
   *)         OS=unknown_system;;
 esac
@@ -286,6 +287,34 @@ fi
 echo "Html support: $html"
 
 ####
+#### BASE64 support
+####
+AC_ARG_ENABLE(base64, 
+	[	--enable-base64		Enable Base64  support],
+	base64="$enable_base64",
+	base64="yes")
+
+if test "$base64" = "yes" ; 
+then
+  EOBJ="$EOBJ base64.o"; EDFLGS="$EDFLGS -DUSE_BASE64"
+fi
+echo "Base64 support: $base64"
+
+####
+#### LOCALE support
+####
+AC_ARG_ENABLE(locale, 
+	[	--enable-locale		Enable locale  support],
+	locale="$enable_locale",
+	locale="yes")
+
+if test "$locale" = "yes" ; 
+then
+  EOBJ="$EOBJ locale.o"; EDFLGS="$EDFLGS -DUSE_LOCALE"
+fi
+echo "Locale support: $locale"
+
+####
 #### Pixmap support
 ####
 AC_ARG_ENABLE(pixmap, 
@@ -313,33 +342,6 @@ then
 fi
 echo "JPEG Images support: $jpegimages"
 
-####
-#### BASE64 support
-####
-AC_ARG_ENABLE(base64, 
-	[	--enable-base64		Enable Base64  support],
-	base64="$enable_base64",
-	base64="yes")
-
-if test "$base64" = "yes" ; 
-then
-  ETKOBJ="$ETKOBJ base64.o"; EDFLGS="$EDFLGS -DUSE_BASE64"
-fi
-echo "Base64 support: $base64"
-
-####
-#### LOCALE support
-####
-AC_ARG_ENABLE(locale, 
-	[	--enable-locale		Enable locale  support],
-	locale="$enable_locale",
-	locale="yes")
-
-if test "$locale" = "yes" ; 
-then
-  ETKOBJ="$ETKOBJ locale.o"; EDFLGS="$EDFLGS -DUSE_LOCALE"
-fi
-echo "Locale support: $locale"
 
 
 ##############################################################################
