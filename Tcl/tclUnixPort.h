@@ -38,10 +38,18 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #ifdef USE_DIRENT2_H
-#   include "../compat/dirent2.h"
+#  ifdef STk_CODE
+#     include "compat/dirent2.h"
+#  else
+#     include "../compat/dirent2.h"
+#  endif
 #else
 #   ifdef NO_DIRENT_H
+#     ifdef STk_CODE
+#	include "compat/dirent.h"
+#     else
 #	include "../compat/dirent.h"
+#     endif
 #   else
 #	include <dirent.h>
 #   endif
@@ -67,7 +75,11 @@
 #ifdef HAVE_UNISTD_H
 #   include <unistd.h>
 #else
-#   include "../compat/unistd.h"
+#  ifdef STk_CODE
+#    include "compat/unistd.h"
+#  else
+#    include "../compat/unistd.h"
+#  endif
 #endif
 #ifdef	USE_FIONBIO
 

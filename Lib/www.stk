@@ -16,7 +16,7 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date:  4-Oct-1996 16:14
-;;;; Last file update: 28-Feb-1998 13:53
+;;;; Last file update: 11-Apr-1998 11:51
 
 ;; 
 ;; This module needs a library of protocol getters & file viewers to be

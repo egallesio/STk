@@ -25,14 +25,14 @@ libfgmp.a:
 install: 
 
 install.libs: install
-	-if [ ! -d $(execdir) ] ; then mkdir -p $(execdir); fi
+	-if [ ! -d $(ardir) ] ; then mkdir -p $(ardir); fi
 	-if [ -f libfgmp.a ] ; then \
-	   $(CP) libfgmp.a $(execdir); \
-	   $(RANLIB) $(execdir)/libfgmp.a; \
+	   $(CP) libfgmp.a $(ardir); \
+	   $(RANLIB) $(ardir)/libfgmp.a; \
 	 fi
 	-if [ -f libgmp.a ]  ; then \
-	   $(CP) libgmp.a  $(execdir); \
-	   $(RANLIB) $(execdir)/libgmp.a; \
+	   $(CP) libgmp.a  $(ardir); \
+	   $(RANLIB) $(ardir)/libgmp.a; \
 	fi
 	-if [ ! -d $(incdir) ] ; then mkdir -p $(incdir); fi
 	$(CP) gmp.h $(incdir)

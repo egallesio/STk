@@ -3,7 +3,7 @@
 %
 %           Author: Erick Gallesio [eg@unice.fr]
 %    Creation date: ??-Nov-1993 ??:??
-% Last file update: 16-Dec-1997 19:09
+% Last file update: 18-Apr-1998 14:47
 %
 
 \section*{Introduction}
@@ -55,7 +55,7 @@ There are three types of comments in {\stk}:
 \begin{enumerate}
 \item a semicolon (;) indicates the start of a comment. 
 This kind of comment extends to the end of the line (as described in \rrrr).
-\item multi-lines comment use the classical lisp conventions: a comment 
+\item multi-lines comment use the classical Lisp convention: a comment 
   begins with \verb+#|+ and ends with \verb+|#+.
 \item  comments can also be introduced by \sharpsign$!$.  This
   extension is particularly useful for building {\stk} scripts. On most
@@ -88,14 +88,13 @@ This kind of comment extends to the end of the line (as described in \rrrr).
 \item[\tt\sharpsign.<expr>] is read as the evaluation of the Scheme
   expression {\tt <expr>}. The evaluation is done during the
   \ide{read} process, when the \var{\sharpsign.} is encountered.
-  Evaluation is done in the global environment.
+  Evaluation is done in the environment of the current module.
   \begin{scheme}
     (define foo 1)
     \sharpsign.foo                                 \lev 1
     '(foo \sharpsign.foo \sharpsign.(+ foo foo))   \lev (foo 1 2)
     (let ((foo 2))
        \sharpsign.foo)                             \lev 1
-    
   \end{scheme}
 \end{description}
 
@@ -353,7 +352,30 @@ keywords into account. On keywords, \ide{eq?} behaves like \ide{eqv?}.
 \proto{list?}{ obj}{procedure}
 \proto{list}{ \var{obj} \dotsfoo}{procedure}
 \proto{length}{ list}{procedure}
-\proto{append}{ list \dotsfoo}{procedure}
+\proto{append}{ list \dotsfoo}{procedure}}
+\saut
+\doc
+\end{entry}
+
+\begin{entry}{%
+\proto{append!}{ list \ldots}{procedure}}
+\saut
+
+Returns a list consisting of the elements of the first \var{list}
+followed by the elements of the other lists, as with \texttt{append}.
+The differenece with \texttt{append} is that the arguments are {\em
+  changed} rather than {\em copied}.
+\begin{scheme}
+  (append! '(1 2) '(3 4) '(5 6)) \lev '(1 2 3 4 5 6)
+  (let ((l1 '(1 2))
+        (l2 '(3 4))
+        (l3 '(5 6)))
+    (append! l1 l2 l3)
+    (list l1 l2 l3)) \lev ((1 2 3 4 5 6) (3 4 5 6) (5 6))
+\end{scheme}
+\end{entry}
+
+\begin{entry}{%
 \proto{reverse}{ list}{procedure}
 \proto{list-tail}{ list \vr{k}}{procedure}
 \proto{list-ref}{ list \vr{k}}{procedure}
@@ -384,6 +406,17 @@ have been deleted. The predicate used to test the presence of \var{obj} in
 (remq "foo" '("foo" "bar")) \ev ("foo" "bar")
 (remove "foo" '("foo" "bar")) 
                 \ev ("bar")
+\end{scheme}
+\end{entry}
+
+\begin{entry}{%
+\proto{last-pair}{ list}{procedure}}
+\saut
+Returns the last pair of \var{list}\footnote{\ide{Last-pair} was a standard 
+procedure in {\rthree}.}.
+\begin{scheme}
+(last-pair '(1 2 3))   \lev 3
+(last-pair '(1 2 . 3)) \lev (2 . 3)
 \end{scheme}
 \end{entry}
 
@@ -1275,15 +1308,11 @@ undefined. Otherwise, it returns the handler currently associated to
 
 \begin{entry}{%
 \proto{load}{ filename}{procedure}
-\proto{load}{ filename environment}{procedure}}
+\proto{load}{ filename module}{procedure}}
 \saut
 
 The first form is identical to \rrrr{}. The second one loads the
-content of \var{filename} in the given \var{environment}. So, the first
-form  is equivalent to 
-\begin{scheme}
-(load filename (global-environment))
-\end{scheme}
+content of \var{filename} in the given \var{module} environment.
 \begin{note}
   The \var{load} primitive has been extended to allow loading of
   object files, though this is not implemented on all systems.
@@ -1296,13 +1325,13 @@ form  is equivalent to
 
 \begin{entry}{%
 \proto{try-load}{ filename}{procedure}
-\proto{try-load}{ filename environment}{procedure}}
+\proto{try-load}{ filename module}{procedure}}
 \saut
 Tries to load the file named \var{filename}. If \var{filename} exists and is
 readable, it is loaded, and \ide{try-load} returns {\schtrue}. 
 Otherwise, the result of the call is {\schfalse}.
 The second form of \var{try-load} tries to load the content of \var{filename} 
-in the given \var{environment}. 
+in the given \var{module} environment. 
 \end{entry}
 
 \begin{entry}{%
@@ -1310,16 +1339,17 @@ in the given \var{environment}.
 \saut
 Defines \hyper{symbol}s as autoload symbols associated to file
 \var{filename}. 
-Fisrt evaluation of an autoload symbol will cause the loading of its
-associated file. \var{Filename} must provide a definition for the symbol which
+First evaluation of an autoload symbol will cause the loading of its
+associated file in the module environment in which the autoload was done. 
+\var{Filename} must provide a definition for the symbol which
 lead to its loading, otherwise an error is signaled.
 \end{entry}
 
 \begin{entry}{%
-\proto{autoload?}{ symbol}{procedure}}
+\proto{autoload?}{ symbol module}{procedure}}
 \saut
-Returns {\schtrue} if \var{symbol} is an autoload symbol; returns {\schfalse}
-otherwise.
+Returns {\schtrue} if \var{symbol} is an autoload symbol in  \var{module}
+environment ; returns {\schfalse} otherwise.
 \end{entry}
 
 \begin{entry}{%

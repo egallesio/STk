@@ -11,11 +11,11 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
-;;;; $Id: Entry.stklos 1.5 Sun, 01 Feb 1998 23:14:16 +0100 eg $
+;;;; $Id: Entry.stklos 1.6 Mon, 27 Apr 1998 13:39:00 +0000 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 28-Feb-1994 11:36
-;;;; Last file update: 29-Jan-1998 17:26
+;;;; Last file update: 27-Apr-1998 12:09
 
 (require "Basics")
 
@@ -75,6 +75,13 @@
 
 (define-method tk-constructor ((self <Entry>))
   Tk:entry)
+
+
+(define-method initialize ((self <Entry>) initargs)
+  (next-method)
+   ;; If a value is specified upon init, set it.
+  (let ((val (get-keyword :value initargs #f)))
+    (when val (initialize-value-slot self val))))
 
 ;;;
 ;;; bounding-box

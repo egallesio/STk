@@ -3,7 +3,7 @@
 #
 #            Author: Erick Gallesio [eg@unice.fr]
 #     Creation date:  2-Oct-1995 21:17  
-#  Last file update: 30-Oct-1996 12:17
+#  Last file update: 27-Apr-1998 12:23
 
 include ../config.make
 
@@ -20,7 +20,7 @@ install:
 	chmod 0755 $(HLP_DIR)/Img
 	$(CP) Img/*.gif $(HLP_DIR)/Img
 	chmod 0644  $(HLP_DIR)/Img/*.gif
-	../Src/test-stk -no -f make-link.stk $(HLP_DIR)
+#	../Src/test-stk -no -f make-link.stk $(HLP_DIR)
 
 install.libs:
 

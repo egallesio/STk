@@ -28,11 +28,11 @@ libevtcl.a: $(EVOBJ)
 install: all
 
 install.libs: install
-	-if [ ! -d $(execdir) ] ; then mkdir -p $(execdir); fi 
-	$(CP) libtcl.a $(execdir)
-	$(RANLIB) $(execdir)/libtcl.a
-	$(CP) libevtcl.a $(execdir)
-	$(RANLIB) $(execdir)/libevtcl.a
+	-if [ ! -d $(ardir) ] ; then mkdir -p $(ardir); fi 
+	$(CP) libtcl.a $(ardir)
+	$(RANLIB) $(ardir)/libtcl.a
+	$(CP) libevtcl.a $(ardir)
+	$(RANLIB) $(ardir)/libevtcl.a
 	-if [ ! -d $(incdir) ] ; then mkdir -p $(incdir); fi
 	$(CP) tcl.h tclInt.h tclRegexp.h $(incdir)
 

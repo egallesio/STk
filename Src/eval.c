@@ -16,7 +16,7 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: eval.c 1.10 Fri, 10 Apr 1998 14:05:25 +0200 eg $
+ * $Id: eval.c 1.10 Fri, 10 Apr 1998 12:05:25 +0000 eg $
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 23-Oct-1993 21:37

@@ -16,11 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- *  $Id: stk.h 1.11 Fri, 10 Apr 1998 09:13:18 +0200 eg $
+ *  $Id: stk.h 1.12 Wed, 22 Apr 1998 21:52:02 +0000 eg $
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 12-May-1993 10:34
- * Last file update:  9-Apr-1998 10:57
+ * Last file update: 22-Apr-1998 11:34
  *
  ******************************************************************************/
 
@@ -285,6 +285,7 @@ typedef struct obj* PRIMITIVE;
 #define OPORTP(x)	 TYPEP(x,tc_oport)
 #define ISPORTP(x)	 TYPEP(x,tc_isport)
 #define OSPORTP(x)	 TYPEP(x,tc_osport)
+#define SPORTP(x)        (ISPORTP(x)||OSPORTP(x))
 #define INTEGERP(x)	 TYPEP(x,tc_integer)
 #define BIGNUMP(x)	 TYPEP(x,tc_bignum)
 #define NUMBERP(x)	 (FLONUMP(x) || INTEGERP(x) || BIGNUMP(x))
@@ -314,6 +315,7 @@ typedef struct obj* PRIMITIVE;
 #define NOPORTP(x)	  NTYPEP(x,tc_oport)
 #define NISPORTP(x)	  NTYPEP(x,tc_isport)
 #define NOSPORTP(x)	  NTYPEP(x,tc_osport)
+#define NSPORTP(x)	  (!SPORTP(x))
 #define NINTEGERP(x)	  NTYPEP(x,tc_integer)
 #define NBIGNUMP(x)	  NTYPEP(x,tc_bignum)
 #define NNUMBERP(x)	  (NFLONUMP(x) && NINTEGERP(x) && NBIGNUMP(x))

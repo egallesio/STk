@@ -1,0 +1,70 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+  <head>
+    <title>Applets in STk</title>
+  </head>
+
+  <body bgcolor=white>
+    <h1><img src="Images/STk-tiny.gif">Applets in STk</h1>
+    <p>
+
+    <script language="STk">
+	(lambda (parent url)
+	  (let ((dir (dirname (expand-file-name 
+				((with-module URL url:filename) url)))))
+	    (load (string-append dir "/animate.stk"))))
+    </script>
+
+    <font size=+4>
+       <b>S-scape</b> allows the insertion of STk-code in a HTML page.
+       <P> Examples:
+       <ul>
+	<li> Animation: 
+	  <script language="STk">
+	  (lambda (parent url) 
+	    (let* ((dir (dirname (expand-file-name 
+				  ((with-module URL url:filename) url))))
+                   (img  (make-animation (string-append dir "/Images/mosaic*")
+			      		 parent 100)))
+		(set! *img* img)
+		(pack img :expand #t :fill "both")))
+          </script>
+        <p>
+	<li> Piece of embedded interface:
+	  <script language="STk">
+          (lambda (parent url)
+            (let ((w (scale (format #f "~A.scale" (widget-name parent))
+			   :label "delay between frames (ms)" :orient "hor"
+			   :to 300 :length 250))
+		  (b (button (format #f "~A.butt" (widget-name parent))
+			     :text "Stop animation" :foreground "red")))
+	      (w 'set 100)
+	      (tk-set! w :command (lambda (x)
+				     (change-animation-delay *img* (w 'get))))
+	      (tk-set! b :command (lambda ()
+				     (change-animation-delay *img* -1)))
+	      (pack w b :expand #t :fill "both")))
+	  </script>
+        <p>
+        <li> Embedded application:
+	<script language="STk">
+	(lambda (parent url)
+	  (let ((dir (dirname (expand-file-name 
+				((with-module URL url:filename) url)))))
+	    (load (string-append dir "/puzzle.stk"))
+	    (display-puzzle parent)))
+
+	</script>
+      </ul>
+
+    </font>
+    <hr>
+    <A HREF="main-en.html"><img src="Images/backward.gif" align=middle> Top</A>
+    <hr>
+    <address><a href="mailto:eg@unice.fr">Erick Gallesio</a></address>
+<!-- Created: Mon Mar  9 13:16:50 CET 1998 -->
+<!-- hhmts start -->
+Last modified: Tue Mar 10 21:37:14 CET 1998
+<!-- hhmts end -->
+  </body>
+</html>

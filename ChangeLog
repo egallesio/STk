@@ -1,11 +1,88 @@
+1998-04-30  Erick Gallesio  <eg@unice.fr>
+
+	* STk-3.99.1 Release
+
+	* STklos/stklos.stk (ensure-class): Inclusion of the Metaclass 
+	init-keywords patch from J-M kubek <kubek@insa-tlse.fr>, which 
+	allows to initialize some slots of a class when declaring it.
+
+	* Lib/bigloo.stk (module): The compatibility function between
+ 	bigloo modules and STk modules was not updated to the current
+ 	version of modules. Bug signaled by J-M kubek <kubek@insa-tlse.fr>
+
+	* STklos/stklos.stk (shallow-clone): usage of
+ 	class-definition-name instead of slot-definition-name in *-clone
+ 	functions. Bug signaled by Walter C. Pelissero
+ 	<wcp@luppolo.lpds.sublink.org>
+
+	* Tcl/tclUnixPort.h: 
+	* Tcl/Int.h: Path correction for accessing compatibility
+ 	files. This was needed for SunOS 4.3.x.
+
+	* Extensions/Makefile.in : Don't trap errors when linking to see
+	that there are problems (particularly for Solaris).
+
+1998-04-27  Erick Gallesio  <eg@unice.fr>
+
+	* Installation process has been updated.
+
+	* STklos/Tk/Button.stklos: The variable associated to a radio
+ 	button or check button was not using the environment.
+
+	* STklos/Tk/Text.stklos:
+	* STklos/Tk/Entry.stklos:
+	* STklos/Tk/Scale.stklos:
+	* STklos/Tk/Basic.stklos: New function: initialize-value-slot
+ 	which allow to initialize this slot even if the state of the
+ 	widget is disabled. Idea from Walter C. Pelissero
+ 	<wcp@luppolo.lpds.sublink.org>
+	
+
+1998-04-26  Erick Gallesio  <eg@unice.fr>
+
+	* Src/toplevel.c: Correction of a long standing bug which causes
+ 	background STk to take all the CPU in some circumstances. It was
+ 	hard to track
+
+1998-04-22  Erick Gallesio  <eg@unice.fr>
+
+	* Src/tcl-glue.c (STk_valid_environment): Various problems
+ 	corrected with the new :environment options which is available on
+ 	widgets now.
+
+	* Src/port.c (STk_flush): Bug correction. Trying to flush a string
+ 	port was erroneous. Bug signalled by Walter C. Pelissero
+ 	<wcp@luppolo.lpds.sublink.org>
+
+Mon Apr 20 20:52:21 1998  Erick Gallesio  <eg@unice.fr>
+
+	* Doc/Manual/repl-display-prompt.n: New documentation file.
+
+	* Doc/Reference/*: Documentation update.
+
+Mon Apr 13 12:24:19 1998  Erick Gallesio  <eg@unice.fr>
+
+	* Demos/Html-demos/*: Adding the English demos which were
+ 	accidentally forgotten from the previous release
+
+
+Sun Apr 12 14:13:05 1998  Erick Gallesio  <eg@unice.fr>
+
+	* Help/*: Pages were not regenerated and correspond to an old
+ 	version.
+
+	* configure.in : Various correction in the installation process
+ 	which was wrong. The spec file for RPM and the STk.prj are now
+ 	auto generated at configuration time
+
 Fri Apr 10 09:01:17 1998  Erick Gallesio  <eg@unice.fr>
 
 	* STk-3.99.0 release
 
 Wed Apr  8 17:02:26 1998  Erick Gallesio  <eg@unice.fr>
 
-	* Src/*.c: Correction: stderr (instead of STk_stderr) was incorrectly 
-	used in some places.
+	* Src/*.c: Correction: stderr (instead of STk_stderr) was
+ 	incorrectly used in some places.
 	
 	* Src/Stack: Code was absolutely incorrect for machine which don't
  	support FFI.
@@ -215,7 +292,7 @@ Thu Jan  8 12:27:44 1998  Erick Gallesio  <eg@unice.fr>
 
 Sat Jan  3 16:50:55 1998  Erick Gallesio  <eg@unice.fr>
 
-	* STk.prj: STk.prj has been completely redefines. Now PRCS
+	* STk.prj: STk.prj has been completely redefined. Now PRCS
  	versions are in sync with STk version. 
 
 Thu Jan  1 13:18:22 1998  Erick Gallesio  <eg@unice.fr>

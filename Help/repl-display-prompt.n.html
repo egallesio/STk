@@ -1,0 +1,33 @@
+<HTML><HEAD><TITLE>STk procedure - repl-display-prompt manual page</TITLE></HEAD>
+<BR>
+<BODY bgcolor = #c3ffc3>
+<H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageGreen.gif"> repl-display-prompt, repl-display-result</H2>
+<I>Display a prompt/result in
+interactive mode</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<H3><A NAME="M2">SYNOPSIS</A></H3>
+(<B>repl-display-prompt </B><I>module</I>)<BR>
+(<B>repl-display-result </B><I>value</I>)<BR>
+<H3><A NAME="M3">DESCRIPTION</A></H3>
+<B>Repl-display-prompt</B> is called by the interactive toplevel loop 
+before reading a <I>sexpr</I>. This procedure is called with one parameter:
+the selected module in the toplevel loop.
+<P>
+A simple form of this procedure could be:
+
+<PRE>(define (repl-display-prompt module)
+  (let ((p (current-error-port)))
+    (format p &quot;~A&gt; &quot; (module-name module))
+    (flush p)))</PRE>
+<P>
+<B>Repl-display-result</B> is called by the interactive toplevel loop 
+after the evaluation of a <I>sexpr</I>. This procedure is called with the 
+result of this evaluation as parameter.
+
+<P>
+A simple form, mimicking the MIT Scheme way of presenting results, could be:
+
+<PRE>(define (repl-display-result value)
+  (format #t &quot;\\n;Value: ~S\\n\\n&quot; value))</PRE>
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif"><P>
+<A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookGreen.gif"> Back to the <B>STk</B> main page</A>
+</BODY></HTML>

@@ -16,11 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: env.c 1.4 Fri, 23 Jan 1998 18:46:19 +0100 eg $
+ * $Id: env.c 1.5 Mon, 20 Apr 1998 20:15:01 +0000 eg $
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 23-Oct-1993 21:37
- * Last file update: 23-Jan-1998 09:57
+ * Last file update: 15-Apr-1998 17:43
  */
 
 #include "stk.h"
@@ -251,6 +251,8 @@ PRIMITIVE STk_symbol_boundp(SCM x, SCM env)
   tmp = *STk_varlookup(x, env->storage_as.env.data, FALSE);
   return (tmp == UNBOUND) ? Ntruth : Truth;
 }
+
+
 
 PRIMITIVE STk_the_environment(SCM args, SCM env, int len)
 {

@@ -1,0 +1,39 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+  <head>
+    <title>STklos Example</title>
+  </head>
+
+  <body bgcolor=white>
+    <h1><img src="Images/STk-tiny.gif">STklos Example</h1>
+    <font size=+6>
+      Launch an <b>xterm</b>  to test this <i>program</i> with 
+      <ul>
+        <li> the non-installed version of STk
+            (<a expr=(system "xterm -e test-stk &")>test-stk</a>)
+        <li> the installed version of STk
+             (<a expr=(system "xterm -e stk &")>stk</a>)
+      </ul>
+     </font>
+     <pre>
+      (require "Tk-classes")
+      (define l (make &lt;Button&gt;
+                      :text    "Hello, world"
+                      :font    "10x20"
+                      :command (lambda () (exit 0))))
+      (pack l)
+     </pre>
+    <font size=+6>
+    <b>Cut</b> the 3 expressions above and <b>Paste</b> them in the xterm 
+    window as soon as it appears.
+    </font>
+    <hr>
+    <A HREF="main-en.html"><img src="Images/backward.gif" align=middle> Top</A>
+    <hr>
+    <address><a href="mailto:eg@unice.fr">Erick Gallesio</a></address>
+<!-- Created: Mon Mar  9 12:30:47 CET 1998 -->
+<!-- hhmts start -->
+Last modified: Mon Apr 13 10:13:04 CEST 1998
+<!-- hhmts end -->
+  </body>
+</html>

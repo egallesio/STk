@@ -1,0 +1,69 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+  <head>
+    <title>Composite Widgets</title>
+  </head>
+
+  <body bgcolor="white">
+  <script language="STk">
+      (lambda (parent url)
+        (let ((dir (dirname (expand-file-name 
+				  ((with-module URL url:filename) url)))))
+           (chdir dir)))
+  </script>
+
+
+    <h1><img src="Images/STk-tiny.gif">Composite Widgets</h1>
+    <font size=+4>
+        A composite widget is made by assembling several widgets (simple
+        or even composite widgets):
+    </font>
+
+    <pre>
+     (define le (make &lt;Labeled-entry&gt; :value 50 :title "Valeur:"))
+    </pre>
+
+    <font size=+4>
+    defines <tt>le</tt> as an instance of the <tt>&lt;Labeled-entry&gt;</tt>
+    class. This object, on a screen, gives:
+    <p>
+    <center>
+      <IMG SRC="Images/compo-all.gif"><P>
+    </center>
+    <pre>
+
+
+    </pre>
+    In fact, this widget is composed if three Tk basic widgets: a
+    <i>frame</i>, a <i>label</i> an an <i>entry</i>:
+    <pre>
+
+    </pre>
+    <center>
+      <IMG SRC=Images/frame.gif> + <IMG SRC=Images/label.gif> + <IMG SRC=Images/entry.gif><P>
+    </center>
+
+    <pre>
+
+    </pre>
+    <ul>
+    <li> A demonstration of some composite widgets can be launched from here with:
+      <ul> 
+        <li> the non-installed version of STk 
+	     (<a expr=(system "test-stk -f stklos-widgets.stklos&")><tt>test-stk</tt></a>)
+        <li> the installed version of STk
+             (<a expr=(system "stk -f stklos-widgets.stklos &")><tt>stk</tt></a>)<p>
+      </ul>
+    <li> The complete <a href="Lentry.stklos">code</a> of the <tt>&lt;Labeled-entry&gt;</tt> class is approximatively 60 lines.
+    </ul>
+    </font>
+    <hr>
+    <A HREF="main-fr.html"><img src="Images/backward.gif" align=middle> Retour</A>
+    <hr>
+    <address><a href="mailto:eg@unice.fr">Erick Gallesio</a></address>
+<!-- Created: Tue Mar 10 18:42:29 CET 1998 -->
+<!-- hhmts start -->
+Last modified: Mon Apr 13 12:08:18 CEST 1998
+<!-- hhmts end -->
+  </body>
+</html>

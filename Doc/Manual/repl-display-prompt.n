@@ -1,0 +1,45 @@
+'\" Color=Green
+'\"
+'\" 
+.so STk-man.macros
+.TH repl-display-prompt n 3.99 STk "STk procedure"
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+repl-display-prompt, repl-display-result \- Display a prompt/result in
+interactive mode
+.SH SYNOPSIS
+(\fBrepl-display-prompt \fImodule\fR)
+.br
+(\fBrepl-display-result \fIvalue\fR)
+.BE
+
+.SH DESCRIPTION
+.PP
+\fBRepl-display-prompt\fR is called by the interactive toplevel loop 
+before reading a \fIsexpr\fR. This procedure is called with one parameter:
+the selected module in the toplevel loop.
+.LP
+A simple form of this procedure could be:
+
+.CS
+(define (repl-display-prompt module)
+  (let ((p (current-error-port)))
+    (format p "~A> " (module-name module))
+    (flush p)))
+.CE
+
+
+.PP
+\fBRepl-display-result\fR is called by the interactive toplevel loop 
+after the evaluation of a \fIsexpr\fR. This procedure is called with the 
+result of this evaluation as parameter.
+
+.LP
+A simple form, mimicking the MIT Scheme way of presenting results, could be:
+
+.CS
+(define (repl-display-result value)
+  (format #t "\\n;Value: ~S\\n\\n" value))
+.CE
+

@@ -1,5 +1,5 @@
 #
-# Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+# Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 # 
 #
 # Permission to use, copy, and/or distribute this software and its
@@ -12,7 +12,7 @@
 #
 #           Author: Erick Gallesio [eg@kaolin.unice.fr]
 #    Creation date:  6-Mar-1994 15:49
-# Last file update: 10-Oct-1996 09:35
+# Last file update: 30-Apr-1998 10:57
 
 include ../config.make
 
@@ -26,7 +26,7 @@ CFLAGS= $(SH_CCFLAGS) $(STKCFLAGS) $(DFLGS) -DUSE_TK @DEFS@ \
 .SUFFIXES: .$(SH_SUFFIX) .o .c
 
 .o.$(SH_SUFFIX): 
-	-$(SH_LOADER) $(SH_LDFLAGS) $*.$(SH_SUFFIX) $<
+	$(SH_LOADER) $(SH_LDFLAGS) $*.$(SH_SUFFIX) $<
 	if test -f a.out  ;then mv a.out $*.$(SH_SUFFIX); fi
 
 

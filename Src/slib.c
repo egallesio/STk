@@ -15,7 +15,7 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: slib.c 1.6 Fri, 10 Apr 1998 14:05:25 +0200 eg $
+ * $Id: slib.c 1.6 Fri, 10 Apr 1998 12:05:25 +0000 eg $
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: ??-Oct-1993 ??:?? 

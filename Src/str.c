@@ -16,7 +16,7 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: str.c 1.1 Sat, 03 Jan 1998 13:46:25 +0100 eg $
+ * $Id: str.c 1.1 Sat, 03 Jan 1998 12:46:25 +0000 eg $
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: ??????

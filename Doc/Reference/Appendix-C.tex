@@ -3,7 +3,7 @@
 %
 %           Author: Erick Gallesio [eg@unice.fr]
 %    Creation date: 22-May-1994 22:13
-% Last file update: 21-Jan-1996 17:35
+% Last file update: 22-Apr-1998 11:04
 %
 
 \section{Introduction}
@@ -388,8 +388,8 @@ So:
 
 These rules are used to compute a linear order for a class and all its
 superclasses, from most specific to least specific.  This order is called the
-``class precedence list'' of the class. Given those two rules, we can claim
-that the initial form for the {\tt x} slot of previous example is 2 since the
+``class precedence list'' of the class. Given these two rules, we can claim
+that the initial form for the {\tt x} slot of previous example is 1 since the
 class {\tt X} is placed before {\tt Y} in class precedence list of {\tt Z}.
 
 This two rules are not always enough to determine a unique order, however, but
@@ -517,7 +517,7 @@ the list of applicable methods. This is done by using the special form
 \begin{scheme}
 (define-method Test((a <integer>))  (cons 'integer (next-method)))
 (define-method Test((a <number>))   (cons 'number  (next-method)))
-(define-method Test(a)		    (list 'top))
+(define-method Test(a)              (list 'top))
 \end{scheme}
 
 With those definitions,

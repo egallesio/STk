@@ -16,12 +16,11 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date:  6-Oct-1996 17:12
-;;;; Last file update: 28-Feb-1998 11:33
+;;;; Last file update: 11-Apr-1998 11:50
 ;;;;
 
 (require "image")
 (select-module WWW)
-
 
 ;=============================================================================
 ;

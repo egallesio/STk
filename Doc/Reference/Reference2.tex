@@ -3,7 +3,7 @@
 %
 %           Author: Erick Gallesio [eg@unice.fr]
 %    Creation date: ??-Nov-1993 ??:??
-% Last file update:  6-Apr-1998 11:25
+% Last file update: 20-Apr-1998 11:58
 %
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -342,11 +342,11 @@ they are automatically exported.
 \end{entry}
 
 \begin{entry}{%
-\proto{with-module}{ module \hyperi{expr} \hyperii{expr} \ldots} {syntax}}
+\proto{with-module}{ name \hyperi{expr} \hyperii{expr} \ldots} {syntax}}
 \saut
 
 Evaluates the expressions of \hyperi{expr} \hyperii{expr} \ldots in
-the \var{module} environment. \var{Module} must have been created
+the environment of module \var{name}. Module \var{name} must have been created
 previously by a \ide{define-module}. The result of \ide{with-module}
 is the result of the evaluation of the last \hyper{expr}.
 
@@ -373,6 +373,34 @@ Returns the current-module.
      (cons (eq? (current-module) (find-module 'M))
            (eq? (current-module) (find-module 'STk))))
        \lev (\schtrue . \schfalse)
+\end{scheme}
+\end{entry}
+
+\begin{entry}{%
+\proto{select-module}{ name} {syntax}}
+\saut
+
+Evaluates the expressions which follows in module \var{name}
+environment.  Module \var{name} must have been created previously by a
+\ide{define-module}. The result of \ide{select-module} is undefined.
+\ide{Select-module} is particularly useful when debugging since it
+allows to place toplevel evaluation in a particular module. The
+following transcript shows an usage of
+\ide{select-module}\footnote{This transcript uses the default value for the 
+  function \texttt{repl-display-prompt} (see page \pageref{repl-display-prompt})
+  which displays the name of the current module in the prompt.}:
+
+\begin{scheme}
+STk> (define foo 1)
+STk> (define-module bar
+        (define foo 2))
+STk> foo
+1
+STk> (select-module bar)
+bar> foo
+2
+bar> (select-module STk) 
+STk> 
 \end{scheme}
 \end{entry}
 
@@ -691,9 +719,6 @@ which does not exist).
 \proto{glob}{ \vri{pattern} \vrii{pattern} \dotsfoo} {procedure}}
 \saut
 
-%%%%%%%%%%%%%%   Irgendwann h"alt Gott seine Arme auf:
-%%%%%%%%%%%%%%       BIS HIERHIN UND NICHT WEITER!
-
 The code for \ide{glob} is taken from the Tcl library. It performs
 file name ``globbing'' in a fashion similar to the csh shell.
 \ide{Glob} returns a list of the filenames that match at least one of
@@ -725,6 +750,29 @@ Second, glob only returns the names of files that actually exist; in csh no
 check for existence is made unless a pattern contains a ?, \etoile, or  
 \leftbracket\rightbracket
 construct.
+\end{entry}
+
+\begin{entry}{%
+\proto{remove-file}{ string} {procedure}}
+\saut
+Removes the file whose path name is given in \var{string}.
+The result of \ide{remove-file} is undefined.
+\end{entry}
+
+\begin{entry}{%
+\proto{rename-file}{ \vri{string} \vrii{string}} {procedure}}
+\saut
+Renames the file whose path-name is contained in \vri{string} in the path 
+name given by \vrii{string}. The result of \ide{rename-file} is undefined.
+\end{entry}
+
+\begin{entry}{%
+\proto{temporary-file-name}{ string} {procedure}}
+\saut
+
+Generates a unique temporary file name. The value returned by
+\ide{temporary-file-name} is the newly generated name of {\schfalse}
+if a unique name cannot be generated.
 \end{entry}
 
 \begin{entry}{%

@@ -15,7 +15,7 @@
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 10-Oct-1995 07:55
- * Last file update: 10-Apr-1998 10:19
+ * Last file update: 26-Apr-1998 18:41
  *
  */
 

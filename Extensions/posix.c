@@ -16,7 +16,7 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: posix.c 1.1 Sat, 03 Jan 1998 13:46:25 +0100 eg $ 
+ * $Id: posix.c 1.1 Sat, 03 Jan 1998 12:46:25 +0000 eg $ 
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 14-Mar-1995 20:14

@@ -1,0 +1,69 @@
+<HTML><HEAD><TITLE>STk procedure - make-image manual page</TITLE></HEAD>
+<BR>
+<BODY bgcolor = #c3ffc3>
+<H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageGreen.gif"> create-image, find-image, change-image, free-image </H2>
+<I>an easier way to manipulate Tk images
+</I><P><IMG ALIGN=TOP SRC="./Img/line-red.gif">
+<H3><A NAME="M2">PACKAGE</A></H3>
+Tk
+
+<H3><A NAME="M3">SYNOPSIS</A></H3>
+(<B>make-image</B> key <I>create image ?options?</I>)<BR>
+(<B>find-image</B> key)<BR>
+(<B>change-image</B> key  <I>create image options</I>)<BR>
+(<B>free-image</B> key)<BR>
+<H3><A NAME="M4">DESCRIPTION</A></H3>
+<B>make-image</B> is a STk procedure which simplifies Tk images
+creation by providing a homogeneous way to create an image,
+independently of its coding format.  The first argument of
+<B>make-image</B> is a string which identifies the image; if an image
+with this key has been already loaded in memory, it will not be loaded
+again and <B>make-image</B> will return it. If no option is given,
+the identifying image key is taken as a file name (the file is searched 
+using the variable <B>*image-path*</B>, which must contain a set of 
+prefix pathnames to prepend to the given filename).
+If options are passed to the <B>make-image</B>  procedure they must follow
+the convention of the options passed in <B><A HREF=../Help/./image.n.html>image create</A></B> just after the
+image format. If the image cannot be created, this procedure returns <B>#f</B>.
+<P>
+Hereafter is a simple usage of this procedure:
+<P>
+<PRE>(require &quot;image&quot;)
+(require &quot;pixmap&quot;)
+
+(define img1 (make-image &quot;a pixmap&quot; :file &quot;exit.xpm&quot;))
+(define img2 (make-image &quot;a bitmap&quot; :file &quot;default.xbm&quot;))
+(define img3 (make-image &quot;a pixmap&quot;))
+(define img4 (make-image &quot;x.xpm&quot;))</PRE>
+In this case, <I>img3</I> is identical to <I>img1</I> since they use the same key.
+<I>Img4</I> is the image associated to the file &quot;x.xpm&quot; found according to 
+the  *image-path* varaiable.
+
+<P>
+<B>find-image</B> returns the image associated to the given <I>key</I> or 
+<B>#f</B> if this image has not been loaded yet.
+
+<P>
+<B>change-image</B> changes the content of an image previously created with
+<B>make-image</B>. Options are the identical to <B>make-image</B>
+options.
+<P>
+Example:
+<PRE>(button '.b1 :image img1)
+(button '.b2 :image img2)
+(button '.b3 :image img1) ; .b3 content is identical to .b1
+(pack .b1 .b2 .b3)
+(change-image &quot;a pixmap&quot; :file &quot;default.xbm&quot;)</PRE>
+After the execution of <B>change-image</B>, both <I>.b1</I> and <I>.b3</I>
+graphical contents are changed.
+
+<P>
+<B>delete-image</B> removes the image with the given key of the cache.
+The memory used by this image is returned to the system. See the 
+discussion about how this image is displayed in <B><A HREF=../Help/./image.n.html>image delete</A></B>.
+
+<H3><A NAME="M5">SEE ALSO</A></H3>
+<B><A HREF="./bitmap.n.html">bitmap</A></B>, <B><A HREF="./image.n.html">image</A></B>, <B><A HREF="./jpeg.n.html">jpeg</A></B>, <B><A HREF="./photo.n.html">photo</A></B>, <B><A HREF="./pixmap.n.html">pixmap</A></B>
+<P><IMG ALIGN=TOP SRC="./Img/line-red.gif"><P>
+<A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookGreen.gif"> Back to the <B>STk</B> main page</A>
+</BODY></HTML>

@@ -16,11 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: port.c 1.5 Sun, 22 Mar 1998 17:16:09 +0100 eg $
+ * $Id: port.c 1.6 Wed, 22 Apr 1998 21:52:02 +0000 eg $
  *
  *            Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 17-Feb-1993 12:27
- * Last file update: 21-Mar-1998 22:25
+ * Last file update: 22-Apr-1998 11:44
  *
  */
 #ifndef WIN32
@@ -715,9 +715,11 @@ PRIMITIVE STk_flush(SCM port)
   int code;
 
   port = verify_port("flush", port, F_WRITE|F_READ);
-  code = fflush(PORT_FILE(port));
 
-  if (code == EOF) Err("flush: cannot flush buffer", port);
+  if (! SPORTP(port)) {
+    if (fflush(PORT_FILE(port)) == EOF)
+      Err("flush: cannot flush buffer", port);
+  }
 
   return UNDEFINED;
 }

@@ -20,7 +20,7 @@
 ;;;; Original package is GPL'ed. However, code and way to implement
 ;;;; multiple windows and mdw_lib are completely different.
 ;;;;
-;;;; $Id: Multiwin.stklos 1.7 Fri, 10 Apr 1998 09:13:18 +0200 eg $
+;;;; $Id: Multiwin.stklos 1.7 Fri, 10 Apr 1998 07:13:18 +0000 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date:  5-Apr-1996 18:04

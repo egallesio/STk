@@ -19,7 +19,7 @@
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date:  8-Jul-1997 10:33
- * Last file update: 10-Apr-1998 10:48
+ * Last file update: 26-Apr-1998 18:42
  *
  */
 
@@ -174,7 +174,7 @@ Tcl_ListObjReplace(interp, listPtr, first, count, objc, objv)
     /* Tcl_DecrRefCount(objs); */
   }		       
   else {
-    panic("EG: Problem in Tcl_ListObjReplace");
+    panic("Problem in Tcl_ListObjReplace");
   }
 }
 

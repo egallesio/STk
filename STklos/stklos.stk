@@ -12,11 +12,11 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
-;;;; $Id: stklos.stk 1.19 Fri, 10 Apr 1998 14:05:25 +0200 eg $
+;;;; $Id: stklos.stk 1.21 Thu, 30 Apr 1998 14:16:40 +0000 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 20-Feb-1994 21:09
-;;;; Last file update: 10-Apr-1998 10:51
+;;;; Last file update: 30-Apr-1998 15:47
 
 (when (provided? "stklos") 
   (error "STklos already initialized."))
@@ -186,10 +186,11 @@
        ',slots							; slots 
        ,(or (get-keyword :metaclass options #f)			; metaclass
 	    `(ensure-metaclass ',supers (the-environment)))
-       (the-environment)))					; environment
+       (the-environment)					; environment
+       ,@options))
 
 ;==== Ensure-class
-(define (ensure-class name supers slots metaclass env)
+(define (ensure-class name supers slots metaclass env . options)
   (let ((supers (if (null? supers) 
 		    (list (%find-class '<object> env))
 		    (map (lambda (x) (%find-class x env)) supers))))
@@ -204,8 +205,8 @@
     
     ;; Everything seems correct, build the class
     (let ((old (%find-class name env #f))
-	  (cls (make metaclass :dsupers supers :slots slots 
-		     :name name :environment env)))
+	  (cls (apply make metaclass :dsupers supers :slots slots 
+		      :name name :environment env options)))
       (when old (class-redefinition old cls))
       (set-symbol! name cls env)
       cls)))
@@ -478,7 +479,7 @@
 
 (define-method shallow-clone ((self <object>))
   (let ((clone (%allocate-instance (class-of self)))
-	(slots (map class-definition-name
+	(slots (map slot-definition-name
 		    (class-slots (class-of self)))))
     (for-each (lambda (slot)
 		(if (slot-bound? self slot)
@@ -488,7 +489,7 @@
 
 (define-method deep-clone  ((self <object>))
   (let ((clone (%allocate-instance (class-of self)))
-	(slots (map class-definition-name
+	(slots (map slot-definition-name
 		    (class-slots (class-of self)))))
     (for-each (lambda (slot)
 		(if (slot-bound? self slot)
@@ -509,7 +510,6 @@
 ;==== Class-redefinition
 
 (define-method class-redefinition ((old <Class>) (new <Class>))
-  (DEBUG "Redefinition of class ~S" old)
   ;; Work on direct methods:
   ;;		1. Remove accessor methods from the old class 
   ;;		2. Patch the occurences of old in the specializers by new

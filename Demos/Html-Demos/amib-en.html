@@ -1,0 +1,63 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+  <head>
+    <title>Building Interfaces in STklos</title>
+  </head>
+
+  <body bgcolor=white>
+  <script language="STk">
+      (lambda (parent url)
+        (let ((dir (dirname (expand-file-name 
+				  ((with-module URL url:filename) url)))))
+           (chdir dir)))
+  </script>
+
+
+
+    <h1><img src="Images/STk-tiny.gif">
+	AMIB: <font color=red>A</font>
+	      <font color=red>M</font>ini
+	      <font color=red>I</font>nterface 
+	      <font color=red>B</font>uilder</h1>
+    <font size=+4>
+    <center>
+    <a href="Images/amib.gif"><img src="Images/amib-tiny.gif"></a>
+    </center>
+    <ul>
+    </ul><p>
+    <I>Objective</I>: Building Graphical Interfaces interactively<P> 
+      <ul>
+	<li> Written in STklos<P>
+	<li> Provides 
+	  <ul>
+	    <li> Interactive building of GUI;
+	    <li> Save/Restore of built interfaces.<P>
+	  </ul>
+	<li> Uses the STklos Meta Object Protocol<P>
+	<li> Code  
+	   <ul> 
+	   <li> generic (adding a new widget just consists in adding a line in 
+		the program)
+	   <li> just a demo (less than <B>600 lines</B> of code!!)<p>
+	   </ul>
+
+	<li> Launch a Demo of AMIB with
+	<ul>
+        <li> the non-installed version of STk
+	     (<a expr=(system "test-stk -f amib.stklos&")><tt>test-stk -f amib.stklos&</tt></a>)
+        <li> the installed version of STk
+             (<a expr=(system "stk -f amib.stklos &")><tt>stk -f amib.stklos&</tt></a>)
+        </ul>
+      </ul>
+      </font>
+    </font>
+    <hr>
+      <A HREF="main-en.html"><img src="Images/backward.gif" align=middle> Top</A>
+    <hr>
+    <address><a href="mailto:eg@unice.fr">Erick Gallesio</a></address>
+<!-- Created: Tue Mar 10 17:40:16 CET 1998 -->
+<!-- hhmts start -->
+Last modified: Mon Apr 13 12:00:21 CEST 1998
+<!-- hhmts end -->
+  </body>
+</html>

@@ -14,7 +14,7 @@
  * permission of the copyright holder.  
  * This software is provided ``as is'' without express or implied warranty.
  *
- * $Id: values.c 1.1 Fri, 10 Apr 1998 09:13:18 +0200 eg $
+ * $Id: values.c 1.1 Fri, 10 Apr 1998 07:13:18 +0000 eg $
  *
  *            Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date:  8-Mar-1998 10:19

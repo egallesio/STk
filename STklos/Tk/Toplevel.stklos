@@ -11,7 +11,7 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
-;;;; $Id: Toplevel.stklos 1.7 Tue, 03 Mar 1998 23:48:24 +0100 eg $
+;;;; $Id: Toplevel.stklos 1.7 Tue, 03 Mar 1998 22:48:24 +0000 eg $
 ;;;;
 ;;;;	       Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;	Creation date:	5-Mar-1994 17:19

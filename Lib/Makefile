@@ -3,7 +3,7 @@
 #
 #            Author: Erick Gallesio [eg@unice.fr]
 #     Creation date: ???
-#  Last file update: 28-Oct-1997 21:23
+#  Last file update: 30-Apr-1998 16:28
 
 
 include ../config.make
@@ -29,7 +29,7 @@ install:
 	chmod 0644 $(STK_IMAGES)/*
 	$(CP) Match/*.scm $(STK_STK_MATCH)
 	chmod 0644 $(STK_STK_MATCH)/*
-
+	chmod 0755 $(SITE_SCHEME) $(STK_IMAGES) $(STK_STK) $(STK_STK_MATCH)
 install.libs:
 
 clean:

@@ -37,17 +37,29 @@
 
 #include <ctype.h>
 #ifdef NO_LIMITS_H
-#   include "../compat/limits.h"
+#  ifdef STk_CODE
+#    include "compat/limits.h"
+#  else
+#     include "../compat/limits.h"
+#  endif
 #else
 #   include <limits.h>
 #endif
 #ifdef NO_STDLIB_H
-#   include "../compat/stdlib.h"
+#  ifdef STk_CODE
+#    include "compat/stdlib.h"
+#  else
+#    include "../compat/stdlib.h"
+#  endif
 #else
 #   include <stdlib.h>
 #endif
 #ifdef NO_STRING_H
-#include "../compat/string.h"
+#  ifdef STk_CODE
+#    include "compat/string.h"
+#  else
+#    include "../compat/string.h"
+#  endif
 #else
 #include <string.h>
 #endif

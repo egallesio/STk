@@ -1,7 +1,22 @@
+04/27/98 Release 3.99.1
+-----------------------
+
+Mainly minor correction to 3.99.0 (installation problems principally)
+
+Otherwise:
+    * Inclusion of the Metaclass init-keywords patch from J-M Kubek 
+      <kubek@insa-tlse.fr>, which allows to initialize some slots of 
+      a class when declaring it.
+
+    * Tk widgets can be initailized at creation time, even if they 
+      are disabled (idea from Walter C. Pelissero
+      <wcp@luppolo.lpds.sublink.org>
+
+
 04/10/98 Release 3.99.0
 -----------------------
 
-This is the pre-4.0 release. Why is is not calles 4.0? Good question. 
+This is the pre-4.0 release. Why is is not called 4.0? Good question. 
 This version would have been numbered 4.0 if there was not a so long
 time between this release and the previous one. Since I take so long 
 to release, I had time to add a lot of things to my "TODO list". 
@@ -16,7 +31,7 @@ Here are the main visible changes from previous release:
 
    * A module system has been added
    * Integration of the Bigloo MATCH-CASE and MATCH-LAMBDA
-     primitives. Furthermore, the file bigloo.stk provide
+     primitives. Furthermore, the file bigloo.stk provides
      some compatibility between STk and bigloo modules.
    * A simple FFI has been added. It allows to access C
      functions without writing C code (works only on a
@@ -28,7 +43,7 @@ Here are the main visible changes from previous release:
      REPL are now user definable.
    * report-error mechanism has been enhanced a lot (work
      is not completely achieved).
-   * new-primitives: append!, mast-pair, C-string->string,
+   * new-primitives: append!, last-pair, C-string->string,
      remove-file, rename-file, temporary-file-name, ...
    * Numerous bug corrections
    * ...
@@ -72,6 +87,12 @@ Here are the main visible changes from previous release:
 	  method-generic-function, method-specializers
 	  method-procedure, remove-method
 	  change-object-class
+
+  * When a class is redefined, the instances and methods which uses it
+    are redefined accordingly, as in CLOS (i.e. if you add a slot in a
+    class, all its -- direct or indirect -- instances will have the new
+    slot added dynamically. 
+
    * New kind of slot allocation: "active". An active slot
      is a slot for which you can put a daemon before or
      after its reading/writing

@@ -11,11 +11,11 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
-;;;; $Id: Text.stklos 1.4 Tue, 24 Feb 1998 12:23:02 +0100 eg $
+;;;; $Id: Text.stklos 1.5 Mon, 27 Apr 1998 13:39:00 +0000 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;    Creation date: 22-Aug-1993 10:55
-;;;; Last file update: 24-Feb-1998 12:15
+;;;; Last file update: 27-Apr-1998 12:31
 
 (require "hash")
 (require "Basics")
@@ -105,7 +105,10 @@
   (make <Text-tag> :parent self :Tid "sel")
   ;; Create "insert" and "current" mark
   (make <Text-mark> :parent self :Mid "insert"  :index "1.0")
-  (make <Text-mark> :parent self :Mid "current" :index "1.0"))  
+  (make <Text-mark> :parent self :Mid "current" :index "1.0")
+  ;; If a value is specified upon init, set it.
+  (let ((val (get-keyword :value initargs #f)))
+    (when val (initialize-value-slot self val))))
 
 
 (define-method destroy ((self <Text>))
@@ -579,7 +582,6 @@
       (error "**** No index specified for this inset"))
 
     (let ((IId (gensym "inset_img")))
-      (DEBUG "IMAGE = ~S" image)
       ((Id parent) 'image 'create index :image image :name IId) ; create inset
       (slot-set! self 'IId IId))
     (next-method)))

@@ -16,11 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: toplevel.c 1.4 Sun, 22 Mar 1998 17:16:09 +0100 eg $
+ * $Id: toplevel.c 1.5 Mon, 27 Apr 1998 08:44:17 +0000 eg $
  *
  *	     Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date:  6-Apr-1994 14:46
- * Last file update: 21-Mar-1998 12:51
+ * Last file update: 26-Apr-1998 18:41
  */
 
 #include "stk.h"
@@ -202,20 +202,6 @@ static void finish_initialisation(void)
    */
   STk_user_init();
 
-
-#if (defined(USE_TK) && !defined(WIN32))
-  /*  
-   * Set up a handler for characters coming from stdin (Verify that we are
-   * interactive, because background interpreters are locked)
-   */
-  if (STk_interactivep) {
-    Tcl_CreateFileHandler(fileno(STk_stdin),
-			  TCL_READABLE,
-			  (Tk_FileProc *) STk_StdinProc, 
-			  (ClientData) NULL);
-  }
-#endif
-  
   /* 
    * See if we have the '-file' option
    */
@@ -232,12 +218,13 @@ static void finish_initialisation(void)
 #endif
     exit(0);
   }
-  
+
   /* 
    * See if we've used the '-interactive' option; if so, 
    *		- unbufferize stdout and  stderr so that the interpreter can
    *		  be used with Emacs and 
    *		- print the STk banner
+   *		- set the input handler
    */
   if (STk_interactivep) {
     static char *out, *err;
@@ -245,6 +232,13 @@ static void finish_initialisation(void)
     out = STk_line_bufferize_io(STk_stdout);
     err = STk_line_bufferize_io(STk_stderr);
     print_banner();
+#if (defined(USE_TK) && !defined(WIN32))
+    /* Set up a handler for characters coming from stdin */
+    Tcl_CreateFileHandler(fileno(STk_stdin),
+			  TCL_READABLE,
+			  (Tk_FileProc *) STk_StdinProc, 
+			  (ClientData) NULL);
+#endif
   }
   fflush(stdout);
 

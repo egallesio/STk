@@ -3,7 +3,7 @@
 %
 %           Author: Erick Gallesio [eg@unice.fr]
 %    Creation date: 21-Dec-1997 20:09
-% Last file update: 21-Dec-1997 21:56
+% Last file update: 18-Apr-1998 13:36
 %
 
 \section*{Introduction}
@@ -11,10 +11,62 @@
 This appendix lists the main differences\footnote{ Only the
   differences which affect the language or new ports are reported here.
   In particular, internal changes, packages written in Scheme or
-  performance enhancement are not discussed here.}.among the various
+  performance enhancement are not discussed here.} among the various
 recent versions of STk.  Differences with older versions as well as
 implementation changes are described in the CHANGES file located in
 the main directory of the STk distribution.
+
+\section*{Release 3.99.0}
+\small{\emph{Release date: 04/10/98}}
+
+Changes can be classified in three categories:
+\begin{itemize}
+\item About Scheme
+  \begin{itemize}
+  \item A module system has been added
+    
+  \item Integration of the Bigloo \ide{match-case} and
+    \ide{match-lambda} primitives. Furthermore, the file \emph{bigloo.stk}
+    provides some compatibility between {\stk} and bigloo modules.
+
+  \item A simple Foreign Function Interface has been added. 
+    
+  \item integrates the {\rfive} \ide{values} and \ide{call-with-values}
+
+  \item multi-line comments have been added.
+    
+  \item new file primitives: \texttt{remove-file}, \texttt{rename-file} and 
+    \texttt{temporary-file-name}.
+    
+  \item new list primitives: \texttt{append!}, \texttt{last-pair},
+    \texttt{remq}, \texttt{remv} and \texttt{remove}.
+
+  \item \texttt{load}, \texttt{try-load} and \texttt{autoload?} can nw
+    be called with a module as second parameter. If this second parameter is
+    present, the loading is done in the environment of the given module.
+  \end{itemize}
+
+\item About Tk
+  \begin{itemize}
+  \item Integration of the Tk8.0 toolkit
+  \item Buttons, Checkbuttons and Radiobuttons can use a
+    \texttt{:variable} and \texttt{:textvariable} in a given
+    environment. This environment is given with the new \texttt{:environment}
+    option.
+  \end{itemize}
+
+\item About STklos
+  \begin{itemize}
+  \item The MOP of {\stklos} is now very similar to the CLOS's MOP. In
+    particular generic function has been added for controlling slot
+    accesses, as well as numerous introspection functions.
+  \item  When a class is redefined, the instances and methods which uses it
+    are redefined accordingly, as in CLOS (i.e. if anew slot is added in a
+    class, all its -- direct or indirect -- instances will have the new
+    slot added dynamically. 
+  \end{itemize}
+\end{itemize}
+
 
 \section*{Release 3.1.1}
 

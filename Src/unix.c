@@ -19,7 +19,7 @@
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 29-Mar-1994 10:57
- * Last file update: 27-Feb-1998 21:07
+ * Last file update: 17-Apr-1998 12:17
  */
 #ifndef WIN32
 #  include <unistd.h>
@@ -723,8 +723,11 @@ PRIMITIVE STk_rename_file(SCM filename1, SCM filename2)
 
 PRIMITIVE STk_temporary_file_name(void)
 {
+  char *s;
+
   ENTER_PRIMITIVE("temporary-file-name");
-  return STk_makestring(tmpnam(NULL));
+  s = tmpnam(NULL);
+  return s ? STk_makestring(s) : Ntruth;
 }
 
 

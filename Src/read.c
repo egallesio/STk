@@ -15,7 +15,7 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: read.c 1.3 Sun, 01 Feb 1998 23:14:16 +0100 eg $
+ * $Id: read.c 1.3 Sun, 01 Feb 1998 22:14:16 +0000 eg $
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: ??-Oct-1993 ??:?? 

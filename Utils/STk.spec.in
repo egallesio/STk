@@ -1,0 +1,81 @@
+%define		release 1
+Summary: 	Scheme Interpreter with access to the Tk toolkit
+Name:    	STk
+Version: 	@VERSION@
+Release: 	%{release}
+Copyright: 	distributable
+Source: 	STk-@VERSION@.tar.gz
+Group:		Development/Languages
+Packager:	Erick Gallesio <eg@unice.fr>
+
+%package devel
+Summary: 	Header files and libraries for STk
+Group: 		Development/Libraries
+Requires:	STk = @VERSION@
+
+%description
+STk is a R4RS Scheme interpreter which can access the Tk graphical
+package.  Concretely it can be seen as the John Ousterhout's Tk
+package where the Tcl language has been replaced by Scheme.
+
+STk also provides an efficient object oriented system called STklos.
+STklos is an extensive OO system with multiple inheritance, generic
+functions, multi-methods and a Meta Object Protocol).
+
+This package uses the 8.0 version of the Tk package for the graphical part.
+
+
+%description devel
+This package contains the files necessary for extending, in C, the 
+STk interpeter. If you don't need to write some C code for extending
+the interpreter, you don't need to install this package.
+
+
+
+%prep
+%setup
+
+%build
+CFLAGS=-O2 sh configure --prefix=@prefix@
+make
+
+%install 
+make install
+make install.libs
+
+%post
+if [ -d @prefix@/lib/stk/site-scheme ] 
+then 
+  mkdir -p @prefix@/lib/stk/site-scheme 
+fi
+
+%postun
+rm -f @prefix@/lib/stk/man
+rmdir @prefix@/lib/stk/site-scheme || true
+rmdir @prefix@/lib/stk || true
+
+%postun devel
+rm -f @prefix@/lib/stk/include
+
+
+%files
+%doc README INSTALL CHANGES ChangeLog
+@prefix@/lib/stk/@VERSION@/Demos
+@prefix@/lib/stk/@VERSION@/Help
+@prefix@/lib/stk/@VERSION@/Images
+@prefix@/lib/stk/@VERSION@/@MACHINE@/stk
+@prefix@/lib/stk/@VERSION@/@MACHINE@/snow
+@prefix@/lib/stk/@VERSION@/@MACHINE@/*.so
+@prefix@/lib/stk/@VERSION@/STk
+@prefix@/lib/stk/@VERSION@/include
+@prefix@/lib/stk/@VERSION@/man
+@prefix@/bin/stk-@VERSION@
+@prefix@/bin/snow-@VERSION@
+@prefix@/bin/stk
+@prefix@/bin/snow
+
+
+
+%files devel
+@prefix@/lib/stk/@VERSION@/@MACHINE@/Config
+@prefix@/lib/stk/@VERSION@/@MACHINE@/Libs

@@ -21,7 +21,7 @@
 '\" ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATION TO
 '\" PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 '\" 
-'\" $Id: stk.1 1.1 Sat, 03 Jan 1998 13:46:25 +0100 eg $
+'\" $Id: stk.1 1.2 Mon, 20 Apr 1998 20:15:01 +0000 eg $
 '\"
 .so STk-man.macros
 .TH STk 1 4.0 STk "January_1998"
@@ -171,6 +171,10 @@ variable is a list of paths to try when in a load command.
 .IP "\fISTK_HELP_PATH\fR" 15
 This variable serves to initialize the \fI*help-path*\fR Scheme variable. It 
 must contain a list of documentation directories. This variable is used by the help 
+procedure.
+.IP "\fISTK_IMAGE_PATH\fR" 15
+This variable serves to initialize the \fI*image-path*\fR Scheme variable. It 
+must contain a list of images directories. This variable is used by the make-image 
 procedure.
 
 

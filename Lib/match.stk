@@ -1,7 +1,7 @@
 ;;;;
 ;;;; m a t c h  . s t k			-- The bigloo match-case and match-lambda
 ;;;;
-;;;; Copyright © 1997 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+;;;; Copyright © 1997-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
 ;;;; 
 ;;;; Permission to use, copy, and/or distribute this software and its
 ;;;; documentation for any purpose and without fee is hereby granted, provided
@@ -13,7 +13,7 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;    Creation date: 28-Oct-1997 20:47
-;;;; Last file update: 28-Oct-1997 21:16
+;;;; Last file update: 30-Apr-1998 15:27
 ;;;;
 
 ;;;; This file implements code for loading the MATCH-CASE and MATCH-LAMBDA 
@@ -33,7 +33,7 @@
 (load "Match/compiler.scm")
 (load "Match/mexpand.scm")
 
-(with-module Scheme
+(with-module STk
    (import __match_expand)
    
    (define-macro (match-lambda  . clauses)

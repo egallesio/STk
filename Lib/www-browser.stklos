@@ -13,7 +13,7 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 21-Oct-1996 14:02
-;;;; Last file update:  2-Mar-1998 10:47
+;;;; Last file update: 16-Apr-1998 11:45
 ;;;;
 
 (require "Tk-classes")
@@ -77,7 +77,7 @@
 	   (f1    (make <Frame> :parent parent))
 	   (lab	  (make <Label> :parent f1 :anchor "w"))
 	   (gauge (make <Gauge> :parent f1 :width 200 :height 10 
-			:background "Dark Gray" :foreground "IndianRed4")))
+			:background "gray40" :foreground "IndianRed4")))
       ;;
       ;; Pack commponents
       (pack f loc :expand #f :fill "x")

@@ -16,11 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: tcl-glue.c 1.4 Mon, 09 Mar 1998 21:45:18 +0100 eg $
+ * $Id: tcl-glue.c 1.5 Wed, 22 Apr 1998 21:52:02 +0000 eg $
  *
  *            Author: Erick Gallesio [eg@unice.fr]
  *    Creation date:  6-Aug-1997 12:48
- * Last file update:  9-Mar-1998 18:27
+ * Last file update: 22-Apr-1998 22:47
  *
  */
 
@@ -145,14 +145,15 @@ int STk_valid_environment(char *s, void **env)
    * the valid_procedure accepts closure AND strings for pre STk3.0 
    * compatibility reasons.
    */
+  unsigned long tmp;
   int l = strlen(s);
   char *p;
 
   if (l == 0 || l == 2 && s[0] == '#' && s[1] == 'f') {
 #ifdef USE_TK    
-    *env = MOD_ENV(STk_Tk_module);
+    *env = STk_makeenv(MOD_ENV(STk_Tk_module), 0);
 #else
-    *env = NIL;
+    *env = STk_globenv;
 #endif
     return TRUE;
   }
@@ -163,8 +164,11 @@ int STk_valid_environment(char *s, void **env)
       for (p = s + 2; *p; p++)
 	if (!isxdigit(*p)) return FALSE;
       
-      sscanf(s+2, "%lx", (unsigned long) env);
-      if (STk_valid_address((SCM) *env)) return TRUE;
+      sscanf(s+2, "%lx", &tmp);
+      if (STk_valid_address((SCM) tmp) && ENVP((SCM) tmp)) {
+	*(SCM *)env = (SCM) tmp;
+	return TRUE;
+      }
     }
   }
   return FALSE;
@@ -177,8 +181,15 @@ char *STk_tcl_getvar(char *name, char *env)
   
   if (!STk_valid_environment(env, (void **) &e)) return NULL;
 
-  V = *(STk_varlookup(Intern(name), e, 0));
-  return (V == UNBOUND) ? NULL : STk_convert_for_Tcl(V, &dumb);
+  V = *(STk_varlookup(Intern(name), e->storage_as.env.data, 0));
+
+  if (V == UNBOUND) {
+    /* We should probably complain here, but this would break old code */
+    STk_tcl_setvar(name, "", 0, env);
+    return "";
+  }
+  else 
+    STk_convert_for_Tcl(V, &dumb);
 }
 
 
@@ -222,7 +233,7 @@ char *STk_tcl_setvar(char *name, char *val, int flags, char *env)
 
   var = Intern(name);
 
-  tmp = STk_varlookup(var, e, 0);
+  tmp = STk_varlookup(var, e->storage_as.env.data, 0);
   if (*tmp == UNBOUND) {
     if (var->cell_info & CELL_INFO_C_VAR) {
       /* This is not an unbound variable but rather a C variable */
@@ -233,7 +244,7 @@ char *STk_tcl_setvar(char *name, char *val, int flags, char *env)
      * Use big hammer here, since it occcurs only once (at most)
      * for a given widget
      */
-    STk_eval(LIST3(Intern("define"), var, value), e);
+    STk_eval(LIST3(Intern("define"), var, value), e->storage_as.env.data);
     return val;
   }
   *tmp = value;

@@ -11,11 +11,11 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
-;;;; $Id: Basics.stklos 1.10 Sun, 22 Mar 1998 17:16:09 +0100 eg $
+;;;; $Id: Basics.stklos 1.11 Mon, 27 Apr 1998 13:39:00 +0000 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 30-Mar-1993 15:39
-;;;; Last file update: 22-Mar-1998 11:46
+;;;; Last file update: 27-Apr-1998 12:30
 
 (require "Tk-meta")
 
@@ -52,6 +52,18 @@
 ;;
 (define (Tk:slot-is-read-only object slot)
   (error "Value of the slot ``~S'' in ~S cannot be changed." slot object))
+
+
+;;
+;; Initialize the virtual "value" slot independently of the state of the object
+;; (Tk forbid to give a value to a "disabled" object)
+;;
+(define (initialize-value-slot obj value)
+  (let ((s (slot-ref obj 'state)))
+    (unless (equal? s "normal")
+      (slot-set! obj 'state "normal")
+      (slot-set! obj 'value value)
+      (slot-set! obj 'state s))))
 
 
 ;=============================================================================
@@ -446,6 +458,7 @@
 			:accessor     foreground
 			:allocation   :tk-virtual))
   :metaclass <Tk-metaclass>)
+
 
 ;=============================================================================
 ;

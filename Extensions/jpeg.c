@@ -7,7 +7,7 @@
  *	   Department of Computer Science,
  *	   University of California, Berkeley
  *
- * $Id: jpeg.c 1.1 Sat, 03 Jan 1998 13:46:25 +0100 eg $
+ * $Id: jpeg.c 1.1 Sat, 03 Jan 1998 12:46:25 +0000 eg $
  *
  * Parts of this file are based on code under the following
  * copyrights.  Include these copyrights if you do anything

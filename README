@@ -1,4 +1,4 @@
-<
+
 		    This is the release 3.99 of STk
 		   ---------------------------------
 
@@ -18,7 +18,7 @@ This release runs on majors Unix versions (Linux, Solaris, OSF, ...)
 The previous version was also running on Microsoft Win32 (port of
 current version is planned but has not be done yet).
 
-Version 3.99.0 uses the Tk 8.0 package for the graphical part.
+Version 3.99 uses the Tk 8.0 package for the graphical part.
 
 
 DIFFERENCE PREVIOUS RELEASE

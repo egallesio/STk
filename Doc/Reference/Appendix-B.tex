@@ -3,7 +3,7 @@
 %
 %           Author: Erick Gallesio [eg@unice.fr]
 %    Creation date: ??-Nov-1993 ??:??
-% Last file update:  8-Jul-1996 21:52
+% Last file update: 20-Apr-1998 11:54
 %
 
 \newcommand{\schglob}[1]{*#1*}
@@ -16,7 +16,8 @@ implementation and the language described in {\rrrr}.
 {\stk} symbol syntax has been augmented to allow case significant symbols. 
 This extension is discussed in \ref{symbolsection}.
 
-The following symbols are defined in the global environment.
+\smallskip {\stk} also defines some symbols in the global environment
+which are described below:
 
 \begin{itemize}
 
@@ -34,7 +35,7 @@ The following symbols are defined in the global environment.
       each loaded file is printed before its effective reading. File names
       are printed on the standard error stream.
       
-    \item {\tt\schglob{load-path}}\schindex{\schglob{load-path}} must
+\item {\tt\schglob{load-path}}\schindex{\schglob{load-path}} must
       contain a list of strings. Each string is taken as a directory
       path name in which a file will be searched for loading. This
       variable can be set automatically from the {\tt STK\_LOAD\_PATH}
@@ -47,13 +48,7 @@ The following symbols are defined in the global environment.
       file does not exist, the system will sequentially try to find the file by
       appending each suffix of this list. A typical value for this
       variable may be {\tt ("stk" "stklos" "scm" "so")}.
-      
-    \item {\tt\schglob{help-path}}\schindex{help,
-        getting}\schindex{\schglob{help-path}} must contain a list of
-      strings.  Each string is taken as a directory path name in which
-      documentation files are searched. This variable can be set
-      automatically from the {\tt STK\_HELP\_PATH} shell variable. See
-      {\tt stk(1)} for more details.
+
 
 \item {\tt\schglob{argc}}\schindex{\schglob{argc}} contains the
        number of arguments  (0 if none), not including interpreter
@@ -70,13 +65,76 @@ The following symbols are defined in the global environment.
       See {\tt stk(1)} for more details.
 
 \item {\tt\schglob{print-banner}}\schindex{\schglob{print-banner}}. If 
-      {\tt\schglob{print-verbose}} is {\schfalse}, the usual copyright
+      {\tt\schglob{print-banner}} is {\schfalse}, the usual copyright
       message is not displayed when the interpreter is started.
+
+\item {\tt\schglob{stk-library}}\schindex{\schglob{stk-library}}
+  contains the path name of the installation directory of the
+  {\stk} library. This variable can be set automatically from the
+  {\tt STK\_LIBRARY} shell variable. See {\tt stk(1)} for more
+  details.
+
+\end{itemize}
+
+The following symbols are defined only when Tk is loaded:
+
+\begin{itemize}
 
 \item {\tt\schglob{root}}\schindex{\schglob{root}} designates the Tk main
       window (see~A-\ref{root window}). This variable is not set if
       the Tk toolkit is not initialized.
+
+\item {\tt\schglob{help-path}}\schindex{help,
+    getting}\schindex{\schglob{help-path}} must contain a list of
+  strings.  Each string is taken as a directory path name in which
+  documentation files are searched. This variable can be set
+  automatically from the {\tt STK\_HELP\_PATH} shell variable. See
+  {\tt stk(1)} for more details.
+
+\item {\tt\schglob{image-path}}\schindex{\schglob{image-path}} must contain 
+  a list of  strings.  Each string is taken as a directory path name in which
+  images are searched by the function \texttt{make-image}. This variable can be
+  set automatically from the {\tt STK\_IMAGE\_PATH} shell variable. See
+  {\tt stk(1)}  and {\tt make-image(n)} for more details.
+
+\item {\tt\schglob{root}}\schindex{\schglob{root}} designates the Tk main
+      window (see~A-\ref{root window}). This variable is not set if
+      the Tk toolkit is not initialized.
+
+\item {\tt\schglob{start-withdrawn}}\schindex{\schglob{start-withdrawn}}. If  
+  \schglob{start-withdrawn} is not false, the \schglob{root} window 
+  is not mapped on screen until its first sub-window is packed or some
+  action is asked to the window manager for it.
+
+\item {\tt\schglob{tk-version}}\schindex{\schglob{tk-version}} is a string 
+  which contains the version number of the Tk toolkit used by {\stk}.
+
+\item {\tt\schglob{tk-patch-level}}\schindex{\schglob{tk-patch-level}} is
+  a string  which contains the version and patch level of the Tk toolkit 
+  used by {\stk}.
+
 \end{itemize}
+
+Furthermore, {\stk} also defines the following procedures in the global 
+environment:
+
+\begin{itemize}
+\item \ide{report-error}. This procedure is called by the error system to 
+  display the message error. This procedure is described in 
+  {\tt report-error(n)}
+
+\item \ide{repl-display-prompt}. \label{repl-display-prompt} 
+  This procedure is called when the system 
+  is run interactively before reading a \emph{sexpr} to evaluate to display 
+  a prompt. This procedure is described in  {\tt repl-display-prompt(n)}.
+
+\item \ide{repl-display-result}. This procedure is called when the system 
+  is run interactively after the evaluation of a \emph{sexpr} to write the
+  result. This procedure is described in  {\tt repl-display-result(n)}.
+
+\end{itemize}
+
+
 
 \section{Types}
 

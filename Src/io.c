@@ -1,7 +1,7 @@
 /*
  * i o . c					-- Low level I/O
  * 
- * Copyright © 1993-1996 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-1998 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, and/or distribute this software and its
@@ -17,7 +17,7 @@
  *
  *	     Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: ????
- * Last file update: 19-Dec-1996 23:48
+ * Last file update: 26-Apr-1998 11:09
  */
 
 #ifdef WIN32

@@ -15,11 +15,11 @@
 ;;;; This software is a derivative work of other copyrighted softwares; the
 ;;;; copyright notices of these softwares are placed in the file COPYRIGHTS
 ;;;;
-;;;; $Id: Scale.stklos 1.2 Sat, 24 Jan 1998 15:12:00 +0100 eg $
+;;;; $Id: Scale.stklos 1.3 Mon, 27 Apr 1998 13:39:00 +0000 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;    Creation date: 30-Mar-1993 15:28
-;;;; Last file update: 24-Jan-1998 13:48
+;;;; Last file update: 27-Apr-1998 15:12
 
 
 (require "Basics")
@@ -119,16 +119,17 @@
 (define-method tk-constructor ((self <Scale>))
   Tk:scale)
 
+
 ;;;
 ;;;  <Scale> methods
 ;;;
 
 (define-method initialize ((self <Scale>) initargs)
   (next-method)
-  (let* ((val (get-keyword :value initargs #f)))
+  (let ((val (get-keyword :value initargs #f)))
     ;; If a value is specified upon init, set it.
     (when val
-	  (slot-set! self 'value val))))
+      (initialize-value-slot self val))))
 
 (define-method coords ((self <Scale>) . value)
   (apply (slot-ref self 'Id) 'coords value))

@@ -17,7 +17,7 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: dynload.c 1.2 Fri, 10 Apr 1998 09:13:18 +0200 eg $
+ * $Id: dynload.c 1.2 Fri, 10 Apr 1998 07:13:18 +0000 eg $
  * 
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 23-Jan-1994 19:09

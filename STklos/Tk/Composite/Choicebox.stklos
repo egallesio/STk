@@ -11,11 +11,11 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
-;;;; $Id: Choicebox.stklos 1.3 Wed, 04 Feb 1998 11:34:59 +0100 eg $
+;;;; $Id: Choicebox.stklos 1.4 Mon, 27 Apr 1998 13:39:00 +0000 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;    Creation date: 22-Mar-1994 13:05
-;;;; Last file update:  3-Feb-1998 19:22
+;;;; Last file update: 27-Apr-1998 12:11
 
 (require "Basics")
 
@@ -146,7 +146,7 @@
 
         ;; Now one with a set of value pre-defined and no other value allowed
 	(define c2  (make <Choice-box> :title "Enter another choice" 
-			  :title-anchor 'e :title-width 20 
+			  :title-anchor 'e :title-width 20 :value 1
 			  :state "disabled" :choices '(1 2 3 4)))
 	(pack c1 c2)
 |#

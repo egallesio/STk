@@ -11,11 +11,11 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
-;;;; $Id: init.stk 1.13 Fri, 10 Apr 1998 09:13:18 +0200 eg $
+;;;; $Id: init.stk 1.14 Mon, 20 Apr 1998 20:15:01 +0000 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;    Creation date: ??-Sep-1993 ??:??
-;;;; Last file update:  8-Apr-1998 11:41
+;;;; Last file update: 20-Apr-1998 19:31
 ;;;;
 
 ;;;==============================================================================

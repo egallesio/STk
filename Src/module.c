@@ -16,11 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: module.c 1.7 Fri, 10 Apr 1998 14:05:25 +0200 eg $
+ * $Id: module.c 1.8 Mon, 20 Apr 1998 20:15:01 +0000 eg $
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 13-Mar-1997 20:11
- * Last file update: 10-Apr-1998 10:47
+ * Last file update: 20-Apr-1998 19:36
  */
 
 #include "stk.h"
@@ -423,8 +423,11 @@ PRIMITIVE STk_get_module(SCM env)			/* subr */
 
 PRIMITIVE STk_current_module(SCM l, SCM env, int len)	/*  fsubr */
 {
-  /* FIXME: Cette fonction peut maintenant être déclarée void et utiliser 
-   * le module courant 
+  /* Find the module from the environment. This is important to 
+   * compute the module from the environment (instead of just returning
+   * the value of STk_selected_module); otherwise closures would return
+   * a value which don't agree with their own environment (see it as a 
+   * static current_environment).
    */
   ENTER_PRIMITIVE("current-module");
   if (len) Serror("no parameter required", l);

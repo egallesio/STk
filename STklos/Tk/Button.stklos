@@ -12,11 +12,11 @@
 ;;;; permission of the copyright holder.  
 ;;;; This software is provided ``as is'' without express or implied warranty.
 ;;;;
-;;;; $Id: Button.stklos 1.3 Fri, 23 Jan 1998 18:46:19 +0100 eg $
+;;;; $Id: Button.stklos 1.4 Mon, 27 Apr 1998 13:39:00 +0000 eg $
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@kaolin.unice.fr]
 ;;;;    Creation date: 30-Mar-1993 15:39
-;;;; Last file update: 23-Jan-1998 11:41
+;;;; Last file update: 27-Apr-1998 11:20
 
 
 (require "Basics")
@@ -129,10 +129,12 @@
 	      :init-keyword :value
 	      :allocation   :virtual
 	      :slot-ref     (lambda (o)  
-			      (eval-string (slot-ref o 'variable)))
-	      :slot-set!    (lambda (o v) 
+			      (eval (string->symbol (slot-ref o 'variable))
+				    (slot-ref o 'environment)))
+	      :slot-set!    (lambda (o v)
 			      (eval `(set! ,(string->symbol 
-					     (slot-ref o 'variable)) ,v))))))
+					     (slot-ref o 'variable)) ,v)
+				    (slot-ref o 'environment))))))
 
 (define-method tk-constructor ((self <Check-button>))
   Tk:checkbutton)

@@ -10,7 +10,7 @@
 #
 #           Author: Erick Gallesio [eg@unice.fr]
 #    Creation date: 21-Oct-1994 11:25
-# Last file update: 30-Oct-1996 12:00
+# Last file update: 20-Apr-1998 21:43
 
 
 include ../../config.make
@@ -61,11 +61,10 @@ install.man:
 	for  i in *.n ;do \
 	  $(CP) $$i $(MANN_DIR)/stk_$$i; \
 	done
-	../../Src/test-stk -no -file make-link $(MANN_DIR)
+#	../../Src/test-stk -no -file make-link $(MANN_DIR)
 
 clean:
 	rm -f *~
 
 very-clean: clean
 	rm -f *.ps
-	

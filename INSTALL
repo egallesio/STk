@@ -169,11 +169,8 @@ To install stk in the definitive place, type
 
 	$ make install
 
-Intalling STk and Tk manual pages is done with
-
-	$ make install.man
-
-Intalling STk and Tk libraries is done with
+Intalling STk and Tk libraries (useless if you don't plan to write some C code)
+is done with.
 
 	$ make install.lib
 

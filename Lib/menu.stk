@@ -15,7 +15,7 @@
 ;;;;
 ;;;;           Author: Erick Gallesio [eg@unice.fr]
 ;;;;    Creation date: 17-May-1993 12:35
-;;;; Last file update:  8-Apr-1998 11:40
+;;;; Last file update: 27-Apr-1998 12:34
 ;;;;
 
 (select-module Tk)
@@ -734,7 +734,7 @@
 (define (Tk:menu-find w char)
   (let ((char        (string-lower char))
 	(window-list (winfo 'child w)))
-    (DEBUG " Tk:menu-find (à debugger) ~S ~S" w char)
+    ; FIXME: (DEBUG " Tk:menu-find (à debugger) ~S ~S" w char)
     (call/cc
      (lambda (exit)
        (for-each (lambda (child)
@@ -905,8 +905,7 @@
 ;; s -			String to look for.
 
 (define (Tk:menu-find-name menu s)
-  (DEBUG "Tk:menu-find-name manque des test pour les chaines speciales ~S " s)
-  
+  ; FIXME: Tk:menu-find-name manque des test pour les chaines speciales
   (let ((last (menu 'index 'last))
 	(label #f))
     (if (equal? last "none")

@@ -16,7 +16,7 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: cont.c 1.2 Mon, 09 Mar 1998 09:31:40 +0100 eg $
+ * $Id: cont.c 1.2 Mon, 09 Mar 1998 08:31:40 +0000 eg $
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date:  8-Nov-1993 11:34

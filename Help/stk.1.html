@@ -159,14 +159,19 @@ variable is a list of paths to try when in a load command.
 This variable serves to initialize the <I>*help-path*</I> Scheme variable. It 
 must contain a list of documentation directories. This variable is used by the help 
 procedure.
+<P>
+<DT><A NAME="M28"><I>STK_IMAGE_PATH</I></A><DD>
+This variable serves to initialize the <I>*image-path*</I> Scheme variable. It 
+must contain a list of images directories. This variable is used by the make-image 
+procedure.
 
 
 <P>
 </DL>
-<H3><A NAME="M28">FILES</A></H3>
+<H3><A NAME="M29">FILES</A></H3>
 <DL>
-<DT><A NAME="M29"><I>./init.stk</I></A><DD>
-<DT><A NAME="M30"><I>$STK_LIBRARY/STk/init.stk</I></A><DD>
+<DT><A NAME="M30"><I>./init.stk</I></A><DD>
+<DT><A NAME="M31"><I>$STK_LIBRARY/STk/init.stk</I></A><DD>
 When <B>stk</B> starts running, it tries to load the file <I>init.stk</I>
 in the current directory. If this file is not present, it tries to load 
 this file in the <B>STk_LIBRARY</B> directory (the value of <B>STk_LIBRARY</B>
@@ -174,14 +179,14 @@ is automatically computed to be in a sibling directory of the interpreter
 executable.
 
 <P>
-<DT><A NAME="M31"><I>~/.stkrc</I></A><DD>
+<DT><A NAME="M32"><I>~/.stkrc</I></A><DD>
 Standard <I>init.stk</I> file tries to load the file <I>~/.stkrc</I>. This file 
 can be used to store functions definitions or variables settings that you want
 to be executed at each interpreter invocation.
 
 <P>
 </DL>
-<H3><A NAME="M32">SEE ALSO</A></H3>
+<H3><A NAME="M33">SEE ALSO</A></H3>
 <B>wish(1)</B>
 <P><IMG ALIGN=TOP SRC="./Img/line-red.gif"><P>
 <A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookWhite.gif"> Back to the <B>STk</B> main page</A>

@@ -16,7 +16,7 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: proc.c 1.3 Mon, 09 Mar 1998 09:31:40 +0100 eg $
+ * $Id: proc.c 1.3 Mon, 09 Mar 1998 08:31:40 +0000 eg $
  *
  *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: 15-Nov-1993 22:02

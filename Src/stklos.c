@@ -16,11 +16,11 @@
  * This software is a derivative work of other copyrighted softwares; the
  * copyright notices of these softwares are placed in the file COPYRIGHTS
  *
- * $Id: stklos.c 1.12 Sun, 22 Mar 1998 20:42:56 +0100 eg $
+ * $Id: stklos.c 1.13 Mon, 20 Apr 1998 20:15:01 +0000 eg $
  *
  *            Author: Erick Gallesio [eg@unice.fr]
  *    Creation date:  9-Feb-1994 15:56
- * Last file update: 22-Mar-1998 19:25 
+ * Last file update: 13-Apr-1998 23:13 
  */
 
 #ifdef USE_STKLOS
@@ -1084,7 +1084,7 @@ static PRIMITIVE user_more_specificp(SCM m1, SCM m2, SCM targs)
 
 static void select_STklos_module(void)
 {
-  STk_selected_module = STklos = STk_make_module(Intern("stklos"));;
+  STk_selected_module = STklos = STk_make_module(Intern("stklos"));
 }
 
 

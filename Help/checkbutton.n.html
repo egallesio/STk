@@ -31,15 +31,19 @@
 is typically invoked when mouse button 1 is released over the button
 window.  The button's global variable (<B>:variable</B> option) will
 be updated before the procedure is invoked.
-OP :environment environment Environment environment
-Specifies the environment in which the <B>:textvariable</B> or  
-<B>:variable</B>must be taken. By convention, the value <B>#f</B> denotes the
-STk global environment (the default value of this option is false).
+<P>
+<P>
+<DT><I>Name</I>:            <B>environment</B>
+<DT><I>Class</I>:           <B>Environment</B>
+<DT><I>Option keyword</I>:  <B><A NAME="M29">:environment</A></B>
+<DT><I>STklos slot name</I>: <B>environment</B>
+<DD>Specifies the environment in which the <B>:textvariable</B> must be taken. 
+By default, the value of this option is the STk global environment.
 <P>
 <P>
 <DT><I>Name</I>:            <B>height</B>
 <DT><I>Class</I>:           <B>Height</B>
-<DT><I>Option keyword</I>:  <B><A NAME="M29">:height</A></B>
+<DT><I>Option keyword</I>:  <B><A NAME="M30">:height</A></B>
 <DT><I>STklos slot name</I>: <B>height</B>
 <DD>Specifies a desired height for the button.
 If an image or bitmap is being displayed in the button then the value is in
@@ -51,7 +55,7 @@ from the size of the image or bitmap or text being displayed in it.
 <P>
 <DT><I>Name</I>:            <B>indicatorOn</B>
 <DT><I>Class</I>:           <B>IndicatorOn</B>
-<DT><I>Option keyword</I>:  <B><A NAME="M30">:indicatoron</A></B>
+<DT><I>Option keyword</I>:  <B><A NAME="M31">:indicatoron</A></B>
 <DT><I>STklos slot name</I>: <B>indicator-on</B>
 <DD>Specifies whether or not the indicator should be drawn.  Must be a
 proper boolean value.  If false, the <B>relief</B> option is
@@ -61,7 +65,7 @@ selected and raised otherwise.
 <P>
 <DT><I>Name</I>:            <B>offValue</B>
 <DT><I>Class</I>:           <B>Value</B>
-<DT><I>Option keyword</I>:  <B><A NAME="M31">:offvalue</A></B>
+<DT><I>Option keyword</I>:  <B><A NAME="M32">:offvalue</A></B>
 <DT><I>STklos slot name</I>: <B>off-value</B>
 <DD>Specifies value to store in the button's associated variable whenever
 this button is deselected.  Defaults to <B>#f</B>.
@@ -69,7 +73,7 @@ this button is deselected.  Defaults to <B>#f</B>.
 <P>
 <DT><I>Name</I>:            <B>onValue</B>
 <DT><I>Class</I>:           <B>Value</B>
-<DT><I>Option keyword</I>:  <B><A NAME="M32">:onvalue</A></B>
+<DT><I>Option keyword</I>:  <B><A NAME="M33">:onvalue</A></B>
 <DT><I>STklos slot name</I>: <B>on-value</B>
 <DD>Specifies value to store in the button's associated variable whenever
 this button is selected.  Defaults to <B>#t</B>.
@@ -77,7 +81,7 @@ this button is selected.  Defaults to <B>#t</B>.
 <P>
 <DT><I>Name</I>:            <B>selectColor</B>
 <DT><I>Class</I>:           <B>Background</B>
-<DT><I>Option keyword</I>:  <B><A NAME="M33">:selectcolor</A></B>
+<DT><I>Option keyword</I>:  <B><A NAME="M34">:selectcolor</A></B>
 <DT><I>STklos slot name</I>: <B>select-color</B>
 <DD>Specifies a background color to use when the button is selected.
 If <B>indicatorOn</B> is true then the color applies to the indicator.
@@ -92,7 +96,7 @@ displaying when the widget is selected.
 <P>
 <DT><I>Name</I>:            <B>selectImage</B>
 <DT><I>Class</I>:           <B>SelectImage</B>
-<DT><I>Option keyword</I>:  <B><A NAME="M34">:selectimage</A></B>
+<DT><I>Option keyword</I>:  <B><A NAME="M35">:selectimage</A></B>
 <DT><I>STklos slot name</I>: <B>select-image</B>
 <DD>Specifies an image to display (in place of the <B>image</B> option)
 when the checkbutton is selected.
@@ -102,7 +106,7 @@ specified.
 <P>
 <DT><I>Name</I>:            <B>state</B>
 <DT><I>Class</I>:           <B>State</B>
-<DT><I>Option keyword</I>:  <B><A NAME="M35">:state</A></B>
+<DT><I>Option keyword</I>:  <B><A NAME="M36">:state</A></B>
 <DT><I>STklos slot name</I>: <B>state</B>
 <DD>Specifies one of three states for the checkbutton:  <B>normal</B>, <B>active</B>,
 or <B>disabled</B>.  In normal state the checkbutton is displayed using the
@@ -118,7 +122,7 @@ In this state the <B>disabledForeground</B> and
 <P>
 <DT><I>Name</I>:            <B>stringvalue</B>
 <DT><I>Class</I>:           <B>StringValue</B>
-<DT><I>Option keyword</I>:  <B><A NAME="M36">:stringvalue</A></B>
+<DT><I>Option keyword</I>:  <B><A NAME="M37">:stringvalue</A></B>
 <DT><I>STklos slot name</I>: <B>string-value</B>
 <DD>Specifies if the value set to <B>variable</B> by <B>:offvalue</B> or 
 <B>:onvalue</B> must be <I>stringified</I>. For instance, with
@@ -137,7 +141,7 @@ it is set to 10 or 20. Default value for <B>:stringvalue</B> is <B>#t</B>.
 <P>
 <DT><I>Name</I>:            <B>variable</B>
 <DT><I>Class</I>:           <B>Variable</B>
-<DT><I>Option keyword</I>:  <B><A NAME="M37">:variable</A></B>
+<DT><I>Option keyword</I>:  <B><A NAME="M38">:variable</A></B>
 <DT><I>STklos slot name</I>: <B>variable</B>
 <DD>Specifies name of global variable to set to indicate whether
 or not this button is selected.  Defaults to the name of the
@@ -147,7 +151,7 @@ window's path name).
 <P>
 <DT><I>Name</I>:            <B>width</B>
 <DT><I>Class</I>:           <B>Width</B>
-<DT><I>Option keyword</I>:  <B><A NAME="M38">:width</A></B>
+<DT><I>Option keyword</I>:  <B><A NAME="M39">:width</A></B>
 <DT><I>STklos slot name</I>: <B>width</B>
 <DD>Specifies a desired width for the button.
 If an image or bitmap is being displayed in the button then the value is in
@@ -157,7 +161,7 @@ If this option isn't specified, the button's desired width is computed
 from the size of the image or bitmap or text being displayed in it.
 <P>
 </DL>
-<H3><A NAME="M39">DESCRIPTION</A></H3>
+<H3><A NAME="M40">DESCRIPTION</A></H3>
 The <B>checkbutton</B> procedure creates a new window (given by the
 <I>widget-name</I> argument) and makes it into a checkbutton widget.
 Additional
@@ -211,7 +215,7 @@ In addition, each checkbutton monitors its associated variable and
 automatically selects and deselects itself when the variables value
 changes to and from the button's ``on'' value.
 
-<H3><A NAME="M40">WIDGET PROCEDURE</A></H3>
+<H3><A NAME="M41">WIDGET PROCEDURE</A></H3>
 The <B>checkbutton</B> procedure creates a new STk procedure whose
 name is <I>widget-name</I>.  This
 procedure may be used to invoke various
@@ -222,13 +226,13 @@ determine the exact behavior of the procedure.  The following
 procedures are possible for checkbutton widgets:
 <P>
 <DL>
-<DT><A NAME="M41">(<I>widget-name '</I><B>cget</B> <I>option</I>)</A><DD>
+<DT><A NAME="M42">(<I>widget-name '</I><B>cget</B> <I>option</I>)</A><DD>
 Returns the current value of the configuration option given
 by <I>option</I>.
 <I>Option</I> may have any of the values accepted by the <B>checkbutton</B>
 procedure.
 <P>
-<DT><A NAME="M42">(<I>widget-name '</I><B>configure</B> ?<I>option</I>? ?<I>value option value ...</I>?)</A><DD>
+<DT><A NAME="M43">(<I>widget-name '</I><B>configure</B> ?<I>option</I>? ?<I>value option value ...</I>?)</A><DD>
 Query or modify the configuration options of the widget.
 If no <I>option</I> is specified, returns a list describing all of
 the available options for <I>widget-name</I> (see <B>Tk_ConfigureInfo</B> for
@@ -242,35 +246,35 @@ this case the procedure returns an empty list.
 <I>Option</I> may have any of the values accepted by the <B>checkbutton</B>
 procedure.
 <P>
-<DT><A NAME="M43">(<I>widget-name '</I><B>deselect</B>)</A><DD>
+<DT><A NAME="M44">(<I>widget-name '</I><B>deselect</B>)</A><DD>
 Deselects the checkbutton and sets the associated variable to its ``off''
 value.
 <P>
-<DT><A NAME="M44">(<I>widget-name '</I><B>flash</B>)</A><DD>
+<DT><A NAME="M45">(<I>widget-name '</I><B>flash</B>)</A><DD>
 Flashes the checkbutton.  This is accomplished by redisplaying the checkbutton
 several times, alternating between active and normal colors.  At
 the end of the flash the checkbutton is left in the same normal/active
 state as when the procedure was invoked.
 This procedure is ignored if the checkbutton's state is <B>disabled</B>.
 <P>
-<DT><A NAME="M45">(<I>widget-name '</I><B>invoke</B>)</A><DD>
+<DT><A NAME="M46">(<I>widget-name '</I><B>invoke</B>)</A><DD>
 Does just what would have happened if the user invoked the checkbutton
 with the mouse: toggle the selection state of the button and invoke
 the STk procedure associated with the checkbutton, if there is one
 (return value is undefined)
 This procedure is ignored if the checkbutton's state is <B>disabled</B>.
 <P>
-<DT><A NAME="M46">(<I>widget-name '</I><B>select</B>)</A><DD>
+<DT><A NAME="M47">(<I>widget-name '</I><B>select</B>)</A><DD>
 Selects the checkbutton and sets the associated variable to its ``on''
 value.
 <P>
-<DT><A NAME="M47">(<I>widget-name '</I><B>toggle</B>)</A><DD>
+<DT><A NAME="M48">(<I>widget-name '</I><B>toggle</B>)</A><DD>
 Toggles the selection state of the button, redisplaying it and
 modifying its associated variable to reflect the new state.
 
 <P>
 </DL>
-<H3><A NAME="M48">BINDINGS</A></H3>
+<H3><A NAME="M49">BINDINGS</A></H3>
 Tk automatically creates class bindings for checkbuttons that give them
 the following default behavior:
 <OL>
@@ -297,7 +301,7 @@ actions occur:  the checkbutton is completely non-responsive.
 The behavior of checkbuttons can be changed by defining new bindings for
 individual widgets or by redefining the class bindings.
 
-<H3><A NAME="M49">SEE ALSO</A></H3>
+<H3><A NAME="M50">SEE ALSO</A></H3>
 <B><A HREF="./button.n.html">button</A></B>, <B><A HREF="./radiobutton.n.html">radiobutton</A></B>
 <P><IMG ALIGN=TOP SRC="./Img/line-red.gif"><P>
 <A HREF=./STk-hlp.html><IMG ALIGN=BOTTOM SRC="./Img/RefBookBlue.gif"> Back to the <B>STk</B> main page</A>

@@ -14,7 +14,7 @@
 #
 #           Author: Erick Gallesio [eg@unice.fr]
 #    Creation date: ??-Sep-1993 ??:??
-# Last file update: 10-Apr-1998 10:09
+# Last file update: 27-Apr-1998 22:33
 #
 
 
@@ -31,10 +31,12 @@ prefix 		= @prefix@
 stkdir		= $(prefix)/lib/stk
 libdir 		= $(stkdir)/$(VERSION)
 execdir 	= $(libdir)/$(MACHINE)
+confdir		= $(execdir)/Config
+ardir		= $(execdir)/Libs
 mandir 		= $(libdir)/man
 incdir		= $(libdir)/include
 bindir 		= $(prefix)/bin
-etcdir		= $(stkdir)/etc
+
 
 all: start tcl tk mp stack src snow stklos ext stop 
 
@@ -49,10 +51,11 @@ start:
 	@echo "stkdir		= $(stkdir)"			>> config.make
 	@echo "libdir 		= $(libdir)"			>> config.make
 	@echo "execdir	 	= $(execdir)"			>> config.make
+	@echo "confdir 		= $(confdir)"			>> config.make
+	@echo "ardir 		= $(ardir)"			>> config.make
 	@echo "incdir 		= $(incdir)"			>> config.make
 	@echo "bindir 		= $(bindir)"			>> config.make
 	@echo "mandir 		= $(mandir)"			>> config.make
-	@echo "etcdir 		= $(etcdir)"			>> config.make
 	@echo "VERS-OPT		= -DSTK_VERSION=\\\"$(VERSION)\\\"">> config.make
 	@echo "MACHINE 		= -DMACHINE=\\\"$(MACHINE)\\\""	>> config.make
 	@echo "CC		= @CC@"				>> config.make
@@ -118,12 +121,13 @@ install: clean-before
 	(cd Extensions; $(MAKE) install)
 	(cd Demos;   	$(MAKE) install)
 	(cd Help;	$(MAKE) install)
+	(cd Doc;	$(MAKE) install)
 	@echo ""
 	@echo "Installation completed."
 
 install.libs:
-	-if [ ! -d $(etcdir) ] ; then mkdir -p $(etcdir); fi
-	$(CP) config.make $(etcdir)
+	-if [ ! -d $(confdir) ] ; then mkdir -p $(confdir); fi
+	$(CP) config.make $(confdir)
 	-if [ ! -d $(incdir) ] ; then mkdir -p $(incdir); fi
 	/bin/rm -f $(stkdir)/include
 	(cd $(stkdir) ; ln -s $(VERSION)/include ./include)
@@ -132,6 +136,7 @@ install.libs:
 	(cd Mp;		$(MAKE) install.libs)
 	(cd Src;     	$(MAKE) install.stk.libs)
 	(cd Snow;     	$(MAKE) install.snow.libs)
+	chmod 0755 $(confdir) $(ardir) $(confdir)/* $(ardir)/*
 	@echo ""
 	@echo "Full installation completed."
 
@@ -195,11 +200,11 @@ clean:
 	(cd Extensions; $(MAKE) clean)
 	(cd Help;	$(MAKE) clean)
 	(cd Doc;	$(MAKE) clean)
-	/bin/rm -f core *~ Makefile config.*
+	/bin/rm -f core *~ Makefile config.* Src/Makefile
 
 checkin-n:
-	@(Bin/version-number > VERSION; cat VERSION; prcs checkin -n)
+	@(cat VERSION; prcs checkin -n)
 
 checkin:
-	@(Bin/version-number > VERSION; cat VERSION; prcs checkin)
+	@(cat VERSION; prcs checkin)
 

@@ -5,6 +5,9 @@ dnl	to configure the system for the local environment.
 
 AC_INIT(README)
 
+VERSION=3.99.1
+echo "VERSION=$VERSION" > VERSION
+
 # I have a lot of problems with cache. So ...
 /bin/rm -f ./config.cache Src/config.cache Tk/config.cache Tcl/config.cache
 
@@ -63,6 +66,7 @@ AC_SUBST(DFLGS, DFLGS)
 AC_SUBST(EOBJ, EOBJ)
 AC_SUBST(ETKOBJ, ETKOBJ)
 AC_SUBST(MACHINE,MACHINE)
+AC_SUBST(VERSION,VERSION)
 
 ####
 #### Checks for various programs:
@@ -469,7 +473,9 @@ DFLGS="$DFLGS $EDFLGS"
 #### Produce the Makefile
 ####
 echo
-AC_OUTPUT(Makefile)
+AC_OUTPUT(Makefile Utils/STk.spec)
+
+
 
 ##############################################################################
 
@@ -497,6 +503,7 @@ then
 else
   (cd Tk/unix; CC=$CC /bin/sh ./configure)
 fi
+
 
 ###
 ### Some things to terminate

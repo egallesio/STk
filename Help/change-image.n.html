@@ -1,4 +1,4 @@
-<HTML><HEAD><TITLE>STk procedure - create-image manual page</TITLE></HEAD>
+<HTML><HEAD><TITLE>STk procedure - make-image manual page</TITLE></HEAD>
 <BR>
 <BODY bgcolor = #c3ffc3>
 <H2><IMG ALIGN=BOTTOM SRC="./Img/ManPageGreen.gif"> create-image, find-image, change-image, free-image </H2>
@@ -8,21 +8,21 @@
 Tk
 
 <H3><A NAME="M3">SYNOPSIS</A></H3>
-(<B>create-image</B> key <I>create image ?options?</I>)<BR>
+(<B>make-image</B> key <I>create image ?options?</I>)<BR>
 (<B>find-image</B> key)<BR>
 (<B>change-image</B> key  <I>create image options</I>)<BR>
 (<B>free-image</B> key)<BR>
 <H3><A NAME="M4">DESCRIPTION</A></H3>
-<B>create-image</B> is a STk procedure which simplifies Tk images
+<B>make-image</B> is a STk procedure which simplifies Tk images
 creation by providing a homogeneous way to create an image,
 independently of its coding format.  The first argument of
-<B>create-image</B> is a string which identifies the image; if an image
+<B>make-image</B> is a string which identifies the image; if an image
 with this key has been already loaded in memory, it will not be loaded
-again and <B>create-image</B> will return it. If no option is given,
+again and <B>make-image</B> will return it. If no option is given,
 the identifying image key is taken as a file name (the file is searched 
 using the variable <B>*image-path*</B>, which must contain a set of 
 prefix pathnames to prepend to the given filename).
-If options are passed to the <B>create-image</B>  procedure they must follow
+If options are passed to the <B>make-image</B>  procedure they must follow
 the convention of the options passed in <B><A HREF=../Help/./image.n.html>image create</A></B> just after the
 image format. If the image cannot be created, this procedure returns <B>#f</B>.
 <P>
@@ -31,10 +31,10 @@ Hereafter is a simple usage of this procedure:
 <PRE>(require &quot;image&quot;)
 (require &quot;pixmap&quot;)
 
-(define img1 (create-image &quot;a pixmap&quot; :file &quot;exit.xpm&quot;))
-(define img2 (create-image &quot;a bitmap&quot; :file &quot;default.xbm&quot;))
-(define img3 (create-image &quot;a pixmap&quot;))
-(define img4 (create-image &quot;x.xpm&quot;))</PRE>
+(define img1 (make-image &quot;a pixmap&quot; :file &quot;exit.xpm&quot;))
+(define img2 (make-image &quot;a bitmap&quot; :file &quot;default.xbm&quot;))
+(define img3 (make-image &quot;a pixmap&quot;))
+(define img4 (make-image &quot;x.xpm&quot;))</PRE>
 In this case, <I>img3</I> is identical to <I>img1</I> since they use the same key.
 <I>Img4</I> is the image associated to the file &quot;x.xpm&quot; found according to 
 the  *image-path* varaiable.
@@ -45,7 +45,7 @@ the  *image-path* varaiable.
 
 <P>
 <B>change-image</B> changes the content of an image previously created with
-<B>create-image</B>. Options are the identical to <B>create-image</B>
+<B>make-image</B>. Options are the identical to <B>make-image</B>
 options.
 <P>
 Example:
