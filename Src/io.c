@@ -1,7 +1,7 @@
 /*
- * i o . c					-- Low level I/O
+ * i o . c                                      -- Low level I/O
  * 
- * Copyright © 1993-1999 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
+ * Copyright © 1993-2019 Erick Gallesio - I3S-CNRS/ESSI <eg@unice.fr>
  * 
  *
  * Permission to use, copy, modify, distribute,and license this
@@ -13,9 +13,9 @@
  * This software is provided ``AS IS'' without express or implied
  * warranty.
  *
- *	     Author: Erick Gallesio [eg@kaolin.unice.fr]
+ *           Author: Erick Gallesio [eg@kaolin.unice.fr]
  *    Creation date: ????
- * Last file update:  3-Sep-1999 20:20 (eg)
+ * Last file update: 31-Oct-2019 15:55 (eg)
  */
 
 #ifdef WIN32
@@ -29,19 +29,19 @@
 #  include <ctype.h>
 #  define TCL_EVENT_FLAG 0
 #  ifdef HAVE_SYS_SELECT_H
-#    include <sys/select.h>	/* This seems to be useful only for AIX */
+#    include <sys/select.h>     /* This seems to be useful only for AIX */
 #  endif
 
 #  ifndef NO_FD_SET
 #    define SELECT_MASK fd_set
 #  else
 #     ifndef _AIX
-	typedef long fd_mask;
+        typedef long fd_mask;
 #     endif
 #     if defined(_IBMR2)
-#	  define SELECT_MASK void
+#         define SELECT_MASK void
 #     else
-#	  define SELECT_MASK int
+#         define SELECT_MASK int
 #     endif
 #  endif
 #endif
@@ -51,8 +51,8 @@
 #include "sport.h"
 #include "vport.h"
 
-#define BUFFER_SIZE	512
-#define SYSTEM(instr)	{ instr; }
+#define BUFFER_SIZE     512
+#define SYSTEM(instr)   { instr; }
 
 
 #ifdef max
@@ -67,6 +67,10 @@
 #    define READ_DATA_PENDING(fp) (max(0,(fp)->_egptr - (fp)->_gptr))
 #  endif
 #endif
+#if (!defined (READ_DATA_PENDING)) && defined __GLIBC__
+#    define READ_DATA_PENDING(fp) (max(0,(fp)->_IO_read_end - (fp)->_IO_read_ptr))
+#endif
+
 #if (!defined (READ_DATA_PENDING)) && defined __SLBF
 #  define READ_DATA_PENDING(fp) (max(0,fp->_r))
 #endif
@@ -101,7 +105,7 @@ void STk_StdinProc()
 void STk_fill_stdin_buffer(char *s)
 {
   /* This procedure is called by the console to simulate the arrival of
-   * characters on stdin. The string is GC protected			   */
+   * characters on stdin. The string is GC protected                       */
   count  = strlen(s);
   buffer = s;
   filled = 1;
@@ -110,9 +114,9 @@ void STk_fill_stdin_buffer(char *s)
  
 static int file_data_available(SCM port)
 {
-  return ( (PORT_UNGETC(port) != EOF) 			||
-	   ((port == STk_stdin) && (bufidx < count)) 	||
-	   (READ_DATA_PENDING(PORT_FILE(port)))    	 );
+  return ( (PORT_UNGETC(port) != EOF)                   ||
+           ((port == STk_stdin) && (bufidx < count))    ||
+           (READ_DATA_PENDING(PORT_FILE(port)))          );
 }
 
 
@@ -135,21 +139,21 @@ int STk_getc(SCM port)
     else {
 #ifdef USE_TK
       if (Tk_initialized && STk_interactivep) {
-	filled = 0;
-	while (!filled && !STk_control_C) {
-	  Tcl_DoOneEvent(TCL_EVENT_FLAG);
-	  if (Tk_GetNumMainWindows() <= 0) return EOF;
-	}
+        filled = 0;
+        while (!filled && !STk_control_C) {
+          Tcl_DoOneEvent(TCL_EVENT_FLAG);
+          if (Tk_GetNumMainWindows() <= 0) return EOF;
+        }
       }
       else
-	STk_StdinProc();
+        STk_StdinProc();
 #else 
       STk_StdinProc();
 #endif
       if (count <= 0) return EOF;
       else {
-	bufidx = 1;
-	return *buffer;
+        bufidx = 1;
+        return *buffer;
       }
     }
   }
@@ -157,42 +161,42 @@ int STk_getc(SCM port)
   /* Otherwise */
   switch (TYPE(port)) {
     case tc_iport : for ( ; ; ) {
- 		      errno = 0; /* OSF does not set errno to 0 before a read ! */
-		      SYSTEM(result=getc(PORT_FILE(port)));
-		      if (result != EOF || errno != EINTR) break;
-		    }
-		    return result;
+                      errno = 0; /* OSF does not set errno to 0 before a read ! */
+                      SYSTEM(result=getc(PORT_FILE(port)));
+                      if (result != EOF || errno != EINTR) break;
+                    }
+                    return result;
     case tc_isport: {
-		      register struct str_iob *f;
+                      register struct str_iob *f;
 
-		      f = (struct str_iob *) PORT_FILE(port);
-		      return (--(f->cnt)>=0? ((int)*f->ptr++): EOF);
-		    }
+                      f = (struct str_iob *) PORT_FILE(port);
+                      return (--(f->cnt)>=0? ((int)*f->ptr++): EOF);
+                    }
     case tc_ivport: {
-      		      register struct virtual_iob *f;
-		      SCM proc_eof, proc_getc, res;
+                      register struct virtual_iob *f;
+                      SCM proc_eof, proc_getc, res;
 
-		      f    = (struct virtual_iob *) PORT_FILE(port);
+                      f    = (struct virtual_iob *) PORT_FILE(port);
 
-		      proc_eof  = f->eofp;
-		      proc_getc = f->getc;
+                      proc_eof  = f->eofp;
+                      proc_getc = f->getc;
 
-		      if (proc_eof == Ntruth || proc_getc == Ntruth) {
-			/* No eof or getc_procedure => always EOF */
-			return EOF;
-		      } 
+                      if (proc_eof == Ntruth || proc_getc == Ntruth) {
+                        /* No eof or getc_procedure => always EOF */
+                        return EOF;
+                      } 
 
-		      if (Apply1(proc_eof, port) == Ntruth) {
-			/* Not eof */
-			res = Apply1(proc_getc, port);
-			return (res == STk_eof_object) ? EOF:  CHAR(res);
-		      } else {
-			/* eof procedure says we have an eof */
-			return EOF;
-		      }
-		    }
+                      if (Apply1(proc_eof, port) == Ntruth) {
+                        /* Not eof */
+                        res = Apply1(proc_getc, port);
+                        return (res == STk_eof_object) ? EOF:  CHAR(res);
+                      } else {
+                        /* eof procedure says we have an eof */
+                        return EOF;
+                      }
+                    }
     default:        Err("INTERNAL ERROR in STk_getc", NIL); 
-      		    return 0;
+                    return 0;
   }
 }
 
@@ -210,37 +214,37 @@ int STk_putc(int c, SCM port)
   ENTER_PRIMITIVE("write-char");
   switch (TYPE(port)) {
     case tc_oport :  SYSTEM(c=fputc(c, PORT_FILE(port)));
-      		     /* Signal an error if write fails. We can't do better here */
-      		     if (c == EOF) Serror("write error", NIL);
-		     break;
+                     /* Signal an error if write fails. We can't do better here */
+                     if (c == EOF) Serror("write error", NIL);
+                     break;
     case tc_osport: {
-      		      register struct str_iob *f;
-		      register unsigned int tmp;
+                      register struct str_iob *f;
+                      register unsigned int tmp;
     
-		      f =  (struct str_iob *) PORT_FILE(port);
-		      if (++f->cnt == f->bufsiz) {
-			tmp	  = f->bufsiz;
-			tmp	 += tmp/2;
-			f->base	  = must_realloc(f->base, tmp);
-			f->ptr	  = f->base + f->bufsiz - 1; /* base can move */
-			f->bufsiz = tmp;
-		      }
-		      *f->ptr++ = (unsigned char) c;
-		      break;
-		    }
+                      f =  (struct str_iob *) PORT_FILE(port);
+                      if (++f->cnt == f->bufsiz) {
+                        tmp       = f->bufsiz;
+                        tmp      += tmp/2;
+                        f->base   = must_realloc(f->base, tmp);
+                        f->ptr    = f->base + f->bufsiz - 1; /* base can move */
+                        f->bufsiz = tmp;
+                      }
+                      *f->ptr++ = (unsigned char) c;
+                      break;
+                    }
     case tc_ovport: {
-      		      register struct virtual_iob *f;
-		      SCM res, proc;
+                      register struct virtual_iob *f;
+                      SCM res, proc;
 
-		      f    = (struct virtual_iob *) PORT_FILE(port);
-		      proc = f->putc;
-		      if (proc == Ntruth) /* No putc function: return EOF */
-			return EOF;
-		      else {
-			res = Apply2(proc, STk_makechar(c), port);
-			if (res == STk_eof_object) Serror("write error", NIL);
-		      }
-    		    }
+                      f    = (struct virtual_iob *) PORT_FILE(port);
+                      proc = f->putc;
+                      if (proc == Ntruth) /* No putc function: return EOF */
+                        return EOF;
+                      else {
+                        res = Apply2(proc, STk_makechar(c), port);
+                        if (res == STk_eof_object) Serror("write error", NIL);
+                      }
+                    }
   }
   return c;
 }
@@ -251,45 +255,45 @@ int STk_puts(char *s, SCM port)
 
   switch (TYPE(port)) {
     case tc_oport :  {
-      		       int result;
+                       int result;
 
-      		       SYSTEM(result = fputs(s, PORT_FILE(port)));
-		       if (result == EOF) Serror("write-error", NIL);
-		       return result;
-    		     }
+                       SYSTEM(result = fputs(s, PORT_FILE(port)));
+                       if (result == EOF) Serror("write-error", NIL);
+                       return result;
+                     }
     case tc_osport:  {
-      		       register struct str_iob *f;
-		       register unsigned int tmp;
+                       register struct str_iob *f;
+                       register unsigned int tmp;
     
-		       f =  (struct str_iob *) PORT_FILE(port);
-		       for ( ; *s; s++) {
-			 if (++f->cnt == f->bufsiz) {
-			   tmp	   = f->bufsiz;
-			   tmp	  += tmp/2;
-			   f->base = must_realloc(f->base, tmp);
-			   f->ptr  = f->base + f->bufsiz - 1; /* base can move */
-			   f->bufsiz = tmp;
-			 }
-			 *f->ptr++ = (unsigned char) *s;
-		       }
-		       return 0;
-    		    }
-		       
+                       f =  (struct str_iob *) PORT_FILE(port);
+                       for ( ; *s; s++) {
+                         if (++f->cnt == f->bufsiz) {
+                           tmp     = f->bufsiz;
+                           tmp    += tmp/2;
+                           f->base = must_realloc(f->base, tmp);
+                           f->ptr  = f->base + f->bufsiz - 1; /* base can move */
+                           f->bufsiz = tmp;
+                         }
+                         *f->ptr++ = (unsigned char) *s;
+                       }
+                       return 0;
+                    }
+                       
     case tc_ovport: {
-      		      register struct virtual_iob *f;
-		      SCM res, proc;
+                      register struct virtual_iob *f;
+                      SCM res, proc;
 
-		      f    = (struct virtual_iob *) PORT_FILE(port);
-		      proc = f->puts;
-		      if (proc == Ntruth) /* No putc function: return EOF */
-			return EOF;
-		      else {
-			res = Apply2(proc, STk_makestring(s), port);
-			if (res ==STk_eof_object) Serror("write error", NIL);
-		      }
-		    }
-		    /* NO BREAK */
-    default:  	    return 0;
+                      f    = (struct virtual_iob *) PORT_FILE(port);
+                      proc = f->puts;
+                      if (proc == Ntruth) /* No putc function: return EOF */
+                        return EOF;
+                      else {
+                        res = Apply2(proc, STk_makestring(s), port);
+                        if (res ==STk_eof_object) Serror("write error", NIL);
+                      }
+                    }
+                    /* NO BREAK */
+    default:        return 0;
   }
 }
 
@@ -297,24 +301,24 @@ int STk_eof(SCM port)
 {
   switch (TYPE(port)) {
     case tc_iport :  {
-      		       int result;
-      		       SYSTEM(result = feof(PORT_FILE(port)));
-		       return result;
-    		     }
+                       int result;
+                       SYSTEM(result = feof(PORT_FILE(port)));
+                       return result;
+                     }
     case tc_isport:  {
-      		       register struct str_iob *f;
-		       f =  (struct str_iob *) PORT_FILE(port);
-		       return f->cnt <= 0;
-    		     }
-		       
+                       register struct str_iob *f;
+                       f =  (struct str_iob *) PORT_FILE(port);
+                       return f->cnt <= 0;
+                     }
+                       
     case tc_ivport: {
-      		      register struct virtual_iob *f;
-		      SCM proc;
+                      register struct virtual_iob *f;
+                      SCM proc;
 
-		      f    = (struct virtual_iob *) PORT_FILE(port);
-		      proc = f->eofp;
-		      return (proc == Ntruth) ? 1 : (Apply1(proc, port) != Ntruth);
-		    }
+                      f    = (struct virtual_iob *) PORT_FILE(port);
+                      proc = f->eofp;
+                      return (proc == Ntruth) ? 1 : (Apply1(proc, port) != Ntruth);
+                    }
     default:        return 1; /* always EOF on output files */
   }
 }
@@ -323,18 +327,18 @@ int STk_internal_flush(SCM port)
 {
   switch (TYPE(port)) {
     case tc_oport :  {
-      		       int result;
-      		       SYSTEM(result = fflush(PORT_FILE(port)));
-		       return result;
-    		     }
+                       int result;
+                       SYSTEM(result = fflush(PORT_FILE(port)));
+                       return result;
+                     }
     case tc_ovport: {
-      		      register struct virtual_iob *f;
-		      SCM proc;
+                      register struct virtual_iob *f;
+                      SCM proc;
 
-		      f    = (struct virtual_iob *) PORT_FILE(port);
-		      proc = f->flush;
-		      return (proc == Ntruth) ? 0 : (Apply1(proc, port) != Ntruth);
-		    }
+                      f    = (struct virtual_iob *) PORT_FILE(port);
+                      proc = f->flush;
+                      return (proc == Ntruth) ? 0 : (Apply1(proc, port) != Ntruth);
+                    }
     default:        return 0; /* i.e. always works on other ports */
   }
 }
@@ -343,44 +347,44 @@ int STk_internal_char_readyp(SCM port)
 {
   switch (TYPE(port)) {
     case tc_iport : {
-      		      if (file_data_available(port)) return 1;
+                      if (file_data_available(port)) return 1;
 #ifdef WIN32
-		      panic("char-ready?: Not yet implemented!");
+                      panic("char-ready?: Not yet implemented!");
 #else
 #  ifdef HAVE_SELECT
-		      {
-			SELECT_MASK readfds;
-			struct timeval timeout;
-			int f = fileno(PORT_FILE(port));
+                      {
+                        SELECT_MASK readfds;
+                        struct timeval timeout;
+                        int f = fileno(PORT_FILE(port));
 
-			FD_ZERO(&readfds); 
-			FD_SET(f, &readfds);
-			timeout.tv_sec = timeout.tv_usec = 0;
-			return (select(f+1, &readfds, NULL, NULL, &timeout));
-		      }
+                        FD_ZERO(&readfds); 
+                        FD_SET(f, &readfds);
+                        timeout.tv_sec = timeout.tv_usec = 0;
+                        return (select(f+1, &readfds, NULL, NULL, &timeout));
+                      }
 #  else
 #    ifdef FIONREAD
-		      {
-			int result;
+                      {
+                        int result;
 
-			ioctl(fileno(PORT_FILE(port)), FIONREAD, &result);
-			return result;
-		      }
+                        ioctl(fileno(PORT_FILE(port)), FIONREAD, &result);
+                        return result;
+                      }
 #    else
-		      return 1;
+                      return 1;
 #    endif
 #  endif
 #endif
-		    }
+                    }
     case tc_isport: return 1;
     case tc_ivport: {
-      		      register struct virtual_iob *f;
-		      SCM proc;
+                      register struct virtual_iob *f;
+                      SCM proc;
 
-		      f    = (struct virtual_iob *) PORT_FILE(port);
-		      proc = f->readyp;
-		      return (proc == Ntruth) ? 1 : (Apply1(proc, port) != Ntruth);
-		    }
+                      f    = (struct virtual_iob *) PORT_FILE(port);
+                      proc = f->readyp;
+                      return (proc == Ntruth) ? 1 : (Apply1(proc, port) != Ntruth);
+                    }
     default:        return 1; /* always EOF on output files */
   }
 }
@@ -398,13 +402,13 @@ void STk_close(SCM port)
 
     case tc_ivport:
     case tc_ovport: {
-      		      register struct virtual_iob *f;
-		      SCM proc;
+                      register struct virtual_iob *f;
+                      SCM proc;
 
-		      f    = (struct virtual_iob *) PORT_FILE(port);
-		      proc = f->close;
-		      if (proc != Ntruth) Apply1(proc, port);
-    		    }
+                      f    = (struct virtual_iob *) PORT_FILE(port);
+                      proc = f->close;
+                      if (proc != Ntruth) Apply1(proc, port);
+                    }
   }
   PORT_FLAGS(port) |= PORT_CLOSED;
 }
