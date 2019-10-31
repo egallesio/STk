@@ -1,3 +1,13 @@
+2019-10-31 Erick Gallesio <eg@unice.fr>
+
+	* Twenty years later, added a patch from Vladimir Nikishkin to allow
+	compilation with recent eversion of gcc
+
+	* Git-ification of the development tree from 3.1.1 (Sep'98) to 4.0.1
+
+	* Publication of the new tree on Gitlab and Github
+
+
 1999-09-27  Erick Gallesio  <eg@unice.fr>
 
 	* Release 4.0.1
@@ -15,11 +25,11 @@
 	* Doc/Reference/Reference2.tex : Added documentation on the
  	primitive export-al-symbols which was missing.
 
-	* Lib/www-mailto: 	
+	* Lib/www-mailto:
 	* Lib/www.stk: New hook "www:hook-mailto" to handle "mailto:"
  	requests. Furthermore, unknown protocol are properly handled now.
 
-	* Lib/www-browser.stklos: Added a mail composer !!! It is used 
+	* Lib/www-browser.stklos: Added a mail composer !!! It is used
 	by the HTML browser when a "mailto:" is encountered.
 
 1999-09-15  Erick Gallesio  <eg@unice.fr>
@@ -30,7 +40,7 @@
  	done. This solves the problem (and enhance redisplay btw)
  	signalled by Harvey Stein <hjstein@bfr.co.il>
 
-	* Lib/www-url.stk : Applied a patch provided by Harvey Stein to 
+	* Lib/www-url.stk : Applied a patch provided by Harvey Stein to
 	correctly parse URL which use proxies.
 
 	* Src/unix.c (STk_setenv): Use of STk_must_malloc instead of
@@ -53,7 +63,7 @@
 1999-09-13  Erick Gallesio  <eg@unice.fr>
 
 	* Demos/README.html: Modified the applet for allowing the
- 	execution of the examples when STk is installed (bug signalled 
+ 	execution of the examples when STk is installed (bug signalled
 	by  Harvey Stein <hjstein@bfr.co.il>
 
 1999-09-12  Erick Gallesio  <eg@unice.fr>
@@ -68,7 +78,7 @@
 1999-09-05  Erick Gallesio  <eg@unice.fr>
 
 	* Release 4.0.0
-		
+
 	* STk.prj: Added the file Combobox.stklos
 
 1999-09-04  Erick Gallesio  <eg@unice.fr>
@@ -79,16 +89,16 @@
 	* Win32: some minor corrections
 
 1999-09-03  Erick Gallesio  <eg@unice.fr>
-	      
+
 	* First package named 4.0 (Let's pray).
-	
+
 	* New Copyright applied to all the files which need it. The new
  	copyright deletes the restriction on commercial applocations.
 
 	* Tk/generic/tkConfig.c (DoConfig): Correction of a long standing
  	bug signalled by Brian Denheyer <briand@deldotd.com>about the
- 	environments which were garbaged on checkbutton menu entry. 
-	
+ 	environments which were garbaged on checkbutton menu entry.
+
 	* configure.in : Modifications for RPM 3.0 packaging
 
 1999-09-01  Erick Gallesio  <eg@unice.fr>
@@ -97,7 +107,7 @@
  	the scope of the name of a * named let encloses only the body of
  	the let and not the * initialization values of the bound
  	variables. That means that
-	   (let ((f -)) (let f ((n (f 1))) n)) => -1 
+	   (let ((f -)) (let f ((n (f 1))) n)) => -1
 	rather than 1. This (apparently very common) bug was signaled in
  	comp.lang.scheme.
 
@@ -108,9 +118,9 @@
 
 	* Lib/srfi-7.stk: New file for SRFI-7 (PROGRAM)
 
-	* Src/syntax.c (STk_syntax_begin): Accepts now the form "(begin)" 
+	* Src/syntax.c (STk_syntax_begin): Accepts now the form "(begin)"
 	without complaining about a null body
-	
+
 	* Src/port.c : slight modification to input-port? primtive: it
  	returns #t for all the input port (i.e. file, string and virtual
  	port) instead of the file port only. A new primitive as been
@@ -126,7 +136,7 @@
 
 	* Lib/srfi-0.stk: New file implementing srfi-0
 
-	* Lib/srfi-2.stk: New file implementing srfi-2	
+	* Lib/srfi-2.stk: New file implementing srfi-2
 
 1999-08-24  Erick Gallesio  <eg@unice.fr>
 
@@ -142,10 +152,10 @@
 
 	* Src/port.c (STk_close_file_port): closing a closed file with
  	fclose on glibc2.1.1 dumps core. fclose has been replaced by a
- 	fflush and a close. 
+ 	fflush and a close.
 
 	* Lib/winsocket.stklos : New file which implements sockets for
- 	Win32.  This file is a contribution of Steve Pruitt 
+ 	Win32.  This file is a contribution of Steve Pruitt
 	<steve@pruitt.net>
 
 1999-08-22  Erick Gallesio  <eg@unice.fr>
@@ -163,7 +173,7 @@
 1999-08-19  Erick Gallesio  <eg@unice.fr>
 
 	* STklos/Tk/Composite/Paned.stklos (): Made the fraction of a
- 	paned an active slot. This was requested by Andrew Dorrell 
+ 	paned an active slot. This was requested by Andrew Dorrell
 	<andrewd@mountains.net.au>
 
 1999-08-18  Erick Gallesio  <eg@unice.fr>
@@ -183,11 +193,11 @@
 	* Lib/console.stk : Clos console menu didn't exit the interpreter
  	on the main console.
 
-	* Lib/help.stk: Modified the help function to deiconify the 
+	* Lib/help.stk: Modified the help function to deiconify the
 	browser if it already exists
- 	
+
 	* Src/stk.h: Conditionally define TRUE and FALSE as requested by
- 	Shiro Kawai <shiro@squareusa.com> 
+ 	Shiro Kawai <shiro@squareusa.com>
 
 	* Lib/console.stk : New menu in
  	console to allow to open a new console in a given module.
@@ -204,7 +214,7 @@
 
 	* Lib/image.stk : Changed the images are searched. It didn't work
  	for Win32
-	
+
 
 1999-08-04  Erick Gallesio  <eg@unice.fr>
 
@@ -256,7 +266,7 @@
 
 1999-06-19  Erick Gallesio  <eg@unice.fr>
 
-	* Src/hash.c (hash_table_put): 
+	* Src/hash.c (hash_table_put):
 	* Src/tk-glue.c (STk_add_callback): Changed the variable new to
  	new_entry to be more C++ friendly as requested by Jonathan Berry
  	<berryj@elon.edu>
@@ -280,8 +290,8 @@
 
 	* Tcl/tclInt.h: The Tcl List type is now hidden (since it is not
  	used by STk) . It is a request from Jonathan Berry
- 	<berryj@elon.edu> 
-	
+ 	<berryj@elon.edu>
+
 1999-05-28  Erick Gallesio  <eg@unice.fr>
 
 	* Tk/generic/tkCanvLine.c: Added the option :centerarrow for
@@ -292,19 +302,19 @@
  	to the <Line> class to take into account the new:centerarrow
  	option
 
-	
+
 1999-05-26  Erick Gallesio  <eg@unice.fr>
 
-	****** All the stuff below has been provided by people at Grammatech 
+	****** All the stuff below has been provided by people at Grammatech
 	****** <sarah@grammatech.com> & <paul@grammatech.com>
 
-	* Tk/generic/tkFrame.c: Declare the menu option of a frame as 
+	* Tk/generic/tkFrame.c: Declare the menu option of a frame as
 	a TK_CONFIG_MENU rathere than a TK_CONFIG_STRING.
 
 	* Src/tcl-lib.c (Tcl_CreateInterp): flags field was not
  	initialized.
 
-	* Src/stk.h: Added #define USE_PROCESS for Win32 
+	* Src/stk.h: Added #define USE_PROCESS for Win32
 
 	* Src/eval.c: Two new functions for applying 1 or 2 arguments only.
 
@@ -330,19 +340,19 @@
 	((init-console module std-console?)): color missing on HPUX
  	replaced by its value.
 
-	* configure.in: the --prefix option was not correctly propagated 
+	* configure.in: the --prefix option was not correctly propagated
 	to Tk and Tcl configure scripts.
 
 	* Stack/Makefile.in: new entry install.libs
 
 1999-05-21  Erick Gallesio  <eg@unice.fr>
 
-	* Src/dynload.c: 
+	* Src/dynload.c:
 	* Src/number.c:
-	* Src/port.c: 
+	* Src/port.c:
 	* Src/env.c: Some typo errors signalled by David Fox.
 
-	* Src/tcl-lib.c (Tcl_CreateCommand): bug correction suggested by 
+	* Src/tcl-lib.c (Tcl_CreateCommand): bug correction suggested by
 	David Fox <dsfox@cogsci.ucsd.edu>
 
 1999-05-20  Erick Gallesio  <eg@unice.fr>
@@ -360,7 +370,7 @@
  	by the repl-display-result to display results at the toplevel. It
  	was write*, but it doesn't seem to be appreciated. The new value
  	is a function which use write or write* for list and write* for
- 	other object. Of course it can be changed by just setting the 
+ 	other object. Of course it can be changed by just setting the
 	repl-write result.
 
 	* STklos/Tk/Composite/Hierarchy.stklos: Added the remove-item!
@@ -371,8 +381,8 @@
 
 1999-05-19  Erick Gallesio  <eg@unice.fr>
 
-	* Lib/www-browser.stklos (WWW:browser): 
-	* Demos/Widget/Wmenu.stklos (demo-menu): 
+	* Lib/www-browser.stklos (WWW:browser):
+	* Demos/Widget/Wmenu.stklos (demo-menu):
 	* Demos/amib.stklos (build-interface): Use the new toolbar widget
 	instead of simple menu as before.
 
@@ -384,7 +394,7 @@
  	convention that spaces of length 0 in a toolbar correspond to a
  	space which takes all the spaces (i.e. it sets the :expand option
  	of the packer to #t)
-	
+
 	* Lib/menu.stk (Tk:menu-escape menu): code was incorrect when
  	using the Escape key on a cascade menu.
 
@@ -425,7 +435,7 @@
 
 	* STklos/Tk/Composite/Toolbar.stklos: New file which implements
  	the floating toolbar abstraction. This was really a pain to write
- 	(even if it does not seem complicate afterwards :-<). This is not 
+ 	(even if it does not seem complicate afterwards :-<). This is not
 	complete, but it's time to release...
 
 	* STklos/Tk/Menu.stklos: Special clone-widget methods for <menu>
@@ -461,12 +471,12 @@
 
 	* STklos/Tk/Composite/Combobox.stklos (show/hide-combo-list):
  	Changed the focus policy for combo boxes
-	  
+
 
 1999-05-01  Erick Gallesio  <eg@unice.fr>
 
 	* Tk/generic/tkPlace.c: Typo error detected in Biglook and which
- 	seems not harmful in STk. 
+ 	seems not harmful in STk.
 
 	* Src/vector.c (STk_sort): When sorting a list, there was an
  	unnecessary copy vector which was allocated. Thanks to Manuel for
@@ -474,21 +484,21 @@
 
 1999-04-25  Erick Gallesio  <eg@unice.fr>
 
-	* Demos/stkfontsel.stk: New demo. 
+	* Demos/stkfontsel.stk: New demo.
 
-	* Lib/font-chooser.stklos (): When the user exits the widget 
+	* Lib/font-chooser.stklos (): When the user exits the widget
 	without selecting a font, the old font remains the default one.
-	
+
 1999-04-24  Erick Gallesio  <eg@unice.fr>
 
 	* Lib/font-chooser.stklos: The font chooser has been completely
  	rewritten. Now it only use one global variable (instead of 6) and
  	is cleaner than the older one. The chooser also use the Combobox
- 	composite widget. 
+ 	composite widget.
 
 1999-04-17  Erick Gallesio  <eg@unice.fr>
 
-	* STklos/Tk/Text.stklos (text-see): typo error signalled by 
+	* STklos/Tk/Text.stklos (text-see): typo error signalled by
 	Brian Denheyer <briand@deldotd.com>
 
 	* Src/argv.c: Added the -version option to stk. This options just
@@ -517,9 +527,9 @@
 
 1999-03-24  Erick Gallesio  <eg@unice.fr>
 
-	* Src/dynload.c (push_argument): Forgot to implement the boolean case 
+	* Src/dynload.c (push_argument): Forgot to implement the boolean case
 	Patch provided by David Fox <dsfox@cogsci.ucsd.edu>.
-	
+
 	* configure.in: Application of corrections for FreeBSD provided by
  	"F. Heinrichmeyer" <fritz.heinrichmeyer@FernUni-Hagen.de>
 
@@ -527,10 +537,10 @@
 
 	* STklos/Tk/Image.stklos (initialize): New method: Pixmap
  	extension need that the :file or :data be passed when the  image
- 	is created => we use a new initialize method rather than the 
+ 	is created => we use a new initialize method rather than the
  	initialize-image scheme used for bitmaps and photos.
 	Bug signaled by Brian Denheyer <briand@deldotd.com>
-	
+
 
 1999-03-13  Erick Gallesio  <eg@unice.fr>
 
@@ -579,7 +589,7 @@
 
 1999-02-01  Erick Gallesio  <eg@unice.fr>
 
-	* Lib/font-chooser.stklos: New file. 
+	* Lib/font-chooser.stklos: New file.
 
 1999-01-28  Erick Gallesio  <eg@unice.fr>
 
@@ -601,7 +611,7 @@
 
 	* Src/stk.h: Acces to float is now direct (i.e. without pointer).
   	It was not the case to avoid to make too much big cells due to
- 	alignments problems. The trick was to put the union before the 
+ 	alignments problems. The trick was to put the union before the
 	tag (suggested by "Jay Krell" <jay.krell@cornell.edu>. Thanks)
 
 1998-12-27  Erick Gallesio  <eg@unice.fr>
@@ -637,12 +647,12 @@
 
 1998-12-10  Erick Gallesio  <eg@unice.fr>
 
-	* Src/error.c: error management has ben completely changed. This should 
+	* Src/error.c: error management has ben completely changed. This should
 	be less fragile now.
 
 1998-12-08  Erick Gallesio  <eg@unice.fr>
 
-	* Lib/tk-init.stk ("edit"): The ed function is now the scheme editor 
+	* Lib/tk-init.stk ("edit"): The ed function is now the scheme editor
 	instead of the old one in file editor.stk
 
 	* Lib/text.stk: Deleted the binding for Control-v on Unix. I don't
@@ -669,10 +679,10 @@
  	will be the implicit way to interact with the interpreter
 
 	* Src/console.c:
-	* Lib/console.stk: New files to implement a console for interacting 
+	* Lib/console.stk: New files to implement a console for interacting
 	with STklos.
-	
-	* Lib/font-lock.stk: New file. Font-lock doesn't need to load STklos 
+
+	* Lib/font-lock.stk: New file. Font-lock doesn't need to load STklos
 	now.
 
 1998-11-22  Erick Gallesio  <eg@unice.fr>
@@ -684,10 +694,10 @@
 	* STklos/Tk/Listbox.stklos (y-view): Method lacks a dot before the
  	"args" paramter (thanks to Walter C. Pelissero
  	<wcp@luppolo.lpds.sublink.org> for signaling it).
-	
+
 1998-11-21  Erick Gallesio  <eg@unice.fr>
 
-	* configure.in : Applied the patch given by Shiro Kawai 
+	* configure.in : Applied the patch given by Shiro Kawai
 	<shiro@squareusa.com> for IRIX 6.2.
 
 	* Src/port.c: Char-ready is now implemented in io.c which is a
@@ -697,16 +707,16 @@
 
 	* Src/sport.c: New primitive with-error-to-string
 
-	* Src/port.c: 
+	* Src/port.c:
 	  - New primitive with-error-to-file (why was it absent?)
-	  - New primitives with-input-from-port, with-output-to-port, 
+	  - New primitives with-input-from-port, with-output-to-port,
 	    with-error-to-port
 	  - Rewriting of large parts of the file using new primitives.
 
 	  Src/io.c: has completely be rewritten. It should be faster now
  	  and handle all the kind of port we have: file, strings and
  	  virtual
-	
+
 1998-11-18  Erick Gallesio  <eg@unice.fr>
 
 	* Lib/text.stk: Pasting with mouse is now correct.
@@ -715,8 +725,8 @@
 
 	* Src/*.c : * Extensions/*.c: Funtions using files heve all been
  	replaced with port. It means that port, string-ports and virtual
- 	ports are now truly interchangeable. The drawback is that user 
-	code written in C which use files can be BROKEN. 
+ 	ports are now truly interchangeable. The drawback is that user
+	code written in C which use files can be BROKEN.
 
 1998-11-05  Erick Gallesio  <eg@unice.fr>
 
@@ -724,11 +734,11 @@
 
 1998-11-04  Erick Gallesio  <eg@unice.fr>
 
-	* Src/vport.c: New file which implement virtual ports. A virtual 
-	port can be opened for reading or writing. Functions to access 
+	* Src/vport.c: New file which implement virtual ports. A virtual
+	port can be opened for reading or writing. Functions to access
 	the port are given by the user as Scheme procedures
 
-	* STklos/Tk/Composite/Filebox.stklos : Error messages use a :text 
+	* STklos/Tk/Composite/Filebox.stklos : Error messages use a :text
  	option instead of :message => error messages were not correctly
  	displayed
 
@@ -774,7 +784,7 @@
 	* Demos/widget.stk: Code of the various demo of the big widget
  	program are now "font-locked".
 
-	* STklos/Tk/Composite/Schemetext.stklos: New class: <Scheme-text>. 
+	* STklos/Tk/Composite/Schemetext.stklos: New class: <Scheme-text>.
 	This is a subclass of <Scroll-text> specialize for Scheme
  	programs. For now, only Emacs like "font-locking" is done by this
  	widget.
@@ -795,12 +805,12 @@
 1998-09-19  Erick Gallesio  <eg@unice.fr>
 
 	* Extensions/locale.c: New file. This extensions implement string
-	and character comparisons using locale. The new functions are of 
+	and character comparisons using locale. The new functions are of
 	the form string-lo<?, string-lo-ci=?, and so on...
 
 	* Src/str.c (stringcomp): Bug in stringcomp with 8bit characters.
   	We had (char<? #\é #\e) => #f whereas (string<? "é" "e") => #t
-	Comparison is now done on unsigned chars.	
+	Comparison is now done on unsigned chars.
 
 
 1998-09-17  Erick Gallesio  <eg@unice.fr>
@@ -815,14 +825,14 @@
 
 1998-09-10  Erick Gallesio  <eg@unice.fr>
 
-	* Lib/tk-unix.stk: completely rewritten. 
+	* Lib/tk-unix.stk: completely rewritten.
 
-	* Doc/Manual/choose-color.n: 
+	* Doc/Manual/choose-color.n:
 	* Doc/Manual/message-box.n:  New manual pages
 
 	* STklos/Tk/Tk-classes.stklos : The standard Tk dialog were not
  	exported correctly.
-	
+
 1998-09-09  Erick Gallesio  <eg@unice.fr>
 
 	* Big code cleanup on all STk code. There were problems with
@@ -847,7 +857,7 @@
 
 1998-08-29  Erick Gallesio  <eg@unice.fr>
 
-	* STklos/Tk/Toplevel.stklos: Two new methods make-transient and 
+	* STklos/Tk/Toplevel.stklos: Two new methods make-transient and
 	place-toplevel.
 
 	* STklos/stklos.stk (class-methods): New function, which return
@@ -857,7 +867,7 @@
 1998-08-25  Erick Gallesio  <eg@unice.fr>
 
 	* STklos/Tk/Composite/Notepad.stklos: New file which define a
- 	Note-pad class. 
+ 	Note-pad class.
 
 	* Demos/stklos-widgets.stklos: Added <Notepad> demo
 
@@ -869,7 +879,7 @@
  	of use).
 
 	* Demos/stklos-widgets.stklos: Added <hierarchy-tree> demo
-	
+
 
 1998-08-23  Erick Gallesio  <eg@unice.fr>
 
@@ -878,7 +888,7 @@
  	garbaged. BTW, the way for keeping track of closures used in
  	bindings has been simplified.
 
-	* Tk/generic/tkCmds.c (Tk_BindCmd): Adaptated to the new scheme 
+	* Tk/generic/tkCmds.c (Tk_BindCmd): Adaptated to the new scheme
 	for bindings.
 
 1998-08-20  Erick Gallesio  <eg@unice.fr>
@@ -912,7 +922,7 @@
  	CODE!
 
 	* Lib/tk-init.stk (*start-withdrawn*): One example of code broken
- 	by previous modification...	
+ 	by previous modification...
 
 1998-07-22  Erick Gallesio  <eg@unice.fr>
 
@@ -920,7 +930,7 @@
  	files were not installed when doing a "make
  	install.libs". Corrected now. Thanks to Vincent Granet
  	<vg@unice.fr> for signalling it.
-       
+
 
 1998-07-20  Erick Gallesio  <eg@unice.fr>
 
@@ -938,7 +948,7 @@
 	* Lib/base64.stk: New file which load the base64 extension. It
  	also provides the functions (base64-encoding-string and
  	base64-decoding-string)
-	
+
 1998-07-19  Erick Gallesio  <eg@unice.fr>
 
 	* Src/cont.c (STk_throw): Bug correction: continuation escape
@@ -979,7 +989,7 @@
 	* Src/port.c (STk_read_line): Iconcorrect behaviour when a file is
  	not ended by a newline (thanks to Shiro Kawai
  	<shiro@sqush.squareusa.com>)
-	
+
 1998-06-02  Erick Gallesio  <eg@unice.fr>
 
 	* Tcl/tcl.h: Added a dumb field to the Tcl_Obj type for AIX cc
@@ -1009,7 +1019,7 @@
 
 	* STklos/stklos.stk (ensure-class): Better error message when a
  	slot or a metaclass is duplicated (the duplicate is now clearly shown
-	now).  
+	now).
 
 	* configure.in: Added the -fpic option for Linux shared libraries.
   	It seems that problems appear when the object file is bigger than
@@ -1023,7 +1033,7 @@
 
 	* Src/print.c: heavy rewritting. should be a little bit more
  	efficient.
-	
+
 1998-05-28  Erick Gallesio  <eg@unice.fr>
 
 	* Extensions/html.c (html_next_token): Partly rewritten to take
@@ -1031,7 +1041,7 @@
  	Chazarain).  BTW, the procedure has now the same behaviour as
  	Netscape for unfinished entity (e.g. x&zz<...> is seen as a string
  	which must not be interpretated).
-	
+
 
 1998-05-25  Erick Gallesio  <eg@unice.fr>
 
@@ -1057,7 +1067,7 @@
  	circumstances. Patch provided by Grant Edwards
  	<grante@reddwarf.frco.com>
 
-	* Src/tcl-glue.c (STk_tcl_getvar): forgot a return in the function 
+	* Src/tcl-glue.c (STk_tcl_getvar): forgot a return in the function
 	which breaks result at least on Solaris (thanks to Thomas Buerger
 	for the patch).
 
@@ -1074,7 +1084,7 @@
 
 	* Lib/init.stk:
 	* Src/toplevel.c: New global variable *last-defined* which is set
-	when a define is done. This allow some traces when evaluating 
+	when a define is done. This allow some traces when evaluating
 	large pieces of code.
 
 1998-05-11  Erick Gallesio  <eg@unice.fr>
@@ -1085,8 +1095,8 @@
 
 	* STk-3.99.1 Release
 
-	* STklos/stklos.stk (ensure-class): Inclusion of the Metaclass 
-	init-keywords patch from J-M kubek <kubek@insa-tlse.fr>, which 
+	* STklos/stklos.stk (ensure-class): Inclusion of the Metaclass
+	init-keywords patch from J-M kubek <kubek@insa-tlse.fr>, which
 	allows to initialize some slots of a class when declaring it.
 
 	* Lib/bigloo.stk (module): The compatibility function between
@@ -1098,7 +1108,7 @@
  	functions. Bug signaled by Walter C. Pelissero
  	<wcp@luppolo.lpds.sublink.org>
 
-	* Tcl/tclUnixPort.h: 
+	* Tcl/tclUnixPort.h:
 	* Tcl/Int.h: Path correction for accessing compatibility
  	files. This was needed for SunOS 4.3.x.
 
@@ -1119,7 +1129,7 @@
  	which allow to initialize this slot even if the state of the
  	widget is disabled. Idea from Walter C. Pelissero
  	<wcp@luppolo.lpds.sublink.org>
-	
+
 
 1998-04-26  Erick Gallesio  <eg@unice.fr>
 
@@ -1166,7 +1176,7 @@ Wed Apr  8 17:02:26 1998  Erick Gallesio  <eg@unice.fr>
 
 	* Src/*.c: Correction: stderr (instead of STk_stderr) was
  	incorrectly used in some places.
-	
+
 	* Src/Stack: Code was absolutely incorrect for machine which don't
  	support FFI.
 
@@ -1181,8 +1191,8 @@ Mon Mar  9 21:42:08 1998  Erick Gallesio  <eg@unice.fr>
 
 	* Src/tcl-glue: Bug correction in STk_valid_environment
 
-	* Tcl/tclEvent.c: Bug correction: after events callback table was 
-	not correctly cleaned when an event was fired.	
+	* Tcl/tclEvent.c: Bug correction: after events callback table was
+	not correctly cleaned when an event was fired.
 
 Sun Mar  8 23:41:11 1998  Erick Gallesio  <eg@unice.fr>
 
@@ -1211,8 +1221,8 @@ Tue Feb 24 18:56:17 1998  Erick Gallesio  <eg@unice.fr>
  	now the parent class of <Text-window> and of (the new) class
  	<Text-image>.
 
-	* Tk/generic/tkConfig.c: a lot of change to take image as a real 
-	type (instead of a string). Configuration has been cleaned. 
+	* Tk/generic/tkConfig.c: a lot of change to take image as a real
+	type (instead of a string). Configuration has been cleaned.
 
 Thu Feb 19 16:39:46 1998  Erick Gallesio  <eg@unice.fr>
 
@@ -1223,7 +1233,7 @@ Thu Feb 19 16:39:46 1998  Erick Gallesio  <eg@unice.fr>
  	makeing Tk importing STklos+Tk. But there is no good reason to do
  	so. The bad news is that very old code can be broken if it uses
  	list bindings instead of lambda (it's more than 2 years than this
- 	form is deprecated) and STklos. 
+ 	form is deprecated) and STklos.
 
 Thu Feb 12 16:17:36 1998  Erick Gallesio  <eg@unice.fr>
 
@@ -1251,16 +1261,16 @@ Sun Feb  1 19:16:46 1998  Erick Gallesio  <eg@unice.fr>
  	messages box. They are simulated on Unix and will be native
  	(someday) on Windows.
 
-	
-	* STklos/Tk/MsgBox.stklos: New Classes: <Tk-message-box> 
- 	<Abort-retry-ignore-message-box>  <Ok-message-box> 
-	<Ok-cancel-message-box>  <Ok-cancel-message-box> 
-	<Retry-cancel-message-box> <Yes-no-message-box> 
-	<Yes-no-cancel-message-box>. This classes are used by the 
+
+	* STklos/Tk/MsgBox.stklos: New Classes: <Tk-message-box>
+ 	<Abort-retry-ignore-message-box>  <Ok-message-box>
+	<Ok-cancel-message-box>  <Ok-cancel-message-box>
+	<Retry-cancel-message-box> <Yes-no-message-box>
+	<Yes-no-cancel-message-box>. This classes are used by the
 	new function Tk:message-box to build mesages boxes.
-		
+
 	* Src/read.c: Now #. is evaluated in the current module (instead
- 	of the global one).  
+ 	of the global one).
 
 	* Src/tcl-glue.c (STk_convert_Tcl_string2list): current module is
  	set to the Tk module when converting a Tk result to Scheme. This
@@ -1273,16 +1283,16 @@ Thu Jan 29 19:21:48 1998  Erick Gallesio  <eg@unice.fr>
 	* STklos/Tk/Composite/Choicebox.stklos: New slot for
  	<Choice-box>es: CHOICE. This slot contains the set of possible
 	values for the entry.
-	
+
 
 Mon Jan 26 15:42:11 1998  Erick Gallesio  <eg@unice.fr>
 
 	* STklos/Tk/Tk-meta.stklos: Protocol for widget has been
  	"lighted".  The slot tk-valid-option has ben deleted and slot are
  	set one by one after class initialization. This in in fact faster
- 	than the old method. However <Frame> and <Toplevel> classes, don't 
-	fit well in this scheme (some of their slots cannot be changed 
-	after the widget is created (e.g. class or visual) => There is a 
+ 	than the old method. However <Frame> and <Toplevel> classes, don't
+	fit well in this scheme (some of their slots cannot be changed
+	after the widget is created (e.g. class or visual) => There is a
 	spcial init function for theses classes.
 
 	* STklos/Tk/Basics.stklos: Composite widgets have now a class
@@ -1291,12 +1301,12 @@ Mon Jan 26 15:42:11 1998  Erick Gallesio  <eg@unice.fr>
  	for a particular class. For instance labeled entries use the value
  	"LabeledEntry" by default. This feature can be used for
  	initializing the X11 resource database. for instance you can have
-	
+
 		STk*LabeledEntry*Entry*Background: white
 
 	in the .Xdefaults file to set the default value of background of
  	the entry of a <Labeled-entry> widget.
-	
+
 	* STklos/Tk/Basics.stklos: :tk-virtual slots accept now the
  	:init-form option. That means that you can do new classes which
  	simply change the default value by subclassing a previous widget
@@ -1311,7 +1321,7 @@ Sun Jan 25 10:53:54 1998  Erick Gallesio  <eg@unice.fr>
 	* Src/toplevel.c:
 	* Lib/init.stk: User initialization file (.stkrc) is now loaded
  	after Tk is initialized. It used to be initialized at the end of
-	init.stk (and hence just before Tk). File loading is done in C. 
+	init.stk (and hence just before Tk). File loading is done in C.
 	now.
 
 Sat Jan 24 13:22:51 1998  Erick Gallesio  <eg@unice.fr>
@@ -1325,7 +1335,7 @@ Thu Jan 22 23:50:38 1998  Erick Gallesio  <eg@unice.fr>
 
 	* Lib/init.stk: New macro: DEFINE-VARIABLE. It's equivalent to the
  	Elisp/CL DEFVAR
-	
+
 	* Lib/tk-init.stk (*start-withdrawn*): A lot of people dislike the
  	fact that the root window is mapped on screen when Tk is started,
  	The code below, unmaps the *root* window and make it appearing as
@@ -1338,8 +1348,8 @@ Thu Jan 22 23:50:38 1998  Erick Gallesio  <eg@unice.fr>
 Tue Jan 20 14:40:31 1998  Erick Gallesio  <eg@unice.fr>
 
 	* Src/proc.c: New undoumented procedure: %procedure-arity
-	
-	* STklos/stklos.stk: 
+
+	* STklos/stklos.stk:
 	* Src/stklos.c: Optimisation of slot accesses for virtual
  	slots. The call to APPLY is now inlined in the slot-ref and
  	slot-set! functions. The arity of the setter and getter functions
@@ -1365,8 +1375,8 @@ Fri Jan  9 21:06:22 1998  Erick Gallesio  <eg@unice.fr>
 	* Src/port.c: Bug correction in "AUTOLOAD?". BTW, this function
  	admit now a (optional) second parameter which can be a module.
 
-	* Src/syntax.c: 
-	* Src/env.c: 
+	* Src/syntax.c:
+	* Src/env.c:
 	* Src/module.c: Bug correction for C varaiables which were
  	"disconnected" of their C counterpart in some cases
 
@@ -1377,7 +1387,7 @@ Thu Jan  8 12:27:44 1998  Erick Gallesio  <eg@unice.fr>
 Sat Jan  3 16:50:55 1998  Erick Gallesio  <eg@unice.fr>
 
 	* STk.prj: STk.prj has been completely redefined. Now PRCS
- 	versions are in sync with STk version. 
+ 	versions are in sync with STk version.
 
 Thu Jan  1 13:18:22 1998  Erick Gallesio  <eg@unice.fr>
 
@@ -1405,7 +1415,7 @@ Tue Dec 30 23:33:09 1997  Erick Gallesio  <eg@unice.fr>
  	conventions for argument passing to the interpreter (-file option
  	and implicit -file).
 
-	* Src/eval.c: 
+	* Src/eval.c:
 	* Src/error.c: Bug correction: In some circumstances a buggy
  	REPORT-ERROR can lead to an infinite loop. Now we can have the
  	stack when in report-error AND the original error which caused the
@@ -1442,9 +1452,9 @@ Mon Dec 15 13:53:46 1997  Erick Gallesio  <eg@unice.fr>
 
 Sat Dec 13 11:07:46 1997  Erick Gallesio  <eg@unice.fr>
 
-	* Src/stklos.c: 
+	* Src/stklos.c:
 	* Src/slib.c:
-	* Src/port.c: 
+	* Src/port.c:
 	* Src/gc.c: Correction of various bugs signalled by Walter C. Pelissero
  	<wcp@luppolo.lpds.sublink.org>
 
@@ -1473,11 +1483,11 @@ Thu Nov 13 01:10:41 1997  Erick Gallesio  <eg@unice.fr>
 	* Src/proc.c:
 	* Src/gc.c:
 	* Src/eval.c:
-	* Src/syntax.c: Cleaning of procedure creation code. All 
-	closures are created by the function STk_makeclosure 
+	* Src/syntax.c: Cleaning of procedure creation code. All
+	closures are created by the function STk_makeclosure
 	(instead of being inlined in code).
-	
-	* Src/syntax.c: 
+
+	* Src/syntax.c:
 	* Src/env.c: Correction of a long standing bug with internal
  	defines management.  In some cases, access to local variable could
  	be false. This was because new variables were inserted at the
@@ -1487,14 +1497,14 @@ Thu Nov 13 01:10:41 1997  Erick Gallesio  <eg@unice.fr>
  	instead of closed when a process was deallocated. Bug discovered
  	by Sarah Calvo <sarah@grammatech.com>
 
-	
+
 Wed Nov 12 09:35:13 1997  Erick Gallesio  <eg@unice.fr>
 
 	* Src/list.c: new primitve: the R3RS last-pair
 
 Sun Nov  9 22:01:56 1997  Erick Gallesio  <eg@unice.fr>
 
-	* Src/list.c: 
+	* Src/list.c:
 	* Src/primitives.c: New primitive: append!
 
 Tue Oct 28 21:24:02 1997  Erick Gallesio  <eg@unice.fr>
@@ -1535,8 +1545,8 @@ Sun Sep 14 11:22:48 1997  Erick Gallesio  <eg@unice.fr>
  	toplevel window. Furthermore, this widget has a slot called TITLE
  	which contains the title of the widget window.
 
-	*STklos/Tk/*.stklos: added a "(select-module Tk) in all these files	
-	
+	*STklos/Tk/*.stklos: added a "(select-module Tk) in all these files
+
 Sat Sep  6 22:07:39 1997  Erick Gallesio  <eg@unice.fr>
 
 	* Src/toplevel.c: names of display-prompt and display-result have
@@ -1556,7 +1566,7 @@ Wed Aug 27 15:46:25 1997  Erick Gallesio  <eg@unice.fr>
 
 	* Mp/Makefile: Path was incorrect when using fgmp.
 
-	* Src/stklos.c: 
+	* Src/stklos.c:
 	* Src/tk-main.c: Gc_protect is no more useful on modules since a
  	module is always accessible from the module table.
 
@@ -1566,13 +1576,13 @@ Wed Aug 27 15:46:25 1997  Erick Gallesio  <eg@unice.fr>
 Mon Aug 25 12:27:11 1997  Erick Gallesio  <eg@unice.fr>
 
 	* Start of port for final Tk8.0.
-	
+
 	* Src/module.c:
 	* Src/primitives.c: Modules are now stored in a private table
  	instead of bound in the global space. The new primitive
  	FIND-MODULE queries the module table to find a given module
  	(modules are still first-class objects).
-	
+
 	* Tk/generic/tkWindow.c: Reverted the command "tk-state" to "tk"
  	since the module names are no more bound in global space.
 
@@ -1628,7 +1638,7 @@ Wed Aug 13 17:21:08 1997  Erick Gallesio  <eg@unice.fr>
 Tue Jul  8 10:00:26 1997  Erick Gallesio  <eg@unice.fr>
 
 	* New type in the interpreter: tc_tclobjet. This type is necessary
-	to simulate the Tcl "Tcl_Obj" type. Tcl_Obj is a crazy thing. 
+	to simulate the Tcl "Tcl_Obj" type. Tcl_Obj is a crazy thing.
 	Why Tcl does not use a GC, and life would be a *lot* easier (for me
 	but for them too...)
 
@@ -1650,11 +1660,11 @@ Fri May 23 16:07:01 1997  Erick Gallesio  <eg@unice.fr>
 	* Src/stklos.c (build_initializers): build_initializers takes now
  	one more parameter (the environment in which the class has been
  	defined) Consequently, initializer are evaluated in the lexical
- 	environment of the class definition.	
+ 	environment of the class definition.
 
 	* STklos/stklos.stk (compute-get-n-set): Standard behavior of class
-	slots is now identical to CLOS: when a class-slot is inherited, it 
-	is shared with instances of the superclass. If it is redefined, 
+	slots is now identical to CLOS: when a class-slot is inherited, it
+	is shared with instances of the superclass. If it is redefined,
 	a new slot is created
 
 Thu May 15 18:04:50 1997  Erick Gallesio  <eg@unice.fr>
@@ -1712,7 +1722,7 @@ Fri Mar 14 14:00:51 1997  Erick Gallesio  <eg@unice.fr>
 
 Fri Feb 28 10:43:41 1997  Erick Gallesio  <eg@unice.fr>
 
-	* Src/read.c: New feature: multi lines comments 
+	* Src/read.c: New feature: multi lines comments
 	  (as in Common Lisp: #| ... |# )
 
 	* Src/stklos.c (STk_init_STklos): New MOP procedures
@@ -1728,16 +1738,16 @@ Sun Feb 23 23:08:40 1997  Erick Gallesio  <eg@unice.fr>
 
 	* STklos/stklos.stk: New MOP procedures
 		slot-definition-name
-		slot-definition-options	
+		slot-definition-options
 		slot-definition-allocation
 		slot-definition-getter
 		slot-definition-setter
 		slot-definition-accessor
 
-	* Src/stklos.c: Instances type is now in the cell. This decreases 
+	* Src/stklos.c: Instances type is now in the cell. This decreases
 	globally the size of a STklos instance of the size of one int.
 
-	* Two new classes: <simple-method> and <accessor-method>. 
+	* Two new classes: <simple-method> and <accessor-method>.
 	A <simple-method> is a method which cannot be call next_method.
 	<Accesor-method>s are used for defining slot-readers and writers.
 	Application of these methods are faster than normal method
@@ -1747,7 +1757,7 @@ Mon Jan 20 15:59:24 1997  Erick Gallesio  <eg@unice.fr>
 
 	* STklos/stklos.stk (object-equal?): has been redefined to call
 	  eqv? rather than returning #f. This is the same thing except that
-	  when you redefine eqv?, it automatically redefine equal?. 
+	  when you redefine eqv?, it automatically redefine equal?.
 	  Furthermore, it is more coherent with standard Scheme eqv? and equal?
 
 Sat Jan  4 00:45:37 1997  Erick Gallesio  <eg@unice.fr>
@@ -1756,7 +1766,7 @@ Sat Jan  4 00:45:37 1997  Erick Gallesio  <eg@unice.fr>
 	  Modification of DESCRIBE method for classes to take into account new
 	  class slots (specializers and initializers are no more displayed)
 
-	* Src/stklos.c: 
+	* Src/stklos.c:
 	  STklos/stklos.stk:
 	  Modifications
 	     - when a slot does not exists, the gf slot-missing is called
@@ -1767,12 +1777,12 @@ Sat Jan  4 00:45:37 1997  Erick Gallesio  <eg@unice.fr>
 	     - slot-bound-using-class?
 	     - slot-exists-using-class?
 
-	* STklos/stklos.stk (change-class): change-class didn't 
+	* STklos/stklos.stk (change-class): change-class didn't
 	initialize the slots added to the instance. This is done
 	now (but this is a little bit different from CLOS: unbound
-	slots in the "old" instances are initialized with the initform 
+	slots in the "old" instances are initialized with the initform
 	value in the "new" instance, whereas they remain unbound
-	in CLOS).	
+	in CLOS).
 
 Wed Jan  1 11:44:45 1997  Erick Gallesio  <eg@unice.fr>
 
@@ -1809,7 +1819,7 @@ Sun Dec 15 11:04:10 1996  Erick Gallesio  <eg@unice.fr>
 Sun Dec  8 10:13:30 1996  Erick Gallesio  <eg@unice.fr>
 
 	* STklos/Tk/Toplevel.stklos:
-	* STklos/Tk/Tk-methods.stklos: 
+	* STklos/Tk/Tk-methods.stklos:
 	* STklos/Tk/Tk-classes.stklos:
 	* STklos/Tk/Basics.stklos: Bug correction: Toplevel.stklos could be
 	  sometimes loaded several times.  Toplevel is now loaded when doing a
@@ -1826,22 +1836,22 @@ Thu Nov 14 22:17:58 1996  Erick Gallesio  <eg@unice.fr>
 
 Sat Nov  9 15:17:06 1996  Erick Gallesio  <eg@unice.fr>
 
-	* STklos/Tk/Composite/Scrolltext.stklos: 
+	* STklos/Tk/Composite/Scrolltext.stklos:
 	* STklos/Tk/Composite/Scrollcanvas.stklos:
 	* STklos/Tk/Composite/Scrollbox.stklos: Scrollbars are now managed by
 	  grid.
 
 Wed Nov  6 00:15:42 1996  Erick Gallesio  <eg@unice.fr>
 
-	* Tk4.2 integration. 
+	* Tk4.2 integration.
 
 Sun Nov  3 18:53:57 1996  Erick Gallesio  <eg@unice.fr>
 
 	* Lib/www-browser.stklos: A new Web browser package.
 
-	* Demos/webrowse.stklos: This demo replaces the hbrowse demo 
-	  
-	
+	* Demos/webrowse.stklos: This demo replaces the hbrowse demo
+
+
 Wed Oct 30 16:19:46 1996  Erick Gallesio  <eg@unice.fr>
 
 	* Extensions/pixmap.c: upgrading pixmap package to the Tix 4.1b1
@@ -1849,7 +1859,7 @@ Wed Oct 30 16:19:46 1996  Erick Gallesio  <eg@unice.fr>
 Tue Oct 29 00:54:05 1996  Erick Gallesio  <eg@unice.fr>
 
 	* Lib/www*.stk: New files for WEB browsing. Distant images and
-	files are now correctly handled. A lot of ideas have been taken 
+	files are now correctly handled. A lot of ideas have been taken
 	from the Harvey L. Stein WWW package.
 
 Wed Oct 23 16:53:19 1996  Erick Gallesio  <eg@unice.fr>
@@ -1868,13 +1878,13 @@ Wed Oct 23 16:53:19 1996  Erick Gallesio  <eg@unice.fr>
 Mon Oct 21 12:29:07 1996  Erick Gallesio  <eg@unice.fr>
 
 	* STklos/active.stk: a new metaclass which provides actives slots.
-	  Actives slots are slots to which a function can be associated 
+	  Actives slots are slots to which a function can be associated
  	  before/after reading/setting its value. The allocation is :active
 	  and functions can be set with :before-slot-ref, :after-slot-ref
 	  before-slot-set! or after-slot-set!.
 
 	* STklos/Tk/Widget/Gauge: Two new widgets written in Scheme:
-	  <Gauge> and <Valued-Gauge>. They use the active slots metaclass.	  
+	  <Gauge> and <Valued-Gauge>. They use the active slots metaclass.
 
 Thu Oct 17 14:50:29 1996  Erick Gallesio  <eg@unice.fr>
 
@@ -1892,7 +1902,7 @@ Fri Oct 11 13:02:55 1996  Erick Gallesio  <eg@unice.fr>
 	* Extensions/socket.c (socket_shutdown): Bug correction in shutdown
 	  (shutdown and close where inverted).
 
-	* Src/number.c: 
+	* Src/number.c:
 	* Src/read.c: Some change in number reading (in particular for
 	  string<->number conversions which were buggy when number start with
 	  a #.
@@ -1907,15 +1917,15 @@ Sun Oct  6 23:54:28 1996  Erick Gallesio  <eg@unice.fr>
 
 	* Src/stk.h:
 	* Src/char.c:
-	* Src/port.c: 
+	* Src/port.c:
 	* Src/sport.h:
-	* Src/io.c: 
+	* Src/io.c:
 	* Src/print.c: Scheme characters were used as unsigned char without
 	  explicitely specify it.  Modified some declarations to specifically
 	  say that chars were unsigned.
 
 Thu Sep 26 19:38:42 1996  Erick Gallesio  <eg@unice.fr>
-	    
+
 	* STk-3.1.1 Release
 
 	* Demos/amib.stklos: Accessing help is now stk:show-help-file (the
@@ -1971,7 +1981,7 @@ Tue Sep 17 10:03:49 1996  Erick Gallesio  <eg@unice.fr>
 
 	* STklos/Tk/Composite/Multipaned.stklos: Orientation of Multi-paned
 	  didn't work since it was done with differents keywords (:orientation
-	  and :position) in some places (thanks to MIZUSHIMA Kazunori 
+	  and :position) in some places (thanks to MIZUSHIMA Kazunori
 	  <mizkaz@keiou.trad.pfu.co.jp>)
 
 Fri Sep 13 08:22:41 1996  Erick Gallesio  <eg@unice.fr>
@@ -1979,8 +1989,8 @@ Fri Sep 13 08:22:41 1996  Erick Gallesio  <eg@unice.fr>
 	* STklos/Tk/Tk-methods.stklos: Bug correction in a method of focus
 	  (Erik Ostrom <eostrom@research.att.com>)
 
-	* Src/io.c: 
-	* Src/port.c: char-ready? was incorrect when used on stdin 
+	* Src/io.c:
+	* Src/port.c: char-ready? was incorrect when used on stdin
 	  (thanks to  Erick Ostrom)
 
 	* STklos/Tk/Text.stklos: Correction of the value field of text
@@ -2066,7 +2076,7 @@ Tue Aug 13 18:00:10 1996  Erick Gallesio  <eg@unice.fr>
 
 	* Mp/Makefile: replaced make by $(MAKE)
 
-	* New directory: Doc/LaTeX-packages: This dictory contains packages	
+	* New directory: Doc/LaTeX-packages: This dictory contains packages
 	 which ares used in documentation but which are absent from some
 	 Latex distributions.
 
@@ -2111,10 +2121,10 @@ Wed Jul 24 00:04:49 1996  Erick Gallesio  <eg@unice.fr>
 
 Tue Jul 23 10:11:28 1996  Erick Gallesio  <eg@unice.fr>
 
-	* Src/argv.c (STk_process_argc_argv): has been rewritten and is 
+	* Src/argv.c (STk_process_argc_argv): has been rewritten and is
 	 table driven now. Parameters are processed analysed
 	 differently now: the "--" option has been added to allow a clear
-	 separation between interpreter arguments and scripts arguments 
+	 separation between interpreter arguments and scripts arguments
 	 (as in Tcl). However, interpreter arguments must precede scripts
 	 arguments (this is different from Tcl, but more Unixish).
 
@@ -2123,10 +2133,10 @@ Tue Jul 23 10:11:28 1996  Erick Gallesio  <eg@unice.fr>
 
 	* Doc/Makefile: Tk Manuals pages are now prefixed by "stk_"
 	to avoid confusion with original Tk ones. They are always placed
-	in a subtree of the STk tree installation since it eases 
-	the distribution of binary releases. 
+	in a subtree of the STk tree installation since it eases
+	the distribution of binary releases.
 
-	* New demo: mc-server a multiple-client server. This is a first 
+	* New demo: mc-server a multiple-client server. This is a first
 	version, because this demo should be graphical to see connections
 	and deconnection as they arrive. (Next release)
 
@@ -2151,7 +2161,7 @@ Sun Jul 21 17:53:35 1996  Erick Gallesio  <eg@unice.fr>
 
 Fri Jul 19 14:36:04 1996  Erick Gallesio  <eg@unice.fr>
 
-	* Src/posix.c: 
+	* Src/posix.c:
 	   - Renamed posix-access to posix-access? (old name exists
 	     for compatibility but will be garbaged in afuture version)
 	   - Added the constant X_OK which was missing
@@ -2175,19 +2185,19 @@ Mon Jun 10 00:05:16 1996  Erick Gallesio  <eg@unice.fr>
 
 	* Port implementation is different: A port contains now its
 	input and output handler. String ports have been changed accordingly.
-	
+
 Sat Jun  1 21:23:01 1996  Erick Gallesio  <eg@unice.fr>
 
 	* STk works on Win32: However, there are a lot of minor
 	  things which are not correct (fonts, cursors). It seems that
-	  most of this small problems are already resolved with Tk 4.1 
+	  most of this small problems are already resolved with Tk 4.1
 	  (the official one). OK, start to port from Tk4.1a2 to Tk 4.1.
 	  The main probleme will very probably be with the event loop.
 
 Mon May 27 10:42:58 1996  Erick Gallesio  <eg@unice.fr>
 
 	* Renaming files in STklos/Tk and STklos/Tk/Composite: they have now
-	a .stklos suffix (rather than .stk), because Win32 filenames are not 
+	a .stklos suffix (rather than .stk), because Win32 filenames are not
 	really case sensitives.
 
 Sat May 11 08:33:22 1996  Erick Gallesio  <eg@unice.fr>
@@ -2203,17 +2213,17 @@ Fri Apr 26 09:26:10 1996  Erick Gallesio  <eg@unice.fr>
 	fact, widget-environment primitive has also been suppressed. Since it
 	was never documented, I doubt that someone will cry for it.
 
-	* Src/cont.c: Bug: Changed "#ifdef sun" by "#ifdef sparc" for 
-	flushing the registers window Useful for Sun3 (bug signaled 
+	* Src/cont.c: Bug: Changed "#ifdef sun" by "#ifdef sparc" for
+	flushing the registers window Useful for Sun3 (bug signaled
 	by Michael A. Patton <MAP@BBN.com>)
 
-	* Lib/menu.stk: Tk:option-menu: function added (identical to the 
+	* Lib/menu.stk: Tk:option-menu: function added (identical to the
 	Tcl one)
 
 Thu Apr 25 23:10:37 1996  Erick Gallesio  <eg@unice.fr>
 
 	* Tk/generic/tkMenu.c: Bug correction: tearoffmenucommand was not
-	defined as a closure.  
+	defined as a closure.
 
 Wed Apr 24 16:21:42 1996  Erick Gallesio  <eg@unice.fr>
 
@@ -2245,8 +2255,8 @@ Mon Apr 22 23:50:18 1996  Erick Gallesio  <eg@unice.fr>
 	* Src/boolean.c:
 	* Src/proc.c:
 	* Src/print.c:
-	* Src/gc.c: 
-	* Src/stklos.c: 
+	* Src/gc.c:
+	* Src/stklos.c:
 	* Src/eval.c: STklos integration. Generic functions are recognized now
 	by the interpreter as standard STk objects (i.e. stklos is no more a
 	dynamically loadable extension).  This integration provides:
@@ -2290,7 +2300,7 @@ Mon Mar 25 14:20:21 1996  Erick Gallesio  <eg@unice.fr>
 	enhancement. You can now specify a :before-motion and :after-motion
 	scripts. The old :motion is always accepted
 	(it's equivalent to :after-motion). If the :before-motion closure
-	returns #f, the object is not displaced and the :after-motion closure 
+	returns #f, the object is not displaced and the :after-motion closure
 	is not applied.
 
 Mon Feb 26 16:11:30 1996  Erick Gallesio  <eg@unice.fr>
@@ -2355,7 +2365,7 @@ Sun Dec 10 21:37:17 1995  Erick Gallesio  <eg@biot.unice.fr (Erick Gallesio)>
 	This bug was raised with test.scm.
 
 	*******************
-	Changelog was not maintained for a while. I will try to update 
+	Changelog was not maintained for a while. I will try to update
 	it later. Sorry.
 	********************
 
@@ -2363,12 +2373,12 @@ Sat Oct  7 14:57:01 1995  Erick Gallesio  <eg@unice.fr>
 
 	* STk-3.0b1 release
 
-Tue Jul 18 08:46:49 1995  Erick Gallesio  <eg@unice.fr> 
+Tue Jul 18 08:46:49 1995  Erick Gallesio  <eg@unice.fr>
 
 	* Starting STk 3.0 ....
 
 Mon Jul 17 20:55:27 1995  Erick Gallesio  <eg@kaolin.unice.fr (Erick Gallesio)>
-	
+
 	* 2.2 Release
 	* Src/syntax.c (STk_syntax_begin): begin, and & or were not always
 	tail recursives. This bug was detected (and corrected) by  Lars Thomas
@@ -2377,13 +2387,13 @@ Mon Jul 17 20:55:27 1995  Erick Gallesio  <eg@kaolin.unice.fr (Erick Gallesio)>
 
 Sun Jul 16 10:30:26 1995  Erick Gallesio  <eg@unice.fr>
 
-	* Snow/run-snow.in: 
-	* Src/run-stk.in: I have changed the machine determination scheme 
-	to avoid problems on Sun (sun4m sun4 sun4c... are all the same, at 
-	least for STk). For Linux, there is no more differerence between 
+	* Snow/run-snow.in:
+	* Src/run-stk.in: I have changed the machine determination scheme
+	to avoid problems on Sun (sun4m sun4 sun4c... are all the same, at
+	least for STk). For Linux, there is no more differerence between
 	the Intel rocessor used for compiling STk (i{345}86 are all the same).
 
-	* Src/dynload.c: 
+	* Src/dynload.c:
 	* Src/configure.in:
 	* Src/Makefile.in:
 	* configure.in:
@@ -2396,25 +2406,25 @@ Sun Jul 16 10:30:26 1995  Erick Gallesio  <eg@unice.fr>
 
 Sat Jul 16 23:30:27 1995  Erick Gallesio  <eg@unice.fr>
 
-	* Doc/Extension/Extending.tex: Adding documentation for Tcl widget 
+	* Doc/Extension/Extending.tex: Adding documentation for Tcl widget
 	integration
 
 Thu Jul 13 09:04:54 1995  Erick Gallesio  <eg@unice.fr>
 
 	* Doc/Reference/Appendix-D.tex: Description of Ilisp, CMU Scheme packages
-	* Doc/Manual/stk.txt: New manual page. Manual page is now installed in 
+	* Doc/Manual/stk.txt: New manual page. Manual page is now installed in
 	$(prefix)/man/man1/stk.1
-	
-	* Src/error.c (STk_err): Don't print a line number when error comes from 
-	stdin. 
 
-	* Src/stk.h: 
-	* Src/toplevel.c: 
+	* Src/error.c (STk_err): Don't print a line number when error comes from
+	stdin.
+
+	* Src/stk.h:
+	* Src/toplevel.c:
 	* Src/argv.c: New option: -interactive to force the
 	interpreter to be interactive, even if it doesn't seem to
-	be. This is useful when using STk under Emacs. 
+	be. This is useful when using STk under Emacs.
 	When STk is interactive, stdout and stderr are now unbuffered.
-	* Src/port.c (STk_init_standard_ports): line buffering of Stderr has been 
+	* Src/port.c (STk_init_standard_ports): line buffering of Stderr has been
 	deleted. Everything is done now in toplevel.c (depends on the
 	-interactive flag
 
@@ -2433,7 +2443,7 @@ Wed Jul 12 09:57:10 1995  Erick Gallesio  <eg@unice.fr (Erick Gallesio)>
 	ELF compiling. Thanks to Jin S. Choi <jsc@tabitha.atype.com>
 	for the bug correction.
 
-	* Lib/init.stk: Macros are now defined in the global environment. 
+	* Lib/init.stk: Macros are now defined in the global environment.
 	This avoids problems when some primitives procedure are redefined.
 	All the primitive should be protected for those redefinitions.
 
@@ -2442,19 +2452,19 @@ Wed Jul 12 09:57:10 1995  Erick Gallesio  <eg@unice.fr (Erick Gallesio)>
 	* Tk/tkCanvas.c (CanvasWidgetCmd): Correction of a bug signaled by
 	Johann Friedrich Heinrichmeyer. The result of the poscript command
 	must be "stringified".
-	
+
 
 Tue Jul 11 21:16:17 1995  Erick Gallesio  <eg@unice.fr (Erick Gallesio)>
 
 	* STklos/Tk/Canvitem.stk (initialize-item): INCOMPATIBLE CHANGE
-	<Text> in canvas has been renamed in <Canvas-text> to avoid a conflict 
+	<Text> in canvas has been renamed in <Canvas-text> to avoid a conflict
 	when using both cnavases and texts widgets.
 	Demos have been modified to take this modification into account
 
 	* STklos/Tk/Composite/Scrollcanvas.stk (<Scroll-canvas>):
-	* STklos/Tk/Composite/Scrollbox.stk (<Scroll-listbox>): Bug correction in 
+	* STklos/Tk/Composite/Scrollbox.stk (<Scroll-listbox>): Bug correction in
 	background propagation. (Bug signaled by H. J. Stein)
- 
+
 
 Tue Jul 11 16:31:44 1995  Erick Gallesio  <eg@kaolin.unice.fr (Erick Gallesio)>
 
@@ -2462,17 +2472,17 @@ Tue Jul 11 16:31:44 1995  Erick Gallesio  <eg@kaolin.unice.fr (Erick Gallesio)>
 
 Fri Jul  7 23:27:17 1995  Erick Gallesio  <eg@unice.fr (Erick Gallesio)>
 
-	* Tk/tkWindow.c (Tk_CreateMainWindow): 
+	* Tk/tkWindow.c (Tk_CreateMainWindow):
 	* Src/toplevel.c (init_interpreter): Init system path from
 	STK_LIBRARY shell variable. This variable MUST be initialized now
-	(this is done in the stk or snow scripts). This allows us to make 
-	binaries which are independant of their location. This will permit 
+	(this is done in the stk or snow scripts). This allows us to make
+	binaries which are independant of their location. This will permit
 	to distribute binaries on kaolin.
 
 	* Src/hash.c: Modification of the hash table module to take into
 	account an optional parameter which specifies the comparison function.
 	This permits to have equal? eqv? eq? or string? hash tables for instance
-	
+
 Tue Jul  4 14:04:49 1995  Erick Gallesio  <eg@unice.fr (Erick Gallesio)>
 
 	* Src/port.c:
@@ -2481,7 +2491,7 @@ Tue Jul  4 14:04:49 1995  Erick Gallesio  <eg@unice.fr (Erick Gallesio)>
 Fri Jun 23 22:27:26 1995  Erick Gallesio  (eg@unice.fr)
 
 	* STklos/Tk/Composite/Scrolltext.stk (<Scroll-text>): bug correction
-	in background propagation	
+	in background propagation
 
 Mon Jun  5 18:03:47 1995  Erick Gallesio  (eg@kaolin.unice.fr)
 
@@ -2492,7 +2502,7 @@ Mon Jun  5 18:03:47 1995  Erick Gallesio  (eg@kaolin.unice.fr)
 	point would be appreciated.
 
 	* Doc/Extension/Extending.tex: A new version which is more (but not
-	totally :-<) complete.  
+	totally :-<) complete.
 	* Extensions/stack.c: a new file used for illustating the document
 	  "Extending the STk interpreter"
 
@@ -2529,7 +2539,7 @@ Thu Jun  1 19:29:39 1995  Erick Gallesio  (eg@unice.fr)
 	  finished to be loaded, as suggested by David Fox.
 
 	* Src/gc.c (gc_sweep): GC calls now Tcl_DeleteCommand when a new
-	  command is deleted. See below ...  
+	  command is deleted. See below ...
 
 	* Src/tcl-lib.c: Modifications of {Create,Delete}Interp and
 	  {Create,Delete}Command to really execute the detete code of a
@@ -2550,7 +2560,7 @@ Fri May 26 23:52:40 1995  Erick Gallesio  (eg@unice.fr)
 	* STklos/Tk/Toplevel.stk (<Toplevel>): Adding the :init-keyword
 	  for class and display slots. This modification was necessary for
 	  the new AMIB.  Min-size and max-size slots contain now a string
-	  and class and display slots contain a string (it was a symbol) 
+	  and class and display slots contain a string (it was a symbol)
 
 	* STklos/Tk/Frame.stk (<Frame>): Adding the :init-keyword for
 	  class slot Class slot contains a string (it was a symbol)
@@ -2579,13 +2589,13 @@ Tue May  2 00:05:55 1995  Erick Gallesio  (eg@unice.fr)
 
 Mon May  1 16:55:18 1995  Erick Gallesio  (eg@unice.fr)
 
-	* Src/stklos.c (display_instance): 
-	* Src/error.c (STk_err): 
-	* Src/eval.c (STk_show_eval_stack): 
-	* Src/port.c (STk_write): 
-	* Src/tk-glue.c (STk_convert_for_tk): 
-	* Src/toplevel.c (repl_loop): 
-	* Src/extend.c (internal_display): 
+	* Src/stklos.c (display_instance):
+	* Src/error.c (STk_err):
+	* Src/eval.c (STk_show_eval_stack):
+	* Src/port.c (STk_write):
+	* Src/tk-glue.c (STk_convert_for_tk):
+	* Src/toplevel.c (repl_loop):
+	* Src/extend.c (internal_display):
 	* Src/print.c (STk_print):    All those files have been modified for
 	  giving the port (a SCM object) to the procedure which do a print
 	  rather than a FILE *, which is more general. This modification is
@@ -2595,7 +2605,7 @@ Mon May  1 16:55:18 1995  Erick Gallesio  (eg@unice.fr)
 Tue Apr 25 14:57:48 1995  Erick Gallesio  (eg@kaolin.unice.fr)
 
 	* Src/number.c (STk_gcd): Bug correction in lcm, gcd, min and max (arguments
-	  were evaluated several times!!!!). 
+	  were evaluated several times!!!!).
 
 Tue Apr 18 14:55:23 1995  Erick Gallesio  (eg@kaolin.unice.fr)
 
@@ -2663,7 +2673,7 @@ Tue Mar 14 13:30:11 1995  Erick Gallesio  (eg@kaolin.unice.fr)
 
 Fri Mar 10 15:55:47 1995  Erick Gallesio  (eg@kaolin.unice.fr)
 
-	* Src/userinit.c (STk_user_cleanup): STk_user_cleanup has been added. 
+	* Src/userinit.c (STk_user_cleanup): STk_user_cleanup has been added.
 
 	* Src/port.c (STk_init_standard_ports): Error file is now line
 	buffered. This gives better performances when used under emacs.
@@ -2753,7 +2763,7 @@ Sun Jan 29 15:11:06 1995  Erick Gallesio  (eg@biot)
 	<cesana@venus.agcis.st.it>): process-exit-status, process-stop,
 	process-continue, process-send-signal.
 
-	(run_process): A new option: ":host" which permits to execute the command 
+	(run_process): A new option: ":host" which permits to execute the command
 	on a distant host.
 
 Mon Jan 23 12:07:23 1995  Erick Gallesio  (eg@kaolin.unice.fr)
@@ -2852,8 +2862,8 @@ Fri Dec  9 22:15:34 1994  Erick Gallesio  (eg@biot)
 
 Thu Dec  8 22:47:44 1994  Erick Gallesio  (eg@biot)
 
-	* Makefile.in: Modifications of all configure.in and Makefile.in. 
-	Now we can 
+	* Makefile.in: Modifications of all configure.in and Makefile.in.
+	Now we can
 		- share versions of STk between different architectures
 		- have several versions of STk installed on the same machine
 
@@ -3051,7 +3061,7 @@ Wed Aug 31 14:17:44 1994  Erick Gallesio  (eg@kaolin.unice.fr)
 
 Tue Aug 30 13:39:53 1994  Erick Gallesio  (eg@kaolin.unice.fr)
 
-	* Tk/tkArgv.c (Tk_ParseArgv): 
+	* Tk/tkArgv.c (Tk_ParseArgv):
 
 	* Src/gc.c (init_gc): GC complete revision: Now we have a set of
 	heaps and a new heap is allocated as soon as the global space is
@@ -3086,7 +3096,7 @@ Wed Aug 24 12:02:41 1994  Erick Gallesio  (eg@kaolin.unice.fr)
 	* Src/number.c (integerp): Bug correction. integer? must returns
 	#t even if the value is an inexact integer.
 
-	* port.c: - modification to allow close-port on string-port 
+	* port.c: - modification to allow close-port on string-port
 	          - if the first char of a filename is a pipe ("|") character,
 		  usage of popen instead of fopen. This permits to define
 		  "pipe ports" very easily as in Tcl.
