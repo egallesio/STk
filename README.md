@@ -1,6 +1,27 @@
+IMPORTANT NOTE:
 
-		    This is the release 4.0 of STk
-		   -------------------------------
+STk is the ancestor of STklos (http://stklos.net).  The development of STk
+has ceased in in September 1999 with the version 4.0.1.
+
+The current repository contains all the versions from 3.1.1 (Sep'96) to
+4.0.1 (Sep'99).
+
+It also contains fixes to allow the compilation of 4.0.1 on modern versions
+of GCC. Running STk on Win32 and MacOs is probably not possible
+anymore (and there is no plan to assure so). 
+
+Please, don't use this version, except for doing some IT archeology.
+
+There are a lot of modern implementations of Scheme which are still
+developed (STklos is one of them). Prefer a Scheme version which is still
+maintained.
+
+______________________________________________________________________
+
+
+
+                    This is the release 4.0 of STk
+                   -------------------------------
 
 
 (Latest release is always available from <ftp://kaolin.unice.fr/pub/STk> )
@@ -74,54 +95,54 @@ starting point for learning basics of STk widgets programming.
 FILE ORGANIZATION
 -----------------
 
-Stk
-  |___ Contrib	   The contributors directory
-  |___ Demos	   some original Tk demos rewritten for stk plus some other
-  |                stuff found on  the net. 
-  |___ Extensions  This directory contains extensions of the core interpreter
-  |		   (hash tables, POSIX.1 support). See the README file for more 
-  |		   details
-  |___ Doc	   Documentation of STk.		   
-  |___ Help	   Various (HTML) help files for STk.
-  |___ Lib	   a set of Scheme files used by the interpreter
-  |___ Stack       files (very architecture dependant) for pushing args on 
-  |		   the C stack. Used by the FFI of STk.
-  |___ Src	   contains source files of stk (i.e. the sources files of the 
-  |		   interpreter + some glue files between Tk and Scheme).
-  |___ Snow	   contains (mostly) links over Src files. This directory 
-  |		   is used to build snow the Scheme interpreter without Tk
-  |		   support
-  |___ STklos      an CLOS-like object extension of Scheme based on the
-  |    |	   Tiny CLOS package.
-  |    |_ Tk       A library of Tk objects based on the STklos object
-  |    |	   extension package (subdirectory Composite contains
-  |    |	   composite widgets definitions	
-  |    |_ Examples A (small) set of examples written in STklos.
-  |___ Tcl	   contains a set of unchanged files of the Tcl library which 
-  |		   pertain in Stk
-  |___ Tk 	   contains a modified version of the Tk library. Most of the
-  |		   files are unchanged; Search the string ORIGINAL_CODE to see
-  |		   performed changes.
-  |___ Win32	   contains file necessary to compile STk under Win32
+    Stk
+      |___ Contrib     The contributors directory
+      |___ Demos       some original Tk demos rewritten for stk plus some other
+      |                stuff found on  the net. 
+      |___ Extensions  This directory contains extensions of the core interpreter
+      |                (hash tables, POSIX.1 support). See the README file for more 
+      |                details
+      |___ Doc         Documentation of STk.                   
+      |___ Help        Various (HTML) help files for STk.
+      |___ Lib         a set of Scheme files used by the interpreter
+      |___ Stack       files (very architecture dependant) for pushing args on 
+      |                the C stack. Used by the FFI of STk.
+      |___ Src         contains source files of stk (i.e. the sources files of the 
+      |                interpreter + some glue files between Tk and Scheme).
+      |___ Snow        contains (mostly) links over Src files. This directory 
+      |                is used to build snow the Scheme interpreter without Tk
+      |                support
+      |___ STklos      an CLOS-like object extension of Scheme based on the
+      |    |           Tiny CLOS package.
+      |    |_ Tk       A library of Tk objects based on the STklos object
+      |    |           extension package (subdirectory Composite contains
+      |    |           composite widgets definitions        
+      |    |_ Examples A (small) set of examples written in STklos.
+      |___ Tcl         contains a set of unchanged files of the Tcl library which 
+      |                pertain in Stk
+      |___ Tk          contains a modified version of the Tk library. Most of the
+      |                files are unchanged; Search the string ORIGINAL_CODE to see
+      |                performed changes.
+      |___ Win32       contains file necessary to compile STk under Win32
 
 SUPPORTED ARCHITECTURES
 -----------------------
 
 For now, STk is known to run on the following machine/systems
 
-	- Sparc (SunOs 4.1.x & Solaris 2.{34})
-	- Dec 5xxx (Ultrix 4.2)
-	- SGI (IRIX 4.05, 5.1.1, 5.2)
-	- DEC Alpha 3000/400 (OSF-1 V1.3)
-	- RS6000 AIX 3.2.5	
-	- HP 9000/735 (HP-UX 9.01)
-	- PC (Linux 1.0 -> 2.0)
-	- PC (FreeBSD 1.1) 	  
-	- PC (SCO)		  
-	- PC (NetBSD-1.0)	  
-	- Sony WS (Sony NEWS, NEWSOS 4.2R)
-	- PowerPC running Linux
-	- ...
+        - Sparc (SunOs 4.1.x & Solaris 2.{34})
+        - Dec 5xxx (Ultrix 4.2)
+        - SGI (IRIX 4.05, 5.1.1, 5.2)
+        - DEC Alpha 3000/400 (OSF-1 V1.3)
+        - RS6000 AIX 3.2.5      
+        - HP 9000/735 (HP-UX 9.01)
+        - PC (Linux 1.0 -> 2.0)
+        - PC (FreeBSD 1.1)        
+        - PC (SCO)                
+        - PC (NetBSD-1.0)         
+        - Sony WS (Sony NEWS, NEWSOS 4.2R)
+        - PowerPC running Linux
+        - ...
 
 
 Version 3.1.1 was also known to run on Windows 95 (and probably Windows NT).
@@ -139,25 +160,25 @@ DYNAMIC LOADING
 
 Support for dynamic loading is provided for the following architectures/systems
 
-		- SunOs 4.1.x
-		- SunOs 5.3
-		- NetBSD-1.0 (i386-port)
-		- Linux (with the DLD package or ELF format). [ Dynamic
-		  loading is disabled by default. Use -enable-elf or 
-		  -enable-dld to choose the way you want to make dynamic 
-		  loading under Linux]
-		- FreeBSD
-		- HPUX
-		- SGI Irix 5.3 
+                - SunOs 4.1.x
+                - SunOs 5.3
+                - NetBSD-1.0 (i386-port)
+                - Linux (with the DLD package or ELF format). [ Dynamic
+                  loading is disabled by default. Use -enable-elf or 
+                  -enable-dld to choose the way you want to make dynamic 
+                  loading under Linux]
+                - FreeBSD
+                - HPUX
+                - SGI Irix 5.3 
 
 IMAGE CREATION
 --------------
 
 The following architecture support image creation (dumping the interpreter 
 memory in a file):
-		- SunOs 4.1.x
-		- Linux 1.1 (a.out format only)
-		- FreeBSD
+                - SunOs 4.1.x
+                - Linux 1.1 (a.out format only)
+                - FreeBSD
 
 MAILING LIST
 ------------
@@ -188,7 +209,7 @@ STk W3 HOME PAGE
 ----------------
 
 The STk W3 home page is located at
-	http://kaolin.unice.fr/STk
+        http://kaolin.unice.fr/STk
 
 BUGS
 ----
@@ -198,13 +219,13 @@ If you find a bug, please report it to stk-bugs@kaolin.unice.fr.
 AUTHOR ADDRESS
 --------------
 
-Erick Gallesio					  tel : (33) 92-96-51-53
-ESSI - I3S					  fax : (33) 92-96-51-55
-Universite de Nice - Sophia Antipolis		email : eg@unice.fr
-Route des colles
-BP 145
-06903 Sophia Antipolis CEDEX
-FRANCE
+    Erick Gallesio                                    tel : (33) 92-96-51-53
+    ESSI - I3S                                        fax : (33) 92-96-51-55
+    Universite de Nice - Sophia Antipolis           email : eg(at)unice.fr
+    Route des colles
+    BP 145
+    06903 Sophia Antipolis CEDEX
+    FRANCE
 
      
 
