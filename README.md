@@ -1,4 +1,5 @@
 IMPORTANT NOTE:
+---------------
 
 STk is the ancestor of STklos (http://stklos.net).  The development of STk
 has ceased in in September 1999 with the version 4.0.1.
