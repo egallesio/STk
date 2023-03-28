@@ -169,7 +169,7 @@ void STk_Cpointer_display(SCM obj, SCM port, int mode)
  ******************************************************************************/
 
 static Tcl_HashTable Cvars;
-static C_hash_table_initialized = 0;
+static int C_hash_table_initialized = 0;
 
 struct get_n_set_box {
   SCM (*getter)();
